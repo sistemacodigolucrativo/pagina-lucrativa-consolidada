@@ -109,8 +109,8 @@
 - [x] Confirmar a titularidade ou a autorização explícita para copiar integralmente os e-books de referência em formato HTML.
 - [x] Inventariar as sessões, ferramentas e e-books disponíveis na área de membros de referência usando a conta autorizada.
 - [ ] Implementar as ferramentas observáveis e autorizadas no painel de membros da Página Lucrativa 2026.
-- [ ] Criar leitores HTML e uma gestão administrativa para listar, editar e publicar cada e-book autorizado.
-- [ ] Validar as novas funcionalidades diretamente na VPS e sincronizar a versão final no repositório remoto Página Lucrativa.
+- [x] Criar leitores HTML e uma gestão administrativa para listar, editar e publicar cada e-book autorizado.
+- [x] Validar as novas funcionalidades diretamente na VPS e sincronizar a versão final no repositório remoto Página Lucrativa.
 
 # Domínio público da Página Lucrativa
 
@@ -220,4 +220,4 @@
 - [x] Criar a manutenção administrativa para listar, editar, publicar e arquivar e-books.
 - [x] Importar o manifesto de 52 e-books HTML convertidos e validar a integridade do catálogo.
 - [x] Cobrir o módulo com testes automatizados e ativar a versão na VPS.
-- [ ] Sincronizar o marco de e-books validado com o repositório privado.
+- [x] Sincronizar o marco de e-books validado com o repositório privado no commit `03c13ba`.
