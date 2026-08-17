@@ -24,6 +24,8 @@ import ApplicationTracking from "./pages/ApplicationTracking";
 import AdminApplications from "./pages/AdminApplications";
 import MemberCommunications from "./pages/MemberCommunications";
 import AdminCommunications from "./pages/AdminCommunications";
+import MemberReferrals from "./pages/MemberReferrals";
+import AdminReferrals from "./pages/AdminReferrals";
 import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 function AppRoutes() {

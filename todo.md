@@ -260,3 +260,8 @@
 - [x] Criar supervisão administrativa de preparos, incluindo restauração e cancelamento, sem disparos externos automáticos.
 - [x] Validar na VPS o registro pelo membro, a supervisão administrativa, o bloqueio 403 para membro, as rotas HTTPS e a limpeza dos dados temporários.
 - [x] Sincronizar o marco de comunicação validado com o GitHub no commit `230a674`.
+
+# Correção prioritária de runtime
+- [x] Corrigir os imports ausentes de `MemberReferrals` e `AdminReferrals` que impediam o carregamento do bundle publicado.
+- [x] Compilar, executar os 39 testes, reativar o serviço e validar a landing e as rotas de indicações diretamente no domínio publicado.
+- [ ] Sincronizar a correção de runtime validada com o GitHub.
