@@ -1,15 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const sdkMocks = vi.hoisted(() => ({
-  authenticateRequest: vi.fn(),
-}));
-
 const demoMocks = vi.hoisted(() => ({
   resolveDemoSession: vi.fn(),
-}));
-
-vi.mock("./_core/sdk", () => ({
-  sdk: sdkMocks,
 }));
 
 vi.mock("./demoAuth", () => ({
@@ -31,13 +23,6 @@ const demoUser = {
   lastSignedIn: new Date(),
 };
 
-const manusUser = {
-  ...demoUser,
-  id: 3,
-  openId: "manus-user",
-  loginMethod: "manus",
-};
-
 function options() {
   return { req: { headers: { cookie: "pl_demo_session=demo-token" } }, res: {} } as any;
 }
@@ -45,24 +30,21 @@ function options() {
 describe("createContext session source", () => {
   beforeEach(() => vi.resetAllMocks());
 
-  it("prioritizes the separate demo session when both modes can resolve", async () => {
+  it("resolves a valid local user-and-password session", async () => {
     demoMocks.resolveDemoSession.mockReturnValue(demoUser);
-    sdkMocks.authenticateRequest.mockResolvedValue(manusUser);
 
     const context = await createContext(options());
 
     expect(context.user?.openId).toBe("local_demo_member");
     expect(context.authSource).toBe("demo");
-    expect(sdkMocks.authenticateRequest).not.toHaveBeenCalled();
   });
 
-  it("falls back to Manus when a demo session is absent", async () => {
+  it("treats a request without a local session as unauthenticated", async () => {
     demoMocks.resolveDemoSession.mockReturnValue(null);
-    sdkMocks.authenticateRequest.mockResolvedValue(manusUser);
 
     const context = await createContext(options());
 
-    expect(context.user?.openId).toBe("manus-user");
-    expect(context.authSource).toBe("manus");
+    expect(context.user).toBeNull();
+    expect(context.authSource).toBeNull();
   });
 });

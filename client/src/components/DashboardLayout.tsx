@@ -21,7 +21,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
 import { LayoutDashboard, LogOut, PanelLeft, type LucideIcon, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -75,7 +74,7 @@ export default function DashboardLayout({
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-6">
             <h1 className="text-2xl font-semibold tracking-tight text-center">
-              Sign in to continue
+              Acesso necessário
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
               Este painel exige autenticação. Use o acesso local de demonstração para verificar os perfis disponíveis.
@@ -83,9 +82,6 @@ export default function DashboardLayout({
           </div>
           <Button asChild size="lg" className="w-full shadow-lg hover:shadow-xl transition-all">
             <a href="/acesso">Acessar ambiente de teste</a>
-          </Button>
-          <Button onClick={() => startLogin()} variant="outline" className="w-full">
-            Entrar com Manus
           </Button>
         </div>
       </div>

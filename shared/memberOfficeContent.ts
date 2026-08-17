@@ -18,6 +18,7 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
       { icon: "testimonial", label: "Fazer depoimento", path: "/membros/fazer-depoimento" },
       { icon: "profile", label: "Editar perfil", path: "/membros/configuracoes" },
       { icon: "data", label: "Meus dados", path: "/membros/meus-dados" },
+      { icon: "automation", label: "Central de operação", path: "/membros/operacao" },
     ],
   },
   {

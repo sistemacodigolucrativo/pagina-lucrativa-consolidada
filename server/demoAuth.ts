@@ -63,10 +63,10 @@ export function resolveDemoAccount(username: string, password: string): DemoAcco
   return account;
 }
 
-function toDemoUser(account: DemoAccount): User {
+export function toDemoUser(account: DemoAccount): User {
   const now = new Date();
   return {
-    id: account.role === "admin" ? -101 : -102,
+    id: account.role === "admin" ? 1 : 2,
     openId: account.openId,
     name: account.name,
     email: account.email,

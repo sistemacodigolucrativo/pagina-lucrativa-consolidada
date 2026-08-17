@@ -5,6 +5,7 @@ import { BookOpenCheck, ChartNoAxesCombined, FileText, Layers3, UsersRound } fro
 
 const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Operação", path: "/admin", group: "Gestão" },
+  { icon: Layers3, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
   { icon: UsersRound, label: "Membros", path: "/admin/membros", group: "Gestão" },
   { icon: FileText, label: "Pedidos", path: "/admin/pedidos", group: "Gestão" },
   { icon: Layers3, label: "Catálogo", path: "/admin/catalogo", group: "Conteúdo" },

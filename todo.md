@@ -100,5 +100,74 @@
 
 # Confirmação final do repositório remoto
 
-- [ ] Conferir o branch principal e o último commit remoto do repositório Página Lucrativa.
-- [ ] Enviar qualquer alteração final que não esteja sincronizada e confirmar o resultado ao usuário.
+- [x] Conferir o branch principal e o último commit remoto do repositório Página Lucrativa.
+- [x] Enviar qualquer alteração final que não esteja sincronizada e confirmar o resultado ao usuário.
+- [x] Confirmar ao usuário a sincronização final do branch `main` no commit remoto `0d03bb8`.
+
+# Ferramentas e e-books do painel de membros
+
+- [x] Confirmar a titularidade ou a autorização explícita para copiar integralmente os e-books de referência em formato HTML.
+- [x] Inventariar as sessões, ferramentas e e-books disponíveis na área de membros de referência usando a conta autorizada.
+- [ ] Implementar as ferramentas observáveis e autorizadas no painel de membros da Página Lucrativa 2026.
+- [ ] Criar leitores HTML e uma gestão administrativa para listar, editar e publicar cada e-book autorizado.
+- [ ] Validar as novas funcionalidades diretamente na VPS e sincronizar a versão final no repositório remoto Página Lucrativa.
+
+# Domínio público da Página Lucrativa
+
+- [x] Verificar DNS, certificados e a configuração Nginx atual de ocodigolucrativo.site na VPS.
+- [x] Configurar `www.ocodigolucrativo.site/paginalucrativa` como proxy da Página Lucrativa na porta 3101, sem alterar a raiz ou o miniapp existente.
+- [x] Validar HTTP, HTTPS e as rotas de assets pela nova URL antes da entrega.
+
+- [x] Validar na VPS a resposta ou o redirecionamento de HTTP para `www.ocodigolucrativo.site/paginalucrativa/`.
+
+# Mídia da landing de referência
+
+- [ ] Inventariar imagens, vídeos e posicionamentos da landing de referência, distinguindo materiais autorizados de dados de terceiros.
+- [ ] Integrar as imagens e vídeos autorizados nos blocos correspondentes da Página Lucrativa 2026.
+- [ ] Validar a reprodução de mídia e o comportamento responsivo diretamente na VPS.
+- [x] Adaptar o roteamento do cliente ao prefixo `/paginalucrativa` para eliminar a página 404 na URL pública solicitada.
+
+# Autenticação única por usuário e senha
+
+- [x] Remover da interface os convites, redirecionamentos e controles relacionados ao login Manus.
+- [x] Manter somente a sessão local por usuário e senha, com permissões distintas de administrador e membro.
+- [x] Validar diretamente na VPS o login, o logout e as restrições de rota após a simplificação.
+
+- [x] Validar na VPS o logout da sessão local, confirmando a limpeza do cookie `pl_demo_session` e a perda de acesso às rotas protegidas.
+- [x] Validar na VPS as restrições pós-simplificação: visitante sem sessão, membro comum bloqueado em `/admin` e administrador autorizado em `/admin`.
+
+# Auditoria funcional dos painéis
+
+- [x] Auditar a área oficial de membros com a conta autorizada e documentar formalmente a limitação de acesso à administração oficial relacionada.
+- [x] Mapear cada item do menu atual para uma função utilizável, uma regra de acesso e uma fonte de dados administrável.
+- [ ] Substituir itens meramente estruturais por fluxos reais de membro, com estados vazios, validações e retornos de sucesso ou erro.
+- [ ] Criar as telas e os procedimentos administrativos necessários para manter conteúdos, recursos e permissões disponibilizados aos membros.
+- [ ] Cobrir os fluxos implementados com testes automatizados e validar os caminhos críticos diretamente na VPS.
+
+# Implementação por domínios funcionais auditados
+
+- [ ] Executar cada alteração funcional diretamente na release de trabalho da VPS, mantendo o workspace apenas como espelho técnico e registro.
+- [ ] Validar cada marco no serviço ativo da VPS antes de sincronizá-lo para o repositório remoto.
+
+- [ ] Criar a base de dados e os procedimentos para conteúdos administráveis: cursos, materiais, artigos, FAQ, e-books e avisos operacionais.
+- [ ] Criar campanhas, contatos consentidos, convites e histórico de atividade com acesso individual do membro e supervisão administrativa.
+- [ ] Criar manutenção administrativa de produtos, publicações, lançamentos financeiros e status de solicitações.
+- [ ] Criar manutenção de perfil, tickets de suporte, feedback e preferências de contato do membro.
+- [ ] Substituir os itens explicativos do menu por telas funcionais, agrupando rotas equivalentes em domínios de uso real.
+- [ ] Aplicar controles de publicação, arquivamento, visibilidade e papel de usuário em todos os procedimentos administrativos.
+
+## Marco 1 — Operação persistente validada na VPS
+
+- [x] Criar na VPS a base MariaDB local persistente, isolada do miniapp e acessível somente ao serviço Página Lucrativa.
+- [x] Vincular as contas locais de administrador e membro a identificadores persistentes estáveis na base local.
+- [x] Implementar perfil persistente, campanhas rastreáveis e solicitações de suporte para o membro.
+- [x] Implementar central administrativa para criar, publicar, arquivar e disponibilizar materiais, artigos, FAQ e avisos.
+- [x] Implementar resposta administrativa a solicitações de suporte, com retorno visível ao membro.
+- [x] Criar as rotas funcionais `/membros/operacao` e `/admin/operacao` e conectá-las aos respectivos menus.
+- [x] Executar testes automatizados, compilação e validação ponta a ponta desses fluxos no serviço ativo da VPS, removendo dados temporários ao final.
+
+# Fechamento da auditoria funcional
+
+- [x] Registrar a limitação técnica ou auditar explicitamente a administração oficial relacionada, sem expor dados privados.
+- [x] Produzir o mapeamento item a item do menu para função, papel de acesso, origem de dados e manutenção administrativa correspondente.
+- [x] Validar a matriz final contra as rotas atuais do escritório de membros e do painel administrativo do projeto, registrando a inclusão futura de `/admin/operacao`.

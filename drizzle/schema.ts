@@ -118,3 +118,31 @@ export const applications = mysqlTable("applications", {
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
+
+export const managedContent = mysqlTable("managedContent", {
+  id: int("id").autoincrement().primaryKey(),
+  kind: mysqlEnum("kind", ["material", "article", "faq", "notice"]).notNull(),
+  title: varchar("title", { length: 240 }).notNull(),
+  summary: text("summary"),
+  body: text("body"),
+  status: mysqlEnum("status", ["draft", "published", "archived"]).default("draft").notNull(),
+  createdBy: int("createdBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  statusKindIndex: index("managed_content_status_kind_idx").on(table.status, table.kind),
+}));
+
+export const supportTickets = mysqlTable("supportTickets", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  subject: varchar("subject", { length: 180 }).notNull(),
+  message: text("message").notNull(),
+  status: mysqlEnum("status", ["open", "answered", "closed"]).default("open").notNull(),
+  adminResponse: text("adminResponse"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  userUpdatedIndex: index("support_tickets_user_updated_idx").on(table.userId, table.updatedAt),
+  statusUpdatedIndex: index("support_tickets_status_updated_idx").on(table.status, table.updatedAt),
+}));

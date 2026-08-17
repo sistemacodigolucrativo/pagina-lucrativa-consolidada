@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
-import { COOKIE_NAME } from "../shared/const";
 import { DEMO_SESSION_COOKIE_NAME } from "./demoAuth";
 import type { TrpcContext } from "./_core/context";
 
@@ -12,7 +11,7 @@ type CookieCall = {
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
 function createAuthContext(
-  authSource: TrpcContext["authSource"] = "manus"
+  authSource: TrpcContext["authSource"] = "demo"
 ): { ctx: TrpcContext; clearedCookies: CookieCall[] } {
   const clearedCookies: CookieCall[] = [];
 
@@ -21,7 +20,7 @@ function createAuthContext(
     openId: "sample-user",
     email: "sample@example.com",
     name: "Sample User",
-    loginMethod: "manus",
+    loginMethod: "local_demo",
     role: "user",
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -46,7 +45,7 @@ function createAuthContext(
 }
 
 describe("auth.logout", () => {
-  it("clears the session cookie and reports success", async () => {
+  it("clears the local session cookie and reports success", async () => {
     const { ctx, clearedCookies } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 
@@ -54,7 +53,7 @@ describe("auth.logout", () => {
 
     expect(result).toEqual({ success: true });
     expect(clearedCookies).toHaveLength(1);
-    expect(clearedCookies[0]?.name).toBe(COOKIE_NAME);
+    expect(clearedCookies[0]?.name).toBe(DEMO_SESSION_COOKIE_NAME);
     expect(clearedCookies[0]?.options).toMatchObject({
       maxAge: -1,
       secure: true,
@@ -64,8 +63,8 @@ describe("auth.logout", () => {
     });
   });
 
-  it("clears only the demo cookie when the active identity came from the demo session", async () => {
-    const { ctx, clearedCookies } = createAuthContext("demo");
+  it("clears the local session cookie even when no active identity is resolved", async () => {
+    const { ctx, clearedCookies } = createAuthContext(null);
     const caller = appRouter.createCaller(ctx);
 
     await caller.auth.logout();
