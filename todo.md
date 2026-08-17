@@ -178,6 +178,35 @@
 - [x] Validar na VPS que a criação de contato, o preparo de convite e a mudança de status retornam eventos persistidos em `member.activities` e `admin.activities`.
 - [x] Validar na VPS o arquivamento de contato e os bloqueios de papel para visitante e membro comum nos procedimentos administrativos de captação.
 
+- [x] Sincronizar o marco de captação consentida validado na VPS ao repositório privado, no commit `f72686f`.
+
+# Auditoria visual cirúrgica da landing
+
+- [x] Inventariar todas as seções da landing e classificar cada bloco tipográfico como crítico, importante, refinamento ou manter.
+- [x] Inspecionar a composição da landing na VPS em smartphone pequeno, smartphone convencional, smartphone grande, tablet, notebook e desktop.
+- [x] Registrar as ocorrências de fonte excessiva, quebras desequilibradas, CTAs deslocados e espaçamentos que prejudiquem a hierarquia visual.
+- [x] Refinar somente os blocos necessários com escala fluida, largura de texto, peso, contraste, espaçamento e composição, preservando a identidade existente.
+- [x] Validar novamente a landing completa na VPS, incluindo os seis breakpoints, as rotas de membro e a suíte automatizada de 19 testes.
+
+- [x] Aplicar e registrar na VPS, com diff verificável, os ajustes tipográficos do hero e dos títulos longos: escala fluida, medida, espaçamento e pesos.
+- [x] Recapturar os breakpoints após os ajustes tipográficos e só então sincronizar o refinamento visual ao repositório remoto.
+
+- [x] Recapturar na VPS os seis breakpoints auditados — 320, 390, 430, 768, 1280 e 1440 px — após os ajustes tipográficos finais e registrar as evidências.
+- [ ] Sincronizar o refinamento visual validado ao repositório remoto e registrar o commit correspondente antes de encerrar a etapa.
+
+# Linguagem de marketing digital no painel de membros
+
+- [x] Substituir nas telas e nos menus visíveis do membro as referências a Painel, Central ou Operação pelo termo Escritório Virtual e seus desdobramentos de marketing digital.
+- [x] Preservar as rotas internas e a nomenclatura objetiva de gestão no contexto administrativo, sem expor o vocabulário operacional ao membro.
+- [x] Validar diretamente na VPS as rotas e a navegação do membro após a revisão de linguagem.
+
+- [x] Revisar e registrar com diff todas as labels visíveis ao membro que ainda utilizem Painel, Central ou Operação, sem modificar identificadores internos.
+- [x] Validar por teste ou inspeção de código que as rotas de membro e administração permanecem inalteradas enquanto apenas os rótulos públicos mudam.
+- [x] Executar e registrar na VPS a navegação autenticada pelas rotas de membro relevantes após a revisão de linguagem.
+
+- [x] Registrar o diff verificável de rótulos e caminhos entre a release anterior e a atual, evidenciando Escritório Virtual sem mudança em `/membros/operacao`.
+- [x] Executar uma validação autenticada na VPS cobrindo a página inicial, Escritório Virtual e os itens de menu diretamente impactados pela nomenclatura revisada.
+
 # Fechamento da auditoria funcional
 
 - [x] Registrar a limitação técnica ou auditar explicitamente a administração oficial relacionada, sem expor dados privados.

@@ -1,14 +1,14 @@
 export type MemberNavigationItem = {
   label: string;
   path: string;
-  group: "Operação" | "Crescimento" | "Conta";
+  group: "Escritório Virtual" | "Crescimento" | "Conta";
 };
 
 export const memberNavigation: MemberNavigationItem[] = [
-  { label: "Visão geral", path: "/membros", group: "Operação" },
-  { label: "Links & campanhas", path: "/membros/campanhas", group: "Operação" },
-  { label: "Ganhos", path: "/membros/ganhos", group: "Operação" },
-  { label: "Produtos", path: "/membros/produtos", group: "Operação" },
+  { label: "Visão geral", path: "/membros", group: "Escritório Virtual" },
+  { label: "Links & campanhas", path: "/membros/campanhas", group: "Escritório Virtual" },
+  { label: "Ganhos", path: "/membros/ganhos", group: "Escritório Virtual" },
+  { label: "Produtos", path: "/membros/produtos", group: "Escritório Virtual" },
   { label: "Academia", path: "/membros/academia", group: "Crescimento" },
   { label: "Rede & convites", path: "/membros/rede", group: "Crescimento" },
   { label: "Materiais", path: "/membros/materiais", group: "Crescimento" },

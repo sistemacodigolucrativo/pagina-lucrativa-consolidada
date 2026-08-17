@@ -4,7 +4,7 @@ import { formatCompactCount, formatCurrency, memberNavigation } from "./dashboar
 describe("dashboard contracts", () => {
   it("keeps the member navigation grouped and free of duplicated paths", () => {
     expect(new Set(memberNavigation.map(item => item.path)).size).toBe(memberNavigation.length);
-    expect(memberNavigation.map(item => item.group)).toEqual(expect.arrayContaining(["Operação", "Crescimento", "Conta"]));
+    expect(memberNavigation.map(item => item.group)).toEqual(expect.arrayContaining(["Escritório Virtual", "Crescimento", "Conta"]));
   });
 
   it("formats operational values for Brazilian members", () => {

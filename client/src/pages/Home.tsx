@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { ArrowDown, ArrowUpRight, Menu, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -126,6 +126,13 @@ function JoinButton({ className = "" }: { className?: string }) {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showFloatingCta, setShowFloatingCta] = useState(false);
+  useEffect(() => {
+    const updateFloatingCta = () => setShowFloatingCta(window.scrollY > window.innerHeight * .72);
+    updateFloatingCta();
+    window.addEventListener("scroll", updateFloatingCta, { passive: true });
+    return () => window.removeEventListener("scroll", updateFloatingCta);
+  }, []);
   const [, setLocation] = useLocation();
   const application = trpc.applications.submit.useMutation({
     onSuccess: () => setLocation("/pedido/confirmacao"),
@@ -169,7 +176,7 @@ export default function Home() {
               <a href="#f">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a>
             </div>
             <div className="sales-kicker">A Página Lucrativa é sucesso absoluto!</div>
-            <h1>Tenha sua <span>Página Lucrativa</span> Online e Receba <span>PAGAMENTOS</span> de R$50,00 em Sua Conta PagSeguro ou PIX.</h1>
+            <h1>Tenha sua <span>Página Lucrativa</span> Online e Receba <span>PAGAMENTOS</span> de <span className="hero-price">R$50,00</span> em Sua Conta PagSeguro ou PIX.</h1>
             <p>Sem Intermediários e Sem Atravessadores, Aqui a Página é Sua e <strong>Lucra 100%!</strong></p>
             <div className="sales-actions"><JoinButton /><a href="#f" className="btn btn-ghost">Faça parte <ArrowDown size={16} /></a></div>
             <div className="sales-trust"><span className="sales-pulse" />A Página já está pronta, é sua, e o lucro também.</div>
@@ -217,6 +224,6 @@ export default function Home() {
     </main>
 
     <footer className="footer"><div className="shell footer-row"><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span></div></footer>
-    <div className="floating"><JoinButton /></div>
+    <div className={`floating ${showFloatingCta ? "is-visible" : ""}`}><JoinButton /></div>
   </div>;
 }
