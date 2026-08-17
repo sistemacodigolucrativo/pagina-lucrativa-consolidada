@@ -1,6 +1,7 @@
 import { desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { campaignLinks, courses, InsertUser, memberProfiles, products, transactions, users } from "../drizzle/schema";
+import { applications, campaignLinks, courses, InsertUser, memberProfiles, products, transactions, users } from "../drizzle/schema";
+import type { ApplicationInput } from "@shared/applications";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -130,15 +131,30 @@ export async function getPublishedCourses() {
   return db.select().from(courses).where(eq(courses.isPublished, 1)).orderBy(desc(courses.updatedAt));
 }
 
+export async function createApplication(input: ApplicationInput) {
+  const db = await getDb();
+  if (!db) throw new Error("O banco de dados não está disponível no momento.");
+
+  const result = await db.insert(applications).values(input);
+  return { id: Number(result[0].insertId) };
+}
+
+export async function getRecentApplications(limit = 20) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(applications).orderBy(desc(applications.createdAt)).limit(limit);
+}
+
 export async function getAdminOverview() {
   const db = await getDb();
   if (!db) return null;
 
-  const [memberRows, productRows, courseRows, transactionRows] = await Promise.all([
+  const [memberRows, productRows, courseRows, transactionRows, applicationRows] = await Promise.all([
     db.select().from(users),
     db.select().from(products),
     db.select().from(courses),
     db.select().from(transactions),
+    db.select().from(applications),
   ]);
 
   return {
@@ -146,5 +162,6 @@ export async function getAdminOverview() {
     activeProductCount: productRows.filter(product => product.status === "active").length,
     publishedCourseCount: courseRows.filter(course => course.isPublished === 1).length,
     grossVolumeCents: transactionRows.reduce((total, transaction) => total + transaction.amountCents, 0),
+    pendingApplicationCount: applicationRows.filter(application => application.status === "pending").length,
   };
 }

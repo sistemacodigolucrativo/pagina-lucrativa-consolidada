@@ -103,3 +103,18 @@ export const courseProgress = mysqlTable("courseProgress", {
   courseUserUnique: uniqueIndex("course_progress_user_course_unique").on(table.userId, table.courseId),
   userIndex: index("course_progress_user_idx").on(table.userId),
 }));
+
+export const applications = mysqlTable("applications", {
+  id: int("id").autoincrement().primaryKey(),
+  fullName: varchar("fullName", { length: 180 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  whatsapp: varchar("whatsapp", { length: 32 }).notNull(),
+  status: mysqlEnum("status", ["pending", "contacted", "approved", "archived"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({
+  statusDateIndex: index("applications_status_date_idx").on(table.status, table.createdAt),
+  emailIndex: index("applications_email_idx").on(table.email),
+}));
+
+export type Application = typeof applications.$inferSelect;
+export type InsertApplication = typeof applications.$inferInsert;

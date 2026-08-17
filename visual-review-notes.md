@@ -13,3 +13,7 @@ A marca continuará centralizada em **Página Lucrativa**. As próximas iteraç�
 A landing se adapta a uma coluna em tela móvel, preservando a leitura de título, CTAs, blocos de entrega e FAQ. O escritório converte a sidebar em uma barra superior compacta e mantém os indicadores e próximos passos legíveis em uma coluna. A área administrativa segue o mesmo sistema de grupos e exibe estados vazios honestos para membros, produtos, ganhos e academia.
 
 A validação adicional do painel administrativo em tela móvel confirmou a leitura em uma coluna, os cards de gestão sem cortes e a navegação compacta no topo.
+
+Na revisão posterior de equivalência, a landing pública foi verificada em desktop e mobile com a sequência longa de blocos da referência, CTAs “Faça parte”, formulário de pedido e rodapé com a declaração de direitos autorais. As páginas de confirmação e personalização preservam a leitura e os botões de fluxo em telas compactas.
+
+Após a correção final, a faixa institucional do apresentador, a sequência de blocos de copy, os CTAs convergentes para o formulário, o fechamento da oferta e o rodapé “Copyright © 2026 Página Lucrativa. Todos os direitos reservados.” permanecem legíveis e sem sobreposição nas duas larguras verificadas.
