@@ -129,6 +129,29 @@ export async function getMemberProducts(userId: number) {
   return db.select().from(products).where(eq(products.ownerId, userId)).orderBy(desc(products.updatedAt));
 }
 
+export async function createMemberProduct(ownerId: number, input: { title: string; description?: string | null; category?: string | null; priceCents: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const result = await db.insert(products).values({ ownerId, ...input, status: "draft" });
+  return { id: Number(result[0].insertId), status: "draft" as const };
+}
+export async function updateMemberProduct(ownerId: number, productId: number, input: { title: string; description?: string | null; category?: string | null; priceCents: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(products).set({ ...input, status: "draft" }).where(and(eq(products.id, productId), eq(products.ownerId, ownerId)));
+  return { success: true } as const;
+}
+export async function getAdminProducts() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(products).orderBy(desc(products.updatedAt));
+}
+export async function updateAdminProductStatus(productId: number, status: "draft" | "active" | "archived") {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(products).set({ status }).where(eq(products.id, productId));
+  return { success: true } as const;
+}
 export async function getPublishedCourses() {
   const db = await getDb();
   if (!db) return [];

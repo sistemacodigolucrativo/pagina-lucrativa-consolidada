@@ -221,3 +221,7 @@
 - [x] Importar o manifesto de 52 e-books HTML convertidos e validar a integridade do catálogo.
 - [x] Cobrir o módulo com testes automatizados e ativar a versão na VPS.
 - [x] Sincronizar o marco de e-books validado com o repositório privado no commit `03c13ba`.
+
+# Marco 3 — Catálogo de produtos administrável
+- [x] Implementar catálogo de produtos com cadastro no membro, revisão administrativa, publicação e arquivamento.
+- [ ] Sincronizar o marco de catálogo de produtos validado com o GitHub.

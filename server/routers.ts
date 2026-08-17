@@ -10,11 +10,13 @@ import {
   createMemberTicket,
   createMemberContact,
   createMemberInvitation,
+  createMemberProduct,
   deleteMemberCampaign,
   getAdminContent,
   getAdminEbook,
   getAdminEbooks,
   getAdminOverview,
+  getAdminProducts,
   getAdminTickets,
   getAdminContacts,
   getAdminActivities,
@@ -33,10 +35,12 @@ import {
   getRecentApplications,
   updateAdminContentStatus,
   updateAdminEbook,
+  updateAdminProductStatus,
   updateAdminTicket,
   updateAdminContact,
   updateMemberProfile,
   updateMemberContact,
+  updateMemberProduct,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { z } from "zod";
@@ -53,6 +57,7 @@ const profileInput = z.object({
   websiteUrl: z.string().url().max(512).optional().nullable(),
 });
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
+const productInput = z.object({ title: z.string().trim().min(3).max(240), description: z.string().trim().max(8000).optional().nullable(), category: z.string().trim().max(96).optional().nullable(), priceCents: z.number().int().min(0).max(100000000) });
 const contentInput = z.object({
   kind: z.enum(["material", "article", "faq", "notice"]),
   title: z.string().trim().min(3).max(240),
@@ -96,6 +101,8 @@ export const appRouter = router({
     createCampaign: protectedProcedure.input(campaignInput).mutation(({ ctx, input }) => createMemberCampaign(ctx.user.id, input)),
     deleteCampaign: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => deleteMemberCampaign(ctx.user.id, input.id)),
     products: protectedProcedure.query(({ ctx }) => getMemberProducts(ctx.user.id)),
+    createProduct: protectedProcedure.input(productInput).mutation(({ ctx, input }) => createMemberProduct(ctx.user.id, input)),
+    updateProduct: protectedProcedure.input(productInput.extend({ id: z.number().int().positive() })).mutation(({ ctx, input }) => { const { id, ...product } = input; return updateMemberProduct(ctx.user.id, id, product); }),
     academy: protectedProcedure.query(() => getPublishedCourses()),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),
@@ -115,6 +122,8 @@ export const appRouter = router({
   admin: router({
     overview: adminProcedure.query(() => getAdminOverview()),
     applications: adminProcedure.query(() => getRecentApplications()),
+    products: adminProcedure.query(() => getAdminProducts()),
+    updateProductStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "active", "archived"]) })).mutation(({ input }) => updateAdminProductStatus(input.id, input.status)),
     content: adminProcedure.query(() => getAdminContent()),
     createContent: adminProcedure.input(contentInput).mutation(({ ctx, input }) => createAdminContent({ ...input, createdBy: ctx.user.id })),
     updateContentStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "archived"]) })).mutation(({ input }) => updateAdminContentStatus(input.id, input.status)),
