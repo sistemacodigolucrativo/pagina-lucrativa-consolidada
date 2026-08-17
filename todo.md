@@ -87,3 +87,5 @@
 - [x] Validar explicitamente a convivência entre sessão Manus e sessão de demonstração, incluindo entrada, troca e saída sem apagar a sessão principal.
 - [x] Não realizar login Manus adicional para validação de coexistência, conforme solicitado pelo usuário; manter a cobertura automatizada de prioridade e logout seletivo.
 - [x] Adicionar teste automatizado para a prioridade de `pl_demo_session`, o logout seletivo e a resolução correta de `authSource`.
+- [ ] Executar e registrar a validação funcional dos dois acessos locais diretamente na VPS, sem usar o workspace como evidência de teste.
+- [ ] Corrigir a compatibilidade do cookie de demonstração com a prévia HTTP da VPS e repetir os testes de acesso publicados.

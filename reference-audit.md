@@ -36,6 +36,8 @@ O modo de demonstração passou a usar o cookie `pl_demo_session`, separado da s
 
 Na prévia do workspace, a sessão de membro de demonstração permaneceu ativa e o menu de perfil expõe a ação de saída. A validação navegável confirmou a tela do membro; a confirmação com uma sessão Manus real não foi iniciada para não requisitar credenciais externas adicionais.
 
+A entrada pública de demonstração foi confirmada em `http://18.119.174.102:3101/acesso`. A tela descreve o uso de verificação, informa que a sessão é temporária e não usa o login Manus, e apresenta campos de usuário e senha para os dois perfis locais.
+
 ## Próxima coleta
 
 - A área de membros redirecionou para a tela de login, com campos de e-mail e senha, recuperação de acesso, vídeo orientativo e rodapé.
