@@ -190,7 +190,7 @@
 - [x] Converter os menus editoriais de membro em central funcional de artigos, materiais, comunicações, classificados e FAQ.
 - [x] Implementar edição integral de publicações, incluindo tipo, resumo, corpo e estado de visibilidade, no painel administrativo.
 - [x] Validar publicação, visibilidade ao membro, arquivamento, bloqueio administrativo, domínio HTTPS e miniapp preservado diretamente na VPS.
-- [ ] Sincronizar o marco editorial validado com o GitHub.
+- [x] Sincronizar o marco editorial validado com o GitHub no commit `47680be`.
 
 # Auditoria visual cirúrgica da landing
 
