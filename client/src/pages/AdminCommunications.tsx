@@ -1,0 +1,17 @@
+import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import { trpc } from "@/lib/trpc";
+import { ClipboardList, Mail, ShieldCheck } from "lucide-react";
+import { toast } from "sonner";
+
+const menu: DashboardMenuItem[] = [
+  { icon: ClipboardList, label: "Administração", path: "/admin", group: "Gestão" },
+  { icon: Mail, label: "Comunicações", path: "/admin/comunicacoes", group: "Gestão" },
+];
+const labels: Record<string, string> = { link: "Link", email: "E-mail", whatsapp: "WhatsApp" };
+
+export default function AdminCommunications() {
+  const utils = trpc.useUtils();
+  const invitations = trpc.admin.invitations.useQuery();
+  const update = trpc.admin.updateInvitation.useMutation({ onSuccess: () => { void utils.admin.invitations.invalidate(); toast.success("Estado da comunicação atualizado."); }, onError: error => toast.error(error.message) });
+  return <DashboardLayout menuItems={menu} title="Administração"><main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8"><header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-amber-300">Supervisão operacional</span><h1 className="text-3xl font-semibold text-white">Preparos de comunicação</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Acompanhe registros de comunicação preparados pelos membros para contatos consentidos. O sistema não dispara mensagens externas; a administração apenas supervisiona, preserva ou cancela o preparo.</p></header><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="mb-4 flex items-center gap-2 text-white"><ShieldCheck className="size-5 text-amber-300" /><h2 className="font-medium">Fila de preparos</h2></div>{invitations.isLoading ? <p className="text-sm text-zinc-400">Carregando comunicações...</p> : invitations.data?.length ? <div className="space-y-3">{invitations.data.map(invitation => <article key={invitation.id} className="rounded-xl border border-white/10 bg-black/25 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="text-xs uppercase tracking-wider text-amber-200">{labels[invitation.channel]} · {invitation.status === "prepared" ? "Preparado" : "Cancelado"}</p><h3 className="mt-1 font-medium text-white">{invitation.memberName || `Membro #${invitation.userId}`}</h3><p className="mt-1 text-sm text-zinc-400">Destino: {invitation.contactName || "sem contato específico"}{invitation.contactEmail ? ` · ${invitation.contactEmail}` : ""}</p><p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">{invitation.message || "Sem mensagem adicional."}</p></div><div className="flex flex-col items-end gap-2"><span className="text-xs text-zinc-500">{new Date(invitation.createdAt).toLocaleString("pt-BR")}</span><button type="button" disabled={update.isPending} onClick={() => update.mutate({ id: invitation.id, status: invitation.status === "prepared" ? "cancelled" : "prepared" })} className="rounded-lg border border-white/15 px-3 py-2 text-xs font-medium text-zinc-100 hover:border-amber-300 hover:text-amber-200 disabled:opacity-60">{invitation.status === "prepared" ? "Cancelar preparo" : "Restaurar preparo"}</button></div></div></article>)}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">Nenhuma comunicação preparada foi registrada até o momento.</p>}</section></main></DashboardLayout>;
+}

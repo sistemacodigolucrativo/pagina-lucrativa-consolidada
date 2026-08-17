@@ -22,6 +22,8 @@ import AdminOperations from "./pages/AdminOperations";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationTracking from "./pages/ApplicationTracking";
 import AdminApplications from "./pages/AdminApplications";
+import MemberCommunications from "./pages/MemberCommunications";
+import AdminCommunications from "./pages/AdminCommunications";
 import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 function AppRoutes() {
@@ -42,9 +44,9 @@ function AppRoutes() {
     <Route path="/membros/bonus" component={MemberPublications} />
     <Route path="/membros/artigos" component={MemberPublications} />
     <Route path="/membros/perguntas-frequentes" component={MemberPublications} />
-    <Route path="/membros/emails-site" component={MemberPublications} />
-    <Route path="/membros/emails-interessados" component={MemberPublications} />
-    <Route path="/membros/emails-whatsapp" component={MemberPublications} />
+    <Route path="/membros/emails-site" component={MemberCommunications} />
+    <Route path="/membros/emails-interessados" component={MemberCommunications} />
+    <Route path="/membros/emails-whatsapp" component={MemberCommunications} />
     <Route path="/membros/ganhos" component={MemberEarnings} />
     <Route path="/membros/academia" component={MemberCourses} />
     <Route path="/membros/curso-google-ads" component={MemberCourses} />
@@ -70,6 +72,7 @@ function AppRoutes() {
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/pedidos" component={AdminApplications} />
+    <Route path="/admin/comunicacoes" component={AdminCommunications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />
     <Route path="/admin/academia" component={AdminCourses} />
     <Route path="/admin" component={AdminOffice} />

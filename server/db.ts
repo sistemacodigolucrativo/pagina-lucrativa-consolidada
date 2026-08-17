@@ -556,3 +556,35 @@ export async function getAdminActivities() {
   if (!db) return [];
   return db.select().from(memberActivities).orderBy(desc(memberActivities.createdAt)).limit(80);
 }
+
+
+export async function getAdminInvitations() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: memberInvitations.id,
+    userId: memberInvitations.userId,
+    contactId: memberInvitations.contactId,
+    channel: memberInvitations.channel,
+    message: memberInvitations.message,
+    status: memberInvitations.status,
+    createdAt: memberInvitations.createdAt,
+    memberName: users.name,
+    memberEmail: users.email,
+    contactName: memberContacts.name,
+    contactEmail: memberContacts.email,
+  }).from(memberInvitations)
+    .leftJoin(users, eq(memberInvitations.userId, users.id))
+    .leftJoin(memberContacts, eq(memberInvitations.contactId, memberContacts.id))
+    .orderBy(desc(memberInvitations.createdAt));
+}
+
+export async function updateAdminInvitation(invitationId, status) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const invitation = await db.select().from(memberInvitations).where(eq(memberInvitations.id, invitationId)).limit(1);
+  if (!invitation[0]) throw new Error("Preparação de comunicação não encontrada.");
+  await db.update(memberInvitations).set({ status }).where(eq(memberInvitations.id, invitationId));
+  await recordMemberActivity(invitation[0].userId, status === "cancelled" ? "invitation_cancelled" : "invitation_prepared", "invitation", invitationId, "Administração atualizou o preparo de comunicação para " + status + ".");
+  return { success: true };
+}

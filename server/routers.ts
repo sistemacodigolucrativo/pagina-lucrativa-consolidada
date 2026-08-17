@@ -60,6 +60,8 @@ import {
   getAdminReferralLinks,
   getReferralMembers,
   getMemberReferrals,
+  getAdminInvitations,
+  updateAdminInvitation,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { z } from "zod";
@@ -184,6 +186,8 @@ export const appRouter = router({
     contacts: adminProcedure.query(() => getAdminContacts()),
     updateContact: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["new", "contacted", "qualified", "archived"]) })).mutation(({ input }) => updateAdminContact(input.id, input)),
     activities: adminProcedure.query(() => getAdminActivities()),
+    invitations: adminProcedure.query(() => getAdminInvitations()),
+    updateInvitation: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["prepared", "cancelled"]) })).mutation(({ input }) => updateAdminInvitation(input.id, input.status)),
     referralMembers: adminProcedure.query(() => getReferralMembers()),
     referralLinks: adminProcedure.query(() => getAdminReferralLinks()),
     setReferralLink: adminProcedure.input(z.object({ sponsorId: z.number().int().positive(), referredUserId: z.number().int().positive(), status: z.enum(["active", "archived"]) })).mutation(({ input }) => setAdminReferralLink(input)),

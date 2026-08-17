@@ -254,3 +254,9 @@
 - [x] Criar manutenção administrativa de vínculos e estados de indicação.
 - [x] Validar na VPS criação, listagem, atualização administrativa, bloqueio 403 para membro e limpeza dos dados de teste.
 - [x] Sincronizar o marco de rede de indicações validado com o GitHub no commit `1509a95`.
+
+# Marco 9 — Hub de comunicação responsável
+- [x] Converter as rotas de e-mails e WhatsApp em uma central persistente de preparos de comunicação para contatos consentidos.
+- [x] Criar supervisão administrativa de preparos, incluindo restauração e cancelamento, sem disparos externos automáticos.
+- [x] Validar na VPS o registro pelo membro, a supervisão administrativa, o bloqueio 403 para membro, as rotas HTTPS e a limpeza dos dados temporários.
+- [ ] Sincronizar o marco de comunicação validado com o GitHub.
