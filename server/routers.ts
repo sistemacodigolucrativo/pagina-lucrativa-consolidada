@@ -40,6 +40,12 @@ import {
   getPublishedEbook,
   getPublishedEbooks,
   getPublishedCourses,
+  getMemberCourses,
+  updateMemberCourseProgress,
+  getAdminCourses,
+  createAdminCourse,
+  updateAdminCourse,
+  updateAdminCoursePublication,
   getRecentApplications,
   updateAdminContent,
   updateAdminContentStatus,
@@ -67,6 +73,14 @@ const profileInput = z.object({
 });
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
 const productInput = z.object({ title: z.string().trim().min(3).max(240), description: z.string().trim().max(8000).optional().nullable(), category: z.string().trim().max(96).optional().nullable(), priceCents: z.number().int().min(0).max(100000000) });
+const courseInput = z.object({
+  title: z.string().trim().min(3).max(240),
+  summary: z.string().trim().max(8000).optional().nullable(),
+  category: z.string().trim().max(96).optional().nullable(),
+  durationMinutes: z.number().int().min(0).max(100000),
+  level: z.enum(["fundamentos", "pratica", "avancado"]),
+  isPublished: z.boolean(),
+});
 const contentInput = z.object({
   kind: z.enum(["material", "article", "faq", "notice"]),
   title: z.string().trim().min(3).max(240),
@@ -114,7 +128,9 @@ export const appRouter = router({
     updateProduct: protectedProcedure.input(productInput.extend({ id: z.number().int().positive() })).mutation(({ ctx, input }) => { const { id, ...product } = input; return updateMemberProduct(ctx.user.id, id, product); }),
     finance: protectedProcedure.query(({ ctx }) => getMemberFinance(ctx.user.id)),
     createFinanceEntry: protectedProcedure.input(z.object({ type: z.enum(["sale", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: z.number().int().positive().max(100000000) })).mutation(({ ctx, input }) => createMemberFinanceEntry(ctx.user.id, input)),
-    academy: protectedProcedure.query(() => getPublishedCourses()),
+    academy: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
+    courses: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
+    updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),
     tickets: protectedProcedure.query(({ ctx }) => getMemberTickets(ctx.user.id)),
@@ -141,6 +157,10 @@ export const appRouter = router({
     financeMembers: adminProcedure.query(() => getFinanceMembers()),
     createTransaction: adminProcedure.input(z.object({ userId: z.number().int().positive(), type: z.enum(["sale", "commission", "adjustment", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: z.number().int().positive().max(100000000), status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminTransaction(ctx.user.id, input)),
     updateTransaction: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]), adminNote: z.string().trim().max(2000).optional() })).mutation(({ input }) => updateAdminTransaction(input.id, input)),
+    courses: adminProcedure.query(() => getAdminCourses()),
+    createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
+    updateCourse: adminProcedure.input(courseInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...course } = input; return updateAdminCourse(id, course); }),
+    updateCoursePublication: adminProcedure.input(z.object({ id: z.number().int().positive(), isPublished: z.boolean() })).mutation(({ input }) => updateAdminCoursePublication(input.id, input.isPublished)),
     products: adminProcedure.query(() => getAdminProducts()),
     updateProductStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "active", "archived"]) })).mutation(({ input }) => updateAdminProductStatus(input.id, input.status)),
     content: adminProcedure.query(() => getAdminContent()),

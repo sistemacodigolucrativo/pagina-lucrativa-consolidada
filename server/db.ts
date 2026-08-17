@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import {
   applications,
   campaignLinks,
+  courseProgress,
   courses,
   ebooks,
   InsertUser,
@@ -202,6 +203,58 @@ export async function getPublishedCourses() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(courses).where(eq(courses.isPublished, 1)).orderBy(desc(courses.updatedAt));
+}
+
+type CourseLevel = "fundamentos" | "pratica" | "avancado";
+type CourseInput = { title: string; summary?: string | null; category?: string | null; durationMinutes: number; level: CourseLevel; isPublished: boolean };
+
+export async function getMemberCourses(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const [courseRows, progressRows] = await Promise.all([
+    db.select().from(courses).where(eq(courses.isPublished, 1)).orderBy(desc(courses.updatedAt)),
+    db.select().from(courseProgress).where(eq(courseProgress.userId, userId)),
+  ]);
+  const progressByCourse = new Map(progressRows.map(row => [row.courseId, row]));
+  return courseRows.map(course => ({ ...course, progressPercent: progressByCourse.get(course.id)?.progressPercent ?? 0, lastAccessedAt: progressByCourse.get(course.id)?.lastAccessedAt ?? null }));
+}
+
+export async function updateMemberCourseProgress(userId: number, courseId: number, progressPercent: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const course = await db.select({ id: courses.id }).from(courses).where(and(eq(courses.id, courseId), eq(courses.isPublished, 1))).limit(1);
+  if (!course[0]) throw new Error("Curso não encontrado ou indisponível.");
+  const normalized = Math.max(0, Math.min(100, Math.round(progressPercent)));
+  const now = new Date();
+  await db.insert(courseProgress).values({ userId, courseId, progressPercent: normalized, lastAccessedAt: now }).onDuplicateKeyUpdate({ set: { progressPercent: normalized, lastAccessedAt: now } });
+  return { courseId, progressPercent: normalized };
+}
+
+export async function getAdminCourses() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(courses).orderBy(desc(courses.updatedAt));
+}
+
+export async function createAdminCourse(input: CourseInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const result = await db.insert(courses).values({ title: input.title.trim(), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, isPublished: input.isPublished ? 1 : 0 });
+  return { id: Number(result[0].insertId) };
+}
+
+export async function updateAdminCourse(courseId: number, input: CourseInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(courses).set({ title: input.title.trim(), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, isPublished: input.isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
+  return { success: true } as const;
+}
+
+export async function updateAdminCoursePublication(courseId: number, isPublished: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(courses).set({ isPublished: isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
+  return { success: true } as const;
 }
 
 export async function getMemberProfile(userId: number) {

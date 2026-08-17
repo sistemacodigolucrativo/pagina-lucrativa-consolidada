@@ -12,6 +12,8 @@ import AdminEbooks from "./pages/AdminEbooks";
 import MemberProducts from "./pages/MemberProducts";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
+import MemberCourses from "./pages/MemberCourses";
+import AdminCourses from "./pages/AdminCourses";
 import AdminTransactions from "./pages/AdminTransactions";
 import AdminProducts from "./pages/AdminProducts";
 import AdminPublications from "./pages/AdminPublications";
@@ -42,6 +44,22 @@ function AppRoutes() {
     <Route path="/membros/emails-interessados" component={MemberPublications} />
     <Route path="/membros/emails-whatsapp" component={MemberPublications} />
     <Route path="/membros/ganhos" component={MemberEarnings} />
+    <Route path="/membros/academia" component={MemberCourses} />
+    <Route path="/membros/curso-google-ads" component={MemberCourses} />
+    <Route path="/membros/curso-facebook-ads" component={MemberCourses} />
+    <Route path="/membros/curso-posts-facebook" component={MemberCourses} />
+    <Route path="/membros/curso-canva" component={MemberCourses} />
+    <Route path="/membros/curso-negocio" component={MemberCourses} />
+    <Route path="/membros/curso-autonomo" component={MemberCourses} />
+    <Route path="/membros/curso-recepcionista" component={MemberCourses} />
+    <Route path="/membros/curso-ebook" component={MemberCourses} />
+    <Route path="/membros/curso-importacao" component={MemberCourses} />
+    <Route path="/membros/curso-excel" component={MemberCourses} />
+    <Route path="/membros/curso-tiktok-ads" component={MemberCourses} />
+    <Route path="/membros/curso-captura" component={MemberCourses} />
+    <Route path="/membros/curso-logotipo" component={MemberCourses} />
+    <Route path="/membros/curso-capas-videos" component={MemberCourses} />
+    <Route path="/membros/filmes" component={MemberCourses} />
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
@@ -50,6 +68,7 @@ function AppRoutes() {
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/pedidos" component={AdminApplications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />
+    <Route path="/admin/academia" component={AdminCourses} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />
