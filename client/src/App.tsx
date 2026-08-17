@@ -34,6 +34,8 @@ function AppRoutes() {
     <Route path="/membros/operacao" component={MemberOperations} />
     <Route path="/membros/ebooks" component={EbookReader} />
     <Route path="/membros/produtos" component={MemberProducts} />
+    <Route path="/membros/rede" component={MemberReferrals} />
+    <Route path="/membros/patrocinador" component={MemberReferrals} />
     <Route path="/membros/blog" component={MemberPublications} />
     <Route path="/membros/classificados" component={MemberPublications} />
     <Route path="/membros/materiais" component={MemberPublications} />
@@ -65,6 +67,7 @@ function AppRoutes() {
     <Route path="/admin/operacao" component={AdminOperations} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
     <Route path="/admin/produtos" component={AdminProducts} />
+    <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/pedidos" component={AdminApplications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />

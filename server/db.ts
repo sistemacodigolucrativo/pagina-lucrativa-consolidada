@@ -11,6 +11,7 @@ import {
   InsertUser,
   managedContent,
   memberProfiles,
+  referralLinks,
   memberContacts,
   memberInvitations,
   memberActivities,
@@ -254,6 +255,47 @@ export async function updateAdminCoursePublication(courseId: number, isPublished
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   await db.update(courses).set({ isPublished: isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
+  return { success: true } as const;
+}
+
+
+export async function getMemberReferrals(userId: number) {
+  const db = await getDb();
+  if (!db) return { sponsor: null, referrals: [], activeCount: 0, archivedCount: 0 };
+  const [links, memberRows] = await Promise.all([
+    db.select().from(referralLinks),
+    db.select({ id: users.id, name: users.name }).from(users),
+  ]);
+  const members = new Map(memberRows.map(member => [member.id, member]));
+  const sponsorLink = links.find(link => link.referredUserId === userId && link.status === "active");
+  const referrals = links.filter(link => link.sponsorId === userId).map(link => ({ ...link, name: members.get(link.referredUserId)?.name ?? null }));
+  return {
+    sponsor: sponsorLink ? { id: sponsorLink.sponsorId, name: members.get(sponsorLink.sponsorId)?.name ?? null, createdAt: sponsorLink.createdAt } : null,
+    referrals,
+    activeCount: referrals.filter(link => link.status === "active").length,
+    archivedCount: referrals.filter(link => link.status === "archived").length,
+  };
+}
+export async function getReferralMembers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ id: users.id, name: users.name, email: users.email }).from(users).orderBy(users.id);
+}
+export async function getAdminReferralLinks() {
+  const db = await getDb();
+  if (!db) return [];
+  const [links, memberRows] = await Promise.all([db.select().from(referralLinks).orderBy(desc(referralLinks.updatedAt)), db.select({ id: users.id, name: users.name }).from(users)]);
+  const members = new Map(memberRows.map(member => [member.id, member]));
+  return links.map(link => ({ ...link, sponsorName: members.get(link.sponsorId)?.name ?? null, referredName: members.get(link.referredUserId)?.name ?? null }));
+}
+export async function setAdminReferralLink(input: { sponsorId: number; referredUserId: number; status: "active" | "archived" }) {
+  if (input.sponsorId === input.referredUserId) throw new Error("Um membro não pode patrocinar a si mesmo.");
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const people = await db.select({ id: users.id }).from(users).where(eq(users.id, input.sponsorId)).limit(1);
+  const referred = await db.select({ id: users.id }).from(users).where(eq(users.id, input.referredUserId)).limit(1);
+  if (!people[0] || !referred[0]) throw new Error("Patrocinador ou indicado não foi encontrado.");
+  await db.insert(referralLinks).values(input).onDuplicateKeyUpdate({ set: { sponsorId: input.sponsorId, status: input.status } });
   return { success: true } as const;
 }
 

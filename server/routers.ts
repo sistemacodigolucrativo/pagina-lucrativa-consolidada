@@ -56,6 +56,10 @@ import {
   updateMemberProfile,
   updateMemberContact,
   updateMemberProduct,
+  setAdminReferralLink,
+  getAdminReferralLinks,
+  getReferralMembers,
+  getMemberReferrals,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { z } from "zod";
@@ -144,6 +148,7 @@ export const appRouter = router({
     invitations: protectedProcedure.query(({ ctx }) => getMemberInvitations(ctx.user.id)),
     createInvitation: protectedProcedure.input(invitationInput).mutation(({ ctx, input }) => createMemberInvitation(ctx.user.id, input)),
     activities: protectedProcedure.query(({ ctx }) => getMemberActivities(ctx.user.id)),
+    referrals: protectedProcedure.query(({ ctx }) => getMemberReferrals(ctx.user.id)),
   }),
   applications: router({
     submit: publicProcedure.input(applicationInputSchema).mutation(({ input }) => createApplication(input)),
@@ -179,6 +184,9 @@ export const appRouter = router({
     contacts: adminProcedure.query(() => getAdminContacts()),
     updateContact: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["new", "contacted", "qualified", "archived"]) })).mutation(({ input }) => updateAdminContact(input.id, input)),
     activities: adminProcedure.query(() => getAdminActivities()),
+    referralMembers: adminProcedure.query(() => getReferralMembers()),
+    referralLinks: adminProcedure.query(() => getAdminReferralLinks()),
+    setReferralLink: adminProcedure.input(z.object({ sponsorId: z.number().int().positive(), referredUserId: z.number().int().positive(), status: z.enum(["active", "archived"]) })).mutation(({ input }) => setAdminReferralLink(input)),
   }),
 });
 export type AppRouter = typeof appRouter;

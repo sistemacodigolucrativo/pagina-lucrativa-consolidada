@@ -40,6 +40,20 @@ export const memberProfiles = mysqlTable("memberProfiles", {
   slugUnique: uniqueIndex("member_profiles_slug_unique").on(table.slug),
 }));
 
+
+export const referralLinks = mysqlTable("referralLinks", {
+  id: int("id").autoincrement().primaryKey(),
+  sponsorId: int("sponsorId").notNull(),
+  referredUserId: int("referredUserId").notNull(),
+  status: mysqlEnum("status", ["active", "archived"]).default("active").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  referredUnique: uniqueIndex("referral_links_referred_unique").on(table.referredUserId),
+  sponsorIndex: index("referral_links_sponsor_idx").on(table.sponsorId),
+  statusIndex: index("referral_links_status_idx").on(table.status),
+}));
+
 export const campaignLinks = mysqlTable("campaignLinks", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

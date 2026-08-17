@@ -248,3 +248,9 @@
 # Marco 4 — Solicitações públicas acompanháveis
 - [x] Implementar gestão administrativa de solicitações públicas, com atualização de status e acompanhamento pelo solicitante.
 - [x] Sincronizar o marco de solicitações públicas validado com o GitHub no commit `eddfa97`.
+
+# Marco 8 — Rede de indicações privada
+- [x] Implementar patrocinador e rede de indicados com visibilidade restrita à relação direta do membro.
+- [x] Criar manutenção administrativa de vínculos e estados de indicação.
+- [x] Validar na VPS criação, listagem, atualização administrativa, bloqueio 403 para membro e limpeza dos dados de teste.
+- [ ] Sincronizar o marco de rede de indicações validado com o GitHub.
