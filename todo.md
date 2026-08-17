@@ -166,6 +166,18 @@
 - [x] Criar as rotas funcionais `/membros/operacao` e `/admin/operacao` e conectá-las aos respectivos menus.
 - [x] Executar testes automatizados, compilação e validação ponta a ponta desses fluxos no serviço ativo da VPS, removendo dados temporários ao final.
 
+## Marco 2 — Captação consentida e relacionamento
+
+- [x] Criar contatos consentidos, convites e eventos de atividade persistentes diretamente na VPS.
+- [x] Permitir que o membro registre, consulte e atualize somente seus próprios contatos consentidos, sem simular envios externos.
+- [x] Permitir que o administrador revise contatos, atualize seus estados e consulte o histórico operacional correspondente.
+- [x] Exibir no membro indicadores próprios de captação e no administrador uma visão de supervisão sem dados de terceiros desnecessários.
+- [x] Cobrir e validar na VPS os controles de propriedade, consentimento, papéis e arquivamento do novo fluxo.
+
+- [x] Validar na VPS que um membro não consegue consultar ou alterar contatos de outra conta.
+- [x] Validar na VPS que a criação de contato, o preparo de convite e a mudança de status retornam eventos persistidos em `member.activities` e `admin.activities`.
+- [x] Validar na VPS o arquivamento de contato e os bloqueios de papel para visitante e membro comum nos procedimentos administrativos de captação.
+
 # Fechamento da auditoria funcional
 
 - [x] Registrar a limitação técnica ou auditar explicitamente a administração oficial relacionada, sem expor dados privados.

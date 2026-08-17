@@ -8,6 +8,9 @@ import {
   InsertUser,
   managedContent,
   memberProfiles,
+  memberContacts,
+  memberInvitations,
+  memberActivities,
   products,
   supportTickets,
   transactions,
@@ -223,4 +226,89 @@ export async function updateAdminTicket(ticketId: number, input: { status: "open
   if (!db) throw new Error("Banco de dados indisponível.");
   await db.update(supportTickets).set({ status: input.status, adminResponse: input.adminResponse ?? null }).where(eq(supportTickets.id, ticketId));
   return { success: true } as const;
+}
+
+const contactStatuses = ["new", "contacted", "qualified", "archived"] as const;
+type ContactStatus = typeof contactStatuses[number];
+
+async function recordMemberActivity(userId: number, type: "contact_created" | "contact_updated" | "invitation_prepared" | "invitation_cancelled" | "admin_contact_update", entityType: string, entityId: number | null, description: string) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(memberActivities).values({ userId, type, entityType, entityId, description });
+}
+
+export async function getMemberContacts(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(memberContacts).where(eq(memberContacts.userId, userId)).orderBy(desc(memberContacts.updatedAt));
+}
+
+export async function createMemberContact(userId: number, input: { campaignId?: number | null; name: string; email: string; whatsapp?: string | null; source: string; consentNote?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  if (input.campaignId) {
+    const campaign = await db.select({ id: campaignLinks.id }).from(campaignLinks).where(and(eq(campaignLinks.id, input.campaignId), eq(campaignLinks.userId, userId))).limit(1);
+    if (!campaign[0]) throw new Error("Campanha não encontrada para esta conta.");
+  }
+  const result = await db.insert(memberContacts).values({ userId, campaignId: input.campaignId ?? null, name: input.name, email: input.email, whatsapp: input.whatsapp ?? null, source: input.source, consentNote: input.consentNote ?? null });
+  const id = Number(result[0].insertId);
+  await recordMemberActivity(userId, "contact_created", "contact", id, `Contato consentido registrado: ${input.name}.`);
+  return { id };
+}
+
+export async function updateMemberContact(userId: number, contactId: number, input: { status: ContactStatus; source?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const owned = await db.select({ id: memberContacts.id }).from(memberContacts).where(and(eq(memberContacts.id, contactId), eq(memberContacts.userId, userId))).limit(1);
+  if (!owned[0]) throw new Error("Contato não encontrado para esta conta.");
+  await db.update(memberContacts).set({ status: input.status, ...(input.source ? { source: input.source } : {}) }).where(eq(memberContacts.id, contactId));
+  await recordMemberActivity(userId, "contact_updated", "contact", contactId, `Contato atualizado para o status ${input.status}.`);
+  return { success: true } as const;
+}
+
+export async function getMemberInvitations(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(memberInvitations).where(eq(memberInvitations.userId, userId)).orderBy(desc(memberInvitations.createdAt));
+}
+
+export async function createMemberInvitation(userId: number, input: { contactId?: number | null; channel: "link" | "email" | "whatsapp"; message?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  if (input.contactId) {
+    const contact = await db.select({ id: memberContacts.id }).from(memberContacts).where(and(eq(memberContacts.id, input.contactId), eq(memberContacts.userId, userId))).limit(1);
+    if (!contact[0]) throw new Error("Contato não encontrado para esta conta.");
+  }
+  const result = await db.insert(memberInvitations).values({ userId, contactId: input.contactId ?? null, channel: input.channel, message: input.message ?? null });
+  const id = Number(result[0].insertId);
+  await recordMemberActivity(userId, "invitation_prepared", "invitation", id, "Convite preparado manualmente; nenhum envio externo foi realizado.");
+  return { id };
+}
+
+export async function getMemberActivities(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(memberActivities).where(eq(memberActivities.userId, userId)).orderBy(desc(memberActivities.createdAt)).limit(30);
+}
+
+export async function getAdminContacts() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(memberContacts).orderBy(desc(memberContacts.updatedAt));
+}
+
+export async function updateAdminContact(contactId: number, input: { status: ContactStatus }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const contact = await db.select().from(memberContacts).where(eq(memberContacts.id, contactId)).limit(1);
+  if (!contact[0]) throw new Error("Contato não encontrado.");
+  await db.update(memberContacts).set({ status: input.status }).where(eq(memberContacts.id, contactId));
+  await recordMemberActivity(contact[0].userId, "admin_contact_update", "contact", contactId, `Administração atualizou o status para ${input.status}.`);
+  return { success: true } as const;
+}
+
+export async function getAdminActivities() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(memberActivities).orderBy(desc(memberActivities.createdAt)).limit(80);
 }

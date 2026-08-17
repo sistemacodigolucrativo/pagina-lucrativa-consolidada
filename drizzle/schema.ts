@@ -146,3 +146,46 @@ export const supportTickets = mysqlTable("supportTickets", {
   userUpdatedIndex: index("support_tickets_user_updated_idx").on(table.userId, table.updatedAt),
   statusUpdatedIndex: index("support_tickets_status_updated_idx").on(table.status, table.updatedAt),
 }));
+
+export const memberContacts = mysqlTable("memberContacts", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  campaignId: int("campaignId"),
+  name: varchar("name", { length: 180 }).notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  whatsapp: varchar("whatsapp", { length: 32 }),
+  source: varchar("source", { length: 160 }).notNull(),
+  consentAt: timestamp("consentAt").defaultNow().notNull(),
+  consentNote: text("consentNote"),
+  status: mysqlEnum("status", ["new", "contacted", "qualified", "archived"]).default("new").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  userStatusIndex: index("member_contacts_user_status_idx").on(table.userId, table.status),
+  campaignIndex: index("member_contacts_campaign_idx").on(table.campaignId),
+}));
+
+export const memberInvitations = mysqlTable("memberInvitations", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  contactId: int("contactId"),
+  channel: mysqlEnum("channel", ["link", "email", "whatsapp"]).default("link").notNull(),
+  message: text("message"),
+  status: mysqlEnum("status", ["prepared", "cancelled"]).default("prepared").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({
+  userDateIndex: index("member_invitations_user_date_idx").on(table.userId, table.createdAt),
+  contactIndex: index("member_invitations_contact_idx").on(table.contactId),
+}));
+
+export const memberActivities = mysqlTable("memberActivities", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", ["contact_created", "contact_updated", "invitation_prepared", "invitation_cancelled", "admin_contact_update"]).notNull(),
+  entityType: varchar("entityType", { length: 48 }).notNull(),
+  entityId: int("entityId"),
+  description: varchar("description", { length: 320 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({
+  userDateIndex: index("member_activities_user_date_idx").on(table.userId, table.createdAt),
+}));
