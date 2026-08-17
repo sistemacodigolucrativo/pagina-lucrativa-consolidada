@@ -4,6 +4,7 @@ import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_
 import { applicationInputSchema } from "@shared/applications";
 import {
   createAdminContent,
+  createAdminEbook,
   createApplication,
   createMemberCampaign,
   createMemberTicket,
@@ -11,6 +12,8 @@ import {
   createMemberInvitation,
   deleteMemberCampaign,
   getAdminContent,
+  getAdminEbook,
+  getAdminEbooks,
   getAdminOverview,
   getAdminTickets,
   getAdminContacts,
@@ -24,9 +27,12 @@ import {
   getMemberInvitations,
   getMemberActivities,
   getPublishedContent,
+  getPublishedEbook,
+  getPublishedEbooks,
   getPublishedCourses,
   getRecentApplications,
   updateAdminContentStatus,
+  updateAdminEbook,
   updateAdminTicket,
   updateAdminContact,
   updateMemberProfile,
@@ -55,6 +61,15 @@ const contentInput = z.object({
   status: z.enum(["draft", "published", "archived"]),
 });
 
+const ebookInput = z.object({
+  sourceId: z.string().trim().min(4).max(64),
+  sourceFile: z.string().trim().min(1).max(255),
+  sourcePath: z.string().trim().min(1).max(1024),
+  title: z.string().trim().min(3).max(240),
+  summary: z.string().trim().max(16000).optional().nullable(),
+  htmlContent: z.string().min(20).max(18000000),
+  status: z.enum(["draft", "published", "archived"]),
+});
 export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: z.string().email().max(320), whatsapp: z.string().trim().max(32).optional().nullable(), source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
 export const invitationInput = z.object({ contactId: z.number().int().positive().optional().nullable(), channel: z.enum(["link", "email", "whatsapp"]), message: z.string().trim().max(4000).optional().nullable() });
 export const appRouter = router({
@@ -87,6 +102,8 @@ export const appRouter = router({
     tickets: protectedProcedure.query(({ ctx }) => getMemberTickets(ctx.user.id)),
     createTicket: protectedProcedure.input(ticketInput).mutation(({ ctx, input }) => createMemberTicket(ctx.user.id, input)),
     content: protectedProcedure.query(() => getPublishedContent()),
+    ebooks: protectedProcedure.query(() => getPublishedEbooks()),
+    ebook: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getPublishedEbook(input.id)),
     contacts: protectedProcedure.query(({ ctx }) => getMemberContacts(ctx.user.id)),
     createContact: protectedProcedure.input(captureContactInput).mutation(({ ctx, input }) => createMemberContact(ctx.user.id, input)),
     updateContact: protectedProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["new", "contacted", "qualified", "archived"]), source: z.string().trim().min(2).max(160).optional() })).mutation(({ ctx, input }) => updateMemberContact(ctx.user.id, input.id, input)),
@@ -101,6 +118,13 @@ export const appRouter = router({
     content: adminProcedure.query(() => getAdminContent()),
     createContent: adminProcedure.input(contentInput).mutation(({ ctx, input }) => createAdminContent({ ...input, createdBy: ctx.user.id })),
     updateContentStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "archived"]) })).mutation(({ input }) => updateAdminContentStatus(input.id, input.status)),
+    ebooks: adminProcedure.query(() => getAdminEbooks()),
+    ebook: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminEbook(input.id)),
+    createEbook: adminProcedure.input(ebookInput).mutation(({ ctx, input }) => createAdminEbook({ ...input, createdBy: ctx.user.id })),
+    updateEbook: adminProcedure.input(ebookInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => {
+      const { id, ...ebook } = input;
+      return updateAdminEbook(id, ebook);
+    }),
     tickets: adminProcedure.query(() => getAdminTickets()),
     updateTicket: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["open", "answered", "closed"]), adminResponse: z.string().trim().max(8000).optional().nullable() })).mutation(({ input }) => updateAdminTicket(input.id, input)),
     contacts: adminProcedure.query(() => getAdminContacts()),

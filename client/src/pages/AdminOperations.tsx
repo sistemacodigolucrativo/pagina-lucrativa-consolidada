@@ -8,6 +8,7 @@ import { toast } from "sonner";
 const menu: DashboardMenuItem[] = [
   { icon: LayoutDashboard, label: "Visão geral", path: "/admin", group: "Gestão" },
   { icon: BookOpenText, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
+  { icon: BookOpenText, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
 ];
 
 type ContentStatus = "draft" | "published" | "archived";

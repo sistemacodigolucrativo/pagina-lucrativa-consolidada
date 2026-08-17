@@ -7,6 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MemberOffice from "./pages/MemberOffice";
 import MemberOperations from "./pages/MemberOperations";
+import EbookReader from "./pages/EbookReader";
+import AdminEbooks from "./pages/AdminEbooks";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
@@ -19,9 +21,11 @@ function AppRoutes() {
     <Route path="/personalizar" component={PersonalizeAccess} />
     <Route path="/acesso" component={DemoLogin} />
     <Route path="/membros/operacao" component={MemberOperations} />
+    <Route path="/membros/ebooks" component={EbookReader} />
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
+    <Route path="/admin/ebooks" component={AdminEbooks} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />

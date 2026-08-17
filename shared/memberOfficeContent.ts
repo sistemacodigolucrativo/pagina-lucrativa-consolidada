@@ -52,6 +52,7 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
     label: "Complemento",
     items: [
       { icon: "downloads", label: "Baixar produtos", path: "/membros/materiais" },
+      { icon: "academy", label: "Biblioteca de e-books", path: "/membros/ebooks" },
       { icon: "certificate", label: "Cartão e certificado", path: "/membros/cartao-certificado" },
       { icon: "ranking", label: "Usuários com mais pontos", path: "/membros/ranking" },
       { icon: "articles", label: "Artigos marketing", path: "/membros/artigos" },

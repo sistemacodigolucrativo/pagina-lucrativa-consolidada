@@ -10,6 +10,7 @@ const adminMenu: DashboardMenuItem[] = [
   { icon: FileText, label: "Pedidos", path: "/admin/pedidos", group: "Gestão" },
   { icon: Layers3, label: "Catálogo", path: "/admin/catalogo", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
+  { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
 ];
 
 export default function AdminOffice() {

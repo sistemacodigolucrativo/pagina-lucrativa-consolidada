@@ -1,4 +1,4 @@
-import { index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
+import { index, int, longtext, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -133,6 +133,22 @@ export const managedContent = mysqlTable("managedContent", {
   statusKindIndex: index("managed_content_status_kind_idx").on(table.status, table.kind),
 }));
 
+export const ebooks = mysqlTable("ebooks", {
+  id: int("id").autoincrement().primaryKey(),
+  sourceId: varchar("sourceId", { length: 64 }).notNull().unique(),
+  sourceFile: varchar("sourceFile", { length: 255 }).notNull(),
+  sourcePath: varchar("sourcePath", { length: 1024 }).notNull(),
+  title: varchar("title", { length: 240 }).notNull(),
+  summary: text("summary"),
+  htmlContent: longtext("htmlContent").notNull(),
+  status: mysqlEnum("status", ["draft", "published", "archived"]).default("draft").notNull(),
+  createdBy: int("createdBy"),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  statusUpdatedIndex: index("ebooks_status_updated_idx").on(table.status, table.updatedAt),
+}));
 export const supportTickets = mysqlTable("supportTickets", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

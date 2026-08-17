@@ -212,3 +212,12 @@
 - [x] Registrar a limitação técnica ou auditar explicitamente a administração oficial relacionada, sem expor dados privados.
 - [x] Produzir o mapeamento item a item do menu para função, papel de acesso, origem de dados e manutenção administrativa correspondente.
 - [x] Validar a matriz final contra as rotas atuais do escritório de membros e do painel administrativo do projeto, registrando a inclusão futura de `/admin/operacao`.
+
+# Módulo de e-books HTML autorizados
+- [x] Criar a tabela persistente de e-books, incluindo conteúdo HTML, metadados, estado de publicação e arquivamento.
+- [x] Disponibilizar procedimentos protegidos para leitura de e-books publicados e gestão administrativa completa.
+- [x] Construir a estante de leitura do membro e o leitor HTML responsivo.
+- [x] Criar a manutenção administrativa para listar, editar, publicar e arquivar e-books.
+- [x] Importar o manifesto de 52 e-books HTML convertidos e validar a integridade do catálogo.
+- [x] Cobrir o módulo com testes automatizados e ativar a versão na VPS.
+- [ ] Sincronizar o marco de e-books validado com o repositório privado.

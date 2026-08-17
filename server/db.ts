@@ -5,6 +5,7 @@ import {
   applications,
   campaignLinks,
   courses,
+  ebooks,
   InsertUser,
   managedContent,
   memberProfiles,
@@ -167,6 +168,65 @@ export async function getPublishedContent() {
   return db.select().from(managedContent).where(eq(managedContent.status, "published")).orderBy(desc(managedContent.updatedAt));
 }
 
+const ebookListFields = {
+  id: ebooks.id,
+  sourceId: ebooks.sourceId,
+  sourceFile: ebooks.sourceFile,
+  sourcePath: ebooks.sourcePath,
+  title: ebooks.title,
+  summary: ebooks.summary,
+  status: ebooks.status,
+  publishedAt: ebooks.publishedAt,
+  createdAt: ebooks.createdAt,
+  updatedAt: ebooks.updatedAt,
+};
+type EbookStatus = "draft" | "published" | "archived";
+type EbookInput = {
+  sourceId: string;
+  sourceFile: string;
+  sourcePath: string;
+  title: string;
+  summary?: string | null;
+  htmlContent: string;
+  status: EbookStatus;
+  createdBy: number;
+};
+export async function getPublishedEbooks() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select(ebookListFields).from(ebooks).where(eq(ebooks.status, "published")).orderBy(desc(ebooks.publishedAt), desc(ebooks.updatedAt));
+}
+export async function getPublishedEbook(ebookId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(ebooks).where(and(eq(ebooks.id, ebookId), eq(ebooks.status, "published"))).limit(1);
+  return result[0] ?? null;
+}
+export async function getAdminEbooks() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select(ebookListFields).from(ebooks).orderBy(desc(ebooks.updatedAt));
+}
+export async function getAdminEbook(ebookId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.select().from(ebooks).where(eq(ebooks.id, ebookId)).limit(1);
+  return result[0] ?? null;
+}
+export async function createAdminEbook(input: EbookInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const result = await db.insert(ebooks).values({ ...input, publishedAt: input.status === "published" ? new Date() : null });
+  return { id: Number(result[0].insertId) };
+}
+export async function updateAdminEbook(ebookId: number, input: Omit<EbookInput, "createdBy">) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const current = await db.select({ id: ebooks.id }).from(ebooks).where(eq(ebooks.id, ebookId)).limit(1);
+  if (!current[0]) throw new Error("E-book não encontrado.");
+  await db.update(ebooks).set({ ...input, publishedAt: input.status === "published" ? new Date() : null }).where(eq(ebooks.id, ebookId));
+  return { success: true } as const;
+}
 export async function createApplication(input: ApplicationInput) {
   const db = await getDb();
   if (!db) throw new Error("O banco de dados não está disponível no momento.");
