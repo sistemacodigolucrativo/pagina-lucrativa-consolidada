@@ -65,7 +65,7 @@
 - [x] Coletar evidências atuais da landing pública, da área de membros de referência e da Página Lucrativa 2026 publicada.
 - [x] Comparar contexto, sequência de seções, copy, CTAs e fluxos observáveis entre as versões.
 - [x] Verificar especificamente a presença e a equivalência visual das imagens de depoimentos, sem reproduzir material de terceiros sem autorização.
-- [ ] Apresentar as correspondências, divergências e itens deliberadamente não replicados.
+- [x] Apresentar as correspondências, divergências e itens deliberadamente não replicados.
 
 # Alinhamento da landing e do painel de membros à referência
 
@@ -95,5 +95,10 @@
 
 # Arquivo compactado no repositório privado
 
-- [ ] Gerar uma cópia compactada da versão final do projeto, sem dependências, arquivos de ambiente ou dados sensíveis.
-- [ ] Enviar o arquivo compactado ao repositório privado da Página Lucrativa e confirmar o commit correspondente.
+- [x] Gerar uma cópia compactada da versão final do projeto, sem dependências, arquivos de ambiente ou dados sensíveis.
+- [x] Enviar o arquivo compactado ao repositório privado da Página Lucrativa e confirmar o commit correspondente.
+
+# Confirmação final do repositório remoto
+
+- [ ] Conferir o branch principal e o último commit remoto do repositório Página Lucrativa.
+- [ ] Enviar qualquer alteração final que não esteja sincronizada e confirmar o resultado ao usuário.
