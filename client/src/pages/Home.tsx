@@ -3,9 +3,9 @@ import { ArrowDown, ArrowUpRight, Menu, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
-const heroImage = "/assets/hero.jpg";
-const methodImage = "/assets/method.jpg";
-const deliveryImage = "/assets/delivery.jpg";
+const heroImage = "/manus-storage/imported-sprint-hero_2aa66410.jpg";
+const methodImage = "/manus-storage/imported-sprint-method_0b5ae91c.jpg";
+const deliveryImage = "/manus-storage/imported-sprint-delivery_c100fe4d.jpg";
 
 const contentBlocks = [
   {
