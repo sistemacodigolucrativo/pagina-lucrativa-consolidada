@@ -1,0 +1,19 @@
+import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import { trpc } from "@/lib/trpc";
+import { formatCurrency } from "@shared/dashboard";
+import { BookOpenCheck, ChartNoAxesCombined, Layers3, UsersRound } from "lucide-react";
+
+const adminMenu: DashboardMenuItem[] = [
+  { icon: ChartNoAxesCombined, label: "Operação", path: "/admin", group: "Gestão" },
+  { icon: UsersRound, label: "Membros", path: "/admin/membros", group: "Gestão" },
+  { icon: Layers3, label: "Catálogo", path: "/admin/catalogo", group: "Conteúdo" },
+  { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
+];
+
+export default function AdminOffice() {
+  const overview = trpc.admin.overview.useQuery();
+  const data = overview.data;
+
+  return <DashboardLayout menuItems={adminMenu} title="Administração"><div className="office-page admin-page"><div className="office-intro"><div><span className="office-eyebrow">Operação da plataforma</span><h1>Administração</h1><p>Uma leitura objetiva da base de membros, do catálogo e do conteúdo publicado.</p></div></div>
+    {overview.isLoading ? <div className="office-loading"><span>Carregando operação</span><i /><i /><i /></div> : overview.error ? <section className="office-empty"><span className="office-empty-mark">PL</span><h2>Área exclusiva da administração.</h2><p>Esta rota só é liberada para contas com permissão administrativa no projeto.</p></section> : <><section className="office-stat-grid"><article><span>Membros ativos</span><strong>{data?.memberCount ?? 0}</strong><small>Contas de membros</small></article><article><span>Produtos ativos</span><strong>{data?.activeProductCount ?? 0}</strong><small>Itens publicados no catálogo</small></article><article><span>Volume registrado</span><strong>{formatCurrency(data?.grossVolumeCents ?? 0)}</strong><small>Transações da base</small></article></section><section className="office-next"><div><span className="office-eyebrow">Curadoria</span><h2>{data?.publishedCourseCount ?? 0} cursos disponíveis na academia.</h2><p>Use esta área para acompanhar o que está publicado e decidir os próximos conteúdos de formação.</p></div><BookOpenCheck size={34} /></section></>}</div></DashboardLayout>;
+}

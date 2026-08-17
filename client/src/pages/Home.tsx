@@ -7,46 +7,42 @@
 import { useState } from "react";
 import { ArrowDown, ArrowUpRight, Check, ChevronDown, Menu, X } from "lucide-react";
 
-const heroImage = "/assets/sprint-hero.jpg";
-const methodImage = "/assets/sprint-method.jpg";
-const deliveryImage = "/assets/sprint-delivery.jpg";
+const heroImage = "/assets/imported-sprint-hero.jpg";
+const methodImage = "/assets/imported-sprint-method.jpg";
+const deliveryImage = "/assets/imported-sprint-delivery.jpg";
 
-const proofItems = [
-  ["01", "sessão individual"],
-  ["02", "sistema sob medida"],
-  ["03", "execução sem achismo"],
-];
+const proofItems = [["01", "uma operação em um só lugar"], ["02", "método antes de volume"], ["03", "próximos passos visíveis"]];
 
 const methodItems = [
-  ["Diagnóstico", "O que está travando a sua venda hoje."],
-  ["Posicionamento", "A promessa que faz sentido para o seu cliente."],
-  ["Oferta", "O caminho para apresentar valor com clareza."],
-  ["Scripts", "As palavras certas para cada conversa."],
-  ["Rotina", "Um jeito simples de repetir o que funciona."],
-  ["Plano de ação", "A ordem certa para colocar tudo em prática."],
+  ["Página", "Apresente a sua proposta com uma mensagem direta."],
+  ["Campanhas", "Organize de onde cada conversa começou."],
+  ["Produtos", "Concentre o que você oferece em uma vitrine clara."],
+  ["Ganhos", "Acompanhe movimentações sem perder o contexto."],
+  ["Academia", "Transforme conteúdo em rotina de execução."],
+  ["Próximo passo", "Decida o que fazer sem abrir dez abas."],
 ];
 
 const deliveryItems = [
-  "Uma sessão individual de implementação com a Kau",
-  "Diagnóstico do seu momento comercial",
-  "Scripts de conversa para o seu negócio",
-  "Roteiro de oferta e follow-up",
-  "Rotina comercial para a semana",
-  "Plano de ação com decisões na ordem certa",
+  "Uma página para apresentar sua proposta",
+  "Um escritório virtual para sua operação",
+  "Links e campanhas organizados por origem",
+  "Catálogo de produtos em uma visão única",
+  "Ganhos e próximos passos em leitura simples",
+  "Uma academia para sustentar a sua execução",
 ];
 
 const faqs = [
-  ["É uma aula gravada?", "Não. É uma sessão individual e prática para transformar o seu contexto em um plano comercial aplicável."],
-  ["Preciso ter uma equipe de vendas?", "Não. O Sprint foi pensado para donos de negócio que vendem no WhatsApp, em reuniões ou pessoalmente."],
-  ["O plano serve para qualquer segmento?", "O método organiza decisões universais, mas os scripts e exemplos são construídos para o seu negócio."],
-  ["Quando recebo o material?", "Depois da aplicação, você sai com o sistema comercial organizado para começar a usar na próxima conversa."],
+  ["O que é a Página Lucrativa?", "É uma estrutura para transformar sua proposta, sua divulgação e sua operação em um sistema que você consegue acompanhar."],
+  ["Preciso ter uma equipe?", "Não. A estrutura foi pensada para quem já empreende e quer organizar a própria rotina comercial antes de escalar."],
+  ["Consigo usar só a página?", "Sim. Você pode começar pela apresentação pública e evoluir para os recursos do escritório conforme a sua operação amadurece."],
+  ["O que encontro no escritório?", "Campanhas, ganhos, produtos, formação, rede, materiais e configurações organizados em hubs objetivos."],
 ];
 
 function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <span className={`brand ${compact ? "brand-compact" : ""}`}>
       <span className="brand-mark" aria-hidden="true">S</span>
-      <span>startlab</span>
+      <span>página lucrativa</span>
     </span>
   );
 }
@@ -70,14 +66,14 @@ export default function Home() {
             {menuOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
           <nav className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
-            <a href="#sprint" onClick={closeMenu}>O Sprint</a>
-            <a href="#entregas" onClick={closeMenu}>O que inclui</a>
+            <a href="#sprint" onClick={closeMenu}>A plataforma</a>
+            <a href="#entregas" onClick={closeMenu}>O que reúne</a>
             <a href="#perfil" onClick={closeMenu}>É para você?</a>
             <a href="#duvidas" onClick={closeMenu}>Dúvidas</a>
           </nav>
           <div className="nav-actions">
-            <a className="nav-login" href="#oferta">Já sou membro</a>
-            <a className="btn btn-primary" href="#oferta">Aplicar agora <ArrowUpRight size={15} /></a>
+            <a className="nav-login" href="/membros">Já sou membro</a>
+            <a className="btn btn-primary" href="/membros">Acessar escritório <ArrowUpRight size={15} /></a>
           </div>
         </div>
       </header>
@@ -87,14 +83,14 @@ export default function Home() {
           <div className="sales-grid-glow" aria-hidden="true" />
           <div className="shell sales-hero-grid">
             <div className="sales-hero-copy reveal-item">
-              <div className="sales-kicker">Para donos de negócio que vendem no WhatsApp, em reunião ou pessoalmente</div>
-              <h1>Tenha a <span>implementação comercial</span> do seu negócio pronta e personalizada.</h1>
-              <p>Uma sessão <strong>individual</strong> de plano de ação com a Kau + o seu sistema comercial completo: scripts, rotina e roteiros de venda escritos pro seu negócio.</p>
+              <div className="sales-kicker">PÁGINA LUCRATIVA 2026 · PARA QUEM QUER OPERAR COM MAIS CLAREZA</div>
+              <h1>Construa uma <span>operação comercial</span> que sabe o que fazer agora.</h1>
+              <p>Uma base para apresentar sua proposta, organizar campanhas, acompanhar produtos e ganhar <strong>clareza para executar</strong> sem depender de improviso.</p>
               <div className="sales-actions">
-                <a href="#oferta" className="btn btn-primary">Quero destravar as vendas <ArrowUpRight size={16} /></a>
+                <a href="/membros" className="btn btn-primary">Conhecer o escritório <ArrowUpRight size={16} /></a>
                 <a href="#sprint" className="btn btn-ghost">Entender como funciona <ArrowDown size={16} /></a>
               </div>
-              <div className="sales-trust"><span className="sales-pulse" />Uma decisão clara para a próxima conversa, a próxima semana e o próximo nível do seu negócio.</div>
+              <div className="sales-trust"><span className="sales-pulse" />Uma decisão clara para a próxima conversa, a próxima semana e o próximo avanço do seu negócio.</div>
             </div>
 
             <div className="sales-hero-side reveal-item reveal-delay">
@@ -102,13 +98,13 @@ export default function Home() {
                 <img src={heroImage} alt="Estratégia comercial sendo organizada sobre uma mesa de trabalho" />
                 <div className="photo-overlay" aria-hidden="true" />
               </div>
-              <div className="sales-author-badge"><strong>Sprint de Vendas</strong><span>·</span> Método StartLab</div>
-              <div className="sprint-stamp"><span>um plano</span><strong>sob<br />medida</strong><small>para vender melhor</small></div>
+              <div className="sales-author-badge"><strong>Página Lucrativa</strong><span>·</span> escritório virtual</div>
+              <div className="sprint-stamp"><span>o próximo</span><strong>passo<br />visível</strong><small>para operar melhor</small></div>
               <div className="sprint-paper-card">
-                <span className="mono">sistema comercial</span>
-                <strong>pronto para<br />implementar</strong>
+                <span className="mono">operação comercial</span>
+                <strong>pronta para<br />acompanhar</strong>
                 <div className="paper-lines"><i /><i /><i /></div>
-                <span className="paper-sign">diagnóstico · scripts · rotina</span>
+                <span className="paper-sign">página · campanhas · execução</span>
               </div>
             </div>
           </div>
@@ -123,11 +119,11 @@ export default function Home() {
         <section className="sales-section sprint-problem" id="problema">
           <div className="shell sales-narrow">
             <Eyebrow>O problema não é falta de esforço</Eyebrow>
-            <h2>Você já tentou vender mais.<br /><span>Só faltou um sistema.</span></h2>
+            <h2>Você já faz muita coisa.<br /><span>Só precisa ver o sistema.</span></h2>
             <div className="sprint-problem-grid">
-              <article><span className="sprint-quote-mark">“</span><h3>Cada conversa começa do zero</h3><p>Você explica, improvisa, responde e torce para o cliente entender.</p><strong>Isso cansa — e não escala.</strong></article>
-              <article><span className="sprint-quote-mark">“</span><h3>O cliente some no meio</h3><p>Sem um roteiro de follow-up, cada silêncio parece um sinal para desistir.</p><strong>Não precisa ser assim.</strong></article>
-              <article><span className="sprint-quote-mark">“</span><h3>A rotina depende do seu humor</h3><p>Quando a operação fica só na sua cabeça, vender vira uma tarefa pesada.</p><strong>Clareza dá leveza.</strong></article>
+              <article><span className="sprint-quote-mark">“</span><h3>Cada divulgação perde o contexto</h3><p>Você publica, responde e depois não sabe de onde veio cada oportunidade.</p><strong>Contexto também é estratégia.</strong></article>
+              <article><span className="sprint-quote-mark">“</span><h3>O produto fica escondido</h3><p>Quando a proposta está espalhada, explicar valor exige energia demais.</p><strong>Uma vitrine organiza a conversa.</strong></article>
+              <article><span className="sprint-quote-mark">“</span><h3>A rotina vira uma coleção de abas</h3><p>Sem um escritório, acompanhar o que importa parece sempre mais difícil.</p><strong>Clareza devolve ritmo.</strong></article>
             </div>
           </div>
         </section>
@@ -135,14 +131,14 @@ export default function Home() {
         <section className="sales-section sales-method" id="sprint">
           <div className="shell">
             <div className="sales-section-heading">
-              <div><Eyebrow>O Sprint de Vendas</Eyebrow><h2>Um plano feito para o seu momento, <span>não para um cenário ideal.</span></h2></div>
-              <p>Você não precisa de mais conteúdo para consumir. Precisa de decisões claras, escritas na ordem certa e prontas para entrar na sua rotina.</p>
+              <div><Eyebrow>A plataforma</Eyebrow><h2>Uma estrutura feita para o seu momento, <span>não para um cenário ideal.</span></h2></div>
+              <p>Você não precisa de mais uma ferramenta solta. Precisa de escolhas visíveis, organizadas na ordem em que sua operação realmente acontece.</p>
             </div>
             <div className="sprint-method-layout">
               <div className="sprint-method-copy">
                 <div className="section-image-wrap"><img src={methodImage} alt="Caderno com rotina comercial organizada" /></div>
-                <p>E agora com um diferencial que ninguém mais entrega: um plano de ação montado para o seu momento, com decisões claras e na ordem certa.</p>
-                <a href="#oferta" className="btn btn-primary">Quero começar <ArrowUpRight size={16} /></a>
+                <p>Da página pública ao escritório virtual, a estrutura conecta o que você oferece, o que divulga e o que precisa acompanhar.</p>
+                <a href="/membros" className="btn btn-primary">Abrir escritório <ArrowUpRight size={16} /></a>
               </div>
               <div className="sprint-method-items">
                 {methodItems.map(([title, body], index) => <div key={title}><b>{String(index + 1).padStart(2, "0")}</b><span><strong>{title}</strong>{body}</span></div>)}
@@ -154,8 +150,8 @@ export default function Home() {
         <section className="sales-section sales-delivery" id="entregas">
           <div className="shell">
             <div className="sales-section-heading">
-              <div><Eyebrow>O que você leva</Eyebrow><h2>Menos teoria.<br /><span>Mais implementação.</span></h2></div>
-              <p>O material não fica perdido em uma pasta. Ele nasce conectado às conversas, ofertas e decisões que já fazem parte do seu negócio.</p>
+              <div><Eyebrow>O que você reúne</Eyebrow><h2>Menos dispersão.<br /><span>Mais direção.</span></h2></div>
+              <p>O trabalho não fica perdido entre links, arquivos e conversas. Ele ganha um lugar para ser retomado, ajustado e colocado em prática.</p>
             </div>
             <div className="sales-delivery-grid">
               <div className="sales-delivery-list">
@@ -163,7 +159,7 @@ export default function Home() {
               </div>
               <div className="sales-quote delivery-card">
                 <img src={deliveryImage} alt="Kit de implementação comercial com cartões e caderno" />
-                <div className="delivery-card-content"><Eyebrow>A virada de chave</Eyebrow><strong>Você pode continuar improvisando.<br />Ou pode sair daqui com um sistema.</strong><p>O plano deixa de depender da memória, da energia do dia ou da próxima resposta do cliente.</p></div>
+                <div className="delivery-card-content"><Eyebrow>A virada de chave</Eyebrow><strong>Você pode continuar acumulando abas.<br />Ou pode operar com um sistema.</strong><p>A rotina deixa de depender da memória, da energia do dia ou da próxima mensagem inesperada.</p></div>
               </div>
             </div>
           </div>
@@ -173,7 +169,7 @@ export default function Home() {
           <div className="shell">
             <Eyebrow>Para quem é</Eyebrow>
             <div className="sprint-fit-grid">
-              <div><h2>É para você se quer parar de <span>vender no improviso.</span></h2><ul><li>Você já tem um negócio rodando e quer organizar a próxima fase.</li><li>Você vende, mas sente que cada conversa depende demais de você.</li><li>Você quer clareza para aplicar, não mais uma aula para assistir.</li></ul></div>
+              <div><h2>É para você se quer parar de <span>operar no improviso.</span></h2><ul><li>Você já tem um negócio rodando e quer organizar a próxima fase.</li><li>Você divulga e vende, mas sente que tudo depende demais da sua memória.</li><li>Você quer clareza para aplicar, não mais uma ferramenta para alimentar.</li></ul></div>
               <div className="sprint-not-fit"><h2>Não é pra você,<br /><span>se...</span></h2><ul><li>Você procura fórmula mágica sem executar nada.</li><li>Quer só assistir aulas, sem aplicar no negócio.</li><li>Não tem — nem quer ter — um negócio rodando.</li></ul></div>
             </div>
           </div>
@@ -181,10 +177,10 @@ export default function Home() {
 
         <section className="sales-section sales-offer" id="oferta">
           <div className="shell sales-offer-grid">
-            <div className="offer-copy"><Eyebrow>A aplicação</Eyebrow><h2>Seu próximo passo não precisa ser <span>mais complicado.</span></h2><p>Em uma sessão, você organiza o que precisa ser dito, feito e repetido para vender melhor — com um sistema que respeita o tamanho e o momento do seu negócio.</p><div className="sales-notes"><span>sessão individual</span><span>material personalizado</span><span>plano aplicável</span></div></div>
+              <div className="offer-copy"><Eyebrow>O escritório virtual</Eyebrow><h2>Seu próximo passo não precisa ser <span>mais complicado.</span></h2><p>Abra um espaço para sua proposta, seus links, seus produtos e sua formação. Tudo com uma leitura que respeita o tamanho e o momento do seu negócio.</p><div className="sales-notes"><span>página pública</span><span>operação organizada</span><span>próximo passo aplicável</span></div></div>
             <div className="sales-price-card">
               <div className="application-seal" aria-hidden="true"><span>S</span><small>startlab</small><b>aplicação</b></div>
-              <Eyebrow>Sprint de Vendas</Eyebrow><div className="sales-price">R$ 97 <small>à vista</small></div><h3>Sessão individual + sistema comercial completo</h3><p>Preencha seus dados para receber as instruções de aplicação. O pagamento demonstrativo via PIX acontece na próxima etapa.</p><div className="offer-rule" aria-hidden="true"><i /><i /><i /></div><a href="#inicio" className="btn btn-primary">Aplicar agora <ArrowUpRight size={16} /></a><small>O resultado depende da aplicação do plano no seu negócio.</small>
+              <Eyebrow>Página Lucrativa 2026</Eyebrow><div className="sales-price">PL <small>escritório virtual</small></div><h3>Uma base para apresentar, organizar e acompanhar sua operação.</h3><p>A prévia atual apresenta os hubs principais da plataforma. O acesso aos recursos de membro acontece pelo escritório virtual.</p><div className="offer-rule" aria-hidden="true"><i /><i /><i /></div><a href="/membros" className="btn btn-primary">Acessar escritório <ArrowUpRight size={16} /></a><small>Os recursos evoluem conforme a sua operação é configurada.</small>
             </div>
           </div>
         </section>
@@ -202,12 +198,12 @@ export default function Home() {
         </section>
 
         <section className="sales-section sprint-final-cta">
-          <div className="shell"><Eyebrow>O próximo nível começa com uma decisão</Eyebrow><h2>Chega de deixar uma venda importante<br /><span>depender do improviso.</span></h2><p>Você já sabe que precisa organizar. Agora pode sair com o primeiro plano pronto.</p><a href="#oferta" className="btn btn-primary">Quero começar <ArrowUpRight size={16} /></a></div>
+          <div className="shell"><Eyebrow>O próximo nível começa com uma decisão</Eyebrow><h2>Chega de deixar sua rotina comercial<br /><span>depender do improviso.</span></h2><p>Você já sabe que precisa organizar. Agora pode abrir um espaço para operar com mais direção.</p><a href="/membros" className="btn btn-primary">Abrir escritório <ArrowUpRight size={16} /></a></div>
         </section>
       </main>
 
-      <footer className="footer"><div className="shell footer-row"><span><Brand compact /> · Sprint de Vendas · Método StartLab © 2026</span><span>Todos os direitos reservados</span></div></footer>
-      <div className="floating"><a className="btn btn-primary" href="#oferta">Aplicar para o Sprint <ArrowUpRight size={15} /></a></div>
+      <footer className="footer"><div className="shell footer-row"><span><Brand compact /> · Escritório virtual · 2026</span><span>Todos os direitos reservados</span></div></footer>
+      <div className="floating"><a className="btn btn-primary" href="/membros">Acessar escritório <ArrowUpRight size={15} /></a></div>
     </div>
   );
 }

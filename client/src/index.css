@@ -9,6 +9,69 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--panel);
+  --color-card-foreground: var(--foreground);
+  --color-popover: var(--panel);
+  --color-popover-foreground: var(--foreground);
+  --color-primary: var(--gold);
+  --color-primary-foreground: #171108;
+  --color-secondary: var(--panel-soft);
+  --color-secondary-foreground: var(--foreground);
+  --color-muted: var(--panel-soft);
+  --color-muted-foreground: var(--muted);
+  --color-accent: var(--panel-soft);
+  --color-accent-foreground: var(--foreground);
+  --color-border: var(--line);
+  --color-input: var(--line);
+  --color-ring: var(--gold);
+  --color-sidebar: var(--panel);
+  --color-sidebar-foreground: var(--foreground);
+  --color-sidebar-primary: var(--gold);
+  --color-sidebar-primary-foreground: #171108;
+  --color-sidebar-accent: #1c1914;
+  --color-sidebar-accent-foreground: var(--foreground);
+  --color-sidebar-border: var(--line);
+  --color-sidebar-ring: var(--gold);
+}
+
+.office-page { width: min(1220px, 100%); margin: 0 auto; padding: 32px 32px 72px; color: var(--ivory); }
+.office-intro { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; padding-bottom: 30px; border-bottom: 1px solid var(--line); }
+.office-eyebrow { display: block; margin-bottom: 11px; color: var(--gold); font: 10px/1.3 "DM Mono", monospace; letter-spacing: .12em; text-transform: uppercase; }
+.office-intro h1 { margin: 0; font: 600 clamp(34px, 4.6vw, 58px)/.98 "Space Grotesk", sans-serif; letter-spacing: -.065em; }
+.office-intro p { max-width: 590px; margin: 14px 0 0; color: var(--muted); font-size: 14px; line-height: 1.7; }
+.office-action { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 11px 15px; border: 1px solid rgba(229, 189, 98, .7); border-radius: 11px; color: #1a1307; background: var(--gold); font: 700 11px "Manrope", sans-serif; transition: transform .18s var(--ease-out), box-shadow .18s var(--ease-out); white-space: nowrap; }
+.office-action:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(229, 189, 98, .2); }
+.office-action:active { transform: scale(.97); }
+.office-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }
+.office-stat-grid article, .office-balance, .office-profile-card { min-height: 168px; padding: 23px; border: 1px solid var(--line); border-radius: 17px; background: linear-gradient(145deg, rgba(229, 189, 98, .07), rgba(255,255,255,.018)); }
+.office-stat-grid span, .office-balance > span, .office-profile-card > span { display: block; color: var(--muted); font: 10px "DM Mono", monospace; letter-spacing: .09em; text-transform: uppercase; }
+.office-stat-grid strong { display: block; margin: 15px 0 10px; color: var(--gold-bright); font: 600 clamp(30px, 3vw, 44px)/1 "Space Grotesk", sans-serif; letter-spacing: -.06em; }
+.office-stat-grid small { color: var(--muted); font-size: 12px; }
+.office-next { display: flex; align-items: flex-end; justify-content: space-between; gap: 22px; margin-top: 14px; padding: 29px; border: 1px dashed rgba(229, 189, 98, .45); border-radius: 17px; background: #12100d; }
+.office-next h2 { max-width: 670px; margin: 0; font: 600 clamp(25px, 3vw, 38px)/1.04 "Space Grotesk", sans-serif; letter-spacing: -.055em; }
+.office-next p { max-width: 590px; margin: 12px 0 0; color: var(--muted); font-size: 13px; }
+.office-next > svg { flex: 0 0 auto; color: var(--gold); }
+.office-split { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 14px; }
+.office-split article { padding: 24px; border: 1px solid rgba(255,255,255,.09); border-radius: 17px; background: #0e0d0b; }
+.office-split h2 { max-width: 360px; margin: 0; font: 600 25px/1.05 "Space Grotesk", sans-serif; letter-spacing: -.055em; }
+.office-split p { max-width: 440px; color: var(--muted); font-size: 13px; }
+.office-split a { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px; color: var(--gold); font-size: 12px; font-weight: 800; }
+.office-empty { display: grid; justify-items: start; max-width: 670px; margin: 44px auto; padding: 34px; border: 1px solid var(--line); border-radius: 18px; background: radial-gradient(circle at top right, rgba(229, 189, 98, .1), transparent 36%), #0e0d0b; }
+.office-empty-mark { display: grid; place-items: center; width: 44px; height: 44px; margin-bottom: 21px; border: 1px solid var(--gold); border-radius: 12px; color: var(--gold); font: 800 13px "DM Mono", monospace; }
+.office-empty h2 { margin: 0; font: 600 clamp(25px, 3vw, 36px)/1.02 "Space Grotesk", sans-serif; letter-spacing: -.06em; }
+.office-empty p { max-width: 500px; margin: 12px 0 22px; color: var(--muted); font-size: 14px; }
+.office-loading { display: flex; align-items: center; gap: 9px; min-height: 260px; color: var(--muted); font: 11px "DM Mono", monospace; letter-spacing: .05em; text-transform: uppercase; }
+.office-loading i { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); animation: office-pulse .9s infinite alternate; }
+.office-loading i:nth-child(3) { animation-delay: .18s; }.office-loading i:nth-child(4) { animation-delay: .36s; }
+.office-balance { margin-top: 28px; min-height: auto; }.office-balance strong { display: block; margin: 15px 0 10px; color: var(--gold-bright); font: 600 clamp(44px, 7vw, 78px)/.92 "Space Grotesk", sans-serif; letter-spacing: -.08em; }.office-balance p { margin: 0; color: var(--muted); font-size: 13px; }
+.office-list { display: grid; margin-top: 18px; border-top: 1px solid var(--line); }.office-list article { display: grid; grid-template-columns: 1fr auto auto; align-items: center; gap: 20px; padding: 18px 4px; border-bottom: 1px solid var(--line); }.office-list-code { color: var(--gold); font: 10px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }.office-list h3 { margin: 5px 0 0; font: 600 17px "Space Grotesk", sans-serif; letter-spacing: -.04em; }.office-list p { max-width: 520px; overflow: hidden; margin: 4px 0 0; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }.office-list-metric { text-align: right; }.office-list-metric strong { display: block; color: var(--gold-bright); font-size: 14px; }.office-list-metric span { color: var(--muted); font-size: 10px; }.office-icon-button { display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 9px; color: var(--gold); background: transparent; }
+.office-product-grid, .office-course-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 28px; }.office-product-grid article, .office-course-grid article { display: flex; min-height: 240px; flex-direction: column; padding: 22px; border: 1px solid var(--line); border-radius: 16px; background: #100f0c; }.office-product-grid span, .office-course-grid span { color: var(--gold); font: 10px "DM Mono", monospace; letter-spacing: .08em; text-transform: uppercase; }.office-product-grid h2, .office-course-grid h2 { margin: 14px 0 8px; font: 600 24px/1.05 "Space Grotesk", sans-serif; letter-spacing: -.055em; }.office-product-grid p, .office-course-grid p { color: var(--muted); font-size: 13px; }.office-product-grid strong { margin-top: auto; color: var(--gold-bright); font-size: 16px; }.office-course-grid footer { display: flex; align-items: center; justify-content: space-between; margin-top: auto; color: var(--muted); font-size: 11px; }.office-course-grid button { display: inline-flex; align-items: center; gap: 6px; border: 0; color: var(--gold); background: transparent; font-size: 11px; font-weight: 800; }.office-profile-card { max-width: 580px; margin-top: 28px; }.office-profile-card h2 { margin: 15px 0 8px; font: 600 32px "Space Grotesk", sans-serif; letter-spacing: -.06em; }.office-profile-card p { color: var(--muted); font-size: 14px; }
+@keyframes office-pulse { to { opacity: .2; transform: translateY(-4px); } }
+@media (max-width: 760px) { .office-page { padding: 24px 18px 58px; }.office-intro { align-items: flex-start; flex-direction: column; }.office-stat-grid, .office-product-grid, .office-course-grid, .office-split { grid-template-columns: 1fr; }.office-list article { grid-template-columns: 1fr auto; }.office-icon-button { display: none; }.office-next { align-items: flex-start; }.office-next > svg { display: none; } }
+
 :root {
   --background: #050505;
   --foreground: #f5f0e7;
