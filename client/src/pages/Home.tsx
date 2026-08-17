@@ -135,7 +135,7 @@ export default function Home() {
   }, []);
   const [, setLocation] = useLocation();
   const application = trpc.applications.submit.useMutation({
-    onSuccess: () => setLocation("/pedido/confirmacao"),
+    onSuccess: data => setLocation(`/pedido/confirmacao?codigo=${encodeURIComponent(data.trackingCode)}`),
   });
 
   function submitApplication(event: FormEvent<HTMLFormElement>) {

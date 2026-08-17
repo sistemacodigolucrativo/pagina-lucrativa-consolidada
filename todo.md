@@ -225,3 +225,7 @@
 # Marco 3 — Catálogo de produtos administrável
 - [x] Implementar catálogo de produtos com cadastro no membro, revisão administrativa, publicação e arquivamento.
 - [x] Sincronizar o marco de catálogo de produtos validado com o GitHub no commit `028c416`.
+
+# Marco 4 — Solicitações públicas acompanháveis
+- [x] Implementar gestão administrativa de solicitações públicas, com atualização de status e acompanhamento pelo solicitante.
+- [ ] Sincronizar o marco de solicitações públicas validado com o GitHub.

@@ -109,8 +109,11 @@ export const applications = mysqlTable("applications", {
   fullName: varchar("fullName", { length: 180 }).notNull(),
   email: varchar("email", { length: 320 }).notNull(),
   whatsapp: varchar("whatsapp", { length: 32 }).notNull(),
+  trackingCode: varchar("trackingCode", { length: 24 }),
   status: mysqlEnum("status", ["pending", "contacted", "approved", "archived"]).default("pending").notNull(),
+  adminNote: text("adminNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({
   statusDateIndex: index("applications_status_date_idx").on(table.status, table.createdAt),
   emailIndex: index("applications_email_idx").on(table.email),

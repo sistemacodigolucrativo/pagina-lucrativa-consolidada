@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { existsSync } from "node:fs";
@@ -253,8 +254,21 @@ export async function updateAdminEbook(ebookId: number, input: Omit<EbookInput, 
 export async function createApplication(input: ApplicationInput) {
   const db = await getDb();
   if (!db) throw new Error("O banco de dados não está disponível no momento.");
-  const result = await db.insert(applications).values(input);
-  return { id: Number(result[0].insertId) };
+  const trackingCode = `PL-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
+  const result = await db.insert(applications).values({ ...input, trackingCode });
+  return { id: Number(result[0].insertId), trackingCode };
+}
+export async function getApplicationTracking(trackingCode: string, email: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ id: applications.id, status: applications.status, adminNote: applications.adminNote, createdAt: applications.createdAt, updatedAt: applications.updatedAt }).from(applications).where(and(eq(applications.trackingCode, trackingCode), eq(applications.email, email))).limit(1);
+  return rows[0] ?? null;
+}
+export async function updateAdminApplication(applicationId: number, input: { status: "pending" | "contacted" | "approved" | "archived"; adminNote?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(applications).set({ status: input.status, adminNote: input.adminNote?.trim() || null }).where(eq(applications.id, applicationId));
+  return { success: true } as const;
 }
 
 export async function getRecentApplications(limit = 20) {

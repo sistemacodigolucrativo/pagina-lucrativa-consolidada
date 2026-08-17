@@ -14,12 +14,15 @@ import AdminProducts from "./pages/AdminProducts";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
+import ApplicationTracking from "./pages/ApplicationTracking";
+import AdminApplications from "./pages/AdminApplications";
 import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 function AppRoutes() {
   return <Switch>
     <Route path="/" component={Home} />
     <Route path="/pedido/confirmacao" component={ApplicationConfirmation} />
+    <Route path="/pedido/acompanhar" component={ApplicationTracking} />
     <Route path="/personalizar" component={PersonalizeAccess} />
     <Route path="/acesso" component={DemoLogin} />
     <Route path="/membros/operacao" component={MemberOperations} />
@@ -30,6 +33,7 @@ function AppRoutes() {
     <Route path="/admin/operacao" component={AdminOperations} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
     <Route path="/admin/produtos" component={AdminProducts} />
+    <Route path="/admin/pedidos" component={AdminApplications} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />
