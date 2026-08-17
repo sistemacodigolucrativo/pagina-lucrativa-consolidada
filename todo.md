@@ -259,4 +259,4 @@
 - [x] Converter as rotas de e-mails e WhatsApp em uma central persistente de preparos de comunicação para contatos consentidos.
 - [x] Criar supervisão administrativa de preparos, incluindo restauração e cancelamento, sem disparos externos automáticos.
 - [x] Validar na VPS o registro pelo membro, a supervisão administrativa, o bloqueio 403 para membro, as rotas HTTPS e a limpeza dos dados temporários.
-- [ ] Sincronizar o marco de comunicação validado com o GitHub.
+- [x] Sincronizar o marco de comunicação validado com o GitHub no commit `230a674`.
