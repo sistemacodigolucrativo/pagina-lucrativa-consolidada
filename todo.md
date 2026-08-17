@@ -197,7 +197,7 @@
 - [x] Implementar catálogo de cursos publicado, progresso individual do membro e curadoria administrativa.
 - [x] Encaminhar as rotas equivalentes de cursos para a Academia funcional e validar visibilidade, ocultação e permissões diretamente na VPS.
 - [x] Cobrir o domínio com testes automatizados, compilação e validação ponta a ponta, removendo o curso temporário usado na checagem.
-- [ ] Sincronizar o marco de cursos validado com o GitHub.
+- [x] Sincronizar o marco de cursos validado com o GitHub no commit `daa785b`.
 
 # Auditoria visual cirúrgica da landing
 
