@@ -264,4 +264,4 @@
 # Correção prioritária de runtime
 - [x] Corrigir os imports ausentes de `MemberReferrals` e `AdminReferrals` que impediam o carregamento do bundle publicado.
 - [x] Compilar, executar os 39 testes, reativar o serviço e validar a landing e as rotas de indicações diretamente no domínio publicado.
-- [ ] Sincronizar a correção de runtime validada com o GitHub.
+- [x] Sincronizar a correção de runtime validada com o GitHub no commit `b644ab6`.
