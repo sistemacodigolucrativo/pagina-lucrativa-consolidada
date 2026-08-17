@@ -228,4 +228,4 @@
 
 # Marco 4 — Solicitações públicas acompanháveis
 - [x] Implementar gestão administrativa de solicitações públicas, com atualização de status e acompanhamento pelo solicitante.
-- [ ] Sincronizar o marco de solicitações públicas validado com o GitHub.
+- [x] Sincronizar o marco de solicitações públicas validado com o GitHub no commit `eddfa97`.
