@@ -104,6 +104,51 @@ export async function getMemberOverview(userId: number) {
   };
 }
 
+export async function getMemberFinance(userId: number) {
+  const db = await getDb();
+  if (!db) return { transactions: [], balanceCents: 0, earnedCents: 0, pendingCents: 0 };
+  const transactionsList = await db.select().from(transactions).where(eq(transactions.userId, userId)).orderBy(desc(transactions.occurredAt));
+  const posted = transactionsList.filter(entry => entry.status === "posted");
+  return {
+    transactions: transactionsList,
+    balanceCents: posted.reduce((total, entry) => total + entry.amountCents, 0),
+    earnedCents: posted.filter(entry => entry.amountCents > 0).reduce((total, entry) => total + entry.amountCents, 0),
+    pendingCents: transactionsList.filter(entry => entry.status === "pending").reduce((total, entry) => total + entry.amountCents, 0),
+  };
+}
+export async function createMemberFinanceEntry(userId: number, input: { type: "sale" | "withdrawal"; description: string; amountCents: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const amountCents = input.type === "withdrawal" ? -Math.abs(input.amountCents) : Math.abs(input.amountCents);
+  const result = await db.insert(transactions).values({ userId, createdBy: userId, type: input.type, description: input.description.trim(), amountCents, status: "pending" });
+  return { id: Number(result[0].insertId) };
+}
+export async function getAdminTransactions() {
+  const db = await getDb();
+  if (!db) return [];
+  const [rows, memberRows] = await Promise.all([db.select().from(transactions).orderBy(desc(transactions.occurredAt)), db.select({ id: users.id, name: users.name, email: users.email }).from(users)]);
+  const members = new Map(memberRows.map(member => [member.id, member]));
+  return rows.map(row => ({ ...row, memberName: members.get(row.userId)?.name ?? null, memberEmail: members.get(row.userId)?.email ?? null }));
+}
+export async function getFinanceMembers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ id: users.id, name: users.name, email: users.email }).from(users).orderBy(users.id);
+}
+export async function createAdminTransaction(adminId: number, input: { userId: number; type: "sale" | "commission" | "adjustment" | "withdrawal"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const amountCents = input.type === "withdrawal" ? -Math.abs(input.amountCents) : Math.abs(input.amountCents);
+  const result = await db.insert(transactions).values({ ...input, description: input.description.trim(), amountCents, createdBy: adminId });
+  return { id: Number(result[0].insertId) };
+}
+export async function updateAdminTransaction(transactionId: number, input: { status: "pending" | "posted" | "void"; adminNote?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(transactions).set({ status: input.status, adminNote: input.adminNote?.trim() || null }).where(eq(transactions.id, transactionId));
+  return { success: true } as const;
+}
+
 export async function getMemberCampaigns(userId: number) {
   const db = await getDb();
   if (!db) return [];

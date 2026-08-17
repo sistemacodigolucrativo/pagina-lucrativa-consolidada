@@ -180,6 +180,11 @@
 
 - [x] Sincronizar o marco de captação consentida validado na VPS ao repositório privado, no commit `f72686f`.
 
+## Marco 5 — Lançamentos financeiros administráveis
+
+- [x] Implementar lançamentos financeiros do membro e manutenção administrativa com controles de acesso.
+- [ ] Sincronizar o marco financeiro validado com o GitHub.
+
 # Auditoria visual cirúrgica da landing
 
 - [x] Inventariar todas as seções da landing e classificar cada bloco tipográfico como crítico, importante, refinamento ou manter.

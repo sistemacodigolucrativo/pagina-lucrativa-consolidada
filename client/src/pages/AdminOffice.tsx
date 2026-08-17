@@ -1,7 +1,7 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@shared/dashboard";
-import { BookOpenCheck, ChartNoAxesCombined, FileText, Layers3, UsersRound } from "lucide-react";
+import { BookOpenCheck, ChartNoAxesCombined, CircleDollarSign, FileText, Layers3, UsersRound } from "lucide-react";
 
 const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Operação", path: "/admin", group: "Gestão" },
@@ -12,6 +12,7 @@ const adminMenu: DashboardMenuItem[] = [
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
   { icon: Layers3, label: "Produtos", path: "/admin/produtos", group: "Conteúdo" },
+  { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Gestão" },
 ];
 
 export default function AdminOffice() {

@@ -72,10 +72,15 @@ export const products = mysqlTable("products", {
 export const transactions = mysqlTable("transactions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  createdBy: int("createdBy"),
   type: mysqlEnum("type", ["sale", "commission", "adjustment", "withdrawal"]).notNull(),
   description: varchar("description", { length: 320 }).notNull(),
   amountCents: int("amountCents").notNull(),
+  status: mysqlEnum("status", ["pending", "posted", "void"]).default("posted").notNull(),
+  adminNote: text("adminNote"),
   occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({
   userDateIndex: index("transactions_user_date_idx").on(table.userId, table.occurredAt),
 }));
