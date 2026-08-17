@@ -89,3 +89,11 @@
 - [x] Adicionar teste automatizado para a prioridade de `pl_demo_session`, o logout seletivo e a resolução correta de `authSource`.
 - [ ] Executar e registrar a validação funcional dos dois acessos locais diretamente na VPS, sem usar o workspace como evidência de teste.
 - [ ] Corrigir a compatibilidade do cookie de demonstração com a prévia HTTP da VPS e repetir os testes de acesso publicados.
+- [ ] Tornar a sessão de demonstração independente do JWT Manus e do banco de dados, que não estão configurados no serviço isolado da VPS.
+- [ ] Implementar armazenamento temporário próprio para a sessão de demonstração e removê-la do fluxo de JWT/OAuth Manus.
+- [ ] Remover a dependência de `upsertUser` e `getUserByOpenId` na autenticação de demonstração e resolver os perfis locais sem banco de dados.
+
+# Arquivo compactado no repositório privado
+
+- [ ] Gerar uma cópia compactada da versão final do projeto, sem dependências, arquivos de ambiente ou dados sensíveis.
+- [ ] Enviar o arquivo compactado ao repositório privado da Página Lucrativa e confirmar o commit correspondente.

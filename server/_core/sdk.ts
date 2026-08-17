@@ -6,7 +6,6 @@ import type { Request } from "express";
 import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
-import { DEMO_SESSION_COOKIE_NAME } from "../demoAuth";
 import { ENV } from "./env";
 import type {
   ExchangeTokenRequest,
@@ -320,23 +319,6 @@ class SDKServer {
     return user;
   }
 
-  async authenticateDemoRequest(req: Request): Promise<AuthenticatedUser> {
-    const cookies = this.parseCookies(req.headers.cookie);
-    const sessionToken = cookies.get(DEMO_SESSION_COOKIE_NAME);
-    const session = await this.verifySession(sessionToken);
-
-    if (!session || !session.openId.startsWith("local_demo_")) {
-      throw ForbiddenError("Invalid demo session cookie");
-    }
-
-    const user = await db.getUserByOpenId(session.openId);
-    if (!user || user.loginMethod !== "local_demo") {
-      throw ForbiddenError("Demo user not found");
-    }
-
-    await db.upsertUser({ openId: user.openId, lastSignedIn: new Date() });
-    return user;
-  }
 }
 
 const CRON_OPEN_ID_PREFIX = "cron_";

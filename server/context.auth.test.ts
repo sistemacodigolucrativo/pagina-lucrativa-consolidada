@@ -1,12 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const sdkMocks = vi.hoisted(() => ({
-  authenticateDemoRequest: vi.fn(),
   authenticateRequest: vi.fn(),
+}));
+
+const demoMocks = vi.hoisted(() => ({
+  resolveDemoSession: vi.fn(),
 }));
 
 vi.mock("./_core/sdk", () => ({
   sdk: sdkMocks,
+}));
+
+vi.mock("./demoAuth", () => ({
+  DEMO_SESSION_COOKIE_NAME: "pl_demo_session",
+  resolveDemoSession: demoMocks.resolveDemoSession,
 }));
 
 import { createContext } from "./_core/context";
@@ -31,14 +39,14 @@ const manusUser = {
 };
 
 function options() {
-  return { req: { headers: {} }, res: {} } as any;
+  return { req: { headers: { cookie: "pl_demo_session=demo-token" } }, res: {} } as any;
 }
 
 describe("createContext session source", () => {
   beforeEach(() => vi.resetAllMocks());
 
   it("prioritizes the separate demo session when both modes can resolve", async () => {
-    sdkMocks.authenticateDemoRequest.mockResolvedValue(demoUser);
+    demoMocks.resolveDemoSession.mockReturnValue(demoUser);
     sdkMocks.authenticateRequest.mockResolvedValue(manusUser);
 
     const context = await createContext(options());
@@ -49,7 +57,7 @@ describe("createContext session source", () => {
   });
 
   it("falls back to Manus when a demo session is absent", async () => {
-    sdkMocks.authenticateDemoRequest.mockRejectedValue(new Error("no demo session"));
+    demoMocks.resolveDemoSession.mockReturnValue(null);
     sdkMocks.authenticateRequest.mockResolvedValue(manusUser);
 
     const context = await createContext(options());

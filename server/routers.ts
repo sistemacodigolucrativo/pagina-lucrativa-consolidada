@@ -4,8 +4,8 @@ import { sdk } from "./_core/sdk";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { applicationInputSchema } from "@shared/applications";
-import { createApplication, getAdminOverview, getMemberCampaigns, getMemberOverview, getMemberProducts, getPublishedCourses, getRecentApplications, upsertUser } from "./db";
-import { DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
+import { createApplication, getAdminOverview, getMemberCampaigns, getMemberOverview, getMemberProducts, getPublishedCourses, getRecentApplications } from "./db";
+import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 
 export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -29,19 +29,7 @@ export const appRouter = router({
         throw new Error("Credenciais de demonstração inválidas.");
       }
 
-      await upsertUser({
-        openId: account.openId,
-        name: account.name,
-        email: account.email,
-        loginMethod: "local_demo",
-        role: account.role,
-        lastSignedIn: new Date(),
-      });
-
-      const token = await sdk.createSessionToken(account.openId, {
-        name: account.name,
-        expiresInMs: 1000 * 60 * 60 * 12,
-      });
+      const token = createDemoSession(account);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, {
         ...cookieOptions,

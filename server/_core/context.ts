@@ -1,5 +1,7 @@
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
+import { parse as parseCookieHeader } from "cookie";
 import type { User } from "../../drizzle/schema";
+import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 import { sdk } from "./sdk";
 
 export type TrpcContext = {
@@ -15,10 +17,13 @@ export async function createContext(
   let user: User | null = null;
   let authSource: TrpcContext["authSource"] = null;
 
-  try {
-    user = await sdk.authenticateDemoRequest(opts.req);
+  const cookies = parseCookieHeader(opts.req.headers.cookie ?? "");
+  const demoUser = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+
+  if (demoUser) {
+    user = demoUser;
     authSource = "demo";
-  } catch (error) {
+  } else {
     try {
       user = await sdk.authenticateRequest(opts.req);
       authSource = "manus";
