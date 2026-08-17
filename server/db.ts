@@ -350,6 +350,13 @@ export async function createAdminContent(input: { kind: "material" | "article" |
   return { id: Number(result[0].insertId) };
 }
 
+export async function updateAdminContent(contentId: number, input: { kind: "material" | "article" | "faq" | "notice"; title: string; summary?: string | null; body?: string | null; status: "draft" | "published" | "archived" }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(managedContent).set(input).where(eq(managedContent.id, contentId));
+  return { success: true } as const;
+}
+
 export async function updateAdminContentStatus(contentId: number, status: "draft" | "published" | "archived") {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");

@@ -10,9 +10,11 @@ import MemberOperations from "./pages/MemberOperations";
 import EbookReader from "./pages/EbookReader";
 import AdminEbooks from "./pages/AdminEbooks";
 import MemberProducts from "./pages/MemberProducts";
+import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
 import AdminTransactions from "./pages/AdminTransactions";
 import AdminProducts from "./pages/AdminProducts";
+import AdminPublications from "./pages/AdminPublications";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
@@ -30,12 +32,22 @@ function AppRoutes() {
     <Route path="/membros/operacao" component={MemberOperations} />
     <Route path="/membros/ebooks" component={EbookReader} />
     <Route path="/membros/produtos" component={MemberProducts} />
+    <Route path="/membros/blog" component={MemberPublications} />
+    <Route path="/membros/classificados" component={MemberPublications} />
+    <Route path="/membros/materiais" component={MemberPublications} />
+    <Route path="/membros/bonus" component={MemberPublications} />
+    <Route path="/membros/artigos" component={MemberPublications} />
+    <Route path="/membros/perguntas-frequentes" component={MemberPublications} />
+    <Route path="/membros/emails-site" component={MemberPublications} />
+    <Route path="/membros/emails-interessados" component={MemberPublications} />
+    <Route path="/membros/emails-whatsapp" component={MemberPublications} />
     <Route path="/membros/ganhos" component={MemberEarnings} />
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
     <Route path="/admin/produtos" component={AdminProducts} />
+    <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/pedidos" component={AdminApplications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />
     <Route path="/admin" component={AdminOffice} />

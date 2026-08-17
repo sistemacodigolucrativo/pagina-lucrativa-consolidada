@@ -11,6 +11,7 @@ const adminMenu: DashboardMenuItem[] = [
   { icon: Layers3, label: "Catálogo", path: "/admin/catalogo", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
+  { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
   { icon: Layers3, label: "Produtos", path: "/admin/produtos", group: "Conteúdo" },
   { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Gestão" },
 ];
