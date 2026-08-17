@@ -28,6 +28,7 @@ export function useAuth(options?: UseAuthOptions) {
   });
 
   const logout = useCallback(async () => {
+    const isDemoSession = meQuery.data?.loginMethod === "local_demo";
     try {
       await logoutMutation.mutateAsync();
     } catch (error: unknown) {
@@ -42,13 +43,15 @@ export function useAuth(options?: UseAuthOptions) {
       // Clear the Preview auto-login token mirrored into sessionStorage, so
       // header-based sessions (Safari ITP / WebView) are logged out too. The
       // backend cookie is cleared by the logout mutation.
-      try {
-        sessionStorage.removeItem("manus-cookie");
-      } catch {}
+      if (!isDemoSession) {
+        try {
+          sessionStorage.removeItem("manus-cookie");
+        } catch {}
+      }
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }
-  }, [logoutMutation, utils]);
+  }, [logoutMutation, meQuery.data?.loginMethod, utils]);
 
   const state = useMemo(() => {
     localStorage.setItem(

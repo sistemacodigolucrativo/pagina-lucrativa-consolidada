@@ -9,6 +9,7 @@ import MemberOffice from "./pages/MemberOffice";
 import AdminOffice from "./pages/AdminOffice";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import PersonalizeAccess from "./pages/PersonalizeAccess";
+import DemoLogin from "./pages/DemoLogin";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -17,6 +18,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/pedido/confirmacao"} component={ApplicationConfirmation} />
       <Route path={"/personalizar"} component={PersonalizeAccess} />
+      <Route path={"/acesso"} component={DemoLogin} />
       <Route path={"/membros"} component={MemberOffice} />
       <Route path={"/membros/:section"} component={MemberOffice} />
       <Route path={"/admin"} component={AdminOffice} />

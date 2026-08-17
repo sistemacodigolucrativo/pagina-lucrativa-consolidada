@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { appRouter } from "./routers";
 import { COOKIE_NAME } from "../shared/const";
+import { DEMO_SESSION_COOKIE_NAME } from "./demoAuth";
 import type { TrpcContext } from "./_core/context";
 
 type CookieCall = {
@@ -10,7 +11,9 @@ type CookieCall = {
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
-function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] } {
+function createAuthContext(
+  authSource: TrpcContext["authSource"] = "manus"
+): { ctx: TrpcContext; clearedCookies: CookieCall[] } {
   const clearedCookies: CookieCall[] = [];
 
   const user: AuthenticatedUser = {
@@ -27,6 +30,7 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
 
   const ctx: TrpcContext = {
     user,
+    authSource,
     req: {
       protocol: "https",
       headers: {},
@@ -58,5 +62,15 @@ describe("auth.logout", () => {
       httpOnly: true,
       path: "/",
     });
+  });
+
+  it("clears only the demo cookie when the active identity came from the demo session", async () => {
+    const { ctx, clearedCookies } = createAuthContext("demo");
+    const caller = appRouter.createCaller(ctx);
+
+    await caller.auth.logout();
+
+    expect(clearedCookies).toHaveLength(1);
+    expect(clearedCookies[0]?.name).toBe(DEMO_SESSION_COOKIE_NAME);
   });
 });

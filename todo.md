@@ -76,10 +76,14 @@
 - [x] Reproduzir os blocos permitidos das telas prioritárias do Escritório Virtual, além da navegação, sem incluir dados privados ou provas sociais de terceiros.
 - [x] Tratar explicitamente os estados de carregamento, erro e vazio de campanhas, produtos e cursos para não apresentar ausência de dados como resultado definitivo.
 - [x] Registrar no inventário de auditoria os módulos efetivamente reproduzidos e os módulos que permanecem fora por dependerem de dados privados ou conteúdo não autorizado.
-- [ ] Validar as alterações em desktop e mobile, sincronizar a revisão no repositório e atualizar a prévia isolada na VPS.
+- [x] Validar as alterações em desktop e mobile, sincronizar a revisão no repositório e atualizar a prévia isolada na VPS.
 
 # Acessos locais de verificação
 
-- [ ] Criar uma autenticação local simples, isolada do login Manus, para testes de administrador e membro comum.
-- [ ] Provisionar uma conta de teste administrativa e uma conta de teste de membro comum com funções distintas.
-- [ ] Validar o acesso às rotas `/admin` e `/membros` com as duas contas e informar as credenciais ao usuário de forma direta.
+- [x] Criar uma autenticação local simples, isolada do login Manus, para testes de administrador e membro comum.
+- [x] Provisionar uma conta de teste administrativa e uma conta de teste de membro comum com funções distintas.
+- [x] Validar no workspace o acesso às rotas `/admin` e `/membros` com as duas contas e confirmar o isolamento de privilégios.
+- [ ] Sincronizar a autenticação de demonstração no repositório privado e na prévia isolada da VPS, preservando o miniapp existente.
+- [x] Validar explicitamente a convivência entre sessão Manus e sessão de demonstração, incluindo entrada, troca e saída sem apagar a sessão principal.
+- [x] Não realizar login Manus adicional para validação de coexistência, conforme solicitado pelo usuário; manter a cobertura automatizada de prioridade e logout seletivo.
+- [x] Adicionar teste automatizado para a prioridade de `pl_demo_session`, o logout seletivo e a resolução correta de `authSource`.

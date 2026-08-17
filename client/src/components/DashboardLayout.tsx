@@ -78,15 +78,14 @@ export default function DashboardLayout({
               Sign in to continue
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
+              Este painel exige autenticação. Use o acesso local de demonstração para verificar os perfis disponíveis.
             </p>
           </div>
-          <Button
-            onClick={() => startLogin()}
-            size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all"
-          >
-            Sign in
+          <Button asChild size="lg" className="w-full shadow-lg hover:shadow-xl transition-all">
+            <a href="/acesso">Acessar ambiente de teste</a>
+          </Button>
+          <Button onClick={() => startLogin()} variant="outline" className="w-full">
+            Entrar com Manus
           </Button>
         </div>
       </div>

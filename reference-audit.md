@@ -18,7 +18,23 @@ Em particular, a Página Lucrativa 2026 já pode manter um bloco de vídeos da m
 
 ## Verificação da versão publicada
 
-O endereço de prévia `http://18.119.174.102:3101/` respondeu com o título esperado, mas a renderização observada no navegador ficou vazia sobre fundo escuro. Como essa página anteriormente respondeu com HTML e título corretos por HTTP, o próximo passo técnico é verificar os assets JavaScript/CSS e o console da página publicada antes de utilizar essa captura como evidência de divergência de design.
+O endereço de prévia `http://18.119.174.102:3101/` respondeu com o título esperado e expôs a copy completa no DOM, mas a renderização observada no navegador permaneceu vazia sobre fundo escuro. A inspeção de console não retornou exceções; portanto, isso não deve ser interpretado como divergência de conteúdo até a investigação específica de CSS e do carregamento visual externo.
+
+A inspeção de layout mostrou que a landing `sales-page reference-page` está renderizada com cerca de 12 mil pixels de altura. O primeiro filho do `#root` é uma seção vazia, sem altura, deixada pelo contêiner de desenvolvimento; esse artefato não contém o conteúdo da landing. Após a estabilização do carregamento, a captura externa exibiu corretamente o cabeçalho, a hero, a imagem e os CTAs da landing.
+
+Para a validação de perfis, foi incluída a rota `/acesso`, com formulário visualmente integrado à identidade editorial. As credenciais não são exibidas na tela e a sessão de demonstração tem duração limitada; isso permite testar os dois escritórios sem copiar a autenticação ou os dados privados da referência.
+
+O perfil administrativo de demonstração foi validado no navegador. Após a autenticação, a rota `/admin` exibiu o escritório de Administração, a navegação de gestão e conteúdo, o nome do perfil de demonstração e os estados vazios legítimos de pedidos e cursos.
+
+A sessão administrativa permaneceu ativa durante a inspeção do painel. Para testar o membro comum de forma isolada, a sessão será substituída diretamente por uma nova autenticação na rota de acesso local.
+
+O perfil de membro de demonstração também foi autenticado com sucesso e direcionado para `/membros`. A página expôs o escritório virtual, o aviso operacional, os indicadores vazios legítimos e a sequência de módulos de divulgação, captação e estudo. A primeira captura mostrou o skeleton de carregamento enquanto as consultas eram resolvidas; o conteúdo textual retornado confirma que a sessão e a rota foram aplicadas corretamente.
+
+O isolamento de privilégios foi verificado: com a sessão de membro comum ativa, a rota `/admin` permaneceu acessível apenas até a moldura visual e exibiu o aviso de área exclusiva, sem retornar os dados operacionais administrativos.
+
+O modo de demonstração passou a usar o cookie `pl_demo_session`, separado da sessão Manus. A suíte automatizada valida a prioridade da sessão local, o fallback para Manus, o `authSource` e o logout seletivo. A validação com uma sessão Manus real permanece dependente de uma sessão ativa do proprietário no navegador, pois não há credenciais Manus armazenadas ou solicitadas para este projeto.
+
+Na prévia do workspace, a sessão de membro de demonstração permaneceu ativa e o menu de perfil expõe a ação de saída. A validação navegável confirmou a tela do membro; a confirmação com uma sessão Manus real não foi iniciada para não requisitar credenciais externas adicionais.
 
 ## Próxima coleta
 
