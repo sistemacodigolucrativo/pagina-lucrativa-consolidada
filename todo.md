@@ -183,7 +183,7 @@
 ## Marco 5 — Lançamentos financeiros administráveis
 
 - [x] Implementar lançamentos financeiros do membro e manutenção administrativa com controles de acesso.
-- [ ] Sincronizar o marco financeiro validado com o GitHub.
+- [x] Sincronizar o marco financeiro validado com o GitHub no commit `826456e`.
 
 # Auditoria visual cirúrgica da landing
 
