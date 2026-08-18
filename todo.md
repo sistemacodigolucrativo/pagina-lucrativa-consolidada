@@ -205,3 +205,8 @@
 - [x] Diferenciar os atalhos Editar perfil, Meus dados, Saiba como divulgar, Encurtador de URL e Convidar amigos por contexto de rota, exibindo a ação persistente pertinente.
 - [x] Preservar a visão completa do Escritório Virtual como área de operação consolidada, sem duplicar dados ou formulários.
 - [x] Cobrir a seleção de fluxo por rota, validar em celular, tablet e computador diretamente na VPS e sincronizar o marco no GitHub.
+
+# Especialização da central de automações
+- [x] Diferenciar a rota de automações da central de comunicações, deixando explícito o preparo persistente de sequências sem prometer disparos externos.
+- [x] Cobrir a seleção contextual da rota e validar ações, responsividade e serviço diretamente na VPS.
+- [x] Sincronizar o ajuste validado com o repositório privado.

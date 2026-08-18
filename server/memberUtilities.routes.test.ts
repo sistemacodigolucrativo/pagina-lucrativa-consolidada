@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { getMemberCommunicationContext } from "../shared/memberCommunicationRoutes";
 import { getMemberOperationContext } from "../shared/memberOperationRoutes";
 
 describe("rotas funcionais do Escritório Virtual", () => {
@@ -26,5 +27,15 @@ describe("rotas funcionais do Escritório Virtual", () => {
     expect(getMemberOperationContext("/membros/como-divulgar")).toMatchObject({ title: "Saiba como divulgar", anchorId: "profile" });
     expect(getMemberOperationContext("/membros/campanhas")).toMatchObject({ title: "Encurtador de URL e campanhas", anchorId: "profile" });
     expect(getMemberOperationContext("/membros/convites")).toMatchObject({ title: "Convidar amigos", anchorId: "convites" });
+  });
+
+  it("diferencia automações como preparação registrada, sem alegar disparo externo", () => {
+    expect(getMemberCommunicationContext("/membros/automacoes")).toMatchObject({
+      title: "Preparar sequência de divulgação",
+      formTitle: "Preparar uma etapa da sequência",
+      defaultChannel: "email",
+    });
+    expect(getMemberCommunicationContext("/membros/automacoes").description).toContain("nenhum envio externo é automatizado");
+    expect(getMemberCommunicationContext("/membros/emails-whatsapp")).toMatchObject({ defaultChannel: "whatsapp" });
   });
 });
