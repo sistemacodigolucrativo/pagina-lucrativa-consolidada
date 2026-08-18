@@ -308,3 +308,12 @@
 # Responsividade de pedidos públicos recentes
 - [x] Ajustar no mobile a composição de data, nome e contato de cada pedido público recente.
 - [x] Validar a legibilidade da listagem em celular, tablet e desktop sem alterar o cabeçalho administrativo.
+
+# Responsividade do formulário de pedido administrativo
+- [x] Empilhar no mobile os campos de status e retorno da atualização de pedido, sem sobreposição de textos.
+- [x] Validar a legibilidade do formulário de pedido publicado em tela móvel.
+
+# Auditoria sistêmica de responsividade dos formulários
+- [x] Inventariar os formulários de administração e do Escritório Virtual que preservam colunas estreitas no celular.
+- [x] Aplicar uma composição móvel compartilhada que empilhe campos e preserve larguras internas seguras.
+- [x] Validar os formulários corrigidos em celular, tablet e desktop no domínio publicado.

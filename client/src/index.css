@@ -287,6 +287,14 @@ img { display: block; max-width: 100%; }
 .reference-videos { background: linear-gradient(135deg, #100d08, #050505); }
 .reference-video-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 44px; }
 .reference-video-grid iframe { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 15px; background: #111; }
+.office-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; width: 100%; }
+.office-form-grid > label { display: grid; min-width: 0; gap: 7px; }
+.office-form-grid > label > span { color: var(--muted); font: 10px "DM Mono", monospace; letter-spacing: .1em; text-transform: uppercase; }
+.office-form-grid input, .office-form-grid select, .office-form-grid textarea { box-sizing: border-box; width: 100%; min-width: 0; min-height: 46px; padding: 11px 13px; border: 1px solid var(--line); border-radius: 10px; outline: 0; color: var(--ivory); background: rgba(5,5,5,.52); font: inherit; }
+.office-form-grid textarea { min-height: 92px; resize: vertical; }
+.office-form-grid input:focus, .office-form-grid select:focus, .office-form-grid textarea:focus { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(229,189,98,.11); }
+.office-form-grid .office-form-full, .office-form-grid > .application-error { grid-column: 1 / -1; }
+.office-form-grid > button { justify-self: start; }
 .application-form { display: grid; gap: 13px; }
 .application-form .application-seal { justify-self: start; }
 .application-form .sales-price { margin-bottom: 0; }
@@ -337,6 +345,9 @@ img { display: block; max-width: 100%; }
 }
 
 @media (max-width: 650px) {
+  .office-form-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .office-form-grid .office-form-full, .office-form-grid > .application-error { grid-column: auto; }
+  .office-form-grid > button { width: 100%; justify-content: center; }
   .shell { width: min(100% - 32px, 1140px); }
   .nav-actions .nav-login { display: none; }
   .mobile-menu-button { display: inline-flex; }

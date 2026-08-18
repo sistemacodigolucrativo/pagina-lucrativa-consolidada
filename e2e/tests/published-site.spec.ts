@@ -91,6 +91,51 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     expect(dateBox!.x + dateBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
   });
 
+  test('formulários administrativos empilham e contêm seus campos no celular', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, 'admin', '123', '/admin');
+
+    for (const destination of ['/admin/pedidos', '/admin/financeiro']) {
+      await page.goto(route(destination));
+      const form = page.locator('.office-form-grid').first();
+      await expect(form).toBeVisible();
+
+      const [formBox, controlBoxes] = await Promise.all([
+        form.boundingBox(),
+        form.locator('input, select, textarea').evaluateAll(elements => elements.map(element => {
+          const rect = element.getBoundingClientRect();
+          return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+        })),
+      ]);
+
+      expect(formBox).not.toBeNull();
+      expect(controlBoxes.length).toBeGreaterThan(1);
+      for (const control of controlBoxes) {
+        expect(control.x).toBeGreaterThanOrEqual(formBox!.x - 1);
+        expect(control.x + control.width).toBeLessThanOrEqual(formBox!.x + formBox!.width + 1);
+      }
+      for (let index = 1; index < controlBoxes.length; index += 1) {
+        expect(controlBoxes[index].y).toBeGreaterThanOrEqual(controlBoxes[index - 1].y + controlBoxes[index - 1].height - 1);
+      }
+    }
+
+    for (const viewport of [
+      { width: 768, height: 1024 },
+      { width: 1280, height: 720 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(route('/admin/financeiro'));
+      const controls = page.locator('.office-form-grid').first().locator('select, input, textarea');
+      const firstControl = await controls.nth(0).boundingBox();
+      const secondControl = await controls.nth(1).boundingBox();
+
+      expect(firstControl).not.toBeNull();
+      expect(secondControl).not.toBeNull();
+      expect(Math.abs(secondControl!.y - firstControl!.y)).toBeLessThanOrEqual(1);
+      expect(secondControl!.x).toBeGreaterThan(firstControl!.x + firstControl!.width);
+    }
+  });
+
   test('rotas de painéis sem sessão redirecionam ao acesso local', async ({ page }) => {
     for (const protectedPath of ['/membros', '/admin']) {
       await page.context().clearCookies();
