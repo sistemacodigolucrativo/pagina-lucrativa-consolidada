@@ -6,7 +6,7 @@ describe("getMemberOperationContext", () => {
     expect(getMemberOperationContext("/membros/campanhas").title).toBe("Encurtador de URL e campanhas");
   });
 
-  it("reconhece a rota publicada com o prefixo /paginalucrativa", () => {
-    expect(getMemberOperationContext("/paginalucrativa/membros/campanhas").title).toBe("Encurtador de URL e campanhas");
+  it("reconhece a rota canônica de campanhas na raiz", () => {
+    expect(getMemberOperationContext("/membros/campanhas").title).toBe("Encurtador de URL e campanhas");
   });
 });

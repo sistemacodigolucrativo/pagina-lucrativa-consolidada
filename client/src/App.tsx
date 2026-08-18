@@ -113,7 +113,7 @@ function AppRoutes() {
 }
 function App() {
   const pathname = typeof window === "undefined" ? "" : window.location.pathname;
-  const base = pathname === "/paginalucrativa" || pathname.startsWith("/paginalucrativa/") ? "/paginalucrativa" : "";
+  const base = "";
   return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;

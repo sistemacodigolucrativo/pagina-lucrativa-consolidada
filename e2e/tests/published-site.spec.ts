@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 
-const APP_PREFIX = '/paginalucrativa';
+const APP_PREFIX = '';
 const route = (path = '/') => `${APP_PREFIX}${path}`;
 
 async function signIn(page: Page, username: string, password: string, destination: string) {
@@ -13,6 +13,11 @@ async function signIn(page: Page, username: string, password: string, destinatio
 }
 
 test.describe('Página Lucrativa 2026 publicada', () => {
+  test('o prefixo legado redireciona permanentemente para a raiz canônica', async ({ page }) => {
+    await page.goto('/paginalucrativa/');
+    await expect(page).toHaveURL(new RegExp('/$'));
+    await expect(page.getByRole('link', { name: /Escritório Virtual/i })).toBeVisible();
+  });
   test('a landing pública exibe a marca, navegação e formulário de pedido', async ({ page }) => {
     await page.goto(route('/'));
 

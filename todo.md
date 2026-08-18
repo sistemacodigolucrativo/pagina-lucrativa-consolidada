@@ -267,3 +267,12 @@
 - [x] Validar, em viewport mobile, que cada item abre a rota esperada e mantém a navegação acessível após a troca de tela.
 - [x] Corrigir itens sem rota, com rota divergente ou com estado mobile incorreto e registrar a cobertura automatizada correspondente.
 - [x] Corrigir a tela "Extrato e total de ganhos", que utiliza o menu padrão em vez do catálogo do Escritório Virtual no mobile.
+
+# Comparação das versões publicadas
+- [x] Comparar as versões em `/membros` e `/paginalucrativa`, incluindo origem de implantação, ativos e fluxos de acesso.
+- [x] Determinar qual versão contém a implementação mais atualizada e se há alterações independentes que justifiquem merge.
+
+# Migração da Página Lucrativa para a raiz do domínio
+- [x] Tornar `https://ocodigolucrativo.site/` a URL canônica da Página Lucrativa, com landing, acesso e painéis operando sem o prefixo `/paginalucrativa`.
+- [x] Substituir o prefixo `/paginalucrativa` por redirecionamentos permanentes de compatibilidade para as rotas equivalentes da raiz.
+- [x] Validar ativos, CTAs, autenticação, rotas de membro e rotas administrativas no domínio raiz antes da sincronização.

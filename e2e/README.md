@@ -12,6 +12,6 @@ npm ci
 npx playwright test --config ../current/e2e/playwright.config.ts
 ```
 
-Por padrão, a configuração testa `https://www.ocodigolucrativo.site/paginalucrativa` com o Google Chrome disponível na VPS, em modo headless e com `--no-sandbox`. Para apontar para outro ambiente, defina `E2E_BASE_URL`.
+Por padrão, a configuração testa `https://www.ocodigolucrativo.site/` com o Google Chrome disponível na VPS, em modo headless e com `--no-sandbox`. Para apontar para outro ambiente, defina `E2E_BASE_URL`.
 
 O relatório HTML é produzido em `e2e/playwright-report/index.html` e os artefatos de falha são gravados em `e2e/test-results/`.

@@ -53,6 +53,6 @@ const routeContexts: Record<string, MemberOperationContext> = {
 };
 
 export function getMemberOperationContext(pathname: string): MemberOperationContext {
-  const normalizedPath = pathname.startsWith("/paginalucrativa/") ? pathname.slice("/paginalucrativa".length) : pathname;
+  const normalizedPath = pathname;
   return routeContexts[normalizedPath] ?? defaultContext;
 }

@@ -137,7 +137,7 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activePath = location.replace(/^\/paginalucrativa(?=\/|$)/, "") || "/";
+  const activePath = location || "/";
   const activeMenuItem = menuItems.find(item => item.path === activePath);
   const groupedMenuItems = menuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
     const group = item.group ?? "Navegação";
