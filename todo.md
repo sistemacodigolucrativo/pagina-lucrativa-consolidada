@@ -210,3 +210,8 @@
 - [x] Diferenciar a rota de automações da central de comunicações, deixando explícito o preparo persistente de sequências sem prometer disparos externos.
 - [x] Cobrir a seleção contextual da rota e validar ações, responsividade e serviço diretamente na VPS.
 - [x] Sincronizar o ajuste validado com o repositório privado.
+
+# Navegação administrativa contextual
+- [x] Unificar a navegação dos módulos de pedidos, financeiro e comunicações, evitando a barra lateral genérica sem remover as operações persistentes já existentes.
+- [x] Remover o item duplicado de produtos do painel administrativo e disponibilizar o acesso à supervisão de comunicações.
+- [x] Cobrir a configuração de navegação, validar rotas e permissões diretamente na VPS e sincronizar o marco no GitHub.

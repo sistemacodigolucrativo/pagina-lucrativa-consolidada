@@ -1,22 +1,8 @@
-import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
+import { adminMenu } from "@/lib/adminNavigation";
 import { formatCurrency } from "@shared/dashboard";
-import { BookOpenCheck, ChartNoAxesCombined, CircleDollarSign, FileText, Layers3, UsersRound } from "lucide-react";
-
-const adminMenu: DashboardMenuItem[] = [
-  { icon: ChartNoAxesCombined, label: "Operação", path: "/admin", group: "Gestão" },
-  { icon: Layers3, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
-  { icon: UsersRound, label: "Membros", path: "/admin/membros", group: "Gestão" },
-  { icon: ChartNoAxesCombined, label: "Pontuação", path: "/admin/pontos", group: "Gestão" },
-  { icon: FileText, label: "Relatos", path: "/admin/relatos", group: "Gestão" },
-  { icon: FileText, label: "Pedidos", path: "/admin/pedidos", group: "Gestão" },
-  { icon: Layers3, label: "Catálogo", path: "/admin/produtos", group: "Conteúdo" },
-  { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
-  { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
-  { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
-  { icon: Layers3, label: "Produtos", path: "/admin/produtos", group: "Conteúdo" },
-  { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Gestão" },
-];
+import { BookOpenCheck } from "lucide-react";
 
 export default function AdminOffice() {
   const overview = trpc.admin.overview.useQuery();
