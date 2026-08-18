@@ -65,6 +65,32 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.getByText('Administração', { exact: true }).first()).toBeVisible();
   });
 
+  test('pedido público recente mantém a data legível dentro do conteúdo no mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, 'admin', '123', '/admin');
+
+    const row = page.locator('.office-list article').filter({ hasText: 'Marcelo' }).first();
+    const content = row.locator('> div').first();
+    const mobileDate = row.locator('.office-list-mobile-date');
+
+    await expect(row).toBeVisible();
+    await expect(mobileDate).toBeVisible();
+    await expect(row.locator('.office-list-desktop-date')).toBeHidden();
+
+    const [rowBox, contentBox, dateBox] = await Promise.all([
+      row.boundingBox(),
+      content.boundingBox(),
+      mobileDate.boundingBox(),
+    ]);
+
+    expect(rowBox).not.toBeNull();
+    expect(contentBox).not.toBeNull();
+    expect(dateBox).not.toBeNull();
+    expect(dateBox!.y).toBeGreaterThan(contentBox!.y);
+    expect(dateBox!.x).toBeGreaterThanOrEqual(contentBox!.x);
+    expect(dateBox!.x + dateBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
+  });
+
   test('rotas de painéis sem sessão redirecionam ao acesso local', async ({ page }) => {
     for (const protectedPath of ['/membros', '/admin']) {
       await page.context().clearCookies();

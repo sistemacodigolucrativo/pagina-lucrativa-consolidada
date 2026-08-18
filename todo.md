@@ -304,3 +304,7 @@
 - [x] Adicionar um botão Ampliar que abre o painel de leitura em modo de tela cheia.
 - [x] Permitir sair da tela cheia por botão e pela tecla Esc, mantendo o conteúdo responsivo.
 - [x] Validar a ampliação e o retorno no domínio publicado, com cobertura automatizada.
+
+# Responsividade de pedidos públicos recentes
+- [x] Ajustar no mobile a composição de data, nome e contato de cada pedido público recente.
+- [x] Validar a legibilidade da listagem em celular, tablet e desktop sem alterar o cabeçalho administrativo.
