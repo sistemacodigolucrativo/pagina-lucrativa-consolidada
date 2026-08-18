@@ -3,6 +3,8 @@ import { ArrowDown, ArrowUpRight, Menu, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
+import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
+import { PhoneInput } from "@/components/PhoneInput";
 
 const heroImage = "/manus-storage/imported-sprint-hero_2aa66410.jpg";
 const methodImage = "/manus-storage/imported-sprint-method_0b5ae91c.jpg";
@@ -128,6 +130,7 @@ function JoinButton({ className = "" }: { className?: string }) {
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showFloatingCta, setShowFloatingCta] = useState(false);
+  const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
   useEffect(() => {
     const updateFloatingCta = () => setShowFloatingCta(window.scrollY > window.innerHeight * .72);
     updateFloatingCta();
@@ -146,8 +149,8 @@ export default function Home() {
     const form = new FormData(event.currentTarget);
     application.mutate({
       fullName: String(form.get("fullName") ?? ""),
-      email: String(form.get("email") ?? ""),
-      whatsapp: String(form.get("whatsapp") ?? ""),
+      email: normalizeEmail(applicationContact.email),
+      whatsapp: normalizePhone(applicationContact.whatsapp),
       affiliateSlug,
     });
   }
@@ -218,8 +221,8 @@ export default function Home() {
           <form className="sales-price-card application-form" onSubmit={submitApplication}>
             <div className="application-seal" aria-hidden="true"><span>PL</span><small>página</small><b>pedido</b></div><div className="sales-price">À VISTA R$ 50,00 <small>ou até 12x de R$ 5,17</small></div><h3>(Preencha Agora Formulário Acima)</h3><p>A pessoa que receber o pagamento, vai lhe enviar uma senha especial para você personalizar sua Página Lucrativa.</p>
             <label className="application-field"><span>Nome</span><input name="fullName" autoComplete="name" required minLength={3} placeholder="Seu nome completo" /></label>
-            <label className="application-field"><span>Email</span><input name="email" type="email" autoComplete="email" required placeholder="voce@email.com" /></label>
-            <label className="application-field"><span>Whatsapp</span><input name="whatsapp" inputMode="tel" autoComplete="tel" required minLength={10} placeholder="(00) 00000-0000" /></label>
+            <label className="application-field"><span>Email</span><input name="email" type="email" autoComplete="email" required maxLength={320} value={applicationContact.email} onChange={event => setApplicationContact(current => ({ ...current, email: normalizeEmail(event.target.value) }))} placeholder="voce@email.com" /></label>
+            <label className="application-field"><span>WhatsApp</span><PhoneInput name="whatsapp" required value={applicationContact.whatsapp} onChange={whatsapp => setApplicationContact(current => ({ ...current, whatsapp }))} placeholder="(00) 0 0000-0000" /></label>
             {application.error && <p className="application-error" role="alert">{application.error.message}</p>}
             <button className="btn btn-primary" type="submit" disabled={application.isPending}>{application.isPending ? "Registrando pedido..." : "Realizar pedido"}<ArrowUpRight size={16} /></button><small>Seus dados serão usados apenas para acompanhar este pedido.</small>
           </form>

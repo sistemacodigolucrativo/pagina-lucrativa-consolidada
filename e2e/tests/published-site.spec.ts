@@ -27,6 +27,19 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.locator('#f')).toContainText(/pedido|formulário/i);
   });
 
+  test('WhatsApp público sanitiza a digitação, aplica máscara e bloqueia número incompleto', async ({ page }) => {
+    await page.goto(route('/'));
+    const whatsapp = page.locator('input[name="whatsapp"]');
+
+    await whatsapp.fill('abc(73) 99999-9999');
+    await expect(whatsapp).toHaveValue('(73) 9 9999-9999');
+    await expect(whatsapp).toHaveAttribute('inputmode', 'numeric');
+
+    await whatsapp.fill('739999999');
+    expect(await whatsapp.evaluate(input => input.validity.valid)).toBe(false);
+    expect(await whatsapp.evaluate(input => input.validationMessage)).toMatch(/telefone com DDD/i);
+  });
+
   test('credenciais inválidas permanecem no acesso e informam o erro', async ({ page }) => {
     await page.goto(route('/acesso'));
     await page.locator('#demo-username').fill('credencial-invalida');

@@ -2,6 +2,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { applicationInputSchema } from "@shared/applications";
+import { normalizedEmailZodSchema, optionalPhoneZodSchema } from "@shared/contactValidation";
 import {
   createAdminContent,
   createAdminEbook,
@@ -88,7 +89,7 @@ const campaignInput = z.object({
 const profileInput = z.object({
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
   bio: z.string().trim().max(2000).optional().nullable(),
-  whatsapp: z.string().trim().max(32).optional().nullable(),
+  whatsapp: optionalPhoneZodSchema,
   websiteUrl: z.string().url().max(512).optional().nullable(),
 });
 const receivingPreferenceInput = z.object({
@@ -125,7 +126,7 @@ const ebookInput = z.object({
   htmlContent: z.string().min(20).max(18000000),
   status: z.enum(["draft", "published", "archived"]),
 });
-export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: z.string().email().max(320), whatsapp: z.string().trim().max(32).optional().nullable(), source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
+export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: normalizedEmailZodSchema, whatsapp: optionalPhoneZodSchema, source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
 export const invitationInput = z.object({ contactId: z.number().int().positive().optional().nullable(), channel: z.enum(["link", "email", "whatsapp"]), message: z.string().trim().max(4000).optional().nullable() });
 export const testimonialInput = z.object({ content: z.string().trim().min(30).max(8000), authorConfirmed: z.literal(true) });
 export const appRouter = router({
@@ -183,7 +184,7 @@ export const appRouter = router({
   }),
   applications: router({
     submit: publicProcedure.input(applicationInputSchema).mutation(({ input }) => createApplication(input)),
-    lookup: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24), email: z.string().trim().email().max(320) })).query(({ input }) => getApplicationTracking(input.trackingCode, input.email)),
+    lookup: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24), email: normalizedEmailZodSchema })).query(({ input }) => getApplicationTracking(input.trackingCode, input.email)),
   }),
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
