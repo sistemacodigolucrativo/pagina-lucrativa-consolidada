@@ -276,3 +276,7 @@
 - [x] Tornar `https://ocodigolucrativo.site/` a URL canônica da Página Lucrativa, com landing, acesso e painéis operando sem o prefixo `/paginalucrativa`.
 - [x] Substituir o prefixo `/paginalucrativa` por redirecionamentos permanentes de compatibilidade para as rotas equivalentes da raiz.
 - [x] Validar ativos, CTAs, autenticação, rotas de membro e rotas administrativas no domínio raiz antes da sincronização.
+
+# Refinamento da Área de acesso
+- [x] Remover a frase “Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Página” da Área de acesso.
+- [x] Validar a tela de acesso enxuta na raiz do domínio e sincronizar a alteração validada.

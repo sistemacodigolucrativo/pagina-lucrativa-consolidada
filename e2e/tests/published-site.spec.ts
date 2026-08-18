@@ -52,6 +52,7 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(password).toHaveAttribute('type', 'password');
 
     await expect(page.getByRole('button', { name: 'Recuperar acesso' })).toBeDisabled();
+    await expect(page.getByText('Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Página Lucrativa.', { exact: true })).toHaveCount(0);
   });
 
   test('membro e administrador entram nos respectivos ambientes', async ({ page }) => {

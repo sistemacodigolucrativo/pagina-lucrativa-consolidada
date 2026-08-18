@@ -43,9 +43,6 @@ export default function DemoLogin() {
               <h1 className="font-[Space_Grotesk] text-4xl font-semibold leading-[0.98] sm:text-5xl">
                 Acesse seu Escritório Virtual.
               </h1>
-              <p className="max-w-sm text-sm leading-7 text-[#f5f0e7]/65">
-                Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Página Lucrativa.
-              </p>
             </div>
             <p className="max-w-sm font-mono text-[10px] leading-5 tracking-wide text-[#f5f0e7]/40 uppercase">
               Acesso seguro · Página Lucrativa
