@@ -330,3 +330,20 @@
 - [x] Padronizar no frontend a higienização, a normalização e a validação antes do envio em todas as telas afetadas.
 - [x] Aplicar as mesmas regras em todos os contratos tRPC e confirmar que a persistência só recebe valores estruturados válidos.
 - [x] Cobrir com testes unitários e E2E os casos válidos, inválidos, colagem, autopreenchimento, exclusão e chamadas diretas à API.
+
+# Diferenciação de Editar perfil e Meus dados
+- [x] Comparar as rotas publicadas, seus formulários e os dados persistidos por cada uma.
+- [x] Separar as finalidades de Editar perfil e Meus dados caso a interface atual esteja duplicada.
+- [x] Validar a navegação no domínio publicado e sincronizar o ajuste com o repositório privado.
+
+# Catálogo móvel do Escritório Virtual
+- [x] Reproduzir a abertura do menu móvel que mostra somente o grupo Escritório e confirmar os grupos ou itens ocultos.
+- [x] Corrigir a composição e o estado expansível do catálogo móvel para manter todos os grupos acessíveis.
+- [x] Validar em dispositivo móvel no domínio publicado e sincronizar a correção com o repositório privado.
+
+# Mensagem senha especial
+- [x] Auditar páginas, rotas, contratos, persistência, permissões, estados e interações existentes do módulo Mensagem senha especial.
+- [x] Mapear o fluxo completo de leitura, edição, validação, gravação, retorno e atualização de interface sem replicar o layout de referência.
+- [x] Implementar no template atual os comportamentos e conteúdos do módulo com persistência por usuário e controle de autorização.
+- [x] Criar cobertura unitária, de contrato e E2E para carregamento, alteração, salvamento, persistência, erros, sessão e responsividade.
+- [x] Validar a versão ativa na VPS e sincronizar a entrega com o repositório privado.

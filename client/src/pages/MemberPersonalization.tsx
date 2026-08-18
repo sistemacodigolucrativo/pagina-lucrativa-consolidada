@@ -1,42 +1,55 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
-import { KeyRound, LayoutDashboard, MessageSquareText, Send, ShieldCheck } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { Copy, ExternalLink, KeyRound, Link2, Save, ShieldCheck } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const menu: DashboardMenuItem[] = [
-  { icon: LayoutDashboard, label: "Escritório", path: "/membros", group: "Navegação" },
-  { icon: MessageSquareText, label: "Mensagem e acesso", path: "/membros/mensagem-especial", group: "Personalização" },
-  { icon: KeyRound, label: "Meus dados", path: "/membros/meus-dados", group: "Personalização" },
+  { icon: Link2, label: "Escritório", path: "/membros", group: "Navegação" },
+  { icon: KeyRound, label: "Mensagem senha especial", path: "/membros/mensagem-especial", group: "Personalização" },
+  { icon: ShieldCheck, label: "Meus dados", path: "/membros/meus-dados", group: "Personalização" },
 ];
+const field = "mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-amber-300/50 focus:ring-2";
 
 export default function MemberPersonalization() {
   const utils = trpc.useUtils();
-  const profile = trpc.member.profile.useQuery();
-  const tickets = trpc.member.tickets.useQuery();
-  const [message, setMessage] = useState("");
-  const [confirmed, setConfirmed] = useState(false);
-  const requests = useMemo(() => (tickets.data ?? []).filter(ticket => ticket.subject.startsWith("Personalização:")), [tickets.data]);
-  const createRequest = trpc.member.createTicket.useMutation({
-    onSuccess: async () => {
-      setMessage("");
-      setConfirmed(false);
-      await utils.member.tickets.invalidate();
-      toast.success("Solicitação de personalização registrada para a administração.");
-    },
+  const specialAccess = trpc.member.specialAccess.useQuery();
+  const [form, setForm] = useState({ title: "", message: "", buttonLabel: "", destinationUrl: "", password: "", status: "draft" as "draft" | "published" | "paused" });
+
+  useEffect(() => {
+    if (!specialAccess.data) return;
+    setForm({ title: specialAccess.data.title, message: specialAccess.data.message, buttonLabel: specialAccess.data.buttonLabel, destinationUrl: specialAccess.data.destinationUrl, password: "", status: specialAccess.data.status });
+  }, [specialAccess.data]);
+
+  const publicLink = useMemo(() => specialAccess.data && typeof window !== "undefined" ? `${window.location.origin}/senha-especial/${specialAccess.data.publicCode}` : "", [specialAccess.data]);
+  const save = trpc.member.updateSpecialAccess.useMutation({
+    onSuccess: async () => { setForm(current => ({ ...current, password: "" })); await utils.member.specialAccess.invalidate(); toast.success("Mensagem especial atualizada."); },
     onError: error => toast.error(error.message),
   });
-
-  function submit(event: FormEvent) {
+  const submit = (event: FormEvent) => {
     event.preventDefault();
-    const text = message.trim();
-    if (!text) return toast.error("Escreva a mensagem que deseja preparar.");
-    if (!confirmed) return toast.error("Confirme que a solicitação não inclui senha ou dados sensíveis.");
-    createRequest.mutate({
-      subject: "Personalização: mensagem e orientação de acesso",
-      message: `Mensagem solicitada para personalização:\n${text}\n\nA conta solicitou instruções de acesso seguro. Nenhuma senha foi registrada neste chamado.`,
-    });
-  }
+    if (form.status === "published" && !specialAccess.data?.hasPassword && !form.password) return toast.error("Defina uma senha antes de publicar.");
+    save.mutate({ ...form, password: form.password || undefined });
+  };
+  const copyLink = async () => {
+    if (!publicLink) return;
+    await navigator.clipboard.writeText(publicLink);
+    toast.success("Link copiado.");
+  };
 
-  return <DashboardLayout menuItems={menu} title="Escritório Virtual"><main className="mx-auto w-full max-w-6xl space-y-7 p-5 sm:p-8"><header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-amber-300">Acesso e personalização</span><h1 className="text-3xl font-semibold text-white">Mensagem e acesso especial</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Prepare a mensagem que acompanhará a personalização da sua página e envie a solicitação para acompanhamento administrativo. O retorno fica registrado na sua própria conta.</p></header><section className="grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]"><form onSubmit={submit} className="space-y-4 rounded-2xl border border-amber-300/25 bg-zinc-950/60 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><MessageSquareText className="size-5 text-amber-300" /><h2 className="font-medium">Preparar mensagem</h2></div><label className="block text-sm leading-6 text-zinc-200">Mensagem para a sua página<textarea required maxLength={2000} value={message} onChange={event => setMessage(event.target.value)} placeholder="Ex.: Escreva aqui a orientação ou a mensagem que deseja revisar para o acesso de personalização." className="mt-1 min-h-40 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-amber-300/50 focus:ring-2" /></label><label className="flex items-start gap-3 text-sm leading-6 text-zinc-300"><input required type="checkbox" checked={confirmed} onChange={event => setConfirmed(event.target.checked)} className="mt-1 size-4" />Confirmo que não inseri senha atual, credencial, documento ou outro dado sensível nesta solicitação.</label><button type="submit" disabled={createRequest.isPending} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.97] disabled:opacity-60"><Send className="size-4" />{createRequest.isPending ? "Registrando..." : "Enviar para análise"}</button></form><section className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><ShieldCheck className="size-5 text-amber-300" /><h2 className="font-medium">Orientação de acesso seguro</h2></div><p className="text-sm leading-6 text-zinc-300">Para proteger sua conta, uma senha não é exibida nem gravada nesta área. Quando precisar de orientação para acesso ou atualização de dados, use o registro ao lado. A administração responde no histórico abaixo.</p><div className="rounded-xl border border-white/10 bg-black/25 p-4"><span className="text-xs uppercase tracking-wider text-amber-200">Sua página</span><p className="mt-2 break-all text-sm text-white">{profile.data?.slug ? `/${profile.data.slug}` : "Configure seu identificador no Escritório Virtual."}</p><a href="/membros/meus-dados" className="mt-3 inline-flex text-sm font-medium text-amber-200 underline-offset-4 hover:underline">Atualizar meus dados</a></div><p className="text-xs leading-5 text-zinc-500">As respostas administrativas e o status do chamado permanecem vinculados somente à sua conta.</p></section></section><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6"><div className="mb-4 flex flex-wrap items-center justify-between gap-3"><div><span className="text-xs uppercase tracking-[0.16em] text-amber-300">Acompanhamento</span><h2 className="mt-1 text-lg font-medium text-white">Solicitações de personalização</h2></div><span className="text-xs uppercase tracking-wider text-zinc-500">{requests.length} registros</span></div>{tickets.isLoading ? <p className="text-sm text-zinc-400">Carregando solicitações...</p> : requests.length ? <div className="space-y-3">{requests.map(ticket => <article key={ticket.id} className="rounded-xl border border-white/10 bg-black/25 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><span className="text-xs uppercase tracking-wider text-amber-200">{ticket.status}</span><h3 className="mt-1 font-medium text-white">{ticket.subject}</h3><p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-zinc-300">{ticket.message}</p></div><time className="text-xs text-zinc-500">{new Date(ticket.updatedAt).toLocaleString("pt-BR")}</time></div>{ticket.adminResponse ? <div className="mt-4 border-l-2 border-amber-300 pl-3"><span className="text-xs uppercase tracking-wider text-amber-200">Resposta da administração</span><p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-zinc-200">{ticket.adminResponse}</p></div> : <p className="mt-4 text-sm text-zinc-500">Aguardando análise da administração.</p>}</article>)}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">Você ainda não registrou uma solicitação de personalização. Use o formulário acima quando precisar preparar uma mensagem ou receber orientação de acesso.</p>}</section></main></DashboardLayout>;
+  return <DashboardLayout menuItems={menu} title="Escritório Virtual"><main className="mx-auto w-full max-w-6xl space-y-7 p-5 sm:p-8">
+    <header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-amber-300">Acesso e personalização</span><h1 className="text-3xl font-semibold text-white">Mensagem senha especial</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Crie uma página de acesso privada com mensagem, senha e direcionamento próprios. A senha nunca é exibida depois de salva.</p></header>
+    <section className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,.85fr)]"><form onSubmit={submit} className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6">
+      <div className="flex items-center gap-2 text-white"><KeyRound className="size-5 text-amber-300" /><h2 className="font-medium">Configurar acesso especial</h2></div>
+      <label className="block text-sm text-zinc-200">Título<input required maxLength={160} value={form.title} onChange={event => setForm({ ...form, title: event.target.value })} className={field} placeholder="Acesso especial" /></label>
+      <label className="block text-sm text-zinc-200">Mensagem<textarea required minLength={10} maxLength={5000} value={form.message} onChange={event => setForm({ ...form, message: event.target.value })} className={`${field} min-h-32`} placeholder="Escreva a orientação que o visitante verá antes de informar a senha." /></label>
+      <div className="grid gap-4 sm:grid-cols-2"><label className="block text-sm text-zinc-200">Texto do botão<input required maxLength={80} value={form.buttonLabel} onChange={event => setForm({ ...form, buttonLabel: event.target.value })} className={field} /></label><label className="block text-sm text-zinc-200">Status<select value={form.status} onChange={event => setForm({ ...form, status: event.target.value as typeof form.status })} className={field}><option value="draft">Rascunho</option><option value="published">Publicado</option><option value="paused">Pausado</option></select></label></div>
+      <label className="block text-sm text-zinc-200">Destino após a senha<input required type="url" maxLength={1024} value={form.destinationUrl} onChange={event => setForm({ ...form, destinationUrl: event.target.value })} className={field} placeholder="https://" /></label>
+      <label className="block text-sm text-zinc-200">{specialAccess.data?.hasPassword ? "Nova senha (opcional)" : "Senha de acesso"}<input type="password" minLength={6} maxLength={128} value={form.password} onChange={event => setForm({ ...form, password: event.target.value })} className={field} placeholder={specialAccess.data?.hasPassword ? "Deixe em branco para manter a atual" : "Mínimo de 6 caracteres"} /></label>
+      <button disabled={save.isPending} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"><Save className="size-4" />{save.isPending ? "Salvando..." : "Salvar configuração"}</button>
+    </form><aside className="space-y-4 rounded-2xl border border-amber-300/25 bg-zinc-950/60 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><ShieldCheck className="size-5 text-amber-300" /><h2 className="font-medium">Publicação e controle</h2></div>
+      <p className="text-sm leading-6 text-zinc-300">O link só funciona quando o status está como publicado e uma senha foi definida. A administração pode pausar a página a qualquer momento.</p>
+      <div className="rounded-xl border border-white/10 bg-black/25 p-4"><span className="text-xs uppercase tracking-wider text-amber-200">Link de divulgação</span><p className="mt-2 break-all text-sm text-white">{publicLink || "Carregando..."}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={copyLink} disabled={!publicLink} className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm text-white disabled:opacity-60"><Copy className="size-4" />Copiar</button>{specialAccess.data?.status === "published" && <a href={publicLink} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm text-white"><ExternalLink className="size-4" />Abrir</a>}</div></div>
+      <dl className="grid grid-cols-2 gap-3 text-sm"><div><dt className="text-zinc-500">Acessos</dt><dd className="mt-1 font-medium text-white">{specialAccess.data?.accessCount ?? 0}</dd></div><div><dt className="text-zinc-500">Senha</dt><dd className="mt-1 font-medium text-white">{specialAccess.data?.hasPassword ? "Configurada" : "Pendente"}</dd></div></dl>{specialAccess.data?.adminNote && <div className="rounded-xl border border-amber-300/20 bg-amber-300/10 p-3 text-sm leading-6 text-amber-50"><strong>Orientação administrativa:</strong><br />{specialAccess.data.adminNote}</div>}</aside></section>
+  </main></DashboardLayout>;
 }

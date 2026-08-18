@@ -14,16 +14,15 @@ describe("rotas funcionais do Escritório Virtual", () => {
     expect(appSource).toContain('<Route path="/membros/cartao-certificado" component={MemberCredentials} />');
   });
 
-  it("reaproveita fluxos persistentes para dados, divulgação, convites e automações", () => {
-    expect(appSource).toContain('<Route path="/membros/meus-dados" component={MemberOperations} />');
+  it("mantém dados privados em tela própria e reaproveita os fluxos operacionais pertinentes", () => {
+    expect(appSource).toContain('<Route path="/membros/meus-dados" component={MemberAccount} />');
+    expect(appSource).toContain('<Route path="/membros/configuracoes" component={MemberProfile} />');
     expect(appSource).toContain('<Route path="/membros/como-divulgar" component={MemberOperations} />');
     expect(appSource).toContain('<Route path="/membros/convites" component={MemberOperations} />');
     expect(appSource).toContain('<Route path="/membros/automacoes" component={MemberCommunications} />');
   });
 
   it("especializa os atalhos compartilhados com a ação pertinente de cada rota", () => {
-    expect(getMemberOperationContext("/membros/configuracoes")).toMatchObject({ title: "Editar perfil", anchorId: "profile" });
-    expect(getMemberOperationContext("/membros/meus-dados")).toMatchObject({ title: "Meus dados", anchorId: "profile" });
     expect(getMemberOperationContext("/membros/como-divulgar")).toMatchObject({ title: "Saiba como divulgar", anchorId: "profile" });
     expect(getMemberOperationContext("/membros/campanhas")).toMatchObject({ title: "Encurtador de URL e campanhas", anchorId: "profile" });
     expect(getMemberOperationContext("/membros/convites")).toMatchObject({ title: "Convidar amigos", anchorId: "convites" });

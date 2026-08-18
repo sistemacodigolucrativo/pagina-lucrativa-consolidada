@@ -37,6 +37,10 @@ import MemberTestimonial from "./pages/MemberTestimonial";
 import AdminTestimonials from "./pages/AdminTestimonials";
 import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
+import MemberProfile from "./pages/MemberProfile";
+import MemberAccount from "./pages/MemberAccount";
+import SpecialAccessPublic from "./pages/SpecialAccessPublic";
+import AdminSpecialAccess from "./pages/AdminSpecialAccess";
 function AppRoutes() {
   return <Switch>
     <Route path="/" component={Home} />
@@ -44,6 +48,7 @@ function AppRoutes() {
     <Route path="/pedido/acompanhar" component={ApplicationTracking} />
     <Route path="/personalizar" component={PersonalizeAccess} />
     <Route path="/acesso" component={DemoLogin} />
+    <Route path="/senha-especial/:code" component={SpecialAccessPublic} />
     <Route path="/membros/operacao" component={MemberOperations} />
     <Route path="/membros/ebooks" component={EbookReader} />
     <Route path="/membros/produtos" component={MemberProducts} />
@@ -61,8 +66,8 @@ function AppRoutes() {
     <Route path="/membros/automacoes" component={MemberCommunications} />
     <Route path="/membros/mensagem-especial" component={MemberPersonalization} />
     <Route path="/membros/fazer-depoimento" component={MemberTestimonial} />
-    <Route path="/membros/meus-dados" component={MemberOperations} />
-    <Route path="/membros/configuracoes" component={MemberOperations} />
+    <Route path="/membros/meus-dados" component={MemberAccount} />
+    <Route path="/membros/configuracoes" component={MemberProfile} />
     <Route path="/membros/como-divulgar" component={MemberOperations} />
     <Route path="/membros/campanhas" component={MemberOperations} />
     <Route path="/membros/convites" component={MemberOperations} />
@@ -106,6 +111,7 @@ function AppRoutes() {
     <Route path="/admin/pontos" component={AdminPerformance} />
     <Route path="/admin/relatos" component={AdminTestimonials} />
     <Route path="/admin/academia" component={AdminCourses} />
+    <Route path="/admin/mensagem-especial" component={AdminSpecialAccess} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />

@@ -1,6 +1,6 @@
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { randomUUID } from "node:crypto";
+import { randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
   applications,
@@ -12,6 +12,7 @@ import {
   managedContent,
   memberProfiles,
   receivingPreferences,
+  specialAccessPages,
   referralLinks,
   memberContacts,
   memberInvitations,
@@ -398,6 +399,20 @@ export async function getMemberProfile(userId: number) {
   return rows[0] ?? null;
 }
 
+export async function getMemberAccount(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ name: users.name, email: users.email, role: users.role, updatedAt: users.updatedAt }).from(users).where(eq(users.id, userId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function updateMemberAccount(userId: number, input: { name: string; email: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(users).set({ name: input.name.trim(), email: input.email.trim().toLowerCase() }).where(eq(users.id, userId));
+  return getMemberAccount(userId);
+}
+
 export async function updateMemberProfile(userId: number, input: { slug: string; bio?: string | null; whatsapp?: string | null; websiteUrl?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
@@ -766,5 +781,113 @@ export async function updateAdminTestimonial(testimonialId: number, input: { sta
   const testimonial = await db.select({ id: memberTestimonials.id }).from(memberTestimonials).where(eq(memberTestimonials.id, testimonialId)).limit(1);
   if (!testimonial[0]) throw new Error("Relato não encontrado.");
   await db.update(memberTestimonials).set({ status: input.status, adminNote: input.adminNote ?? null }).where(eq(memberTestimonials.id, testimonialId));
+  return { success: true } as const;
+}
+
+type SpecialAccessStatus = "draft" | "published" | "paused";
+type SpecialAccessInput = { title: string; message: string; buttonLabel: string; destinationUrl: string; password?: string; status: SpecialAccessStatus };
+
+function hashSpecialAccessPassword(password: string) {
+  const salt = randomUUID();
+  const digest = scryptSync(password, salt, 64).toString("hex");
+  return `scrypt$${salt}$${digest}`;
+}
+
+function verifySpecialAccessPassword(password: string, passwordHash: string | null) {
+  if (!passwordHash) return false;
+  const [algorithm, salt, expected] = passwordHash.split("$");
+  if (algorithm !== "scrypt" || !salt || !expected) return false;
+  const actual = scryptSync(password, salt, 64).toString("hex");
+  return timingSafeEqual(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
+}
+
+function newSpecialAccessCode() {
+  return randomUUID().replace(/-/g, "").slice(0, 16);
+}
+
+async function ensureSpecialAccessPage(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const existing = await db.select().from(specialAccessPages).where(eq(specialAccessPages.userId, userId)).limit(1);
+  if (existing[0]) return existing[0];
+  await db.insert(specialAccessPages).values({
+    userId,
+    publicCode: newSpecialAccessCode(),
+    title: "Acesso especial",
+    message: "Use a senha recebida para continuar para a área preparada especialmente para você.",
+    buttonLabel: "Continuar",
+    destinationUrl: "https://www.ocodigolucrativo.site/",
+    status: "draft",
+  });
+  const created = await db.select().from(specialAccessPages).where(eq(specialAccessPages.userId, userId)).limit(1);
+  return created[0];
+}
+
+function memberSpecialAccessView(page: typeof specialAccessPages.$inferSelect) {
+  return {
+    publicCode: page.publicCode,
+    title: page.title,
+    message: page.message,
+    buttonLabel: page.buttonLabel,
+    destinationUrl: page.destinationUrl,
+    status: page.status,
+    hasPassword: Boolean(page.passwordHash),
+    adminNote: page.adminNote,
+    accessCount: page.accessCount,
+    lastAccessAt: page.lastAccessAt,
+    updatedAt: page.updatedAt,
+  };
+}
+
+export async function getMemberSpecialAccess(userId: number) {
+  return memberSpecialAccessView(await ensureSpecialAccessPage(userId));
+}
+
+export async function updateMemberSpecialAccess(userId: number, input: SpecialAccessInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const current = await ensureSpecialAccessPage(userId);
+  const passwordHash = input.password ? hashSpecialAccessPassword(input.password) : current.passwordHash;
+  if (input.status === "published" && !passwordHash) throw new Error("Defina uma senha de acesso antes de publicar a página.");
+  await db.update(specialAccessPages).set({
+    title: input.title,
+    message: input.message,
+    buttonLabel: input.buttonLabel,
+    destinationUrl: input.destinationUrl,
+    passwordHash,
+    status: input.status,
+  }).where(eq(specialAccessPages.userId, userId));
+  return getMemberSpecialAccess(userId);
+}
+
+export async function getPublicSpecialAccess(publicCode: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ publicCode: specialAccessPages.publicCode, title: specialAccessPages.title, message: specialAccessPages.message, buttonLabel: specialAccessPages.buttonLabel }).from(specialAccessPages).where(and(eq(specialAccessPages.publicCode, publicCode), eq(specialAccessPages.status, "published"))).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function unlockPublicSpecialAccess(publicCode: string, password: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const rows = await db.select().from(specialAccessPages).where(and(eq(specialAccessPages.publicCode, publicCode), eq(specialAccessPages.status, "published"))).limit(1);
+  const page = rows[0];
+  if (!page || !verifySpecialAccessPassword(password, page.passwordHash)) throw new Error("Senha inválida ou acesso indisponível.");
+  await db.update(specialAccessPages).set({ accessCount: page.accessCount + 1, lastAccessAt: new Date() }).where(eq(specialAccessPages.id, page.id));
+  return { destinationUrl: page.destinationUrl };
+}
+
+export async function getAdminSpecialAccessPages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ id: specialAccessPages.id, userId: specialAccessPages.userId, publicCode: specialAccessPages.publicCode, title: specialAccessPages.title, status: specialAccessPages.status, adminNote: specialAccessPages.adminNote, accessCount: specialAccessPages.accessCount, lastAccessAt: specialAccessPages.lastAccessAt, updatedAt: specialAccessPages.updatedAt, memberName: users.name, memberEmail: users.email }).from(specialAccessPages).leftJoin(users, eq(specialAccessPages.userId, users.id)).orderBy(desc(specialAccessPages.updatedAt));
+}
+
+export async function updateAdminSpecialAccessPage(id: number, input: { status: SpecialAccessStatus; adminNote?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const existing = await db.select({ id: specialAccessPages.id }).from(specialAccessPages).where(eq(specialAccessPages.id, id)).limit(1);
+  if (!existing[0]) throw new Error("Página especial não encontrada.");
+  await db.update(specialAccessPages).set({ status: input.status, adminNote: input.adminNote ?? null }).where(eq(specialAccessPages.id, id));
   return { success: true } as const;
 }

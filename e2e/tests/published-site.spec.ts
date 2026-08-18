@@ -182,6 +182,28 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.getByRole('heading', { name: 'Meu desempenho', exact: true })).toBeVisible();
   });
 
+  test('Mensagem senha especial apresenta configuração, gestão administrativa e estado público indisponível', async ({ page }) => {
+    await signIn(page, 'user', '123', '/membros');
+    await page.goto(route('/membros/mensagem-especial'));
+
+    await expect(page.getByRole('heading', { name: 'Mensagem senha especial', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Configurar acesso especial', exact: true })).toBeVisible();
+    await expect(page.getByLabel('Título')).toBeVisible();
+    await expect(page.getByLabel('Mensagem')).toBeVisible();
+    await expect(page.getByLabel('Destino após a senha')).toHaveAttribute('type', 'url');
+    await expect(page.getByRole('button', { name: 'Salvar configuração' })).toBeVisible();
+
+    await page.context().clearCookies();
+    await signIn(page, 'admin', '123', '/admin');
+    await page.goto(route('/admin/mensagem-especial'));
+    await expect(page.getByRole('heading', { name: 'Mensagens senha especial', exact: true })).toBeVisible();
+    await expect(page.getByText(/senhas nunca são exibidas/i)).toBeVisible();
+
+    await page.context().clearCookies();
+    await page.goto(route('/senha-especial/codigo-inexistente'));
+    await expect(page.getByRole('heading', { name: 'Acesso indisponível', exact: true })).toBeVisible();
+  });
+
   test('campos monetários e chave PIX higienizam dados estruturados no Escritório Virtual', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
 
@@ -264,7 +286,7 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await signIn(page, 'user', '123', '/membros');
 
     await page.goto(route('/membros/mensagem-especial'));
-    await expect(page.getByRole('heading', { name: 'Mensagem e acesso especial', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Mensagem senha especial', exact: true })).toBeVisible();
     await page.locator('[data-sidebar="trigger"]').click();
 
     await expect(page.getByText('Escritório', { exact: true })).toBeVisible();
@@ -305,7 +327,7 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await openMenu();
     await page.getByText('Mensagem senha especial', { exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/mensagem-especial(?:[/?#]|$)`));
-    await expect(page.getByRole('heading', { name: 'Mensagem e acesso especial', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Mensagem senha especial', exact: true })).toBeVisible();
 
     await openMenu();
     await page.getByRole('button', { name: 'Ferramentas administrativas: expandir submenu' }).click();
