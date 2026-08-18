@@ -195,3 +195,8 @@
 - [x] Criar a fila administrativa de curadoria, com aprovação, rejeição, arquivamento e anotação interna.
 - [x] Validar permissões, rotas, suíte automatizada, compilação e serviço diretamente na VPS, sem gerar dados de relato fictícios.
 - [x] Sincronizar o marco de relatos próprios validado com o repositório privado.
+
+# Correção de navegação administrativa
+- [x] Corrigir o atalho Catálogo para apontar para a manutenção real de produtos, sem cair no painel administrativo genérico.
+- [x] Validar a rota de catálogo, o menu administrativo, a suíte de testes e a compilação diretamente na VPS.
+- [x] Sincronizar a correção de navegação administrativa com o repositório privado.

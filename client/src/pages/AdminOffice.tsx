@@ -10,7 +10,7 @@ const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Pontuação", path: "/admin/pontos", group: "Gestão" },
   { icon: FileText, label: "Relatos", path: "/admin/relatos", group: "Gestão" },
   { icon: FileText, label: "Pedidos", path: "/admin/pedidos", group: "Gestão" },
-  { icon: Layers3, label: "Catálogo", path: "/admin/catalogo", group: "Conteúdo" },
+  { icon: Layers3, label: "Catálogo", path: "/admin/produtos", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
