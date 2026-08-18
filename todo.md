@@ -220,7 +220,7 @@
 - [x] Preparar a infraestrutura Playwright no release ativo da VPS sem alterar a aplicação publicada.
 - [x] Cobrir login local, bloqueios de permissão, navegação crítica de membro e administração e estados sem dados fictícios.
 - [x] Executar a suíte E2E contra o domínio publicado, corrigir falhas identificadas e arquivar as evidências.
-- [ ] Sincronizar a suíte, as evidências permitidas e o relatório de execução com o repositório privado.
+- [x] Sincronizar a suíte, as evidências permitidas e o relatório de execução com o repositório privado.
 
 - [x] Substituir a redação interna de validação da tela de acesso por copy apropriada da Página Lucrativa, removendo menções a sessão temporária, demonstração e Manus.
 
