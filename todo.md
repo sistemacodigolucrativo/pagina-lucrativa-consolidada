@@ -200,3 +200,8 @@
 - [x] Corrigir o atalho Catálogo para apontar para a manutenção real de produtos, sem cair no painel administrativo genérico.
 - [x] Validar a rota de catálogo, o menu administrativo, a suíte de testes e a compilação diretamente na VPS.
 - [x] Sincronizar a correção de navegação administrativa com o repositório privado.
+
+# Especialização dos atalhos do Escritório Virtual
+- [x] Diferenciar os atalhos Editar perfil, Meus dados, Saiba como divulgar, Encurtador de URL e Convidar amigos por contexto de rota, exibindo a ação persistente pertinente.
+- [x] Preservar a visão completa do Escritório Virtual como área de operação consolidada, sem duplicar dados ou formulários.
+- [x] Cobrir a seleção de fluxo por rota, validar em celular, tablet e computador diretamente na VPS e sincronizar o marco no GitHub.
