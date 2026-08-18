@@ -22,11 +22,12 @@ describe("módulo de e-books", () => {
     expect(navigation).toContain('label: "Biblioteca de e-books", path: "/membros/ebooks"');
   });
 
-  it("mantém o HTML em um iframe isolado no leitor e na prévia administrativa", async () => {
-    const reader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
+  it("mantém o HTML em um iframe isolado e responsivo no leitor e na prévia administrativa", async () => {
+    const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
-    expect(reader).toContain("sandbox=\"\"");
-    expect(reader).toContain("srcDoc={selected.data.htmlContent}");
+    expect(reader).toContain("sandbox=\"allow-same-origin\"");
+    expect(reader).toContain("srcDoc={htmlContent}");
+    expect(reader).toContain("calculateResponsiveEbookScale");
     expect(admin).toContain("sandbox=\"\"");
     expect(admin).toContain("srcDoc={form.htmlContent}");
   });

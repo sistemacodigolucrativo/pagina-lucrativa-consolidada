@@ -96,6 +96,41 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.getByText('Material indisponível', { exact: true })).toHaveCount(0);
   });
 
+  test('leitor integrado contém a página do e-book em celular, tablet e desktop', async ({ page }) => {
+    await signIn(page, 'user', '123', '/membros');
+
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1280, height: 720 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(route('/membros/curso-google-ads'));
+      const frame = page.locator('iframe[title^="Leitor de"]');
+      await expect(frame).toBeVisible();
+
+      await expect.poll(async () => frame.evaluate(iframe => {
+        const document = iframe.contentDocument;
+        const pages = Array.from(document?.querySelectorAll<HTMLElement>("[id^='page'][id$='-div']") || []);
+        const maxRight = Math.max(0, ...pages.map(page => page.getBoundingClientRect().right));
+        return { maxRight, viewportWidth: iframe.clientWidth, zoom: Number(document?.body.style.zoom || 1) };
+      })).toMatchObject({ zoom: expect.any(Number) });
+
+      const layout = await frame.evaluate(iframe => {
+        const document = iframe.contentDocument;
+        const pages = Array.from(document?.querySelectorAll<HTMLElement>("[id^='page'][id$='-div']") || []);
+        return {
+          maxRight: Math.max(0, ...pages.map(page => page.getBoundingClientRect().right)),
+          viewportWidth: iframe.clientWidth,
+          zoom: Number(document?.body.style.zoom || 1),
+        };
+      });
+
+      expect(layout.maxRight).toBeLessThanOrEqual(layout.viewportWidth + 2);
+      if (viewport.width === 390) expect(layout.zoom).toBeLessThan(1);
+    }
+  });
+
   test('menu móvel preserva o catálogo do Escritório Virtual e expande seus grupos', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, 'user', '123', '/membros');

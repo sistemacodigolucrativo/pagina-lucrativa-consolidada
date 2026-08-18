@@ -290,3 +290,12 @@
 - [x] Abrir o e-book associado no leitor integrado quando o membro selecionar um curso, inclusive nas rotas históricas da Academia.
 - [x] Permitir a manutenção administrativa do e-book vinculado ao curso e impedir a publicação de curso sem material disponível.
 - [x] Cobrir o fluxo curso–e-book por testes automatizados, validar no domínio publicado e sincronizar a correção no GitHub.
+
+# Exportação da Biblioteca
+- [x] Inventariar os e-books HTML publicados na Biblioteca e preservar seus títulos na estrutura do pacote.
+- [x] Gerar e validar um arquivo ZIP com todos os e-books publicados para entrega ao usuário.
+
+# Responsividade do leitor integrado
+- [x] Diagnosticar o transbordamento visual do conteúdo HTML dentro do painel de leitura em telas compactas.
+- [x] Ajustar o leitor integrado para conter e escalar o e-book dentro do painel em celular, tablet e desktop.
+- [x] Validar visualmente e por testes o leitor responsivo no domínio publicado e sincronizar a correção validada.
