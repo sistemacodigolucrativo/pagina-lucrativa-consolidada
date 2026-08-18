@@ -280,3 +280,6 @@
 # Refinamento da Área de acesso
 - [x] Remover a frase “Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Página” da Área de acesso.
 - [x] Validar a tela de acesso enxuta na raiz do domínio e sincronizar a alteração validada.
+# Direção Cofre de Marca
+- [x] Aplicar a proposta 05 — Cofre de Marca na Área de acesso publicada, preservando a autenticação local.
+- [x] Validar a nova composição Cofre de Marca em desktop e mobile e sincronizar a alteração validada.
