@@ -131,6 +131,23 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     }
   });
 
+  test('botão Ampliar alterna o leitor integrado para tela cheia e permite sair com Esc', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, 'user', '123', '/membros');
+    await page.goto(route('/membros/curso-google-ads'));
+
+    const reader = page.locator('[data-ebook-reader="responsive"]');
+    await expect(reader).toHaveAttribute('data-reader-mode', 'embedded');
+    await page.getByRole('button', { name: 'Ampliar leitor' }).click();
+    await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
+    await expect(reader).toHaveAttribute('data-reader-mode', 'fullscreen');
+    await expect(page.getByRole('button', { name: 'Sair da tela cheia' })).toBeVisible();
+
+    await page.evaluate(() => document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+    await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(false);
+    await expect(reader).toHaveAttribute('data-reader-mode', 'embedded');
+  });
+
   test('menu móvel preserva o catálogo do Escritório Virtual e expande seus grupos', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, 'user', '123', '/membros');

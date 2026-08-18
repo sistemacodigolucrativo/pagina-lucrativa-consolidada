@@ -299,3 +299,8 @@
 - [x] Diagnosticar o transbordamento visual do conteúdo HTML dentro do painel de leitura em telas compactas.
 - [x] Ajustar o leitor integrado para conter e escalar o e-book dentro do painel em celular, tablet e desktop.
 - [x] Validar visualmente e por testes o leitor responsivo no domínio publicado e sincronizar a correção validada.
+
+# Ampliação do leitor integrado
+- [x] Adicionar um botão Ampliar que abre o painel de leitura em modo de tela cheia.
+- [x] Permitir sair da tela cheia por botão e pela tecla Esc, mantendo o conteúdo responsivo.
+- [x] Validar a ampliação e o retorno no domínio publicado, com cobertura automatizada.

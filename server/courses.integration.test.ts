@@ -26,6 +26,7 @@ describe("Academia com leitor integrado", () => {
     expect(memberCourses).toContain("htmlContent={course.ebook.htmlContent}");
     expect(reader).toContain("srcDoc={htmlContent}");
     expect(reader).toContain('sandbox="allow-same-origin"');
+    expect(reader).toContain('data-reader-mode={isFullscreen ? "fullscreen" : "embedded"}');
     expect(memberCourses).toContain("Abrir material");
   });
 
