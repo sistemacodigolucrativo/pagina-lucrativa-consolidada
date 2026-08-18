@@ -31,6 +31,8 @@ import AdminReferrals from "./pages/AdminReferrals";
 import MemberPersonalization from "./pages/MemberPersonalization";
 import MemberTraffic from "./pages/MemberTraffic";
 import MemberCredentials from "./pages/MemberCredentials";
+import MemberTestimonial from "./pages/MemberTestimonial";
+import AdminTestimonials from "./pages/AdminTestimonials";
 import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 function AppRoutes() {
@@ -56,6 +58,7 @@ function AppRoutes() {
     <Route path="/membros/emails-whatsapp" component={MemberCommunications} />
     <Route path="/membros/automacoes" component={MemberCommunications} />
     <Route path="/membros/mensagem-especial" component={MemberPersonalization} />
+    <Route path="/membros/fazer-depoimento" component={MemberTestimonial} />
     <Route path="/membros/meus-dados" component={MemberOperations} />
     <Route path="/membros/configuracoes" component={MemberOperations} />
     <Route path="/membros/como-divulgar" component={MemberOperations} />
@@ -96,6 +99,7 @@ function AppRoutes() {
     <Route path="/admin/comunicacoes" component={AdminCommunications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />
     <Route path="/admin/pontos" component={AdminPerformance} />
+    <Route path="/admin/relatos" component={AdminTestimonials} />
     <Route path="/admin/academia" component={AdminCourses} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />

@@ -15,6 +15,7 @@ import {
   memberContacts,
   memberInvitations,
   memberActivities,
+  memberTestimonials,
   products,
   pointEntries,
   supportTickets,
@@ -627,4 +628,43 @@ export async function updateAdminInvitation(invitationId, status) {
   await db.update(memberInvitations).set({ status }).where(eq(memberInvitations.id, invitationId));
   await recordMemberActivity(invitation[0].userId, status === "cancelled" ? "invitation_cancelled" : "invitation_prepared", "invitation", invitationId, "Administração atualizou o preparo de comunicação para " + status + ".");
   return { success: true };
+}
+
+export async function getMemberTestimonials(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(memberTestimonials).where(eq(memberTestimonials.userId, userId)).orderBy(desc(memberTestimonials.updatedAt));
+}
+
+export async function createMemberTestimonial(userId: number, input: { content: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const result = await db.insert(memberTestimonials).values({ userId, content: input.content, authorConfirmed: 1, status: "pending" });
+  return { id: Number(result[0].insertId) };
+}
+
+export async function getAdminTestimonials() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: memberTestimonials.id,
+    userId: memberTestimonials.userId,
+    content: memberTestimonials.content,
+    authorConfirmed: memberTestimonials.authorConfirmed,
+    status: memberTestimonials.status,
+    adminNote: memberTestimonials.adminNote,
+    createdAt: memberTestimonials.createdAt,
+    updatedAt: memberTestimonials.updatedAt,
+    memberName: users.name,
+    memberEmail: users.email,
+  }).from(memberTestimonials).leftJoin(users, eq(memberTestimonials.userId, users.id)).orderBy(desc(memberTestimonials.updatedAt));
+}
+
+export async function updateAdminTestimonial(testimonialId: number, input: { status: "pending" | "approved" | "rejected" | "archived"; adminNote?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const testimonial = await db.select({ id: memberTestimonials.id }).from(memberTestimonials).where(eq(memberTestimonials.id, testimonialId)).limit(1);
+  if (!testimonial[0]) throw new Error("Relato não encontrado.");
+  await db.update(memberTestimonials).set({ status: input.status, adminNote: input.adminNote ?? null }).where(eq(memberTestimonials.id, testimonialId));
+  return { success: true } as const;
 }

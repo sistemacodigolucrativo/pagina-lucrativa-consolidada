@@ -8,6 +8,7 @@ const adminMenu: DashboardMenuItem[] = [
   { icon: Layers3, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
   { icon: UsersRound, label: "Membros", path: "/admin/membros", group: "Gestão" },
   { icon: ChartNoAxesCombined, label: "Pontuação", path: "/admin/pontos", group: "Gestão" },
+  { icon: FileText, label: "Relatos", path: "/admin/relatos", group: "Gestão" },
   { icon: FileText, label: "Pedidos", path: "/admin/pedidos", group: "Gestão" },
   { icon: Layers3, label: "Catálogo", path: "/admin/catalogo", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },

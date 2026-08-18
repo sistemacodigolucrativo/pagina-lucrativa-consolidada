@@ -68,6 +68,20 @@ export const pointEntries = mysqlTable("pointEntries", {
   statusIndex: index("point_entries_status_idx").on(table.status),
 }));
 
+export const memberTestimonials = mysqlTable("memberTestimonials", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  content: text("content").notNull(),
+  authorConfirmed: int("authorConfirmed").default(0).notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected", "archived"]).default("pending").notNull(),
+  adminNote: text("adminNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  userUpdatedIndex: index("member_testimonials_user_updated_idx").on(table.userId, table.updatedAt),
+  statusUpdatedIndex: index("member_testimonials_status_updated_idx").on(table.status, table.updatedAt),
+}));
+
 export const campaignLinks = mysqlTable("campaignLinks", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

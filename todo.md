@@ -189,3 +189,9 @@
 - [x] Corrigir referência ausente MemberReferrals que impede o carregamento do bundle publicado.
 - [x] Compilar, ativar e validar a página publicada e as rotas de indicações na VPS.
 - [x] Sincronizar a correção de runtime validada com o GitHub no commit b644ab6.
+
+# Relatos próprios com curadoria administrativa
+- [x] Criar envio privado de relato próprio com confirmação de autoria e estados de acompanhamento para o membro.
+- [x] Criar a fila administrativa de curadoria, com aprovação, rejeição, arquivamento e anotação interna.
+- [x] Validar permissões, rotas, suíte automatizada, compilação e serviço diretamente na VPS, sem gerar dados de relato fictícios.
+- [x] Sincronizar o marco de relatos próprios validado com o repositório privado.

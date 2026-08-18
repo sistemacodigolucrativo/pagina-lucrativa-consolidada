@@ -67,6 +67,10 @@ import {
   updateAdminPointEntry,
   getAdminInvitations,
   updateAdminInvitation,
+  getMemberTestimonials,
+  createMemberTestimonial,
+  getAdminTestimonials,
+  updateAdminTestimonial,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { z } from "zod";
@@ -111,6 +115,7 @@ const ebookInput = z.object({
 });
 export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: z.string().email().max(320), whatsapp: z.string().trim().max(32).optional().nullable(), source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
 export const invitationInput = z.object({ contactId: z.number().int().positive().optional().nullable(), channel: z.enum(["link", "email", "whatsapp"]), message: z.string().trim().max(4000).optional().nullable() });
+export const testimonialInput = z.object({ content: z.string().trim().min(30).max(8000), authorConfirmed: z.literal(true) });
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -157,6 +162,8 @@ export const appRouter = router({
     activities: protectedProcedure.query(({ ctx }) => getMemberActivities(ctx.user.id)),
     referrals: protectedProcedure.query(({ ctx }) => getMemberReferrals(ctx.user.id)),
     performance: protectedProcedure.query(({ ctx }) => getMemberPerformance(ctx.user.id)),
+    testimonials: protectedProcedure.query(({ ctx }) => getMemberTestimonials(ctx.user.id)),
+    createTestimonial: protectedProcedure.input(testimonialInput).mutation(({ ctx, input }) => createMemberTestimonial(ctx.user.id, input)),
   }),
   applications: router({
     submit: publicProcedure.input(applicationInputSchema).mutation(({ input }) => createApplication(input)),
@@ -198,6 +205,8 @@ export const appRouter = router({
     performanceMembers: adminProcedure.query(() => getPerformanceMembers()),
     createPointEntry: adminProcedure.input(z.object({ userId: z.number().int().positive(), amount: z.number().int().min(-100000).max(100000).refine(value => value !== 0), reason: z.string().trim().min(3).max(320), status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminPointEntry(ctx.user.id, input)),
     updatePointEntry: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]) })).mutation(({ input }) => updateAdminPointEntry(input.id, input)),
+    testimonials: adminProcedure.query(() => getAdminTestimonials()),
+    updateTestimonial: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "approved", "rejected", "archived"]), adminNote: z.string().trim().max(4000).optional().nullable() })).mutation(({ input }) => updateAdminTestimonial(input.id, input)),
     referralMembers: adminProcedure.query(() => getReferralMembers()),
     referralLinks: adminProcedure.query(() => getAdminReferralLinks()),
     setReferralLink: adminProcedure.input(z.object({ sponsorId: z.number().int().positive(), referredUserId: z.number().int().positive(), status: z.enum(["active", "archived"]) })).mutation(({ input }) => setAdminReferralLink(input)),
