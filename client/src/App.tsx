@@ -92,6 +92,7 @@ function AppRoutes() {
     <Route path="/membros/curso-logotipo" component={MemberCourses} />
     <Route path="/membros/curso-capas-videos" component={MemberCourses} />
     <Route path="/membros/filmes" component={MemberCourses} />
+    <Route path="/membros/curso/:courseKey" component={MemberCourses} />
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />

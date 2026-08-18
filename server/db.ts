@@ -1,6 +1,6 @@
-import { randomUUID } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
   applications,
@@ -249,17 +249,60 @@ export async function getPublishedCourses() {
 }
 
 type CourseLevel = "fundamentos" | "pratica" | "avancado";
-type CourseInput = { title: string; summary?: string | null; category?: string | null; durationMinutes: number; level: CourseLevel; isPublished: boolean };
+type CourseInput = { title: string; summary?: string | null; category?: string | null; durationMinutes: number; level: CourseLevel; ebookId: number | null; isPublished: boolean };
+
+function createCourseRouteKey(title: string) {
+  const stem = title
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120) || "curso";
+  return `${stem}-${randomUUID().slice(0, 8)}`;
+}
+
+async function assertCourseEbook(ebookId: number | null, mustBePublished: boolean) {
+  if (!ebookId) {
+    if (mustBePublished) throw new Error("Vincule um e-book publicado antes de disponibilizar este curso.");
+    return;
+  }
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const result = await db.select({ id: ebooks.id, status: ebooks.status }).from(ebooks).where(eq(ebooks.id, ebookId)).limit(1);
+  if (!result[0]) throw new Error("O e-book selecionado não existe.");
+  if (mustBePublished && result[0].status !== "published") throw new Error("Selecione um e-book publicado para disponibilizar este curso.");
+}
 
 export async function getMemberCourses(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  const [courseRows, progressRows] = await Promise.all([
+  const [courseRows, progressRows, publishedEbookRows] = await Promise.all([
     db.select().from(courses).where(eq(courses.isPublished, 1)).orderBy(desc(courses.updatedAt)),
     db.select().from(courseProgress).where(eq(courseProgress.userId, userId)),
+    db.select({ id: ebooks.id }).from(ebooks).where(eq(ebooks.status, "published")),
   ]);
   const progressByCourse = new Map(progressRows.map(row => [row.courseId, row]));
-  return courseRows.map(course => ({ ...course, progressPercent: progressByCourse.get(course.id)?.progressPercent ?? 0, lastAccessedAt: progressByCourse.get(course.id)?.lastAccessedAt ?? null }));
+  const publishedEbookIds = new Set(publishedEbookRows.map(ebook => ebook.id));
+  return courseRows
+    .filter(course => course.ebookId !== null && publishedEbookIds.has(course.ebookId))
+    .map(course => ({ ...course, progressPercent: progressByCourse.get(course.id)?.progressPercent ?? 0, lastAccessedAt: progressByCourse.get(course.id)?.lastAccessedAt ?? null }));
+}
+
+export async function getMemberCourseByRouteKey(userId: number, routeKey: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const courseRows = await db.select().from(courses).where(and(eq(courses.routeKey, routeKey), eq(courses.isPublished, 1))).limit(1);
+  const course = courseRows[0];
+  if (!course?.ebookId) return null;
+  const [ebookRows, progressRows] = await Promise.all([
+    db.select().from(ebooks).where(and(eq(ebooks.id, course.ebookId), eq(ebooks.status, "published"))).limit(1),
+    db.select().from(courseProgress).where(and(eq(courseProgress.userId, userId), eq(courseProgress.courseId, course.id))).limit(1),
+  ]);
+  const ebook = ebookRows[0];
+  if (!ebook) return null;
+  const progress = progressRows[0];
+  return { ...course, ebook, progressPercent: progress?.progressPercent ?? 0, lastAccessedAt: progress?.lastAccessedAt ?? null };
 }
 
 export async function updateMemberCourseProgress(userId: number, courseId: number, progressPercent: number) {
@@ -282,20 +325,27 @@ export async function getAdminCourses() {
 export async function createAdminCourse(input: CourseInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const result = await db.insert(courses).values({ title: input.title.trim(), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, isPublished: input.isPublished ? 1 : 0 });
+  await assertCourseEbook(input.ebookId, input.isPublished);
+  const result = await db.insert(courses).values({ title: input.title.trim(), routeKey: createCourseRouteKey(input.title), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, ebookId: input.ebookId, isPublished: input.isPublished ? 1 : 0 });
   return { id: Number(result[0].insertId) };
 }
 
 export async function updateAdminCourse(courseId: number, input: CourseInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(courses).set({ title: input.title.trim(), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, isPublished: input.isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
+  await assertCourseEbook(input.ebookId, input.isPublished);
+  await db.update(courses).set({ title: input.title.trim(), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, ebookId: input.ebookId, isPublished: input.isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
   return { success: true } as const;
 }
 
 export async function updateAdminCoursePublication(courseId: number, isPublished: boolean) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
+  if (isPublished) {
+    const courseRows = await db.select({ ebookId: courses.ebookId }).from(courses).where(eq(courses.id, courseId)).limit(1);
+    if (!courseRows[0]) throw new Error("Curso não encontrado.");
+    await assertCourseEbook(courseRows[0].ebookId, true);
+  }
   await db.update(courses).set({ isPublished: isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
   return { success: true } as const;
 }

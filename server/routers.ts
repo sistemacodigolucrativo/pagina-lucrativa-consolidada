@@ -43,6 +43,7 @@ import {
   getPublishedEbook,
   getPublishedEbooks,
   getPublishedCourses,
+  getMemberCourseByRouteKey,
   getMemberCourses,
   updateMemberCourseProgress,
   getAdminCourses,
@@ -104,6 +105,7 @@ const courseInput = z.object({
   category: z.string().trim().max(96).optional().nullable(),
   durationMinutes: z.number().int().min(0).max(100000),
   level: z.enum(["fundamentos", "pratica", "avancado"]),
+  ebookId: z.number().int().positive().nullable(),
   isPublished: z.boolean(),
 });
 const contentInput = z.object({
@@ -156,6 +158,7 @@ export const appRouter = router({
     createFinanceEntry: protectedProcedure.input(z.object({ type: z.enum(["sale", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: z.number().int().positive().max(100000000) })).mutation(({ ctx, input }) => createMemberFinanceEntry(ctx.user.id, input)),
     academy: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
     courses: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
+    course: protectedProcedure.input(z.object({ routeKey: z.string().trim().min(3).max(160) })).query(({ ctx, input }) => getMemberCourseByRouteKey(ctx.user.id, input.routeKey)),
     updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),

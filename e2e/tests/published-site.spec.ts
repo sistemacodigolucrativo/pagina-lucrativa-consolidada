@@ -87,6 +87,15 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.getByRole('heading', { name: 'Meu desempenho', exact: true })).toBeVisible();
   });
 
+  test('curso publicado abre o e-book associado no leitor integrado', async ({ page }) => {
+    await signIn(page, 'user', '123', '/membros');
+
+    await page.goto(route('/membros/curso-google-ads'));
+    await expect(page.getByRole('heading', { name: 'Google Ads', exact: true })).toBeVisible();
+    await expect(page.locator('iframe[sandbox]')).toBeVisible();
+    await expect(page.getByText('Material indisponível', { exact: true })).toHaveCount(0);
+  });
+
   test('menu móvel preserva o catálogo do Escritório Virtual e expande seus grupos', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, 'user', '123', '/membros');

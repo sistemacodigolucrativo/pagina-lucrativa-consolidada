@@ -283,3 +283,10 @@
 # Direção Cofre de Marca
 - [x] Aplicar a proposta 05 — Cofre de Marca na Área de acesso publicada, preservando a autenticação local.
 - [x] Validar a nova composição Cofre de Marca em desktop e mobile e sincronizar a alteração validada.
+
+# Correção da Academia e leitor integrado
+- [x] Criar um vínculo persistente entre cada curso e seu e-book HTML publicado.
+- [x] Preencher a Academia com os cursos de acesso existentes e associar cada um a um material de estudo autorizado.
+- [x] Abrir o e-book associado no leitor integrado quando o membro selecionar um curso, inclusive nas rotas históricas da Academia.
+- [x] Permitir a manutenção administrativa do e-book vinculado ao curso e impedir a publicação de curso sem material disponível.
+- [x] Cobrir o fluxo curso–e-book por testes automatizados, validar no domínio publicado e sincronizar a correção no GitHub.

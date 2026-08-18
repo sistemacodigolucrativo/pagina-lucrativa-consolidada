@@ -4,31 +4,32 @@ import path from "node:path";
 
 const root = process.env.PROJECT_ROOT || process.cwd();
 
-describe("catálogo de cursos", () => {
-  it("mantém o progresso associado ao membro e somente para cursos publicados", async () => {
-    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+describe("Academia com leitor integrado", () => {
+  it("mantém o vínculo persistente de curso, rota e e-book", async () => {
     const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
-    expect(db).toContain("getMemberCourses");
-    expect(db).toContain("eq(courseProgress.userId, userId)");
-    expect(db).toContain("updateMemberCourseProgress");
-    expect(db).toContain("eq(courses.isPublished, 1)");
-    expect(schema).toContain("courseUserUnique");
-  });
-
-  it("restringe a curadoria de cursos à administração", async () => {
+    const data = await readFile(path.join(root, "server/db.ts"), "utf8");
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
-    expect(router).toContain("courses: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id))");
-    expect(router).toContain("updateCourseProgress: protectedProcedure.input");
-    expect(router).toContain("courses: adminProcedure.query(() => getAdminCourses())");
-    expect(router).toContain("createCourse: adminProcedure.input(courseInput)");
-    expect(router).toContain("updateCoursePublication: adminProcedure.input");
+    expect(schema).toContain('routeKey: varchar("routeKey", { length: 160 }).notNull()');
+    expect(schema).toContain('ebookId: int("ebookId")');
+    expect(data).toContain("getMemberCourseByRouteKey");
+    expect(data).toContain("Vincule um e-book publicado antes de disponibilizar este curso.");
+    expect(router).toContain("course: protectedProcedure.input");
   });
 
-  it("encaminha academia, rotas de cursos e administração às páginas funcionais", async () => {
+  it("abre a formação no leitor HTML isolado e preserva rotas já divulgadas", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
-    expect(app).toContain('path="/membros/academia" component={MemberCourses}');
+    const memberCourses = await readFile(path.join(root, "client/src/pages/MemberCourses.tsx"), "utf8");
     expect(app).toContain('path="/membros/curso-google-ads" component={MemberCourses}');
-    expect(app).toContain('path="/membros/filmes" component={MemberCourses}');
-    expect(app).toContain('path="/admin/academia" component={AdminCourses}');
+    expect(app).toContain('path="/membros/curso/:courseKey" component={MemberCourses}');
+    expect(memberCourses).toContain("srcDoc={course.ebook.htmlContent}");
+    expect(memberCourses).toContain('sandbox=""');
+    expect(memberCourses).toContain("Abrir material");
+  });
+
+  it("torna a associação editável na curadoria administrativa", async () => {
+    const adminCourses = await readFile(path.join(root, "client/src/pages/AdminCourses.tsx"), "utf8");
+    expect(adminCourses).toContain("E-book associado");
+    expect(adminCourses).toContain("ebookId");
+    expect(adminCourses).toContain("Vincule um e-book publicado antes de disponibilizar o curso.");
   });
 });

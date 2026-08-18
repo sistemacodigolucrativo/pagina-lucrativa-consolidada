@@ -143,14 +143,19 @@ export const transactions = mysqlTable("transactions", {
 export const courses = mysqlTable("courses", {
   id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 240 }).notNull(),
+  routeKey: varchar("routeKey", { length: 160 }).notNull(),
   summary: text("summary"),
   category: varchar("category", { length: 96 }),
   durationMinutes: int("durationMinutes").default(0).notNull(),
   level: mysqlEnum("level", ["fundamentos", "pratica", "avancado"]).default("fundamentos").notNull(),
+  ebookId: int("ebookId"),
   isPublished: int("isPublished").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-});
+}, table => ({
+  routeKeyUnique: uniqueIndex("courses_route_key_unique").on(table.routeKey),
+  ebookIndex: index("courses_ebook_idx").on(table.ebookId),
+}));
 
 export const courseProgress = mysqlTable("courseProgress", {
   id: int("id").autoincrement().primaryKey(),
