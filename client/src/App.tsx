@@ -28,6 +28,9 @@ import MemberCommunications from "./pages/MemberCommunications";
 import AdminCommunications from "./pages/AdminCommunications";
 import MemberReferrals from "./pages/MemberReferrals";
 import AdminReferrals from "./pages/AdminReferrals";
+import MemberPersonalization from "./pages/MemberPersonalization";
+import MemberTraffic from "./pages/MemberTraffic";
+import MemberCredentials from "./pages/MemberCredentials";
 import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 function AppRoutes() {
@@ -51,10 +54,19 @@ function AppRoutes() {
     <Route path="/membros/emails-site" component={MemberCommunications} />
     <Route path="/membros/emails-interessados" component={MemberCommunications} />
     <Route path="/membros/emails-whatsapp" component={MemberCommunications} />
+    <Route path="/membros/automacoes" component={MemberCommunications} />
+    <Route path="/membros/mensagem-especial" component={MemberPersonalization} />
+    <Route path="/membros/meus-dados" component={MemberOperations} />
+    <Route path="/membros/configuracoes" component={MemberOperations} />
+    <Route path="/membros/como-divulgar" component={MemberOperations} />
+    <Route path="/membros/campanhas" component={MemberOperations} />
+    <Route path="/membros/convites" component={MemberOperations} />
+    <Route path="/membros/cartao-certificado" component={MemberCredentials} />
+    <Route path="/membros/historico" component={MemberTraffic} />
+    <Route path="/membros/top-visitas" component={MemberTraffic} />
     <Route path="/membros/ganhos" component={MemberEarnings} />
     <Route path="/membros/pontos" component={MemberPerformance} />
     <Route path="/membros/pontos-niveis" component={MemberPerformance} />
-    <Route path="/membros/historico" component={MemberPerformance} />
     <Route path="/membros/ranking" component={MemberPerformance} />
     <Route path="/membros/mais-lucrativos" component={MemberPerformance} />
     <Route path="/membros/academia" component={MemberCourses} />

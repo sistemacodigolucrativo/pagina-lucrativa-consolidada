@@ -180,10 +180,10 @@
 - [x] Sincronizar o marco de pontuação validado com o GitHub.
 
 # Responsividade e fluxo de acesso e personalização
-- [ ] Auditar em celular, tablet e computador a rota de acesso e personalização, incluindo a tela de mensagem e senha especial.
-- [ ] Substituir blocos meramente orientativos por ações coerentes com o fluxo de acesso e personalização do membro, quando aplicável.
-- [ ] Corrigir hierarquia, quebras de texto, espaçamentos e navegação responsiva identificados na validação visual.
-- [ ] Validar os ajustes diretamente na VPS nos três breakpoints e registrar a evidência antes de sincronizar o próximo marco.
+- [x] Auditar em celular, tablet e computador a rota de acesso e personalização, incluindo a tela de mensagem e senha especial.
+- [x] Substituir blocos meramente orientativos por ações coerentes com o fluxo de acesso e personalização do membro, quando aplicável.
+- [x] Corrigir hierarquia, quebras de texto, espaçamentos e navegação responsiva identificados na validação visual.
+- [x] Validar os ajustes diretamente na VPS nos três breakpoints e registrar a evidência antes de sincronizar o próximo marco.
 
 # Correção prioritária de runtime
 - [x] Corrigir referência ausente MemberReferrals que impede o carregamento do bundle publicado.
