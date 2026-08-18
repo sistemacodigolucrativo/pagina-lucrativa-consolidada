@@ -16,3 +16,9 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
 ];
+
+export function isAdminNavigation(items: Array<{ path: string }>) {
+  return items.length > 0 && items.every(item => (
+    item.path === "/admin" || item.path.startsWith("/admin/")
+  ));
+}

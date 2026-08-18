@@ -32,6 +32,23 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.getByRole('alert')).toContainText(/inválid|credenciais|acesso/i);
   });
 
+  test('Área de acesso é enxuta, permite mostrar a senha e sinaliza a recuperação futura', async ({ page }) => {
+    await page.goto(route('/acesso'));
+
+    await expect(page.getByText('Entrar na sua conta', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Use seu usuário e senha para continuar.', { exact: true })).toHaveCount(0);
+
+    const password = page.locator('#demo-password');
+    await password.fill('123');
+    await expect(password).toHaveAttribute('type', 'password');
+    await page.getByRole('button', { name: 'Mostrar senha' }).click();
+    await expect(password).toHaveAttribute('type', 'text');
+    await page.getByRole('button', { name: 'Ocultar senha' }).click();
+    await expect(password).toHaveAttribute('type', 'password');
+
+    await expect(page.getByRole('button', { name: 'Recuperar acesso' })).toBeDisabled();
+  });
+
   test('membro e administrador entram nos respectivos ambientes', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
     await expect(page.getByText('Escritório Virtual', { exact: true }).first()).toBeVisible();
@@ -180,5 +197,33 @@ test.describe('Página Lucrativa 2026 publicada', () => {
 
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/?$`));
     await expect(page.getByRole('button', { name: /Realizar pedido/i })).toBeVisible();
+  });
+  test('menu móvel da administração preserva o catálogo em rotas contextuais', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, 'admin', '123', '/admin');
+    await page.goto(route('/admin/membros'));
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/membros(?:[/?#]|$)`));
+
+    const openAdminMenu = async () => {
+      const managementGroup = page.getByText('Gestão', { exact: true });
+      if (!(await managementGroup.isVisible())) {
+        await page.locator('[data-sidebar="trigger"]').click();
+      }
+      await expect(page.getByText('Atuação pessoal', { exact: true })).toBeVisible();
+      await expect(managementGroup).toBeVisible();
+      await expect(page.getByText('Conteúdo', { exact: true })).toBeVisible();
+      await expect(page.getByText('Meu Escritório', { exact: true })).toBeVisible();
+      await expect(page.getByText('Central de manutenção', { exact: true })).toBeVisible();
+      await expect(page.getByRole('button', { name: 'Pontuação' })).toBeVisible();
+      await expect(page.getByText('E-books', { exact: true })).toBeVisible();
+      await expect(page.getByText('Publicações', { exact: true })).toBeVisible();
+    };
+
+    await openAdminMenu();
+    await page.getByRole('button', { name: 'Pontuação' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/pontos(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Pontuação', exact: true })).toBeVisible();
+    await openAdminMenu();
+    await page.screenshot({ path: 'test-results/menu-administracao-mobile.png', fullPage: true });
   });
 });

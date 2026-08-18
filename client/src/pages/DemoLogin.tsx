@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, KeyRound, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { Link, useLocation } from "wouter";
 
@@ -11,6 +11,7 @@ export default function DemoLogin() {
   const utils = trpc.useUtils();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
 
   const login = trpc.auth.demoLogin.useMutation({
@@ -52,16 +53,7 @@ export default function DemoLogin() {
           </div>
 
           <div className="flex items-center p-8 sm:p-12">
-            <form className="w-full space-y-7" onSubmit={onSubmit}>
-              <div className="space-y-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e5bd62]/35 bg-[#e5bd62]/10 text-[#e5bd62]">
-                  <KeyRound className="h-4 w-4" />
-                </div>
-                <p className="font-mono text-[10px] tracking-[0.18em] text-[#e5bd62] uppercase">Área de acesso</p>
-                <h2 className="font-[Space_Grotesk] text-3xl font-semibold">Entrar na sua conta</h2>
-                <p className="text-sm leading-6 text-[#f5f0e7]/60">Use seu usuário e senha para continuar.</p>
-              </div>
-
+            <form className="w-full space-y-6" onSubmit={onSubmit}>
               <div className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="demo-username" className="font-mono text-[10px] tracking-[0.14em] text-[#f5f0e7]/60 uppercase">Usuário</Label>
@@ -69,7 +61,12 @@ export default function DemoLogin() {
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="demo-password" className="font-mono text-[10px] tracking-[0.14em] text-[#f5f0e7]/60 uppercase">Senha</Label>
-                  <Input id="demo-password" type="password" value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" className="h-12 rounded-none border-[#f5f0e7]/20 bg-black/30 text-[#f5f0e7]" required />
+                  <div className="relative">
+                    <Input id="demo-password" type={showPassword ? "text" : "password"} value={password} onChange={event => setPassword(event.target.value)} autoComplete="current-password" className="h-12 rounded-none border-[#f5f0e7]/20 bg-black/30 pr-12 text-[#f5f0e7]" required />
+                    <button type="button" onClick={() => setShowPassword(current => !current)} aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"} aria-pressed={showPassword} className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center text-[#f5f0e7]/55 transition-colors hover:text-[#e5bd62] focus-visible:outline-2 focus-visible:outline-offset-[-3px] focus-visible:outline-[#e5bd62]">
+                      {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -78,6 +75,10 @@ export default function DemoLogin() {
               <Button type="submit" disabled={login.isPending} className="h-12 w-full rounded-none bg-[#e5bd62] font-semibold text-[#16120a] hover:bg-[#f0d28c]">
                 {login.isPending ? "Iniciando sessão..." : "Entrar na conta"}
               </Button>
+
+              <button type="button" disabled title="A recuperação de acesso será configurada em uma próxima etapa." className="mx-auto block text-sm text-[#f5f0e7]/45 underline decoration-[#e5bd62]/40 underline-offset-4 disabled:cursor-not-allowed">
+                Recuperar acesso
+              </button>
             </form>
           </div>
         </section>

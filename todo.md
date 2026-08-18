@@ -248,3 +248,17 @@
 - [x] Mapear o fluxo de abertura, troca de rota e recolhimento de todos os grupos do menu em viewport mobile.
 - [x] Corrigir qualquer menu ou item que fique invisível, inacessível ou sem contraste após a navegação entre rotas.
 - [x] Cobrir o fluxo mobile completo com Playwright e preservar evidências da validação publicada.
+
+# Simplificação da Área de acesso
+- [x] Remover a apresentação repetida de acesso, mantendo uma única orientação objetiva acima do formulário.
+- [x] Adicionar controle acessível para mostrar e ocultar a senha digitada.
+- [x] Adicionar a ação visual Recuperar acesso, sem implementar seu fluxo de recuperação nesta etapa.
+
+# Revisão de pedidos públicos recentes
+- [x] Confirmar a origem, o estado e a atribuição do pedido exibido na gestão administrativa sem reproduzir seus dados pessoais.
+- [x] Revisar a apresentação de contato na lista administrativa para expor somente o mínimo necessário à tratativa do pedido.
+
+# Auditoria ampliada de menus mobile
+- [x] Mapear o catálogo exibido no mobile em todas as rotas administrativas e de membro, incluindo rotas contextuais como pontuação e central de manutenção.
+- [x] Corrigir a composição que mostra apenas o grupo ativo e garantir que todos os grupos permaneçam disponíveis em cada rota mobile.
+- [x] Estender a cobertura Playwright para impedir regressão da navegação administrativa mobile.

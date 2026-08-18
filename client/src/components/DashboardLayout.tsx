@@ -42,6 +42,7 @@ import {
   isMemberOfficeNavigation,
   memberDashboardMenuItems,
 } from "@/lib/memberDashboardNavigation";
+import { adminMenu, isAdminNavigation } from "@/lib/adminNavigation";
 
 const defaultMenuItems = [
   { icon: LayoutDashboard, label: "Page 1", path: "/" },
@@ -77,7 +78,9 @@ export default function DashboardLayout({
   const [, setLocation] = useLocation();
   const navigationMenuItems = isMemberOfficeNavigation(menuItems)
     ? memberDashboardMenuItems
-    : menuItems;
+    : isAdminNavigation(menuItems)
+      ? adminMenu
+      : menuItems;
   const requiresAdmin = navigationMenuItems.some(item => item.path === "/admin" || item.path.startsWith("/admin/"));
   const redirectPath = !loading && !user
     ? "/acesso"

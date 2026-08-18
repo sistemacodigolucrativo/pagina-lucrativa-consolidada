@@ -10,4 +10,12 @@ describe("navegação administrativa", () => {
     expect(adminNavigationSource).not.toContain('path: "/admin/catalogo"');
     expect(appSource).toContain('<Route path="/admin/produtos" component={AdminProducts} />');
   });
+
+  it("normaliza catálogos locais administrativos no layout compartilhado", () => {
+    const layoutSource = readFileSync(new URL("../client/src/components/DashboardLayout.tsx", import.meta.url), "utf8");
+    expect(adminNavigationSource).toContain("export function isAdminNavigation");
+    expect(layoutSource).toContain('import { adminMenu, isAdminNavigation } from "@/lib/adminNavigation"');
+    expect(layoutSource).toContain("isAdminNavigation(menuItems)");
+    expect(layoutSource).toContain("? adminMenu");
+  });
 });
