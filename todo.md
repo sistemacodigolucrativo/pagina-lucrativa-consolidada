@@ -235,3 +235,16 @@
 - [x] Agrupar rotas relacionadas em submenus expansíveis, preservando todos os caminhos e funções existentes.
 
 - [x] Validar a navegação do Escritório Virtual em mobile, tablet e desktop após a reorganização.
+
+# Rastreio de solicitação enviada pela raiz do domínio
+- [x] Identificar o formulário acionado em https://ocodigolucrativo.site/ e confirmar o destino da solicitação sem vínculo de afiliação.
+
+# Paridade do administrador como afiliado
+- [x] Permitir que o administrador personalize sua própria página e mantenha seus dados de recebimento no Escritório Virtual.
+- [x] Atribuir solicitações originadas pelo link pessoal do administrador ao seu perfil de afiliado, sem perder a supervisão global de pedidos.
+- [x] Exibir ao administrador sua carteira de pedidos atribuídos e validar a persistência, as permissões e a gestão administrativa global.
+
+# Auditoria completa de navegação mobile
+- [x] Mapear o fluxo de abertura, troca de rota e recolhimento de todos os grupos do menu em viewport mobile.
+- [x] Corrigir qualquer menu ou item que fique invisível, inacessível ou sem contraste após a navegação entre rotas.
+- [x] Cobrir o fluxo mobile completo com Playwright e preservar evidências da validação publicada.

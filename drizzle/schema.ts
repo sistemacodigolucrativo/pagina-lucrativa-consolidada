@@ -40,6 +40,19 @@ export const memberProfiles = mysqlTable("memberProfiles", {
   slugUnique: uniqueIndex("member_profiles_slug_unique").on(table.slug),
 }));
 
+export const receivingPreferences = mysqlTable("receivingPreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  holderName: varchar("holderName", { length: 180 }),
+  method: mysqlEnum("method", ["pix", "bank_transfer", "other"]).default("pix").notNull(),
+  receivingKey: varchar("receivingKey", { length: 255 }),
+  instructions: text("instructions"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  userUnique: uniqueIndex("receiving_preferences_user_unique").on(table.userId),
+}));
+
 
 export const referralLinks = mysqlTable("referralLinks", {
   id: int("id").autoincrement().primaryKey(),
@@ -157,6 +170,8 @@ export const applications = mysqlTable("applications", {
   email: varchar("email", { length: 320 }).notNull(),
   whatsapp: varchar("whatsapp", { length: 32 }).notNull(),
   trackingCode: varchar("trackingCode", { length: 24 }),
+  ownerUserId: int("ownerUserId"),
+  affiliateSlug: varchar("affiliateSlug", { length: 96 }),
   status: mysqlEnum("status", ["pending", "contacted", "approved", "archived"]).default("pending").notNull(),
   adminNote: text("adminNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -164,6 +179,8 @@ export const applications = mysqlTable("applications", {
 }, table => ({
   statusDateIndex: index("applications_status_date_idx").on(table.status, table.createdAt),
   emailIndex: index("applications_email_idx").on(table.email),
+  ownerDateIndex: index("applications_owner_date_idx").on(table.ownerUserId, table.createdAt),
+  affiliateSlugIndex: index("applications_affiliate_slug_idx").on(table.affiliateSlug),
 }));
 
 export type Application = typeof applications.$inferSelect;

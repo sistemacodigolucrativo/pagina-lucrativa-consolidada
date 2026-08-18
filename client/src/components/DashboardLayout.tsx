@@ -163,6 +163,17 @@ function DashboardLayoutContent({
   }, [isCollapsed]);
 
   useEffect(() => {
+    if (!isMobile || !memberOfficeNavigation) return;
+    const activeGroup = Object.entries(groupedMenuItems).find(([, items]) =>
+      items.some(item => item.path === activePath),
+    )?.[0];
+    if (!activeGroup) return;
+    setGroupOverrides(current => (
+      current[activeGroup] === true ? current : { ...current, [activeGroup]: true }
+    ));
+  }, [activePath, groupedMenuItems, isMobile, memberOfficeNavigation]);
+
+  useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
 
@@ -219,7 +230,7 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0">
+          <SidebarContent className="gap-0 overflow-y-auto overscroll-contain pb-4">
             {Object.entries(groupedMenuItems).map(([group, items]) => {
               const hasSubmenu = items.length > 1;
               const groupOpen = isGroupOpen(group, items);
@@ -231,7 +242,10 @@ function DashboardLayoutContent({
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton
                           isActive={isActive}
-                          onClick={() => setLocation(item.path)}
+                          onClick={() => {
+                            setGroupOverrides(current => ({ ...current, [group]: true }));
+                            setLocation(item.path);
+                          }}
                           tooltip={item.label}
                           className="h-10 transition-all font-normal"
                         >
@@ -277,7 +291,7 @@ function DashboardLayoutContent({
             })}
           </SidebarContent>
 
-          <SidebarFooter className="p-3">
+          <SidebarFooter className="border-t border-border/60 bg-sidebar p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -297,6 +311,8 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
+                {user?.role === "admin" && !location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation("/admin")} className="cursor-pointer"><span>Voltar para Administração</span></DropdownMenuItem> : null}
+                {user?.role === "admin" && location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation("/membros")} className="cursor-pointer"><span>Abrir meu Escritório</span></DropdownMenuItem> : null}
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"

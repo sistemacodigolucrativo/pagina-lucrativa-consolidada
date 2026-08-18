@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { ArrowDown, ArrowUpRight, Menu, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 
 const heroImage = "/manus-storage/imported-sprint-hero_2aa66410.jpg";
 const methodImage = "/manus-storage/imported-sprint-method_0b5ae91c.jpg";
@@ -134,6 +135,8 @@ export default function Home() {
     return () => window.removeEventListener("scroll", updateFloatingCta);
   }, []);
   const [, setLocation] = useLocation();
+  const affiliateSlug = normalizeAffiliateSlug(typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("afiliado"));
+  const affiliate = trpc.public.affiliateProfile.useQuery({ slug: affiliateSlug ?? "pagina-lucrativa" }, { enabled: Boolean(affiliateSlug) });
   const application = trpc.applications.submit.useMutation({
     onSuccess: data => setLocation(`/pedido/confirmacao?codigo=${encodeURIComponent(data.trackingCode)}`),
   });
@@ -145,12 +148,14 @@ export default function Home() {
       fullName: String(form.get("fullName") ?? ""),
       email: String(form.get("email") ?? ""),
       whatsapp: String(form.get("whatsapp") ?? ""),
+      affiliateSlug,
     });
   }
 
   const closeMenu = () => setMenuOpen(false);
 
   return <div className="sales-page reference-page">
+    {affiliate.data ? <div className="border-b border-amber-300/20 bg-black/70 px-4 py-2 text-center text-xs text-amber-100">Página apresentada por <strong>{affiliate.data.name || affiliate.data.slug}</strong>.</div> : null}
     <header className="site-header">
       <div className="shell nav">
         <a href="#inicio" aria-label="Página Lucrativa — início" onClick={closeMenu}><Brand /></a>

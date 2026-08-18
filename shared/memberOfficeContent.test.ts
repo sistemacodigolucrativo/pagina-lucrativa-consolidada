@@ -1,0 +1,11 @@
+import { describe, expect, it } from "vitest";
+import { memberOfficeModuleCount, memberOfficeNavigation } from "./memberOfficeContent";
+
+describe("catálogo do Escritório Virtual", () => {
+  it("mantém as rotas de recebimento e pedidos próprios disponíveis para qualquer titular", () => {
+    const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
+    expect(memberOfficeModuleCount).toBe(48);
+    expect(paths).toContain("/membros/recebimentos");
+    expect(paths).toContain("/membros/meus-pedidos");
+  });
+});

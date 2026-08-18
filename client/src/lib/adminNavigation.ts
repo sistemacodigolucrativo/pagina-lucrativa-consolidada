@@ -1,7 +1,8 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, ChartNoAxesCombined, CircleDollarSign, FileText, Layers3, Mail, UsersRound } from "lucide-react";
+import { BookOpenCheck, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, FileText, Layers3, Mail, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
+  { icon: BriefcaseBusiness, label: "Meu Escritório", path: "/membros", group: "Atuação pessoal" },
   { icon: ChartNoAxesCombined, label: "Operação", path: "/admin", group: "Gestão" },
   { icon: Layers3, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
   { icon: UsersRound, label: "Membros", path: "/admin/membros", group: "Gestão" },

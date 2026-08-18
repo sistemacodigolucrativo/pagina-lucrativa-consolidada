@@ -11,6 +11,7 @@ import {
   InsertUser,
   managedContent,
   memberProfiles,
+  receivingPreferences,
   referralLinks,
   memberContacts,
   memberInvitations,
@@ -354,6 +355,38 @@ export async function updateMemberProfile(userId: number, input: { slug: string;
   return getMemberProfile(userId);
 }
 
+export async function getMemberReceivingPreference(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(receivingPreferences).where(eq(receivingPreferences.userId, userId)).limit(1);
+  return rows[0] ?? null;
+}
+
+export async function updateMemberReceivingPreference(userId: number, input: { holderName?: string | null; method: "pix" | "bank_transfer" | "other"; receivingKey?: string | null; instructions?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.insert(receivingPreferences).values({ userId, ...input }).onDuplicateKeyUpdate({
+    set: {
+      holderName: input.holderName?.trim() || null,
+      method: input.method,
+      receivingKey: input.receivingKey?.trim() || null,
+      instructions: input.instructions?.trim() || null,
+    },
+  });
+  return getMemberReceivingPreference(userId);
+}
+
+export async function getPublicAffiliateProfile(slug: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({
+    slug: memberProfiles.slug,
+    bio: memberProfiles.bio,
+    name: users.name,
+  }).from(memberProfiles).innerJoin(users, eq(users.id, memberProfiles.userId)).where(eq(memberProfiles.slug, slug)).limit(1);
+  return rows[0] ?? null;
+}
+
 export async function getMemberTickets(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -436,8 +469,25 @@ export async function createApplication(input: ApplicationInput) {
   const db = await getDb();
   if (!db) throw new Error("O banco de dados não está disponível no momento.");
   const trackingCode = `PL-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
-  const result = await db.insert(applications).values({ ...input, trackingCode });
+  const affiliateSlug = input.affiliateSlug ?? null;
+  const owner = affiliateSlug
+    ? await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.slug, affiliateSlug)).limit(1)
+    : [];
+  const result = await db.insert(applications).values({
+    fullName: input.fullName,
+    email: input.email,
+    whatsapp: input.whatsapp,
+    trackingCode,
+    affiliateSlug: owner[0] ? affiliateSlug : null,
+    ownerUserId: owner[0]?.userId ?? null,
+  });
   return { id: Number(result[0].insertId), trackingCode };
+}
+
+export async function getMemberAffiliateApplications(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(applications).where(eq(applications.ownerUserId, userId)).orderBy(desc(applications.createdAt));
 }
 export async function getApplicationTracking(trackingCode: string, email: string) {
   const db = await getDb();

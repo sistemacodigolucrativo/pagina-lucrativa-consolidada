@@ -91,6 +91,48 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.getByText('Venda seus produtos', { exact: true })).toBeHidden();
   });
 
+  test('fluxo móvel preserva menus visíveis após trocar rotas do Escritório Virtual', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await signIn(page, 'user', '123', '/membros');
+
+    const openMenu = async () => {
+      const officeGroup = page.getByText('Escritório', { exact: true });
+      if (!(await officeGroup.isVisible())) {
+        await page.locator('[data-sidebar="trigger"]').click();
+      }
+      await expect(officeGroup).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Seus e-mails no sistema:/ })).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Ferramentas administrativas:/ })).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Complemento:/ })).toBeVisible();
+      await expect(page.getByRole('button', { name: /^Área de estudo:/ })).toBeVisible();
+    };
+
+    await openMenu();
+    await page.getByText('Mensagem senha especial', { exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/mensagem-especial(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Mensagem e acesso especial', exact: true })).toBeVisible();
+
+    await openMenu();
+    await page.getByRole('button', { name: 'Ferramentas administrativas: expandir submenu' }).click();
+    await expect(page.getByText('Venda seus produtos', { exact: true })).toBeVisible();
+    await page.getByText('Venda seus produtos', { exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/produtos(?:[/?#]|$)`));
+
+    await openMenu();
+    await page.getByRole('button', { name: 'Complemento: expandir submenu' }).click();
+    await expect(page.getByText('Encurtador de URL', { exact: true })).toBeVisible();
+    await page.getByText('Encurtador de URL', { exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/campanhas(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Encurtador de URL e campanhas', exact: true })).toBeVisible();
+
+    await openMenu();
+    const studyTrigger = page.getByRole('button', { name: 'Área de estudo: expandir submenu' });
+    await studyTrigger.scrollIntoViewIfNeeded();
+    await studyTrigger.click();
+    await expect(page.getByText('Curso Google Ads', { exact: true })).toBeVisible();
+    await page.screenshot({ path: 'test-results/fluxo-menu-mobile.png', fullPage: true });
+  });
+
   test('membro não consegue abrir a administração', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
     await page.goto(route('/admin'));
@@ -109,6 +151,25 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await page.goto(route('/admin/pontos'));
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/pontos(?:[/?#]|$)`));
     await expect(page.getByRole('heading', { name: 'Pontuação', exact: true })).toBeVisible();
+  });
+
+  test('administrador também acessa o próprio Escritório como afiliado', async ({ page }) => {
+    await signIn(page, 'admin', '123', '/admin');
+    await expect(page.getByText('Meu Escritório', { exact: true }).first()).toBeVisible();
+
+    await page.goto(route('/membros/recebimentos'));
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/recebimentos(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Dados de recebimento', exact: true })).toBeVisible();
+    await expect(page.getByText(/não movimenta dinheiro/i)).toBeVisible();
+
+    await page.goto(route('/membros/meus-pedidos'));
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/meus-pedidos(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Meus pedidos', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Carteira atribuída', exact: true })).toBeVisible();
+
+    await page.locator('[data-sidebar="footer"] button').click();
+    await page.getByRole('menuitem', { name: 'Voltar para Administração' }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin(?:[/?#]|$)`));
   });
 
   test('logout encerra a sessão e retorna à landing pública', async ({ page }) => {

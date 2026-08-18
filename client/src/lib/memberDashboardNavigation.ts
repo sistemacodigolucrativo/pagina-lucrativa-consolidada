@@ -38,6 +38,8 @@ const iconByKey: Record<string, LucideIcon> = {
   testimonial: MessageCircleMore,
   profile: Settings,
   data: ClipboardList,
+  receiving: WalletCards,
+  orders: ClipboardList,
   how: Sparkles,
   email: Mail,
   earnings: WalletCards,
@@ -71,5 +73,7 @@ export const memberDashboardMenuItems: MemberNavigationItem[] = memberOfficeNavi
 );
 
 export function isMemberOfficeNavigation(items: Array<{ path: string }>) {
-  return items.some(item => item.path === "/membros" || item.path.startsWith("/membros/"));
+  return items.length > 0 && items.every(item => (
+    item.path === "/membros" || item.path.startsWith("/membros/")
+  ));
 }

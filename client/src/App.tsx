@@ -12,6 +12,8 @@ import AdminEbooks from "./pages/AdminEbooks";
 import MemberProducts from "./pages/MemberProducts";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
+import MemberReceiving from "./pages/MemberReceiving";
+import MemberAffiliateOrders from "./pages/MemberAffiliateOrders";
 import MemberPerformance from "./pages/MemberPerformance";
 import MemberCourses from "./pages/MemberCourses";
 import AdminCourses from "./pages/AdminCourses";
@@ -68,6 +70,8 @@ function AppRoutes() {
     <Route path="/membros/historico" component={MemberTraffic} />
     <Route path="/membros/top-visitas" component={MemberTraffic} />
     <Route path="/membros/ganhos" component={MemberEarnings} />
+    <Route path="/membros/recebimentos" component={MemberReceiving} />
+    <Route path="/membros/meus-pedidos" component={MemberAffiliateOrders} />
     <Route path="/membros/pontos" component={MemberPerformance} />
     <Route path="/membros/pontos-niveis" component={MemberPerformance} />
     <Route path="/membros/ranking" component={MemberPerformance} />

@@ -32,11 +32,14 @@ import {
   updateAdminTransaction,
   getMemberProducts,
   getMemberProfile,
+  getMemberReceivingPreference,
+  getMemberAffiliateApplications,
   getMemberTickets,
   getMemberContacts,
   getMemberInvitations,
   getMemberActivities,
   getPublishedContent,
+  getPublicAffiliateProfile,
   getPublishedEbook,
   getPublishedEbooks,
   getPublishedCourses,
@@ -54,6 +57,7 @@ import {
   updateAdminTicket,
   updateAdminContact,
   updateMemberProfile,
+  updateMemberReceivingPreference,
   updateMemberContact,
   updateMemberProduct,
   setAdminReferralLink,
@@ -85,6 +89,12 @@ const profileInput = z.object({
   bio: z.string().trim().max(2000).optional().nullable(),
   whatsapp: z.string().trim().max(32).optional().nullable(),
   websiteUrl: z.string().url().max(512).optional().nullable(),
+});
+const receivingPreferenceInput = z.object({
+  holderName: z.string().trim().max(180).optional().nullable(),
+  method: z.enum(["pix", "bank_transfer", "other"]),
+  receivingKey: z.string().trim().max(255).optional().nullable(),
+  instructions: z.string().trim().max(2000).optional().nullable(),
 });
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
 const productInput = z.object({ title: z.string().trim().min(3).max(240), description: z.string().trim().max(8000).optional().nullable(), category: z.string().trim().max(96).optional().nullable(), priceCents: z.number().int().min(0).max(100000000) });
@@ -149,6 +159,9 @@ export const appRouter = router({
     updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),
+    receiving: protectedProcedure.query(({ ctx }) => getMemberReceivingPreference(ctx.user.id)),
+    updateReceiving: protectedProcedure.input(receivingPreferenceInput).mutation(({ ctx, input }) => updateMemberReceivingPreference(ctx.user.id, input)),
+    affiliateApplications: protectedProcedure.query(({ ctx }) => getMemberAffiliateApplications(ctx.user.id)),
     tickets: protectedProcedure.query(({ ctx }) => getMemberTickets(ctx.user.id)),
     createTicket: protectedProcedure.input(ticketInput).mutation(({ ctx, input }) => createMemberTicket(ctx.user.id, input)),
     content: protectedProcedure.query(() => getPublishedContent()),
@@ -168,6 +181,9 @@ export const appRouter = router({
   applications: router({
     submit: publicProcedure.input(applicationInputSchema).mutation(({ input }) => createApplication(input)),
     lookup: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24), email: z.string().trim().email().max(320) })).query(({ input }) => getApplicationTracking(input.trackingCode, input.email)),
+  }),
+  public: router({
+    affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
   }),
   admin: router({
     overview: adminProcedure.query(() => getAdminOverview()),
