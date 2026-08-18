@@ -317,3 +317,16 @@
 - [x] Inventariar os formulários de administração e do Escritório Virtual que preservam colunas estreitas no celular.
 - [x] Aplicar uma composição móvel compartilhada que empilhe campos e preserve larguras internas seguras.
 - [x] Validar os formulários corrigidos em celular, tablet e desktop no domínio publicado.
+
+# Validação de dados sensíveis e formalizados
+- [x] Inventariar todos os campos de telefone, WhatsApp, e-mail e demais dados formalizados, incluindo seus procedimentos de API.
+- [x] Centralizar a normalização, máscara e validação de telefone/WhatsApp e e-mail para uso no frontend e backend.
+- [x] Aplicar restrições de entrada, colagem, preenchimento automático e validação antes do envio em todos os formulários afetados.
+- [x] Revalidar no servidor os dados normalizados e rejeitar chamadas diretas com telefone, WhatsApp ou e-mail inválidos.
+- [x] Cobrir os cenários de entrada, exclusão, colagem, autopreenchimento e API por testes automatizados e validar no domínio publicado.
+# Revisão geral de validação dos formulários
+- [x] Inventariar todos os formulários, modais e etapas de cadastro, identificando cada campo de e-mail, telefone/WhatsApp, numérico, URL, identificador e valor monetário.
+- [x] Definir validadores compartilhados e limites canônicos por natureza de dado, preservando campos textuais livres quando apropriado.
+- [x] Padronizar no frontend a higienização, a normalização e a validação antes do envio em todas as telas afetadas.
+- [x] Aplicar as mesmas regras em todos os contratos tRPC e confirmar que a persistência só recebe valores estruturados válidos.
+- [x] Cobrir com testes unitários e E2E os casos válidos, inválidos, colagem, autopreenchimento, exclusão e chamadas diretas à API.

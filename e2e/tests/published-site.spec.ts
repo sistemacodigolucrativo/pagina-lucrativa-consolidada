@@ -40,6 +40,17 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     expect(await whatsapp.evaluate(input => input.validationMessage)).toMatch(/telefone com DDD/i);
   });
 
+  test('e-mail público normaliza espaços e bloqueia estrutura inválida antes do pedido', async ({ page }) => {
+    await page.goto(route('/'));
+    const email = page.locator('input[name="email"]');
+
+    await email.fill('  CONTATO@EMPRESA.COM.BR  ');
+    await expect(email).toHaveValue('contato@empresa.com.br');
+
+    await email.fill('usuario gmail.com');
+    expect(await email.evaluate(input => input.validity.valid)).toBe(false);
+  });
+
   test('credenciais inválidas permanecem no acesso e informam o erro', async ({ page }) => {
     await page.goto(route('/acesso'));
     await page.locator('#demo-username').fill('credencial-invalida');
@@ -169,6 +180,22 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await page.goto(route('/membros/pontos'));
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/pontos(?:[/?#]|$)`));
     await expect(page.getByRole('heading', { name: 'Meu desempenho', exact: true })).toBeVisible();
+  });
+
+  test('campos monetários e chave PIX higienizam dados estruturados no Escritório Virtual', async ({ page }) => {
+    await signIn(page, 'user', '123', '/membros');
+
+    await page.goto(route('/membros/produtos'));
+    const price = page.getByLabel('Preço (R$)');
+    await price.fill('R$ 12,345');
+    await expect(price).toHaveValue('12,34');
+    await expect(price).toHaveAttribute('inputmode', 'decimal');
+
+    await page.goto(route('/membros/recebimentos'));
+    const pixKey = page.getByLabel('Chave PIX');
+    await pixKey.fill('chave-invalida');
+    await pixKey.blur();
+    await expect(page.getByRole('alert')).toContainText(/chave PIX válida/i);
   });
 
   test('curso publicado abre o e-book associado no leitor integrado', async ({ page }) => {

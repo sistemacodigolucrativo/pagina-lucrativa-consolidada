@@ -31,11 +31,13 @@ export function validatePhoneBR(raw: string | null | undefined): boolean {
 }
 
 export function normalizeEmail(raw: string | null | undefined): string {
-  return String(raw ?? "").trim().toLowerCase();
+  return String(raw ?? "").trim().replace(/\s+/g, "").toLowerCase();
 }
 
 export function validateEmail(raw: string | null | undefined): boolean {
-  const email = normalizeEmail(raw);
+  const source = String(raw ?? "").trim();
+  if (/\s/.test(source)) return false;
+  const email = normalizeEmail(source);
   return email.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
@@ -43,6 +45,7 @@ export const normalizedEmailZodSchema = z
   .string()
   .trim()
   .toLowerCase()
+  .refine(value => !/\s/.test(value), "O e-mail não pode conter espaços.")
   .email("Informe um e-mail válido.")
   .max(320, "O e-mail deve ter no máximo 320 caracteres.");
 

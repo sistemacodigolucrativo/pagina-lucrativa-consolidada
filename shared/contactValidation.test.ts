@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatPhoneBR, normalizeEmail, normalizePhone, validatePhoneBR } from "./contactValidation";
+import { formatPhoneBR, normalizedEmailZodSchema, normalizeEmail, normalizePhone, validatePhoneBR } from "./contactValidation";
 
 describe("contactValidation", () => {
   it("higieniza e formata o telefone sem aceitar excesso", () => {
@@ -14,5 +14,11 @@ describe("contactValidation", () => {
     expect(validatePhoneBR("739999999")).toBe(false);
     expect(validatePhoneBR("739999999999")).toBe(false);
     expect(normalizeEmail("  PESSOA@EXAMPLE.COM ")).toBe("pessoa@example.com");
+  });
+
+  it("remove espaços externos, elimina espaços acidentais no campo e rejeita espaços no contrato", () => {
+    expect(normalizeEmail("  PESSOA @EXAMPLE.COM ")).toBe("pessoa@example.com");
+    expect(normalizedEmailZodSchema.parse(" PESSOA@EXAMPLE.COM ")).toBe("pessoa@example.com");
+    expect(() => normalizedEmailZodSchema.parse("pessoa @example.com")).toThrow();
   });
 });

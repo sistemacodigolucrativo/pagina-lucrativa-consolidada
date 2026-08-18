@@ -3,6 +3,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { applicationInputSchema } from "@shared/applications";
 import { normalizedEmailZodSchema, optionalPhoneZodSchema } from "@shared/contactValidation";
+import { httpUrlZodSchema, nonNegativeCentsZodSchema, normalizePixKey, pixKeyZodSchema, positiveCentsZodSchema, signedPointsZodSchema } from "@shared/structuredValidation";
 import {
   createAdminContent,
   createAdminEbook,
@@ -84,22 +85,25 @@ import { z } from "zod";
 const campaignInput = z.object({
   name: z.string().trim().min(3).max(160),
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(128),
-  destinationUrl: z.string().url().max(1024),
+  destinationUrl: httpUrlZodSchema,
 });
 const profileInput = z.object({
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
   bio: z.string().trim().max(2000).optional().nullable(),
   whatsapp: optionalPhoneZodSchema,
-  websiteUrl: z.string().url().max(512).optional().nullable(),
+  websiteUrl: httpUrlZodSchema.max(512).optional().nullable(),
 });
-const receivingPreferenceInput = z.object({
+export const receivingPreferenceInput = z.object({
   holderName: z.string().trim().max(180).optional().nullable(),
   method: z.enum(["pix", "bank_transfer", "other"]),
   receivingKey: z.string().trim().max(255).optional().nullable(),
   instructions: z.string().trim().max(2000).optional().nullable(),
-});
+}).superRefine((value, context) => {
+  if (value.method === "pix" && !value.receivingKey) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe a chave PIX." });
+  if (value.method === "pix" && value.receivingKey && !pixKeyZodSchema.safeParse(value.receivingKey).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe uma chave PIX válida." });
+}).transform(value => ({ ...value, receivingKey: value.method === "pix" && value.receivingKey ? normalizePixKey(value.receivingKey) : value.receivingKey?.trim() || null }));
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
-const productInput = z.object({ title: z.string().trim().min(3).max(240), description: z.string().trim().max(8000).optional().nullable(), category: z.string().trim().max(96).optional().nullable(), priceCents: z.number().int().min(0).max(100000000) });
+const productInput = z.object({ title: z.string().trim().min(3).max(240), description: z.string().trim().max(8000).optional().nullable(), category: z.string().trim().max(96).optional().nullable(), priceCents: nonNegativeCentsZodSchema });
 const courseInput = z.object({
   title: z.string().trim().min(3).max(240),
   summary: z.string().trim().max(8000).optional().nullable(),
@@ -156,7 +160,7 @@ export const appRouter = router({
     createProduct: protectedProcedure.input(productInput).mutation(({ ctx, input }) => createMemberProduct(ctx.user.id, input)),
     updateProduct: protectedProcedure.input(productInput.extend({ id: z.number().int().positive() })).mutation(({ ctx, input }) => { const { id, ...product } = input; return updateMemberProduct(ctx.user.id, id, product); }),
     finance: protectedProcedure.query(({ ctx }) => getMemberFinance(ctx.user.id)),
-    createFinanceEntry: protectedProcedure.input(z.object({ type: z.enum(["sale", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: z.number().int().positive().max(100000000) })).mutation(({ ctx, input }) => createMemberFinanceEntry(ctx.user.id, input)),
+    createFinanceEntry: protectedProcedure.input(z.object({ type: z.enum(["sale", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: positiveCentsZodSchema })).mutation(({ ctx, input }) => createMemberFinanceEntry(ctx.user.id, input)),
     academy: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
     courses: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
     course: protectedProcedure.input(z.object({ routeKey: z.string().trim().min(3).max(160) })).query(({ ctx, input }) => getMemberCourseByRouteKey(ctx.user.id, input.routeKey)),
@@ -195,7 +199,7 @@ export const appRouter = router({
     updateApplication: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "contacted", "approved", "archived"]), adminNote: z.string().max(2000).optional() })).mutation(({ input }) => updateAdminApplication(input.id, input)),
     transactions: adminProcedure.query(() => getAdminTransactions()),
     financeMembers: adminProcedure.query(() => getFinanceMembers()),
-    createTransaction: adminProcedure.input(z.object({ userId: z.number().int().positive(), type: z.enum(["sale", "commission", "adjustment", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: z.number().int().positive().max(100000000), status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminTransaction(ctx.user.id, input)),
+    createTransaction: adminProcedure.input(z.object({ userId: z.number().int().positive(), type: z.enum(["sale", "commission", "adjustment", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: positiveCentsZodSchema, status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminTransaction(ctx.user.id, input)),
     updateTransaction: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]), adminNote: z.string().trim().max(2000).optional() })).mutation(({ input }) => updateAdminTransaction(input.id, input)),
     courses: adminProcedure.query(() => getAdminCourses()),
     createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
@@ -223,7 +227,7 @@ export const appRouter = router({
     updateInvitation: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["prepared", "cancelled"]) })).mutation(({ input }) => updateAdminInvitation(input.id, input.status)),
     performance: adminProcedure.query(() => getAdminPerformance()),
     performanceMembers: adminProcedure.query(() => getPerformanceMembers()),
-    createPointEntry: adminProcedure.input(z.object({ userId: z.number().int().positive(), amount: z.number().int().min(-100000).max(100000).refine(value => value !== 0), reason: z.string().trim().min(3).max(320), status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminPointEntry(ctx.user.id, input)),
+    createPointEntry: adminProcedure.input(z.object({ userId: z.number().int().positive(), amount: signedPointsZodSchema, reason: z.string().trim().min(3).max(320), status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminPointEntry(ctx.user.id, input)),
     updatePointEntry: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]) })).mutation(({ input }) => updateAdminPointEntry(input.id, input)),
     testimonials: adminProcedure.query(() => getAdminTestimonials()),
     updateTestimonial: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "approved", "rejected", "archived"]), adminNote: z.string().trim().max(4000).optional().nullable() })).mutation(({ input }) => updateAdminTestimonial(input.id, input)),
