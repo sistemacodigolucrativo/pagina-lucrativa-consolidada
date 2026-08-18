@@ -262,3 +262,8 @@
 - [x] Mapear o catálogo exibido no mobile em todas as rotas administrativas e de membro, incluindo rotas contextuais como pontuação e central de manutenção.
 - [x] Corrigir a composição que mostra apenas o grupo ativo e garantir que todos os grupos permaneçam disponíveis em cada rota mobile.
 - [x] Estender a cobertura Playwright para impedir regressão da navegação administrativa mobile.
+# Auditoria integral de destinos dos menus
+- [x] Inventariar todos os itens dos menus de membro e administração, com sua rota de destino e o perfil autorizado.
+- [x] Validar, em viewport mobile, que cada item abre a rota esperada e mantém a navegação acessível após a troca de tela.
+- [x] Corrigir itens sem rota, com rota divergente ou com estado mobile incorreto e registrar a cobertura automatizada correspondente.
+- [x] Corrigir a tela "Extrato e total de ganhos", que utiliza o menu padrão em vez do catálogo do Escritório Virtual no mobile.

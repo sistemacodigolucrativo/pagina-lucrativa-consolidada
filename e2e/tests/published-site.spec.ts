@@ -226,4 +226,126 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await openAdminMenu();
     await page.screenshot({ path: 'test-results/menu-administracao-mobile.png', fullPage: true });
   });
+
+  test('auditoria mobile percorre todos os destinos dos menus de membro e administração', async ({ page }) => {
+    test.setTimeout(420_000);
+    await page.setViewportSize({ width: 390, height: 844 });
+
+    const memberItems = [
+      ['Escritório', 'Página inicial', '/membros'],
+      ['Escritório', 'Mensagem senha especial', '/membros/mensagem-especial'],
+      ['Escritório', 'Fazer depoimento', '/membros/fazer-depoimento'],
+      ['Escritório', 'Editar perfil', '/membros/configuracoes'],
+      ['Escritório', 'Meus dados', '/membros/meus-dados'],
+      ['Escritório', 'Dados de recebimento', '/membros/recebimentos'],
+      ['Escritório', 'Meus pedidos', '/membros/meus-pedidos'],
+      ['Escritório', 'Escritório Virtual', '/membros/operacao'],
+      ['Comece por aqui', 'Saiba como divulgar', '/membros/como-divulgar'],
+      ['Seus e-mails no sistema', 'E-mails site & artigos', '/membros/emails-site'],
+      ['Seus e-mails no sistema', 'E-mails de interessados', '/membros/emails-interessados'],
+      ['Seus e-mails no sistema', 'E-mails capturados WhatsApp', '/membros/emails-whatsapp'],
+      ['Ferramentas administrativas', 'Extrato e total de ganhos', '/membros/ganhos'],
+      ['Ferramentas administrativas', 'Meu patrocinador', '/membros/patrocinador'],
+      ['Ferramentas administrativas', 'Meus indicados', '/membros/rede'],
+      ['Ferramentas administrativas', 'Venda seus produtos', '/membros/produtos'],
+      ['Ferramentas administrativas', 'Blog Página Lucrativa', '/membros/blog'],
+      ['Ferramentas administrativas', 'Classificados', '/membros/classificados'],
+      ['Ferramentas administrativas', 'Histórico de visitas', '/membros/historico'],
+      ['Ferramentas administrativas', 'Cursos Página Lucrativa', '/membros/academia'],
+      ['Ferramentas administrativas', 'Perguntas frequentes', '/membros/perguntas-frequentes'],
+      ['Ferramentas administrativas', 'Convidar amigos', '/membros/convites'],
+      ['Complemento', 'Baixar produtos', '/membros/materiais'],
+      ['Complemento', 'Biblioteca de e-books', '/membros/ebooks'],
+      ['Complemento', 'Cartão e certificado', '/membros/cartao-certificado'],
+      ['Complemento', 'Usuários com mais pontos', '/membros/ranking'],
+      ['Complemento', 'Artigos marketing', '/membros/artigos'],
+      ['Complemento', 'Robô WhatsApp e Facebook', '/membros/automacoes'],
+      ['Complemento', 'Top 10 visitas', '/membros/top-visitas'],
+      ['Complemento', 'Encurtador de URL', '/membros/campanhas'],
+      ['Complemento', 'Bônus e materiais', '/membros/bonus'],
+      ['Área de estudo', 'Tabela de pontos e níveis', '/membros/pontos-niveis'],
+      ['Área de estudo', 'Usuários mais lucrativos', '/membros/mais-lucrativos'],
+      ['Área de estudo', 'Curso Google Ads', '/membros/curso-google-ads'],
+      ['Área de estudo', 'Curso Facebook Ads', '/membros/curso-facebook-ads'],
+      ['Área de estudo', 'Curso posts para Facebook', '/membros/curso-posts-facebook'],
+      ['Área de estudo', 'Curso crie designs Canva', '/membros/curso-canva'],
+      ['Área de estudo', 'Curso como criar um negócio', '/membros/curso-negocio'],
+      ['Área de estudo', 'Curso autônomo digital', '/membros/curso-autonomo'],
+      ['Área de estudo', 'Curso de recepcionista', '/membros/curso-recepcionista'],
+      ['Área de estudo', 'Curso crie um e-book', '/membros/curso-ebook'],
+      ['Área de estudo', 'Curso de importação', '/membros/curso-importacao'],
+      ['Área de estudo', 'Curso mestre do Excel', '/membros/curso-excel'],
+      ['Área de estudo', 'Curso TikTok Ads', '/membros/curso-tiktok-ads'],
+      ['Área de estudo', 'Curso página de captura', '/membros/curso-captura'],
+      ['Área de estudo', 'Curso criação de logotipo', '/membros/curso-logotipo'],
+      ['Área de estudo', 'Curso capas para vídeos', '/membros/curso-capas-videos'],
+      ['Área de estudo', 'Filmes motivacionais', '/membros/filmes'],
+    ] as const;
+
+    const adminItems = [
+      ['Atuação pessoal', 'Meu Escritório', '/membros'],
+      ['Gestão', 'Operação', '/admin'],
+      ['Gestão', 'Central de manutenção', '/admin/operacao'],
+      ['Gestão', 'Membros', '/admin/membros'],
+      ['Gestão', 'Pontuação', '/admin/pontos'],
+      ['Gestão', 'Relatos', '/admin/relatos'],
+      ['Gestão', 'Pedidos', '/admin/pedidos'],
+      ['Gestão', 'Financeiro', '/admin/financeiro'],
+      ['Gestão', 'Comunicações', '/admin/comunicacoes'],
+      ['Conteúdo', 'Catálogo', '/admin/produtos'],
+      ['Conteúdo', 'Academia', '/admin/academia'],
+      ['Conteúdo', 'E-books', '/admin/ebooks'],
+      ['Conteúdo', 'Publicações', '/admin/publicacoes'],
+    ] as const;
+
+    const openSidebar = async (group: string) => {
+      const sidebar = page.locator('[data-sidebar="sidebar"]');
+      const groupLabel = sidebar.getByText(group, { exact: true });
+      if (!(await groupLabel.isVisible())) {
+        await page.locator('[data-sidebar="trigger"]').click();
+      }
+      await expect(groupLabel).toBeVisible();
+    };
+
+    const navigateFromMobileMenu = async (group: string, label: string, destination: string) => {
+      await openSidebar(group);
+      const sidebar = page.locator('[data-sidebar="sidebar"]');
+      const item = sidebar.getByRole('button', { name: label, exact: true });
+      if (!(await item.isVisible())) {
+        const expand = sidebar.getByRole('button', {
+          name: `${group}: expandir submenu`,
+          exact: true,
+        });
+        await expect(expand).toBeVisible();
+        await expand.scrollIntoViewIfNeeded();
+        await expand.click();
+      }
+      await expect(item).toBeVisible();
+      await item.scrollIntoViewIfNeeded();
+      await item.click();
+      await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}${destination}(?:[/?#]|$)`));
+      await expect(page.locator('main').last()).toBeVisible();
+    };
+
+    await signIn(page, 'user', '123', '/membros');
+    for (const [group, label, destination] of memberItems) {
+      await navigateFromMobileMenu(group, label, destination);
+    }
+
+    await page.context().clearCookies();
+    await signIn(page, 'admin', '123', '/admin');
+    for (const [group, label, destination] of adminItems) {
+      await navigateFromMobileMenu(group, label, destination);
+      if (destination === '/membros') {
+        await page.locator('[data-sidebar="trigger"]').click();
+        const sidebar = page.locator('[data-sidebar="sidebar"]');
+        await sidebar.locator('[data-sidebar="footer"] button').click();
+        await page.getByRole('menuitem', { name: 'Voltar para Administração' }).click();
+        await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin(?:[/?#]|$)`));
+      }
+    }
+
+    await page.screenshot({ path: 'test-results/auditoria-completa-menus-mobile.png', fullPage: true });
+  });
+
 });
