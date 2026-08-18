@@ -54,6 +54,20 @@ export const referralLinks = mysqlTable("referralLinks", {
   statusIndex: index("referral_links_status_idx").on(table.status),
 }));
 
+export const pointEntries = mysqlTable("pointEntries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  amount: int("amount").notNull(),
+  reason: varchar("reason", { length: 320 }).notNull(),
+  status: mysqlEnum("status", ["pending", "posted", "void"]).default("posted").notNull(),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  userIndex: index("point_entries_user_idx").on(table.userId),
+  statusIndex: index("point_entries_status_idx").on(table.status),
+}));
+
 export const campaignLinks = mysqlTable("campaignLinks", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

@@ -16,6 +16,7 @@ import {
   memberInvitations,
   memberActivities,
   products,
+  pointEntries,
   supportTickets,
   transactions,
   users,
@@ -149,6 +150,45 @@ export async function updateAdminTransaction(transactionId: number, input: { sta
   if (!db) throw new Error("Banco de dados indisponível.");
   await db.update(transactions).set({ status: input.status, adminNote: input.adminNote?.trim() || null }).where(eq(transactions.id, transactionId));
   return { success: true } as const;
+}
+
+export async function getMemberPerformance(userId: number) {
+  const db = await getDb();
+  if (!db) return { entries: [], postedPoints: 0 };
+  const entries = await db.select().from(pointEntries).where(eq(pointEntries.userId, userId)).orderBy(desc(pointEntries.createdAt));
+  return { entries, postedPoints: entries.filter(entry => entry.status === "posted").reduce((total, entry) => total + entry.amount, 0) };
+}
+
+export async function getPerformanceMembers() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.role, "user")).orderBy(desc(users.id));
+}
+
+export async function getAdminPerformance() {
+  const db = await getDb();
+  if (!db) return { entries: [], members: [] };
+  const [entries, members] = await Promise.all([
+    db.select().from(pointEntries).orderBy(desc(pointEntries.createdAt)),
+    getPerformanceMembers(),
+  ]);
+  return { entries, members };
+}
+
+export async function createAdminPointEntry(adminId: number, input: { userId: number; amount: number; reason: string; status: "pending" | "posted" | "void" }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const member = await db.select({ id: users.id }).from(users).where(and(eq(users.id, input.userId), eq(users.role, "user"))).limit(1);
+  if (!member[0]) throw new Error("Membro não encontrado.");
+  const result = await db.insert(pointEntries).values({ userId: input.userId, amount: input.amount, reason: input.reason.trim(), status: input.status, createdBy: adminId });
+  return { id: Number(result[0].insertId) };
+}
+
+export async function updateAdminPointEntry(id: number, input: { status: "pending" | "posted" | "void" }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(pointEntries).set({ status: input.status }).where(eq(pointEntries.id, id));
+  return { success: true };
 }
 
 export async function getMemberCampaigns(userId: number) {

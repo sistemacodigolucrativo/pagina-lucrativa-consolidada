@@ -12,9 +12,11 @@ import AdminEbooks from "./pages/AdminEbooks";
 import MemberProducts from "./pages/MemberProducts";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
+import MemberPerformance from "./pages/MemberPerformance";
 import MemberCourses from "./pages/MemberCourses";
 import AdminCourses from "./pages/AdminCourses";
 import AdminTransactions from "./pages/AdminTransactions";
+import AdminPerformance from "./pages/AdminPerformance";
 import AdminProducts from "./pages/AdminProducts";
 import AdminPublications from "./pages/AdminPublications";
 import AdminOffice from "./pages/AdminOffice";
@@ -50,6 +52,11 @@ function AppRoutes() {
     <Route path="/membros/emails-interessados" component={MemberCommunications} />
     <Route path="/membros/emails-whatsapp" component={MemberCommunications} />
     <Route path="/membros/ganhos" component={MemberEarnings} />
+    <Route path="/membros/pontos" component={MemberPerformance} />
+    <Route path="/membros/pontos-niveis" component={MemberPerformance} />
+    <Route path="/membros/historico" component={MemberPerformance} />
+    <Route path="/membros/ranking" component={MemberPerformance} />
+    <Route path="/membros/mais-lucrativos" component={MemberPerformance} />
     <Route path="/membros/academia" component={MemberCourses} />
     <Route path="/membros/curso-google-ads" component={MemberCourses} />
     <Route path="/membros/curso-facebook-ads" component={MemberCourses} />
@@ -76,6 +83,7 @@ function AppRoutes() {
     <Route path="/admin/pedidos" component={AdminApplications} />
     <Route path="/admin/comunicacoes" component={AdminCommunications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />
+    <Route path="/admin/pontos" component={AdminPerformance} />
     <Route path="/admin/academia" component={AdminCourses} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
