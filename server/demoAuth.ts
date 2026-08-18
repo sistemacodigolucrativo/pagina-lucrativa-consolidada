@@ -29,15 +29,15 @@ type StoredDemoAccount = DemoAccount & { credentialHash: string };
 const demoAccounts: StoredDemoAccount[] = [
   {
     openId: "local_demo_admin",
-    name: "Administrador de demonstração",
-    email: "admin.demo@pagina-lucrativa.local",
+    name: "Administrador Página Lucrativa",
+    email: "administrador@pagina-lucrativa.local",
     role: "admin",
     credentialHash: "f6bd2d1a9a2798aa5b2a000d477587b65aaac9a417064d91ed2bcd8714bbba89",
   },
   {
     openId: "local_demo_member",
-    name: "Membro de demonstração",
-    email: "membro.demo@pagina-lucrativa.local",
+    name: "Membro Página Lucrativa",
+    email: "membro@pagina-lucrativa.local",
     role: "user",
     credentialHash: "61b7de306ccf11d6c81f85e56e86571766d10c01e72449b0171a4966d97e1793",
   },

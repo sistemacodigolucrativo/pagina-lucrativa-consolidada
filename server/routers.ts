@@ -127,7 +127,7 @@ export const appRouter = router({
     }),
     demoLogin: publicProcedure.input(demoLoginInputSchema).mutation(({ ctx, input }) => {
       const account = resolveDemoAccount(input.username, input.password);
-      if (!account) throw new Error("Credenciais de demonstração inválidas.");
+      if (!account) throw new Error("Usuário ou senha inválidos.");
       const token = createDemoSession(account);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, { ...cookieOptions, sameSite: cookieOptions.secure ? "none" : "lax", maxAge: 1000 * 60 * 60 * 12 });

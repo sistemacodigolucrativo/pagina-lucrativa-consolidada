@@ -215,3 +215,23 @@
 - [x] Unificar a navegação dos módulos de pedidos, financeiro e comunicações, evitando a barra lateral genérica sem remover as operações persistentes já existentes.
 - [x] Remover o item duplicado de produtos do painel administrativo e disponibilizar o acesso à supervisão de comunicações.
 - [x] Cobrir a configuração de navegação, validar rotas e permissões diretamente na VPS e sincronizar o marco no GitHub.
+
+# Validação end-to-end com Playwright
+- [x] Preparar a infraestrutura Playwright no release ativo da VPS sem alterar a aplicação publicada.
+- [x] Cobrir login local, bloqueios de permissão, navegação crítica de membro e administração e estados sem dados fictícios.
+- [x] Executar a suíte E2E contra o domínio publicado, corrigir falhas identificadas e arquivar as evidências.
+- [ ] Sincronizar a suíte, as evidências permitidas e o relatório de execução com o repositório privado.
+
+- [x] Substituir a redação interna de validação da tela de acesso por copy apropriada da Página Lucrativa, removendo menções a sessão temporária, demonstração e Manus.
+
+- [x] Revisar a terminologia visível do Escritório Virtual e dos perfis locais, removendo rótulos de demonstração e substituindo painel de operação por Escritório Virtual quando aplicável.
+
+- [x] Corrigir a leitura de contexto das rotas do Escritório Virtual quando abertas diretamente com o prefixo publicado /paginalucrativa.
+
+- [x] Inventariar e documentar todas as opções de menu atuais do Escritório Virtual antes de reorganizar a navegação.
+
+- [x] Reproduzir e corrigir no mobile o desaparecimento dos menus após navegar por Mensagem e acesso.
+
+- [x] Agrupar rotas relacionadas em submenus expansíveis, preservando todos os caminhos e funções existentes.
+
+- [x] Validar a navegação do Escritório Virtual em mobile, tablet e desktop após a reorganização.

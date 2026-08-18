@@ -37,17 +37,17 @@ export default function DemoLogin() {
             </Link>
             <div className="max-w-md space-y-5">
               <span className="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.19em] text-[#e5bd62] uppercase">
-                <ShieldCheck className="h-4 w-4" /> Ambiente de verificação
+                <ShieldCheck className="h-4 w-4" /> Área exclusiva
               </span>
               <h1 className="font-[Space_Grotesk] text-4xl font-semibold leading-[0.98] sm:text-5xl">
-                Consulte os dois lados da operação.
+                Acesse seu Escritório Virtual.
               </h1>
               <p className="max-w-sm text-sm leading-7 text-[#f5f0e7]/65">
-                Esta entrada foi adicionada somente para validar os layouts de membro e administração com perfis separados.
+                Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Página Lucrativa.
               </p>
             </div>
             <p className="max-w-sm font-mono text-[10px] leading-5 tracking-wide text-[#f5f0e7]/40 uppercase">
-              Sessão temporária · Sem acesso ao login Manus
+              Acesso seguro · Página Lucrativa
             </p>
           </div>
 
@@ -57,9 +57,9 @@ export default function DemoLogin() {
                 <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[#e5bd62]/35 bg-[#e5bd62]/10 text-[#e5bd62]">
                   <KeyRound className="h-4 w-4" />
                 </div>
-                <p className="font-mono text-[10px] tracking-[0.18em] text-[#e5bd62] uppercase">Acesso local</p>
-                <h2 className="font-[Space_Grotesk] text-3xl font-semibold">Entrar para testar</h2>
-                <p className="text-sm leading-6 text-[#f5f0e7]/60">Informe as credenciais de verificação recebidas.</p>
+                <p className="font-mono text-[10px] tracking-[0.18em] text-[#e5bd62] uppercase">Área de acesso</p>
+                <h2 className="font-[Space_Grotesk] text-3xl font-semibold">Entrar na sua conta</h2>
+                <p className="text-sm leading-6 text-[#f5f0e7]/60">Use seu usuário e senha para continuar.</p>
               </div>
 
               <div className="space-y-5">
@@ -76,7 +76,7 @@ export default function DemoLogin() {
               {(formError || login.isError) && <p role="alert" className="border-l-2 border-red-400 pl-3 text-sm text-red-200">{formError || "Não foi possível iniciar a sessão."}</p>}
 
               <Button type="submit" disabled={login.isPending} className="h-12 w-full rounded-none bg-[#e5bd62] font-semibold text-[#16120a] hover:bg-[#f0d28c]">
-                {login.isPending ? "Iniciando sessão..." : "Acessar ambiente"}
+                {login.isPending ? "Iniciando sessão..." : "Entrar na conta"}
               </Button>
             </form>
           </div>

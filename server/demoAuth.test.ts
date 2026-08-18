@@ -2,14 +2,14 @@ import { describe, expect, it } from "vitest";
 import { createDemoSession, resolveDemoAccount, resolveDemoSession } from "./demoAuth";
 
 describe("resolveDemoAccount", () => {
-  it("reconhece a conta administrativa de demonstração", () => {
+  it("reconhece a conta administrativa local", () => {
     expect(resolveDemoAccount("admin", "123")).toMatchObject({
       openId: "local_demo_admin",
       role: "admin",
     });
   });
 
-  it("reconhece a conta de membro de demonstração", () => {
+  it("reconhece a conta de membro local", () => {
     expect(resolveDemoAccount("user", "123")).toMatchObject({
       openId: "local_demo_member",
       role: "user",
@@ -21,7 +21,7 @@ describe("resolveDemoAccount", () => {
     expect(resolveDemoAccount("desconhecido", "123")).toBeNull();
   });
 
-  it("emite uma sessão temporária resolvida sem banco de dados ou OAuth", () => {
+  it("emite uma sessão local resolvida sem banco de dados ou OAuth", () => {
     const account = resolveDemoAccount("admin", "123");
     const token = createDemoSession(account!);
 
