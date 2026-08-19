@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useState } from "react";
-import { ArrowDown, ArrowUpRight, Menu, X } from "lucide-react";
+import { FormEvent, MouseEvent, useEffect, useState } from "react";
+import { ArrowDown, ArrowUpRight, Menu, MessageCircle, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
@@ -7,6 +7,7 @@ import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PhoneInput } from "@/components/PhoneInput";
 
 const heroImage = "/assets/hero.jpg";
+const stateDesiredImage = "/state-desired.png";
 const mechanismImage = "/structure-mechanism.png";
 const journeyImage = "/structure-journey.png";
 const valueStackImage = "/structure-value-stack.png";
@@ -121,27 +122,17 @@ function JoinButton({ className = "" }: { className?: string }) {
   return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Quero conhecer a estrutura <ArrowUpRight size={16} /></a>;
 }
 
-function TopPromoBanner({ onClose }: { onClose: () => void }) {
+function TopPromoBanner() {
   return <section className="top-promo-banner" aria-label="Apresentação do Código Lucrativo">
     <img src="/codigo-lucrativo-banner.png" alt="Seu negócio digital pronto para começar, com Página Lucrativa, Escritório Virtual, ferramentas e treinamentos." />
-    <button type="button" className="top-promo-close" aria-label="Fechar imagem de apresentação" onClick={onClose}>
-      <X size={22} strokeWidth={3} aria-hidden="true" />
-    </button>
   </section>;
 }
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showTopPromoBanner, setShowTopPromoBanner] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
-  const [showFloatingCta, setShowFloatingCta] = useState(false);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
-  useEffect(() => {
-    const updateFloatingCta = () => setShowFloatingCta(window.scrollY > window.innerHeight * .72);
-    updateFloatingCta();
-    window.addEventListener("scroll", updateFloatingCta, { passive: true });
-    return () => window.removeEventListener("scroll", updateFloatingCta);
-  }, []);
   useEffect(() => {
     if (!profileDetailsOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -181,6 +172,12 @@ export default function Home() {
   }
 
   const closeMenu = () => setMenuOpen(false);
+  const openPreview = (event: MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    setMenuOpen(false);
+    setPreviewOpen(true);
+    window.setTimeout(() => document.getElementById("preview")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
+  };
 
   return <div className="sales-page reference-page">
     <header className="site-header">
@@ -190,6 +187,7 @@ export default function Home() {
           <a href="#inicio" onClick={closeMenu}>Início</a>
           <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
           <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
+          <a href="#preview" onClick={openPreview}>Preview</a>
           <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
           <a href="/acesso" className="nav-login" onClick={closeMenu}>Entrar</a>
         </nav>
@@ -234,7 +232,7 @@ export default function Home() {
             ) : null}
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
             <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
-            {showTopPromoBanner ? <TopPromoBanner onClose={() => setShowTopPromoBanner(false)} /> : null}
+            <TopPromoBanner />
             <p>Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
             <div className="sales-trust"><span className="sales-pulse" />A estrutura já existe. Você personaliza e coloca sua operação em movimento.</div>
@@ -259,6 +257,7 @@ export default function Home() {
         <div className="shell reference-copy-grid">
           <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
           <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2>
+            {index === 1 && <div className="reference-image-frame inline-reference-image"><img src={stateDesiredImage} alt="Estrutura digital pronta e validada, com painel de operação, personalização, aprendizado e acompanhamento" loading="lazy" /></div>}
             {index === 3 && <div className="reference-image-frame inline-reference-image"><img src={mechanismImage} alt="Estrutura digital conectando página pública, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento" loading="lazy" /></div>}
             {index === 5 && <div className="reference-image-frame inline-reference-image"><img src={journeyImage} alt="Jornada visual de ativação, personalização, aprendizado, divulgação e acompanhamento" loading="lazy" /></div>}
             {index === 7 && <div className="reference-image-frame inline-reference-image"><img src={valueStackImage} alt="Comparação visual entre construir componentes desconectados sozinho e operar uma estrutura digital organizada" loading="lazy" /></div>}
@@ -266,6 +265,21 @@ export default function Home() {
         </div>
       </section>)}
 
+      {previewOpen ? <section className="sales-section preview-area" id="preview" aria-labelledby="preview-title">
+        <div className="shell">
+          <div className="sales-section-heading preview-heading"><div><Eyebrow>Preview temporário</Eyebrow><h2 id="preview-title">Compare alternativas antes da versão oficial.</h2></div><div className="preview-heading-actions"><p>Área experimental acessível somente pelo menu. Os modelos abaixo são referências visuais e não fazem parte da oferta pública.</p><button type="button" className="btn btn-ghost preview-close" onClick={() => setPreviewOpen(false)}>Ocultar Preview</button></div></div>
+          <div className="preview-grid">
+            <details className="preview-card" open>
+              <summary><span className="preview-card-label">Modelo 01</span><strong>FAB circular</strong><span className="preview-card-action">Visualizar</span></summary>
+              <div className="preview-stage"><div className="preview-stage-screen"><span className="preview-stage-kicker">Chat de membros</span><strong>Atalho discreto</strong><small>Ícone circular com presença reduzida.</small></div><div className="preview-stage-fab" aria-hidden="true"><MessageCircle size={24} /></div></div>
+            </details>
+            <details className="preview-card">
+              <summary><span className="preview-card-label">Modelo 02</span><strong>FAB identificado</strong><span className="preview-card-action">Visualizar</span></summary>
+              <div className="preview-stage"><div className="preview-stage-screen"><span className="preview-stage-kicker">Chat de membros</span><strong>Atalho com identificação</strong><small>Ícone circular acompanhado por etiqueta.</small></div><div className="preview-stage-fab preview-stage-fab-labeled" aria-hidden="true"><MessageCircle size={22} /><span>Chat</span></div></div>
+            </details>
+          </div>
+        </div>
+      </section> : null}
       <section className="sales-section reference-videos" id="videos">
         <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
       </section>
@@ -291,6 +305,6 @@ export default function Home() {
     </main>
 
     <footer className="footer"><div className="shell footer-row"><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span>{affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}</div></footer>
-    <div className={`floating ${showFloatingCta ? "is-visible" : ""}`}><JoinButton /></div>
+    <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={23} strokeWidth={2.2} /><span className="member-chat-fab-label" aria-hidden="true"><strong>Chat de membros</strong><small>Em breve</small></span></button></div>
   </div>;
 }
