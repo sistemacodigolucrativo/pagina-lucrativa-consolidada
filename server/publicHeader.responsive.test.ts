@@ -44,6 +44,27 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('  .sales-hero { min-height: auto; padding: 38px 0 70px; }');
   });
 
+  it("loads the edited promo banner through the environment-aware app base", () => {
+    expect(homeSource).toContain('import { withAppBase } from "@/lib/devPath";');
+    expect(homeSource).toContain('const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");');
+    expect(homeSource).toContain('<img src={promoBannerImage}');
+  });
+
+  it("breaks and centers the hero trust statement responsively", () => {
+    expect(homeSource).toContain('className="sales-trust-copy"');
+    expect(homeSource).toContain('className="sales-trust-break"');
+    expect(cssSource).toContain('justify-content: center;');
+    expect(cssSource).toContain('text-align: center;');
+    expect(cssSource).toContain('.sales-trust-break { display: block; }');
+  });
+  it("resolves public section images by stable IDs and keeps automatic placement", () => {
+    expect(homeSource).toContain('const sectionImages = trpc.public.salesSectionImages.useQuery();');
+    expect(homeSource).toContain('const resolveSectionImage = (sectionId: string, fallback: string | null) => {');
+    expect(homeSource).toContain('key={block.id}');
+    expect(homeSource).toContain('{sectionImage ? <div className="reference-image-frame inline-reference-image">');
+    expect(homeSource).toContain('section.id !== "hero_operation"');
+  });
+
   it("keeps the promo banner permanent and removes its close control", () => {
     expect(homeSource).toContain('<TopPromoBanner />');
     expect(homeSource).not.toContain('showTopPromoBanner');
@@ -59,22 +80,9 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.member-chat-fab-wrap { position: fixed;');
   });
 
-  it("loads the state-desired image inside block 02 with the production path", () => {
-    expect(homeSource).toContain('const stateDesiredImage = "/state-desired.png";');
-    expect(homeSource).toContain('{index === 1 && <div className="reference-image-frame inline-reference-image">');
-    expect(homeSource).toContain('alt="Estrutura digital pronta e validada');
+  it("links Preview to a separate experimental page", () => {
+    expect(homeSource).toContain('href={withAppBase("/preview")}');
+    expect(homeSource).not.toContain('previewOpen');
+    expect(homeSource).not.toContain('preview-area');
   });
-
-  it("keeps Preview temporary and isolated from the public flow", () => {
-    expect(homeSource).toContain('<a href="#preview" onClick={openPreview}>Preview</a>');
-    expect(homeSource).toContain('const [previewOpen, setPreviewOpen] = useState(false);');
-    expect(homeSource).toContain('{previewOpen ? <section className="sales-section preview-area" id="preview"');
-    expect(homeSource).toContain('onClick={() => setPreviewOpen(false)}>Ocultar Preview</button>');
-    expect(homeSource).toContain('não fazem parte da oferta pública');
-    expect(homeSource).toContain('className="preview-grid"');
-    expect(homeSource).toContain('Modelo 01');
-    expect(homeSource).toContain('Modelo 02');
-    expect(cssSource).toContain('.preview-grid { display: grid;');
-  });
-
 });

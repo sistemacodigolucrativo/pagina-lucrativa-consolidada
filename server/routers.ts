@@ -42,6 +42,8 @@ import {
   getMemberInvitations,
   getMemberActivities,
   getPublishedContent,
+  getPublicSalesSectionImages,
+  getAdminPublicSalesSectionImages,
   getPublicAffiliateProfile,
   getPublishedEbook,
   getPublishedEbooks,
@@ -87,6 +89,8 @@ import {
   unlockPublicSpecialAccess,
   getAdminSpecialAccessPages,
   updateAdminSpecialAccessPage,
+  removeAdminPublicSalesSectionImage,
+  upsertAdminPublicSalesSectionImage,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { z } from "zod";
@@ -165,6 +169,12 @@ const courseInput = z.object({
   level: z.enum(["fundamentos", "pratica", "avancado"]),
   ebookId: z.number().int().positive().nullable(),
   isPublished: z.boolean(),
+});
+const publicSalesSectionImageInput = z.object({
+  sectionId: z.string().trim().regex(/^[a-z0-9_]+$/).min(3).max(64),
+  dataUrl: z.string().regex(/^data:image\/(?:jpeg|png|gif);base64,[A-Za-z0-9+/=\s]+$/).max(5_700_000),
+  contentType: z.enum(["image/jpeg", "image/png", "image/gif"]),
+  originalName: z.string().trim().max(255).optional().nullable(),
 });
 const contentInput = z.object({
   kind: z.enum(["material", "article", "faq", "notice"]),
@@ -262,6 +272,7 @@ export const appRouter = router({
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
     specialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getPublicSpecialAccess(input.code)),
+    salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
     unlockSpecialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48), password: z.string().min(1).max(128) })).mutation(({ input }) => unlockPublicSpecialAccess(input.code, input.password)),
   }),
   admin: router({
@@ -303,6 +314,9 @@ export const appRouter = router({
     testimonials: adminProcedure.query(() => getAdminTestimonials()),
     updateTestimonial: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "approved", "rejected", "archived"]), adminNote: z.string().trim().max(4000).optional().nullable() })).mutation(({ input }) => updateAdminTestimonial(input.id, input)),
     specialAccess: adminProcedure.query(() => getAdminSpecialAccessPages()),
+    publicSalesSectionImages: adminProcedure.query(() => getAdminPublicSalesSectionImages()),
+    upsertPublicSalesSectionImage: adminProcedure.input(publicSalesSectionImageInput).mutation(({ ctx, input }) => upsertAdminPublicSalesSectionImage(ctx.user.id, input.sectionId, input)),
+    removePublicSalesSectionImage: adminProcedure.input(z.object({ sectionId: z.string().trim().regex(/^[a-z0-9_]+$/).min(3).max(64) })).mutation(({ input }) => removeAdminPublicSalesSectionImage(input.sectionId)),
     updateSpecialAccess: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "paused"]), adminNote: z.string().trim().max(2000).optional().nullable() })).mutation(({ input }) => updateAdminSpecialAccessPage(input.id, input)),
     referralMembers: adminProcedure.query(() => getReferralMembers()),
     referralLinks: adminProcedure.query(() => getAdminReferralLinks()),

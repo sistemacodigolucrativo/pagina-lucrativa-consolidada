@@ -98,7 +98,7 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
           onClick={() => void toggleFullscreen()}
           aria-label={isFullscreen ? "Sair da tela cheia" : "Ampliar leitor"}
           aria-pressed={isFullscreen}
-          className="inline-flex shrink-0 items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 active:scale-[0.97]"
+          className="inline-flex shrink-0 items-center gap-2 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 active:scale-[0.97]"
         >
           {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" /> : <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />}
           {isFullscreen ? "Sair da tela cheia" : "Ampliar"}

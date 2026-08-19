@@ -1,101 +1,16 @@
-import { FormEvent, MouseEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUpRight, Menu, MessageCircle, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { withAppBase } from "@/lib/devPath";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PhoneInput } from "@/components/PhoneInput";
+import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
 
-const heroImage = "/assets/hero.jpg";
-const stateDesiredImage = "/state-desired.png";
-const mechanismImage = "/structure-mechanism.png";
-const journeyImage = "/structure-journey.png";
-const valueStackImage = "/structure-value-stack.png";
-
-const contentBlocks = [
-  {
-    eyebrow: "O problema de começar sozinho",
-    title: "Começar no digital não deveria exigir construir tudo sozinho.",
-    body: [
-      "Quem quer colocar um projeto na internet costuma descobrir que a primeira etapa não é divulgar: é construir toda a base.",
-      "É preciso decidir o que apresentar, preparar uma página, organizar uma área de acesso, configurar links, reunir materiais, aprender divulgação e encontrar uma forma de acompanhar pedidos e contatos.",
-      "Essa complexidade invisível faz muita gente adiar o projeto antes mesmo de dar o primeiro passo.",
-    ],
-  },
-  {
-    eyebrow: "O estado desejado",
-    title: "E se a estrutura principal já estivesse pronta?",
-    body: [
-      "Em vez de começar diante de uma tela em branco, imagine receber uma base digital que já reúne os primeiros caminhos da operação.",
-      "Você entra, entende o que está disponível, personaliza seus dados, aprende a utilizar os recursos e começa a movimentar o seu projeto com mais clareza.",
-    ],
-  },
-  {
-    eyebrow: "O mecanismo",
-    title: "Conheça a Estrutura Digital Replicável.",
-    body: [
-      "A Página Lucrativa organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
-      "A jornada é simples de entender: entre, receba a estrutura, personalize, aprenda, divulgue e acompanhe sua operação.",
-      "Replicável aqui significa repetir uma base de operação; não significa copiar resultados, receber dinheiro automaticamente ou ter vendas garantidas.",
-    ],
-  },
-  {
-    eyebrow: "O produto real",
-    title: "Página Lucrativa não é apenas uma página.",
-    body: [
-      "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, produtos, conteúdos, cursos, contatos e registros da sua própria operação.",
-      "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em movimento — sem precisar começar pela construção da tecnologia.",
-    ],
-  },
-  {
-    eyebrow: "A jornada",
-    title: "Da ativação aos primeiros passos da sua operação.",
-    body: [
-      "Depois do pedido, a jornada continua: acompanhe a solicitação, receba as orientações reais de acesso, complete seu perfil, configure seus dados, personalize sua presença e conheça a oferta.",
-      "Em seguida, aprenda a divulgar, crie seu primeiro link ou campanha e acompanhe visitas, contatos e pedidos conforme sua operação gerar esses registros.",
-    ],
-  },
-  {
-    eyebrow: "O que existe por trás",
-    title: "Um Escritório Virtual para organizar o que você precisa acompanhar.",
-    body: [
-      "Dentro da estrutura, você encontra página pública, perfil personalizado, link pessoal, campanhas, pedidos atribuídos, contatos consentidos, produtos, cursos, e-books, materiais, suporte e acompanhamento financeiro.",
-      "Os módulos aparecem de acordo com o que está publicado e disponível para sua conta. A proposta é centralizar a execução, não prometer que tudo acontece sozinho.",
-    ],
-  },
-  {
-    eyebrow: "A comparação",
-    title: "O que você teria de montar se começasse sozinho?",
-    body: [
-      "Produto ou oferta, site, landing page, área do usuário, autenticação, banco de dados, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
-      "É justamente essa etapa de construção que a Página Lucrativa reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
-    ],
-  },
-  {
-    eyebrow: "A facilidade real",
-    title: "Você não precisa saber programar para começar.",
-    body: [
-      "A infraestrutura tecnológica já foi desenvolvida. O Escritório Virtual apresenta os caminhos disponíveis e concentra as configurações que pertencem à sua conta.",
-      "Isso não elimina o aprendizado nem a execução comercial. Significa que você não precisa criar sistemas do zero antes de aprender a operar um projeto digital.",
-    ],
-  },
-  {
-    eyebrow: "Seu ativo digital",
-    title: "Sua estrutura pode permanecer disponível online.",
-    body: [
-      "Uma página pública pode continuar disponível na internet enquanto sua operação estiver ativa, permitindo que as pessoas encontrem a apresentação e os caminhos que você configurou.",
-      "Disponibilidade online não é promessa de renda 24 horas. Visitas, contatos, pedidos e resultados dependem da divulgação, da oferta, do público e da execução real.",
-    ],
-  },
-  {
-    eyebrow: "A prova que importa",
-    title: "A estrutura precisa fazer sentido antes de qualquer promessa de resultado.",
-    body: [
-      "O que você pode avaliar é concreto: existe uma página, um perfil, um Escritório Virtual, recursos de campanha, pedidos rastreáveis, biblioteca de execução e módulos para acompanhar a operação.",
-      "A Página Lucrativa não promete que a compra, sozinha, produz ganhos. Ela oferece uma base para quem quer começar um projeto digital e buscar resultados através de utilização, divulgação e vendas reais.",
-    ],
-  },
-];
+const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
+const heroSection = PUBLIC_SALES_SECTIONS[0];
+const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "hero_operation");
 
 const faqItems = [
   ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital da Página Lucrativa: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
@@ -124,15 +39,22 @@ function JoinButton({ className = "" }: { className?: string }) {
 
 function TopPromoBanner() {
   return <section className="top-promo-banner" aria-label="Apresentação do Código Lucrativo">
-    <img src="/codigo-lucrativo-banner.png" alt="Seu negócio digital pronto para começar, com Página Lucrativa, Escritório Virtual, ferramentas e treinamentos." />
+    <img src={promoBannerImage} alt="Seu negócio digital pronto para começar, com Página Lucrativa, Escritório Virtual, ferramentas e treinamentos." />
   </section>;
 }
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
+  const sectionImages = trpc.public.salesSectionImages.useQuery();
+  const imageBySection = useMemo(() => new Map((sectionImages.data ?? []).map(image => [image.sectionId, image])), [sectionImages.data]);
+  const resolveSectionImage = (sectionId: string, fallback: string | null) => {
+    const saved = imageBySection.get(sectionId);
+    if (saved?.status === "removed") return null;
+    return saved?.imageUrl ? withAppBase(saved.imageUrl) : fallback ? withAppBase(fallback) : null;
+  };
+  const heroImage = resolveSectionImage(heroSection.id, heroSection.defaultImage);
   useEffect(() => {
     if (!profileDetailsOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
@@ -172,12 +94,6 @@ export default function Home() {
   }
 
   const closeMenu = () => setMenuOpen(false);
-  const openPreview = (event: MouseEvent<HTMLAnchorElement>) => {
-    event.preventDefault();
-    setMenuOpen(false);
-    setPreviewOpen(true);
-    window.setTimeout(() => document.getElementById("preview")?.scrollIntoView({ behavior: "smooth", block: "start" }), 0);
-  };
 
   return <div className="sales-page reference-page">
     <header className="site-header">
@@ -187,7 +103,7 @@ export default function Home() {
           <a href="#inicio" onClick={closeMenu}>Início</a>
           <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
           <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
-          <a href="#preview" onClick={openPreview}>Preview</a>
+          <a href={withAppBase("/preview")} onClick={closeMenu}>Preview</a>
           <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
           <a href="/acesso" className="nav-login" onClick={closeMenu}>Entrar</a>
         </nav>
@@ -235,10 +151,10 @@ export default function Home() {
             <TopPromoBanner />
             <p>Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
-            <div className="sales-trust"><span className="sales-pulse" />A estrutura já existe. Você personaliza e coloca sua operação em movimento.</div>
+            <div className="sales-trust"><span className="sales-pulse" /><span className="sales-trust-copy">A estrutura já existe. Você personaliza<br className="sales-trust-break" />e coloca sua operação em movimento.</span></div>
           </div>
           <div className="sales-hero-side reveal-item reveal-delay">
-            <div className="hero-photo-wrap"><img src={heroImage} alt="Pessoa planejando sua operação digital" /><div className="photo-overlay" aria-hidden="true" /></div>
+            {heroImage ? <div className="hero-photo-wrap"><img src={heroImage} alt={heroSection.defaultAlt} /><div className="photo-overlay" aria-hidden="true" /></div> : <div className="hero-photo-wrap hero-photo-empty" aria-hidden="true" /> }
             <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
             <div className="sprint-stamp"><span>estrutura</span><strong>pronta<br />para operar</strong><small>personalize e comece</small></div>
             <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>personalize<br />e acompanhe</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · campanhas · pedidos</span></div>
@@ -253,33 +169,18 @@ export default function Home() {
         </div>
       </section>
 
-      {contentBlocks.map((block, index) => <section id={index === 0 ? "como-funciona" : index === 3 ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.title}>
-        <div className="shell reference-copy-grid">
-          <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
-          <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2>
-            {index === 1 && <div className="reference-image-frame inline-reference-image"><img src={stateDesiredImage} alt="Estrutura digital pronta e validada, com painel de operação, personalização, aprendizado e acompanhamento" loading="lazy" /></div>}
-            {index === 3 && <div className="reference-image-frame inline-reference-image"><img src={mechanismImage} alt="Estrutura digital conectando página pública, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento" loading="lazy" /></div>}
-            {index === 5 && <div className="reference-image-frame inline-reference-image"><img src={journeyImage} alt="Jornada visual de ativação, personalização, aprendizado, divulgação e acompanhamento" loading="lazy" /></div>}
-            {index === 7 && <div className="reference-image-frame inline-reference-image"><img src={valueStackImage} alt="Comparação visual entre construir componentes desconectados sozinho e operar uma estrutura digital organizada" loading="lazy" /></div>}
-            <div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
-        </div>
-      </section>)}
-
-      {previewOpen ? <section className="sales-section preview-area" id="preview" aria-labelledby="preview-title">
-        <div className="shell">
-          <div className="sales-section-heading preview-heading"><div><Eyebrow>Preview temporário</Eyebrow><h2 id="preview-title">Compare alternativas antes da versão oficial.</h2></div><div className="preview-heading-actions"><p>Área experimental acessível somente pelo menu. Os modelos abaixo são referências visuais e não fazem parte da oferta pública.</p><button type="button" className="btn btn-ghost preview-close" onClick={() => setPreviewOpen(false)}>Ocultar Preview</button></div></div>
-          <div className="preview-grid">
-            <details className="preview-card" open>
-              <summary><span className="preview-card-label">Modelo 01</span><strong>FAB circular</strong><span className="preview-card-action">Visualizar</span></summary>
-              <div className="preview-stage"><div className="preview-stage-screen"><span className="preview-stage-kicker">Chat de membros</span><strong>Atalho discreto</strong><small>Ícone circular com presença reduzida.</small></div><div className="preview-stage-fab" aria-hidden="true"><MessageCircle size={24} /></div></div>
-            </details>
-            <details className="preview-card">
-              <summary><span className="preview-card-label">Modelo 02</span><strong>FAB identificado</strong><span className="preview-card-action">Visualizar</span></summary>
-              <div className="preview-stage"><div className="preview-stage-screen"><span className="preview-stage-kicker">Chat de membros</span><strong>Atalho com identificação</strong><small>Ícone circular acompanhado por etiqueta.</small></div><div className="preview-stage-fab preview-stage-fab-labeled" aria-hidden="true"><MessageCircle size={22} /><span>Chat</span></div></div>
-            </details>
+      {contentBlocks.map((block, index) => {
+        const sectionImage = resolveSectionImage(block.id, block.defaultImage);
+        return <section id={block.id === "problem_start" ? "como-funciona" : block.id === "product_real" ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.id}>
+          <div className="shell reference-copy-grid">
+            <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
+            <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2>
+              {sectionImage ? <div className="reference-image-frame inline-reference-image"><img src={sectionImage} alt={block.defaultAlt} loading="lazy" /></div> : null}
+              <div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
           </div>
-        </div>
-      </section> : null}
+        </section>;
+      })}
+
       <section className="sales-section reference-videos" id="videos">
         <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
       </section>

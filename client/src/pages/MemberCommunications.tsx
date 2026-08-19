@@ -62,7 +62,7 @@ export default function MemberCommunications() {
     <DashboardLayout menuItems={menu} title="Escritório Virtual">
       <main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8">
         <header className="space-y-2">
-          <span className="text-xs uppercase tracking-[0.16em] text-amber-300">{context.eyebrow}</span>
+          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{context.eyebrow}</span>
           <h1 className="text-3xl font-semibold text-white">{context.title}</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">{context.description}</p>
         </header>
@@ -70,7 +70,7 @@ export default function MemberCommunications() {
         <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <form onSubmit={submit} className="order-1 min-w-0 space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
             <div className="flex items-center gap-2 text-white">
-              <Send className="size-5 text-amber-300" />
+              <Send className="size-5 text-emerald-300" />
               <h2 className="font-medium">{context.formTitle}</h2>
             </div>
             <label className="block text-sm text-zinc-200">
@@ -92,7 +92,7 @@ export default function MemberCommunications() {
               {context.messageLabel}
               <textarea value={message} maxLength={4000} onChange={event => setMessage(event.target.value)} placeholder={context.messagePlaceholder} className="mt-1 min-h-36 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" />
             </label>
-            <button disabled={create.isPending} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60 sm:w-auto">
+            <button disabled={create.isPending} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60 sm:w-auto">
               {create.isPending ? "Registrando..." : "Registrar preparo"}
             </button>
           </form>
@@ -107,7 +107,7 @@ export default function MemberCommunications() {
               return <article key={invitation.id} className="rounded-xl border border-white/10 bg-black/25 p-4">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-wider text-amber-200">{channelLabel[invitation.channel as CommunicationChannel]} · {invitation.status === "prepared" ? "Preparado" : "Cancelado"}</p>
+                    <p className="text-xs uppercase tracking-wider text-emerald-200">{channelLabel[invitation.channel as CommunicationChannel]} · {invitation.status === "prepared" ? "Preparado" : "Cancelado"}</p>
                     <h3 className="mt-1 font-medium text-white">{contact ? contact.name : "Preparação sem contato específico"}</h3>
                     <p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-zinc-400">{invitation.message || "Sem texto adicional registrado."}</p>
                   </div>

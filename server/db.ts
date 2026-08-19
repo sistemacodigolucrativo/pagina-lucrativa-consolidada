@@ -21,6 +21,7 @@ import {
   memberTestimonials,
   products,
   pointEntries,
+  publicSalesSectionImages,
   supportTickets,
   transactions,
   users,
@@ -29,6 +30,7 @@ import type { ApplicationInput } from "@shared/applications";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
 import { hashPassword } from "./credentialHash";
+import { getPublicSalesSection } from "../shared/publicSalesSections";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -596,6 +598,40 @@ export async function createMemberTicket(userId: number, input: { subject: strin
   if (!db) throw new Error("Banco de dados indisponível.");
   const result = await db.insert(supportTickets).values({ userId, ...input });
   return { id: Number(result[0].insertId) };
+}
+
+export async function getPublicSalesSectionImages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({ sectionId: publicSalesSectionImages.sectionId, imageUrl: publicSalesSectionImages.imageUrl, contentType: publicSalesSectionImages.contentType, status: publicSalesSectionImages.status, originalName: publicSalesSectionImages.originalName, updatedAt: publicSalesSectionImages.updatedAt }).from(publicSalesSectionImages).orderBy(desc(publicSalesSectionImages.updatedAt));
+}
+
+export async function getAdminPublicSalesSectionImages() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(publicSalesSectionImages).orderBy(desc(publicSalesSectionImages.updatedAt));
+}
+
+export async function upsertAdminPublicSalesSectionImage(adminId: number, sectionId: string, input: { dataUrl: string; contentType: "image/jpeg" | "image/png" | "image/gif"; originalName?: string | null }) {
+  if (!getPublicSalesSection(sectionId)) throw new Error("Seção pública inválida.");
+  const match = input.dataUrl.match(/^data:(image\/(?:jpeg|png|gif));base64,([A-Za-z0-9+/=\s]+)$/);
+  if (!match || match[1] !== input.contentType) throw new Error("Arquivo de imagem inválido.");
+  const buffer = Buffer.from(match[2].replace(/\s/g, ""), "base64");
+  if (!buffer.length || buffer.length > 4 * 1024 * 1024) throw new Error("A imagem deve ter no máximo 4 MB.");
+  const extension = input.contentType === "image/jpeg" ? "jpg" : input.contentType.slice("image/".length);
+  const originalName = input.originalName?.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(0, 255) || null;
+  const stored = await storagePut(`public-sales/${sectionId}/${Date.now()}.${extension}`, buffer, input.contentType);
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.insert(publicSalesSectionImages).values({ sectionId, imageUrl: stored.url, storageKey: stored.key, contentType: input.contentType, status: "active", originalName, createdBy: adminId }).onDuplicateKeyUpdate({ set: { imageUrl: stored.url, storageKey: stored.key, contentType: input.contentType, status: "active", originalName, createdBy: adminId } });
+  return db.select().from(publicSalesSectionImages).where(eq(publicSalesSectionImages.sectionId, sectionId)).limit(1).then(rows => rows[0] ?? null);
+}
+
+export async function removeAdminPublicSalesSectionImage(sectionId: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(publicSalesSectionImages).set({ status: "removed" }).where(eq(publicSalesSectionImages.sectionId, sectionId));
+  return { success: true } as const;
 }
 
 export async function getPublishedContent() {

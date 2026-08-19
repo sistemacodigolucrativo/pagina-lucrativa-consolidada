@@ -1,5 +1,5 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, FileText, KeyRound, Layers3, Mail, UsersRound } from "lucide-react";
+import { BookOpenCheck, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, FileText, ImagePlus, KeyRound, Layers3, Mail, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: BriefcaseBusiness, label: "Meu Escritório", path: "/membros", group: "Atuação pessoal" },
@@ -16,6 +16,7 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
+  { icon: ImagePlus, label: "Imagens da página", path: "/admin/imagens", group: "Conteúdo" },
 ];
 
 export function isAdminNavigation(items: Array<{ path: string }>) {

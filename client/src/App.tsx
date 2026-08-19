@@ -20,7 +20,9 @@ import AdminCourses from "./pages/AdminCourses";
 import AdminTransactions from "./pages/AdminTransactions";
 import AdminPerformance from "./pages/AdminPerformance";
 import AdminProducts from "./pages/AdminProducts";
-import AdminPublications from "./pages/AdminPublications";
+import AdminPublications from "@/pages/AdminPublications";
+import AdminSalesImages from "@/pages/AdminSalesImages";
+import Preview from "@/pages/Preview";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
@@ -109,6 +111,8 @@ function AppRoutes() {
     <Route path="/admin/produtos" component={AdminProducts} />
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/publicacoes" component={AdminPublications} />
+    <Route path="/admin/imagens" component={AdminSalesImages} />
+    <Route path="/preview" component={Preview} />
     <Route path="/admin/pedidos" component={AdminApplications} />
     <Route path="/admin/comunicacoes" component={AdminCommunications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />

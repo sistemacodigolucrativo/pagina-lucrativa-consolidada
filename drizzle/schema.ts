@@ -26,6 +26,22 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+export const publicSalesSectionImages = mysqlTable("publicSalesSectionImages", {
+  id: int("id").autoincrement().primaryKey(),
+  sectionId: varchar("sectionId", { length: 64 }).notNull(),
+  imageUrl: varchar("imageUrl", { length: 1024 }).notNull(),
+  storageKey: varchar("storageKey", { length: 1024 }).notNull(),
+  contentType: varchar("contentType", { length: 32 }).notNull(),
+  status: mysqlEnum("status", ["active", "removed"]).default("active").notNull(),
+  originalName: varchar("originalName", { length: 255 }),
+  createdBy: int("createdBy").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  sectionUniqueIndex: uniqueIndex("public_sales_section_images_section_uidx").on(table.sectionId),
+  updatedIndex: index("public_sales_section_images_updated_idx").on(table.updatedAt),
+}));
+
 export const memberAccountDetails = mysqlTable("memberAccountDetails", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
