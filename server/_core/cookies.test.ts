@@ -28,4 +28,12 @@ describe("getSessionCookieOptions", () => {
       secure: true,
     });
   });
+
+  it("isolates development sessions under the /dev path", () => {
+    const previousPrefix = process.env.VITE_DEV_PREFIX;
+    process.env.VITE_DEV_PREFIX = "/dev";
+    expect(getSessionCookieOptions(request("https"))).toMatchObject({ path: "/dev" });
+    if (previousPrefix === undefined) delete process.env.VITE_DEV_PREFIX;
+    else process.env.VITE_DEV_PREFIX = previousPrefix;
+  });
 });

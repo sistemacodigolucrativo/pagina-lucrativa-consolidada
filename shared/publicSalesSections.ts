@@ -81,7 +81,7 @@ export const PUBLIC_SALES_SECTIONS = [
     title: "O que você teria de montar se começasse sozinho?",
     body: [
       "Produto ou oferta, site, landing page, área do usuário, autenticação, banco de dados, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
-      "É justamente essa etapa de construção que a Página Lucrativa reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
+      "É justamente essa etapa de construção que a Página Lucrativa reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, automatizar, divulgar e desenvolver sua operação.",
     ],
     defaultImage: "/comparison.png",
     defaultAlt: "Comparação entre construir componentes desconectados sozinho e operar uma estrutura digital organizada",

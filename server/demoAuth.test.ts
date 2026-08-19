@@ -15,9 +15,11 @@ describe("resolveDemoAccount", () => {
     expect(await resolveDemoAccount("desconhecido", "123")).toBeNull();
   });
 
-  it("emite uma sessão local resolvida sem OAuth", async () => {
+  it("emite uma sessão local assinada que não depende da memória do processo", async () => {
     const account = await resolveDemoAccount("admin", "123");
     const token = createDemoSession(account!);
+    expect(token.split(".")).toHaveLength(2);
     expect(resolveDemoSession(token)).toMatchObject({ openId: "local_demo_admin", role: "admin", loginMethod: "local_demo" });
+    expect(resolveDemoSession(`${token}invalid`)).toBeNull();
   });
 });

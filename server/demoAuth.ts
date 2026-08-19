@@ -1,10 +1,10 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type { User } from "../drizzle/schema";
 import { getStoredPasswordHashByOpenId } from "./db";
 import { hashDemoCredential, hashPassword, hashesMatch } from "./credentialHash";
 
-export const DEMO_SESSION_COOKIE_NAME = "pl_demo_session";
+export const DEMO_SESSION_COOKIE_NAME = process.env.VITE_DEV_PREFIX ? "pl_demo_session_dev" : "pl_demo_session";
 
 export const demoLoginInputSchema = z.object({
   username: z.string().trim().min(1, "Informe o usuário.").max(64),
@@ -19,13 +19,14 @@ export type DemoAccount = {
   role: "admin" | "user";
 };
 
-type DemoSession = {
-  account: DemoAccount;
+type DemoSessionPayload = {
+  openId: string;
+  role: DemoAccount["role"];
   expiresAt: number;
 };
 
 const DEMO_SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
-const activeDemoSessions = new Map<string, DemoSession>();
+const DEMO_SESSION_SECRET = process.env.JWT_SECRET || "pagina-lucrativa-local-demo-session";
 
 type StoredDemoAccount = DemoAccount & { credentialHash: string };
 
@@ -47,6 +48,29 @@ const demoAccounts: StoredDemoAccount[] = [
     credentialHash: "61b7de306ccf11d6c81f85e56e86571766d10c01e72449b0171a4966d97e1793",
   },
 ];
+
+function signSessionPayload(payload: DemoSessionPayload) {
+  const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
+  const signature = createHmac("sha256", DEMO_SESSION_SECRET).update(encodedPayload).digest("base64url");
+  return `${encodedPayload}.${signature}`;
+}
+
+function readSessionPayload(token: string): DemoSessionPayload | null {
+  const [encodedPayload, encodedSignature] = token.split(".");
+  if (!encodedPayload || !encodedSignature) return null;
+
+  const expectedSignature = createHmac("sha256", DEMO_SESSION_SECRET).update(encodedPayload).digest();
+  const receivedSignature = Buffer.from(encodedSignature, "base64url");
+  if (receivedSignature.length !== expectedSignature.length || !timingSafeEqual(receivedSignature, expectedSignature)) return null;
+
+  try {
+    const payload = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8")) as Partial<DemoSessionPayload>;
+    if (typeof payload.openId !== "string" || (payload.role !== "admin" && payload.role !== "user") || typeof payload.expiresAt !== "number" || payload.expiresAt <= Date.now()) return null;
+    return payload as DemoSessionPayload;
+  } catch {
+    return null;
+  }
+}
 
 export async function resolveDemoAccount(username: string, password: string): Promise<DemoAccount | null> {
   const normalizedUsername = username.trim().toLowerCase();
@@ -78,21 +102,17 @@ export function toDemoUser(account: DemoAccount): User {
 }
 
 export function createDemoSession(account: DemoAccount) {
-  const token = randomUUID();
-  activeDemoSessions.set(token, {
-    account,
+  return signSessionPayload({
+    openId: account.openId,
+    role: account.role,
     expiresAt: Date.now() + DEMO_SESSION_DURATION_MS,
   });
-  return token;
 }
 
 export function resolveDemoSession(token: string | undefined) {
   if (!token) return null;
-  const session = activeDemoSessions.get(token);
-  if (!session) return null;
-  if (session.expiresAt <= Date.now()) {
-    activeDemoSessions.delete(token);
-    return null;
-  }
-  return toDemoUser(session.account);
+  const payload = readSessionPayload(token);
+  if (!payload) return null;
+  const account = demoAccounts.find(candidate => candidate.openId === payload.openId && candidate.role === payload.role);
+  return account ? toDemoUser(account) : null;
 }
