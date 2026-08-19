@@ -1,0 +1,117 @@
+[
+  {
+    "viewport": {
+      "name": "desktop",
+      "width": 1440,
+      "height": 900
+    },
+    "before": {
+      "scrollWidth": 1440,
+      "innerWidth": 1440,
+      "closeButton": "Fechar imagem de apresentação",
+      "bannerImageWidth": 1440,
+      "navTop": 497,
+      "imageCount": 3
+    },
+    "after": {
+      "bannerPresent": false,
+      "navTop": 0,
+      "scrollWidth": 1440,
+      "innerWidth": 1440
+    },
+    "naturalWidths": [
+      {
+        "src": "/structure-mechanism.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      },
+      {
+        "src": "/structure-journey.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      },
+      {
+        "src": "/structure-value-stack.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "tablet",
+      "width": 1024,
+      "height": 768
+    },
+    "before": {
+      "scrollWidth": 1024,
+      "innerWidth": 1024,
+      "closeButton": "Fechar imagem de apresentação",
+      "bannerImageWidth": 1024,
+      "navTop": 439.84375,
+      "imageCount": 3
+    },
+    "after": {
+      "bannerPresent": false,
+      "navTop": 0,
+      "scrollWidth": 1024,
+      "innerWidth": 1024
+    },
+    "naturalWidths": [
+      {
+        "src": "/structure-mechanism.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      },
+      {
+        "src": "/structure-journey.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      },
+      {
+        "src": "/structure-value-stack.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      }
+    ]
+  },
+  {
+    "viewport": {
+      "name": "mobile",
+      "width": 390,
+      "height": 844
+    },
+    "before": {
+      "scrollWidth": 390,
+      "innerWidth": 390,
+      "closeButton": "Fechar imagem de apresentação",
+      "bannerImageWidth": 390,
+      "navTop": 177,
+      "imageCount": 3
+    },
+    "after": {
+      "bannerPresent": false,
+      "navTop": 0,
+      "scrollWidth": 390,
+      "innerWidth": 390
+    },
+    "naturalWidths": [
+      {
+        "src": "/structure-mechanism.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      },
+      {
+        "src": "/structure-journey.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      },
+      {
+        "src": "/structure-value-stack.png",
+        "naturalWidth": 2560,
+        "naturalHeight": 1440
+      }
+    ]
+  }
+]
+VISUAL_CHECK_STATUS=ok

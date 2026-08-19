@@ -7,8 +7,9 @@ import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PhoneInput } from "@/components/PhoneInput";
 
 const heroImage = "/manus-storage/imported-sprint-hero_2aa66410.jpg";
-const methodImage = "/manus-storage/imported-sprint-method_0b5ae91c.jpg";
-const deliveryImage = "/manus-storage/imported-sprint-delivery_c100fe4d.jpg";
+const mechanismImage = "/structure-mechanism.png";
+const journeyImage = "/structure-journey.png";
+const valueStackImage = "/structure-value-stack.png";
 
 const contentBlocks = [
   {
@@ -192,6 +193,7 @@ export default function Home() {
           <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
           <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
           <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
+          <a href="/acesso" className="nav-login" onClick={closeMenu}>Entrar</a>
         </nav>
         <div className="nav-actions"><JoinButton /></div>
       </div>
@@ -254,9 +256,10 @@ export default function Home() {
       {contentBlocks.map((block, index) => <section id={index === 0 ? "como-funciona" : index === 3 ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.title}>
         <div className="shell reference-copy-grid">
           <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
-          <div><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2><div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
-          {index === 2 && <div className="reference-image-frame"><img src={methodImage} alt="Organização de uma estrutura de operação digital" /></div>}
-          {index === 5 && <div className="reference-image-frame"><img src={deliveryImage} alt="Materiais organizados para apoiar uma operação digital" /></div>}
+          <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2><div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
+          {index === 2 && <div className="reference-image-frame"><img src={mechanismImage} alt="Estrutura digital conectando página pública, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento" loading="lazy" /></div>}
+          {index === 4 && <div className="reference-image-frame"><img src={journeyImage} alt="Jornada visual de ativação, personalização, aprendizado, divulgação e acompanhamento" loading="lazy" /></div>}
+          {index === 6 && <div className="reference-image-frame"><img src={valueStackImage} alt="Comparação visual entre construir componentes desconectados sozinho e operar uma estrutura digital organizada" loading="lazy" /></div>}
         </div>
       </section>)}
 
@@ -265,7 +268,7 @@ export default function Home() {
       </section>
 
       <section className="sales-section sales-faq" id="faq">
-        <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div><Eyebrow>Antes de começar</Eyebrow><h2>Clareza para decidir com segurança.</h2><div className="copy-stack"><p>Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.</p>{faqItems.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></div>
+        <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div className="reference-copy-content"><Eyebrow>Antes de começar</Eyebrow><h2>Clareza para decidir com segurança.</h2><div className="copy-stack"><p>Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.</p>{faqItems.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></div>
       </section>
 
       <section className="sales-section sales-offer" id="f">
