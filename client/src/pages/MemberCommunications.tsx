@@ -67,8 +67,8 @@ export default function MemberCommunications() {
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">{context.description}</p>
         </header>
 
-        <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-          <form onSubmit={submit} className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
+        <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+          <form onSubmit={submit} className="order-1 min-w-0 space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
             <div className="flex items-center gap-2 text-white">
               <Send className="size-5 text-amber-300" />
               <h2 className="font-medium">{context.formTitle}</h2>
@@ -92,12 +92,12 @@ export default function MemberCommunications() {
               {context.messageLabel}
               <textarea value={message} maxLength={4000} onChange={event => setMessage(event.target.value)} placeholder={context.messagePlaceholder} className="mt-1 min-h-36 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" />
             </label>
-            <button disabled={create.isPending} className="inline-flex items-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60">
+            <button disabled={create.isPending} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60 sm:w-auto">
               {create.isPending ? "Registrando..." : "Registrar preparo"}
             </button>
           </form>
 
-          <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
+          <section className="order-2 min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-medium text-white">Preparos recentes</h2>
               <span className="text-xs uppercase tracking-wider text-zinc-500">{invitations.data?.length ?? 0} registros</span>

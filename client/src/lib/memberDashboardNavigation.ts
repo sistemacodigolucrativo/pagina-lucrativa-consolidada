@@ -51,6 +51,7 @@ const iconByKey: Record<string, LucideIcon> = {
   history: History,
   academy: BookOpen,
   faq: CircleHelp,
+  support: CircleHelp,
   invite: Send,
   downloads: Boxes,
   certificate: Award,

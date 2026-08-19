@@ -14,7 +14,7 @@ describe("memberOfficeNavigation", () => {
       "Complemento",
       "Área de estudo",
     ]);
-    expect(memberOfficeModuleCount).toBe(48);
+    expect(memberOfficeModuleCount).toBe(51);
     expect(new Set(paths).size).toBe(paths.length);
     expect(paths).toEqual(expect.arrayContaining([
       "/membros/mensagem-especial",
@@ -22,6 +22,9 @@ describe("memberOfficeNavigation", () => {
       "/membros/campanhas",
       "/membros/curso-google-ads",
       "/membros/filmes",
+      "/membros/fale-conosco",
+      "/membros/curso-capas-3d",
+      "/membros/curso-dominio-estrategico",
     ]));
   });
 

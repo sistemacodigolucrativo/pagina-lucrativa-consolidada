@@ -65,10 +65,12 @@ export default function DashboardLayout({
   children,
   menuItems = defaultMenuItems,
   title = "Escritório",
+  subtitle,
 }: {
   children: React.ReactNode;
   menuItems?: DashboardMenuItem[];
   title?: string;
+  subtitle?: string;
 }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
@@ -106,7 +108,7 @@ export default function DashboardLayout({
         } as CSSProperties
       }
     >
-      <DashboardLayoutContent setSidebarWidth={setSidebarWidth} menuItems={navigationMenuItems} title={title}>
+      <DashboardLayoutContent setSidebarWidth={setSidebarWidth} menuItems={navigationMenuItems} title={title} subtitle={subtitle}>
         {children}
       </DashboardLayoutContent>
     </SidebarProvider>
@@ -118,6 +120,7 @@ type DashboardLayoutContentProps = {
   setSidebarWidth: (width: number) => void;
   menuItems: DashboardMenuItem[];
   title: string;
+  subtitle?: string;
 };
 
 function DashboardLayoutContent({
@@ -125,6 +128,7 @@ function DashboardLayoutContent({
   setSidebarWidth,
   menuItems,
   title,
+  subtitle,
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
@@ -227,7 +231,7 @@ function DashboardLayoutContent({
                 <div className="flex items-center gap-2 min-w-0">
                   <span className="font-semibold tracking-tight truncate">
                     {title}
-                  </span>
+                  </span>{subtitle ? <span className="hidden text-xs text-muted-foreground lg:inline">{subtitle}</span> : null}
                 </div>
               ) : null}
             </div>

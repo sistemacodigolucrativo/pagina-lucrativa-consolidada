@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { resolveDemoAccount, toDemoUser } from "./demoAuth";
 
 describe("identidades locais persistentes", () => {
-  it("mantém identificadores estáveis que correspondem às contas da base local", () => {
-    const admin = resolveDemoAccount("admin", "123");
-    const member = resolveDemoAccount("user", "123");
+  it("mantém identificadores estáveis que correspondem às contas da base local", async () => {
+    const admin = await resolveDemoAccount("admin", "123");
+    const member = await resolveDemoAccount("user", "123");
     expect(admin).toBeDefined();
     expect(member).toBeDefined();
     expect(toDemoUser(admin!).id).toBe(1);

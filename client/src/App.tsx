@@ -71,6 +71,7 @@ function AppRoutes() {
     <Route path="/membros/como-divulgar" component={MemberOperations} />
     <Route path="/membros/campanhas" component={MemberOperations} />
     <Route path="/membros/convites" component={MemberOperations} />
+    <Route path="/membros/fale-conosco" component={MemberOperations} />
     <Route path="/membros/cartao-certificado" component={MemberCredentials} />
     <Route path="/membros/historico" component={MemberTraffic} />
     <Route path="/membros/top-visitas" component={MemberTraffic} />
@@ -96,6 +97,8 @@ function AppRoutes() {
     <Route path="/membros/curso-captura" component={MemberCourses} />
     <Route path="/membros/curso-logotipo" component={MemberCourses} />
     <Route path="/membros/curso-capas-videos" component={MemberCourses} />
+    <Route path="/membros/curso-capas-3d" component={MemberCourses} />
+    <Route path="/membros/curso-dominio-estrategico" component={MemberCourses} />
     <Route path="/membros/filmes" component={MemberCourses} />
     <Route path="/membros/curso/:courseKey" component={MemberCourses} />
     <Route path="/membros" component={MemberOffice} />

@@ -1,6 +1,8 @@
-import { createHash, randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 import type { User } from "../drizzle/schema";
+import { getStoredPasswordHashByOpenId } from "./db";
+import { hashDemoCredential, hashPassword, hashesMatch } from "./credentialHash";
 
 export const DEMO_SESSION_COOKIE_NAME = "pl_demo_session";
 
@@ -10,6 +12,7 @@ export const demoLoginInputSchema = z.object({
 });
 
 export type DemoAccount = {
+  username: string;
   openId: string;
   name: string;
   email: string;
@@ -28,6 +31,7 @@ type StoredDemoAccount = DemoAccount & { credentialHash: string };
 
 const demoAccounts: StoredDemoAccount[] = [
   {
+    username: "admin",
     openId: "local_demo_admin",
     name: "Administrador Página Lucrativa",
     email: "administrador@pagina-lucrativa.local",
@@ -35,6 +39,7 @@ const demoAccounts: StoredDemoAccount[] = [
     credentialHash: "f6bd2d1a9a2798aa5b2a000d477587b65aaac9a417064d91ed2bcd8714bbba89",
   },
   {
+    username: "user",
     openId: "local_demo_member",
     name: "Membro Página Lucrativa",
     email: "membro@pagina-lucrativa.local",
@@ -43,22 +48,15 @@ const demoAccounts: StoredDemoAccount[] = [
   },
 ];
 
-function hashCredential(username: string, password: string) {
-  return createHash("sha256")
-    .update(`${username.trim().toLowerCase()}:${password}`)
-    .digest("hex");
-}
-
-function hashesMatch(left: string, right: string) {
-  return timingSafeEqual(Buffer.from(left, "hex"), Buffer.from(right, "hex"));
-}
-
-export function resolveDemoAccount(username: string, password: string): DemoAccount | null {
-  const candidateHash = hashCredential(username, password);
-  const matched = demoAccounts.find(account => hashesMatch(account.credentialHash, candidateHash));
-
+export async function resolveDemoAccount(username: string, password: string): Promise<DemoAccount | null> {
+  const normalizedUsername = username.trim().toLowerCase();
+  const matched = demoAccounts.find(account => account.username === normalizedUsername);
   if (!matched) return null;
-
+  const storedPasswordHash = await getStoredPasswordHashByOpenId(matched.openId);
+  const valid = storedPasswordHash
+    ? hashesMatch(storedPasswordHash, hashPassword(password))
+    : hashesMatch(matched.credentialHash, hashDemoCredential(normalizedUsername, password));
+  if (!valid) return null;
   const { credentialHash: _credentialHash, ...account } = matched;
   return account;
 }
@@ -70,6 +68,7 @@ export function toDemoUser(account: DemoAccount): User {
     openId: account.openId,
     name: account.name,
     email: account.email,
+    passwordHash: null,
     loginMethod: "local_demo",
     role: account.role,
     createdAt: now,

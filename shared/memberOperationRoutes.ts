@@ -3,7 +3,7 @@ export type MemberOperationContext = {
   title: string;
   description: string;
   actionNote: string;
-  anchorId: "profile" | "convites" | null;
+  anchorId: "profile" | "convites" | "support" | null;
 };
 
 const defaultContext: MemberOperationContext = {
@@ -49,6 +49,13 @@ const routeContexts: Record<string, MemberOperationContext> = {
     description: "Prepare convites para pessoas que autorizaram o contato e mantenha um histórico da ação no seu Escritório Virtual.",
     actionNote: "Registre um contato consentido e, em seguida, prepare o convite. O sistema não envia mensagens automaticamente.",
     anchorId: "convites",
+  },
+  "/membros/fale-conosco": {
+    eyebrow: "Suporte funcional",
+    title: "Fale conosco",
+    description: "Entre em contato com a administração para tratar de assuntos funcionais da Plataforma Página Lucrativa.",
+    actionNote: "Dúvidas sobre divulgação continuam organizadas em Saiba como divulgar. Seu nome e e-mail são associados automaticamente à conta autenticada.",
+    anchorId: "support",
   },
 };
 

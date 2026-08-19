@@ -3,7 +3,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { applicationInputSchema } from "@shared/applications";
 import { normalizedEmailZodSchema, optionalPhoneZodSchema } from "@shared/contactValidation";
-import { httpUrlZodSchema, nonNegativeCentsZodSchema, normalizePixKey, pixKeyZodSchema, positiveCentsZodSchema, signedPointsZodSchema } from "@shared/structuredValidation";
+import { httpUrlZodSchema, nonNegativeCentsZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, positiveCentsZodSchema, signedPointsZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
 import {
   createAdminContent,
   createAdminEbook,
@@ -61,6 +61,7 @@ import {
   updateAdminTicket,
   updateAdminContact,
   updateMemberProfile,
+  uploadMemberProfilePhoto,
   updateMemberAccount,
   updateMemberReceivingPreference,
   updateMemberContact,
@@ -95,25 +96,65 @@ const campaignInput = z.object({
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(128),
   destinationUrl: httpUrlZodSchema,
 });
-const profileInput = z.object({
-  slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
+export const profileInput = z.object({
+  slug: z.string().trim().toLowerCase().regex(/^(?=.*[a-z0-9])[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
   bio: z.string().trim().max(2000).optional().nullable(),
   whatsapp: optionalPhoneZodSchema,
   websiteUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  facebookUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  twitterUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  linkedinUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  youtubeUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  skype: z.string().trim().max(255).optional().nullable(),
+  address: z.string().trim().max(255).optional().nullable(),
+  addressNumber: z.string().trim().max(32).optional().nullable(),
+  addressComplement: z.string().trim().max(160).optional().nullable(),
+  postalCode: z.string().trim().max(20).optional().nullable(),
+  district: z.string().trim().max(120).optional().nullable(),
+  city: z.string().trim().max(120).optional().nullable(),
+  state: z.string().trim().max(80).optional().nullable(),
+});
+export const profilePhotoInput = z.object({
+  dataUrl: z.string().regex(/^data:image\/(?:jpeg|png|gif);base64,[A-Za-z0-9+/=\s]+$/).max(1_450_000),
+  contentType: z.enum(["image/jpeg", "image/png", "image/gif"]),
 });
 export const accountInput = z.object({
   name: z.string().trim().min(2, "Informe seu nome.").max(180),
   email: normalizedEmailZodSchema,
+  newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres.").optional().nullable(),
+  confirmPassword: z.string().max(128).optional().nullable(),
+}).superRefine((value, context) => {
+  if (value.newPassword && value.newPassword !== value.confirmPassword) {
+    context.addIssue({ code: z.ZodIssueCode.custom, path: ["confirmPassword"], message: "As senhas não conferem." });
+  }
 });
 export const receivingPreferenceInput = z.object({
   holderName: z.string().trim().max(180).optional().nullable(),
   method: z.enum(["pix", "bank_transfer", "other"]),
   receivingKey: z.string().trim().max(255).optional().nullable(),
   instructions: z.string().trim().max(2000).optional().nullable(),
+  paypalEmail: normalizedEmailZodSchema.optional().nullable(),
+  paypalEnabled: z.boolean().optional(),
+  pagseguroEmail: normalizedEmailZodSchema.optional().nullable(),
+  pagseguroEnabled: z.boolean().optional(),
+  bank1Name: z.string().trim().max(180).optional().nullable(),
+  bank1Agency: z.string().trim().max(64).optional().nullable(),
+  bank1Account: z.string().trim().max(96).optional().nullable(),
+  bank1Type: z.enum(["checking", "savings"]).optional().nullable(),
+  bank1Holder: z.string().trim().max(180).optional().nullable(),
+  bank2Name: z.string().trim().max(180).optional().nullable(),
+  bank2Agency: z.string().trim().max(64).optional().nullable(),
+  bank2Account: z.string().trim().max(96).optional().nullable(),
+  bank2Type: z.enum(["checking", "savings"]).optional().nullable(),
+  bank2Holder: z.string().trim().max(180).optional().nullable(),
+  pixType: z.string().trim().max(64).optional().nullable(),
+  pixKey: z.string().trim().max(255).optional().nullable(),
 }).superRefine((value, context) => {
   if (value.method === "pix" && !value.receivingKey) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe a chave PIX." });
   if (value.method === "pix" && value.receivingKey && !pixKeyZodSchema.safeParse(value.receivingKey).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe uma chave PIX válida." });
-}).transform(value => ({ ...value, receivingKey: value.method === "pix" && value.receivingKey ? normalizePixKey(value.receivingKey) : value.receivingKey?.trim() || null }));
+  if (value.pixKey && !value.pixType) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixType"], message: "Selecione o tipo da chave PIX." });
+  if (value.pixKey && value.pixType && !validatePixKeyByType(value.pixKey, value.pixType)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixKey"], message: "A chave PIX não corresponde ao tipo selecionado." });
+}).transform(value => ({ ...value, receivingKey: value.method === "pix" && value.receivingKey ? normalizePixKey(value.receivingKey) : value.receivingKey?.trim() || null, pixKey: value.pixKey && value.pixType ? normalizePixKeyByType(value.pixKey, value.pixType) : value.pixKey?.trim() || null }));
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
 const productInput = z.object({ title: z.string().trim().min(3).max(240), description: z.string().trim().max(8000).optional().nullable(), category: z.string().trim().max(96).optional().nullable(), priceCents: nonNegativeCentsZodSchema });
 const courseInput = z.object({
@@ -162,8 +203,8 @@ export const appRouter = router({
       ctx.res.clearCookie(DEMO_SESSION_COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
       return { success: true } as const;
     }),
-    demoLogin: publicProcedure.input(demoLoginInputSchema).mutation(({ ctx, input }) => {
-      const account = resolveDemoAccount(input.username, input.password);
+    demoLogin: publicProcedure.input(demoLoginInputSchema).mutation(async ({ ctx, input }) => {
+      const account = await resolveDemoAccount(input.username, input.password);
       if (!account) throw new Error("Usuário ou senha inválidos.");
       const token = createDemoSession(account);
       const cookieOptions = getSessionCookieOptions(ctx.req);
@@ -187,8 +228,12 @@ export const appRouter = router({
     updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),
+    uploadProfilePhoto: protectedProcedure.input(profilePhotoInput).mutation(({ ctx, input }) => uploadMemberProfilePhoto(ctx.user.id, input)),
     account: protectedProcedure.query(({ ctx }) => getMemberAccount(ctx.user.id)),
-    updateAccount: protectedProcedure.input(accountInput).mutation(({ ctx, input }) => updateMemberAccount(ctx.user.id, input)),
+    updateAccount: protectedProcedure.input(accountInput).mutation(({ ctx, input }) => {
+      const { confirmPassword: _confirmPassword, ...accountInputValue } = input;
+      return updateMemberAccount(ctx.user.id, accountInputValue);
+    }),
     receiving: protectedProcedure.query(({ ctx }) => getMemberReceivingPreference(ctx.user.id)),
     updateReceiving: protectedProcedure.input(receivingPreferenceInput).mutation(({ ctx, input }) => updateMemberReceivingPreference(ctx.user.id, input)),
     affiliateApplications: protectedProcedure.query(({ ctx }) => getMemberAffiliateApplications(ctx.user.id)),

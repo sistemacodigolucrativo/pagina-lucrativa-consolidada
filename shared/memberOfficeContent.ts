@@ -21,6 +21,7 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
       { icon: "receiving", label: "Dados de recebimento", path: "/membros/recebimentos" },
       { icon: "orders", label: "Meus pedidos", path: "/membros/meus-pedidos" },
       { icon: "automation", label: "Escritório Virtual", path: "/membros/operacao" },
+      { icon: "support", label: "Fale conosco", path: "/membros/fale-conosco" },
     ],
   },
   {
@@ -83,6 +84,8 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
       { icon: "academy", label: "Curso página de captura", path: "/membros/curso-captura" },
       { icon: "academy", label: "Curso criação de logotipo", path: "/membros/curso-logotipo" },
       { icon: "academy", label: "Curso capas para vídeos", path: "/membros/curso-capas-videos" },
+      { icon: "academy", label: "Curso como fazer capas 3D", path: "/membros/curso-capas-3d" },
+      { icon: "academy", label: "Curso domínio estratégico", path: "/membros/curso-dominio-estrategico" },
       { icon: "academy", label: "Filmes motivacionais", path: "/membros/filmes" },
     ],
   },

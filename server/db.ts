@@ -10,6 +10,7 @@ import {
   ebooks,
   InsertUser,
   managedContent,
+  memberAccountDetails,
   memberProfiles,
   receivingPreferences,
   specialAccessPages,
@@ -26,6 +27,8 @@ import {
 } from "../drizzle/schema";
 import type { ApplicationInput } from "@shared/applications";
 import { ENV } from "./_core/env";
+import { storagePut } from "./storage";
+import { hashPassword } from "./credentialHash";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -399,26 +402,132 @@ export async function getMemberProfile(userId: number) {
   return rows[0] ?? null;
 }
 
-export async function getMemberAccount(userId: number) {
+export type MemberAccount = {
+  name: string | null;
+  email: string | null;
+  role: "admin" | "user";
+  updatedAt: Date;
+};
+
+export type MemberAccountUpdateInput = {
+  name: string;
+  email: string;
+  newPassword?: string | null;
+};
+
+export async function getMemberAccount(userId: number): Promise<MemberAccount | null> {
   const db = await getDb();
   if (!db) return null;
   const rows = await db.select({ name: users.name, email: users.email, role: users.role, updatedAt: users.updatedAt }).from(users).where(eq(users.id, userId)).limit(1);
   return rows[0] ?? null;
 }
 
-export async function updateMemberAccount(userId: number, input: { name: string; email: string }) {
+export async function getStoredPasswordHash(userId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
+  return rows[0]?.passwordHash ?? null;
+}
+
+export async function getStoredPasswordHashByOpenId(openId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.openId, openId)).limit(1);
+  return rows[0]?.passwordHash ?? null;
+}
+
+export async function updateMemberAccount(userId: number, input: MemberAccountUpdateInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(users).set({ name: input.name.trim(), email: input.email.trim().toLowerCase() }).where(eq(users.id, userId));
+  const userUpdate: { name: string; email: string; passwordHash?: string } = { name: input.name.trim(), email: input.email.trim().toLowerCase() };
+  if (input.newPassword?.trim()) userUpdate.passwordHash = hashPassword(input.newPassword.trim());
+  await db.update(users).set(userUpdate).where(eq(users.id, userId));
   return getMemberAccount(userId);
 }
 
-export async function updateMemberProfile(userId: number, input: { slug: string; bio?: string | null; whatsapp?: string | null; websiteUrl?: string | null }) {
+type MemberProfileUpdateInput = {
+  slug: string;
+  bio?: string | null;
+  whatsapp?: string | null;
+  websiteUrl?: string | null;
+  facebookUrl?: string | null;
+  twitterUrl?: string | null;
+  linkedinUrl?: string | null;
+  youtubeUrl?: string | null;
+  skype?: string | null;
+  address?: string | null;
+  addressNumber?: string | null;
+  addressComplement?: string | null;
+  postalCode?: string | null;
+  district?: string | null;
+  city?: string | null;
+  state?: string | null;
+};
+
+const cleanOptional = (value?: string | null) => value?.trim() || null;
+
+export async function updateMemberProfile(userId: number, input: MemberProfileUpdateInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  await db.insert(memberProfiles).values({ userId, ...input }).onDuplicateKeyUpdate({ set: { slug: input.slug, bio: input.bio ?? null, whatsapp: input.whatsapp ?? null, websiteUrl: input.websiteUrl ?? null } });
+  const values = {
+    userId,
+    slug: input.slug.trim().toLowerCase(),
+    bio: cleanOptional(input.bio),
+    whatsapp: cleanOptional(input.whatsapp),
+    websiteUrl: cleanOptional(input.websiteUrl),
+    facebookUrl: cleanOptional(input.facebookUrl),
+    twitterUrl: cleanOptional(input.twitterUrl),
+    linkedinUrl: cleanOptional(input.linkedinUrl),
+    youtubeUrl: cleanOptional(input.youtubeUrl),
+    skype: cleanOptional(input.skype),
+    address: cleanOptional(input.address),
+    addressNumber: cleanOptional(input.addressNumber),
+    addressComplement: cleanOptional(input.addressComplement),
+    postalCode: cleanOptional(input.postalCode),
+    district: cleanOptional(input.district),
+    city: cleanOptional(input.city),
+    state: cleanOptional(input.state),
+  };
+  const { userId: _userId, ...profileValues } = values;
+  await db.insert(memberProfiles).values(values).onDuplicateKeyUpdate({ set: profileValues });
   return getMemberProfile(userId);
 }
+
+export async function uploadMemberProfilePhoto(userId: number, input: { dataUrl: string; contentType: "image/jpeg" | "image/png" | "image/gif" }) {
+  const match = input.dataUrl.match(/^data:(image\/(?:jpeg|png|gif));base64,([A-Za-z0-9+/=\s]+)$/);
+  if (!match || match[1] !== input.contentType) throw new Error("Arquivo de imagem inválido.");
+  const buffer = Buffer.from(match[2].replace(/\s/g, ""), "base64");
+  if (!buffer.length || buffer.length > 1024 * 1024) throw new Error("A foto deve ter no máximo 1 MB.");
+  const extension = input.contentType === "image/jpeg" ? "jpg" : input.contentType.slice("image/".length);
+  const stored = await storagePut(`member-profiles/${userId}/profile.${extension}`, buffer, input.contentType);
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.update(memberProfiles).set({ photoUrl: stored.url }).where(eq(memberProfiles.userId, userId));
+  return getMemberProfile(userId);
+}
+
+export type MemberReceivingUpdateInput = {
+  holderName?: string | null;
+  method: "pix" | "bank_transfer" | "other";
+  receivingKey?: string | null;
+  instructions?: string | null;
+  paypalEmail?: string | null;
+  paypalEnabled?: boolean;
+  pagseguroEmail?: string | null;
+  pagseguroEnabled?: boolean;
+  bank1Name?: string | null;
+  bank1Agency?: string | null;
+  bank1Account?: string | null;
+  bank1Type?: "checking" | "savings" | null;
+  bank1Holder?: string | null;
+  bank2Name?: string | null;
+  bank2Agency?: string | null;
+  bank2Account?: string | null;
+  bank2Type?: "checking" | "savings" | null;
+  bank2Holder?: string | null;
+  pixType?: string | null;
+  pixKey?: string | null;
+};
 
 export async function getMemberReceivingPreference(userId: number) {
   const db = await getDb();
@@ -427,17 +536,33 @@ export async function getMemberReceivingPreference(userId: number) {
   return rows[0] ?? null;
 }
 
-export async function updateMemberReceivingPreference(userId: number, input: { holderName?: string | null; method: "pix" | "bank_transfer" | "other"; receivingKey?: string | null; instructions?: string | null }) {
+export async function updateMemberReceivingPreference(userId: number, input: MemberReceivingUpdateInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  await db.insert(receivingPreferences).values({ userId, ...input }).onDuplicateKeyUpdate({
-    set: {
-      holderName: input.holderName?.trim() || null,
-      method: input.method,
-      receivingKey: input.receivingKey?.trim() || null,
-      instructions: input.instructions?.trim() || null,
-    },
-  });
+  const values = {
+    userId,
+    holderName: input.holderName?.trim() || null,
+    method: input.method,
+    receivingKey: input.receivingKey?.trim() || null,
+    instructions: input.instructions?.trim() || null,
+    paypalEmail: input.paypalEmail?.trim().toLowerCase() || null,
+    paypalEnabled: input.paypalEnabled ? 1 : 0,
+    pagseguroEmail: input.pagseguroEmail?.trim().toLowerCase() || null,
+    pagseguroEnabled: input.pagseguroEnabled ? 1 : 0,
+    bank1Name: input.bank1Name?.trim() || null,
+    bank1Agency: input.bank1Agency?.trim() || null,
+    bank1Account: input.bank1Account?.trim() || null,
+    bank1Type: input.bank1Type || null,
+    bank1Holder: input.bank1Holder?.trim() || null,
+    bank2Name: input.bank2Name?.trim() || null,
+    bank2Agency: input.bank2Agency?.trim() || null,
+    bank2Account: input.bank2Account?.trim() || null,
+    bank2Type: input.bank2Type || null,
+    bank2Holder: input.bank2Holder?.trim() || null,
+    pixType: input.pixType?.trim() || null,
+    pixKey: input.pixKey?.trim() || null,
+  };
+  await db.insert(receivingPreferences).values(values).onDuplicateKeyUpdate({ set: values });
   return getMemberReceivingPreference(userId);
 }
 
@@ -448,6 +573,14 @@ export async function getPublicAffiliateProfile(slug: string) {
     slug: memberProfiles.slug,
     bio: memberProfiles.bio,
     name: users.name,
+    photoUrl: memberProfiles.photoUrl,
+    whatsapp: memberProfiles.whatsapp,
+    websiteUrl: memberProfiles.websiteUrl,
+    facebookUrl: memberProfiles.facebookUrl,
+    twitterUrl: memberProfiles.twitterUrl,
+    linkedinUrl: memberProfiles.linkedinUrl,
+    youtubeUrl: memberProfiles.youtubeUrl,
+    skype: memberProfiles.skype,
   }).from(memberProfiles).innerJoin(users, eq(users.id, memberProfiles.userId)).where(eq(memberProfiles.slug, slug)).limit(1);
   return rows[0] ?? null;
 }
@@ -735,7 +868,7 @@ export async function getAdminInvitations() {
     .orderBy(desc(memberInvitations.createdAt));
 }
 
-export async function updateAdminInvitation(invitationId, status) {
+export async function updateAdminInvitation(invitationId: number, status: "prepared" | "cancelled") {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const invitation = await db.select().from(memberInvitations).where(eq(memberInvitations.id, invitationId)).limit(1);

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { normalizeEmail, validateEmail, validatePhoneBR } from "./contactValidation";
+import { formatPhoneBR, normalizeEmail, validateEmail, validatePhoneBR } from "./contactValidation";
 
 export const MONEY_MAX_CENTS = 100_000_000;
 export const POINTS_MIN_VALUE = -100_000;
@@ -75,6 +75,14 @@ function validateCpf(digits: string): boolean {
   return checksum(9) === Number(digits[9]) && checksum(10) === Number(digits[10]);
 }
 
+export function formatCpfPixKey(raw: string | null | undefined): string {
+  const digits = onlyDigits(String(raw ?? "")).slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
 function validateCnpj(digits: string): boolean {
   if (!/^\d{14}$/.test(digits) || /^(\d)\1+$/.test(digits)) return false;
   const checksum = (weights: number[]) => {
@@ -83,6 +91,42 @@ function validateCnpj(digits: string): boolean {
     return remainder < 2 ? 0 : 11 - remainder;
   };
   return checksum([5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(digits[12]) && checksum([6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]) === Number(digits[13]);
+}
+
+export function formatCnpjPixKey(raw: string | null | undefined): string {
+  const digits = onlyDigits(String(raw ?? "")).slice(0, 14);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 5) return `${digits.slice(0, 2)}.${digits.slice(2)}`;
+  if (digits.length <= 8) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5)}`;
+  if (digits.length <= 12) return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8)}`;
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+export type PixKeyType = "cpf" | "cnpj" | "e-mail" | "celular" | "telefone" | "chave-aleatoria" | "outro" | string;
+
+export function normalizePixKeyByType(raw: string | null | undefined, type: string | null | undefined): string {
+  switch (type) {
+    case "cpf": return formatCpfPixKey(raw);
+    case "cnpj": return formatCnpjPixKey(raw);
+    case "e-mail": return normalizeEmail(raw);
+    case "celular":
+    case "telefone": return formatPhoneBR(raw);
+    default: return normalizePixKey(raw);
+  }
+}
+
+export function validatePixKeyByType(raw: string | null | undefined, type: string | null | undefined): boolean {
+  const source = String(raw ?? "").trim();
+  const digits = onlyDigits(source);
+  switch (type) {
+    case "cpf": return /^\d{11}$/.test(digits);
+    case "cnpj": return /^\d{14}$/.test(digits);
+    case "e-mail": return validateEmail(source);
+    case "celular":
+    case "telefone": return /^\d{11}$/.test(digits) && validatePhoneBR(digits);
+    case "chave-aleatoria": return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(source);
+    default: return validatePixKey(source);
+  }
 }
 
 export function normalizePixKey(raw: string | null | undefined): string {

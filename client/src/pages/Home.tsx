@@ -129,6 +129,7 @@ function JoinButton({ className = "" }: { className?: string }) {
 
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [showFloatingCta, setShowFloatingCta] = useState(false);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
   useEffect(() => {
@@ -137,9 +138,29 @@ export default function Home() {
     window.addEventListener("scroll", updateFloatingCta, { passive: true });
     return () => window.removeEventListener("scroll", updateFloatingCta);
   }, []);
+  useEffect(() => {
+    if (!profileDetailsOpen) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setProfileDetailsOpen(false);
+    };
+    document.body.style.overflow = "hidden";
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [profileDetailsOpen]);
   const [, setLocation] = useLocation();
   const affiliateSlug = normalizeAffiliateSlug(typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("afiliado"));
   const affiliate = trpc.public.affiliateProfile.useQuery({ slug: affiliateSlug ?? "pagina-lucrativa" }, { enabled: Boolean(affiliateSlug) });
+  const publicProfileName = affiliate.data?.name || affiliate.data?.slug || "Perfil público";
+  const publicSocialLinks = affiliate.data ? [
+    ["Website", affiliate.data.websiteUrl],
+    ["Facebook", affiliate.data.facebookUrl],
+    ["Twitter", affiliate.data.twitterUrl],
+    ["Linkedin", affiliate.data.linkedinUrl],
+    ["Youtube", affiliate.data.youtubeUrl],
+  ].filter((entry): entry is [string, string] => Boolean(entry[1])) : [];
   const application = trpc.applications.submit.useMutation({
     onSuccess: data => setLocation(`/pedido/confirmacao?codigo=${encodeURIComponent(data.trackingCode)}`),
   });
@@ -158,7 +179,6 @@ export default function Home() {
   const closeMenu = () => setMenuOpen(false);
 
   return <div className="sales-page reference-page">
-    {affiliate.data ? <div className="border-b border-amber-300/20 bg-black/70 px-4 py-2 text-center text-xs text-amber-100">Página apresentada por <strong>{affiliate.data.name || affiliate.data.slug}</strong>.</div> : null}
     <header className="site-header">
       <div className="shell nav">
         <a href="#inicio" aria-label="Página Lucrativa — início" onClick={closeMenu}><Brand /></a>
@@ -172,17 +192,42 @@ export default function Home() {
         <div className="nav-actions"><JoinButton /></div>
       </div>
     </header>
+    {affiliate.data && profileDetailsOpen ? <div className="affiliate-profile-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setProfileDetailsOpen(false); }}>
+      <section className="affiliate-profile-modal" role="dialog" aria-modal="true" aria-labelledby="affiliate-profile-modal-title">
+        <button type="button" className="affiliate-profile-modal-close" aria-label="Fechar perfil público" onClick={() => setProfileDetailsOpen(false)}>×</button>
+        <div className="affiliate-profile-modal-heading">
+          {affiliate.data.photoUrl ? <img src={affiliate.data.photoUrl} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-modal-avatar" /> : <div className="affiliate-profile-modal-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+          <div><span className="affiliate-profile-modal-eyebrow">Perfil público</span><h2 id="affiliate-profile-modal-title">{publicProfileName}</h2></div>
+        </div>
+        {affiliate.data.bio ? <p className="affiliate-profile-modal-bio">{affiliate.data.bio}</p> : null}
+        <div className="affiliate-profile-modal-details">
+          {publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}><span>{label}</span><strong>{url}</strong></a>)}
+          {affiliate.data.skype ? <div><span>Skype</span><strong>{affiliate.data.skype}</strong></div> : null}
+          {affiliate.data.whatsapp ? <a href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><span>WhatsApp</span><strong>{affiliate.data.whatsapp}</strong></a> : null}
+        </div>
+        <button type="button" className="affiliate-profile-modal-action btn btn-ghost" onClick={() => setProfileDetailsOpen(false)}>Fechar</button>
+      </section>
+    </div> : null}
 
     <main>
       <section className="sales-hero" id="inicio">
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            <div className="reference-presenter">
-              <span>Oportunidade apresentada pelo Empreendedor Digital:</span>
-              <strong>Apresentador(a) da Página Lucrativa</strong>
-              <a href="#f">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a>
-            </div>
+            {affiliate.data ? (
+              <section className="affiliate-profile-hero" aria-label="Perfil público do apresentador">
+                <div className="affiliate-profile-summary">
+                  {affiliate.data.photoUrl ? <img src={affiliate.data.photoUrl} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+                  <div className="affiliate-profile-summary-main">
+                    <span className="affiliate-profile-kicker">Oportunidade apresentada pelo Empreendedor Digital:</span>
+                    <strong className="affiliate-profile-presenter">Apresentador(a) da Página Lucrativa</strong>
+                    <strong className="affiliate-profile-name">{publicProfileName}</strong>
+                    {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público</span>}
+                  </div>
+                  <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver mais</button>
+                </div>
+              </section>
+            ) : null}
             <div className="sales-kicker">A Página Lucrativa é sucesso absoluto!</div>
             <h1>Tenha sua <span>Página Lucrativa</span> Online e Receba <span>PAGAMENTOS</span> de <span className="hero-price">R$50,00</span> em Sua Conta PagSeguro ou PIX.</h1>
             <p>Sem Intermediários e Sem Atravessadores, Aqui a Página é Sua e <strong>Lucra 100%!</strong></p>
@@ -231,7 +276,7 @@ export default function Home() {
 
     </main>
 
-    <footer className="footer"><div className="shell footer-row"><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span></div></footer>
+    <footer className="footer"><div className="shell footer-row"><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span>{affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}</div></footer>
     <div className={`floating ${showFloatingCta ? "is-visible" : ""}`}><JoinButton /></div>
   </div>;
 }
