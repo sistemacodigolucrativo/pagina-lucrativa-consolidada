@@ -4,6 +4,7 @@ import { httpBatchLink } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
+import { withAppBase } from "./lib/devPath";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -11,7 +12,7 @@ const queryClient = new QueryClient();
 const trpcClient = trpc.createClient({
   links: [
     httpBatchLink({
-      url: "/api/trpc",
+      url: withAppBase("/api/trpc"),
       transformer: superjson,
       fetch(input, init) {
         return globalThis.fetch(input, {

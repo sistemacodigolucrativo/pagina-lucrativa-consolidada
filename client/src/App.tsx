@@ -39,6 +39,7 @@ import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 import MemberProfile from "./pages/MemberProfile";
 import MemberAccount from "./pages/MemberAccount";
+import { DEV_PREFIX } from "./lib/devPath";
 import SpecialAccessPublic from "./pages/SpecialAccessPublic";
 import AdminSpecialAccess from "./pages/AdminSpecialAccess";
 function AppRoutes() {
@@ -122,8 +123,7 @@ function AppRoutes() {
   </Switch>;
 }
 function App() {
-  const pathname = typeof window === "undefined" ? "" : window.location.pathname;
-  const base = "";
+  const base = DEV_PREFIX;
   return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;

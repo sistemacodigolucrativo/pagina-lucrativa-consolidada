@@ -183,11 +183,9 @@ export default function Home() {
   const closeMenu = () => setMenuOpen(false);
 
   return <div className="sales-page reference-page">
-    {showTopPromoBanner ? <TopPromoBanner onClose={() => setShowTopPromoBanner(false)} /> : null}
     <header className="site-header">
       <div className="shell nav">
         <a href="#inicio" aria-label="Página Lucrativa — início" onClick={closeMenu}><Brand /></a>
-        <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
         <nav className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
           <a href="#inicio" onClick={closeMenu}>Início</a>
           <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
@@ -195,7 +193,7 @@ export default function Home() {
           <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
           <a href="/acesso" className="nav-login" onClick={closeMenu}>Entrar</a>
         </nav>
-        <div className="nav-actions"><JoinButton /></div>
+        <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
     </header>
     {affiliate.data && profileDetailsOpen ? <div className="affiliate-profile-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setProfileDetailsOpen(false); }}>
@@ -236,6 +234,7 @@ export default function Home() {
             ) : null}
             <div className="sales-kicker">Para quem quer começar no digital sem começar do zero</div>
             <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
+            {showTopPromoBanner ? <TopPromoBanner onClose={() => setShowTopPromoBanner(false)} /> : null}
             <p>Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
             <div className="sales-trust"><span className="sales-pulse" />A estrutura já existe. Você personaliza e coloca sua operação em movimento.</div>

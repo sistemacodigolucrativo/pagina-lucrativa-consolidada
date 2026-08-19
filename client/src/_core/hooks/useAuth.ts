@@ -1,5 +1,6 @@
 import { startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
+import { withAppBase } from "@/lib/devPath";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
 
@@ -64,9 +65,10 @@ export function useAuth(options?: UseAuthOptions) {
     if (meQuery.isLoading || logoutMutation.isPending) return;
     if (state.user) return;
     if (typeof window === "undefined") return;
-    if (redirectPath && window.location.pathname === redirectPath) return;
+    const target = withAppBase(redirectPath ?? "/acesso");
+    if (window.location.pathname === target) return;
 
-    window.location.href = redirectPath ?? "/acesso";
+    window.location.href = target;
   }, [
     redirectOnUnauthenticated,
     redirectPath,
