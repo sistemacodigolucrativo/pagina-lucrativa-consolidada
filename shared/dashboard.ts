@@ -7,7 +7,7 @@ export type MemberNavigationItem = {
 export const memberNavigation: MemberNavigationItem[] = [
   { label: "Visão geral", path: "/membros", group: "Escritório Virtual" },
   { label: "Links & campanhas", path: "/membros/campanhas", group: "Escritório Virtual" },
-  { label: "Ganhos", path: "/membros/ganhos", group: "Escritório Virtual" },
+  { label: "Meus resultados", path: "/membros/ganhos", group: "Escritório Virtual" },
   { label: "Produtos", path: "/membros/produtos", group: "Escritório Virtual" },
   { label: "Academia", path: "/membros/academia", group: "Crescimento" },
   { label: "Rede & convites", path: "/membros/rede", group: "Crescimento" },
