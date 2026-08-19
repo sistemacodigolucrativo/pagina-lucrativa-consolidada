@@ -151,7 +151,7 @@ export default function Home() {
             <TopPromoBanner />
             <p>Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
-            <div className="sales-trust"><span className="sales-pulse" /><span className="sales-trust-copy">A estrutura já existe. Você personaliza<br className="sales-trust-break" />e coloca sua operação em movimento.</span></div>
+            <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">A estrutura já existe. Você personaliza<br className="sales-trust-break" />e coloca sua operação em movimento.</span></div>
           </div>
           <div className="sales-hero-side reveal-item reveal-delay">
             {heroImage ? <div className="hero-photo-wrap"><img src={heroImage} alt={heroSection.defaultAlt} /><div className="photo-overlay" aria-hidden="true" /></div> : <div className="hero-photo-wrap hero-photo-empty" aria-hidden="true" /> }

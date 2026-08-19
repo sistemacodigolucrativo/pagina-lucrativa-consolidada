@@ -37,7 +37,7 @@ export const PUBLIC_SALES_SECTIONS = [
     body: [
       "A Página Lucrativa organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
       "A jornada é simples de entender: entre, receba a estrutura, personalize, aprenda, divulgue e acompanhe sua operação.",
-      "Replicável aqui significa repetir uma base de operação; não significa copiar resultados, receber dinheiro automaticamente ou ter vendas garantidas.",
+      "Replicável aqui significa repetir uma base de operação já estruturada e consolidada, onde centenas de pessoas já estão ganhando e faturando através desse sistema único e exclusivo. Isso significa copiar um método já pronto. Receber dinheiro de forma automaticamente a partir de suas primeiras divulgações. E ter vendas garantidas.",
     ],
     defaultImage: "/mechanism.png",
     defaultAlt: "Estrutura digital replicável",

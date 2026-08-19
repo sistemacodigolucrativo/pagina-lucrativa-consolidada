@@ -53,9 +53,20 @@ describe("public responsive header and hero layout", () => {
   it("breaks and centers the hero trust statement responsively", () => {
     expect(homeSource).toContain('className="sales-trust-copy"');
     expect(homeSource).toContain('className="sales-trust-break"');
+    expect(homeSource).toContain('className="sales-trust sales-trust-featured"');
     expect(cssSource).toContain('justify-content: center;');
     expect(cssSource).toContain('text-align: center;');
     expect(cssSource).toContain('.sales-trust-break { display: block; }');
+    expect(cssSource).toContain('.sales-trust-featured {');
+    expect(cssSource).toContain('@keyframes sales-trust-glow');
+  });
+
+  it("keeps the requested development-only mechanism demonstration text", () => {
+    expect(homeSource).toContain("A estrutura já existe. Você personaliza");
+    const mechanismSource = readFileSync(resolve(process.cwd(), "shared/publicSalesSections.ts"), "utf8");
+    expect(mechanismSource).toContain("centenas de pessoas já estão ganhando e faturando através desse sistema único e exclusivo");
+    expect(mechanismSource).toContain("Receber dinheiro de forma automaticamente a partir de suas primeiras divulgações");
+    expect(mechanismSource).toContain("E ter vendas garantidas.");
   });
   it("resolves public section images by stable IDs and keeps automatic placement", () => {
     expect(homeSource).toContain('const sectionImages = trpc.public.salesSectionImages.useQuery();');
