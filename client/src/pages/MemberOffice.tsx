@@ -1,74 +1,11 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { formatCurrency } from "@shared/dashboard";
-import { memberOfficeNavigation } from "@shared/memberOfficeContent";
-import {
-  Award,
-  BookOpen,
-  Bot,
-  Boxes,
-  ChartNoAxesCombined,
-  ChevronRight,
-  CircleHelp,
-  ClipboardList,
-  Copy,
-  FileText,
-  Gift,
-  GraduationCap,
-  History,
-  Link2,
-  Mail,
-  Medal,
-  MessageCircleMore,
-  PanelTop,
-  Send,
-  Settings,
-  Share2,
-  Sparkles,
-  Trophy,
-  UserCog,
-  UsersRound,
-  WalletCards,
-  type LucideIcon,
-} from "lucide-react";
+import { ChevronRight, Copy } from "lucide-react";
+import { memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
 import { useLocation } from "wouter";
 
-const iconByKey: Record<string, LucideIcon> = {
-  overview: ChartNoAxesCombined,
-  message: Mail,
-  testimonial: MessageCircleMore,
-  profile: Settings,
-  data: ClipboardList,
-  how: Sparkles,
-  email: Mail,
-  earnings: WalletCards,
-  sponsor: UserCog,
-  network: UsersRound,
-  products: Boxes,
-  blog: FileText,
-  classified: PanelTop,
-  history: History,
-  academy: BookOpen,
-  faq: CircleHelp,
-  support: CircleHelp,
-  invite: Send,
-  downloads: Boxes,
-  certificate: Award,
-  ranking: Medal,
-  articles: FileText,
-  automation: Bot,
-  visits: ChartNoAxesCombined,
-  link: Link2,
-  bonus: Gift,
-  study: GraduationCap,
-};
-
-const menuItems: DashboardMenuItem[] = memberOfficeNavigation.flatMap(group => group.items.map(item => ({
-  icon: iconByKey[item.icon] ?? PanelTop,
-  label: item.label,
-  path: item.path,
-  group: group.label,
-})));
+const menuItems: DashboardMenuItem[] = memberDashboardMenuItems;
 
 const moduleDetails: Record<string, { eyebrow: string; title: string; detail: string; notes: string[] }> = {
   "/membros/mensagem-especial": { eyebrow: "Acesso e personalização", title: "Mensagem e senha especial", detail: "Organize a mensagem que acompanha o acesso de personalização da sua página.", notes: ["A senha de personalização é enviada após a confirmação do pedido.", "Mantenha instruções claras e não compartilhe credenciais em áreas públicas."] },

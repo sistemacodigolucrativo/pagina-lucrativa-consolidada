@@ -61,6 +61,14 @@ const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
 
+function isAcademyCourseRoute(path: string) {
+  return path.startsWith("/membros/curso");
+}
+
+function isNavigationItemActive(itemPath: string, activePath: string) {
+  return itemPath === activePath || (itemPath === "/membros/academia" && isAcademyCourseRoute(activePath));
+}
+
 export default function DashboardLayout({
   children,
   menuItems = defaultMenuItems,
@@ -141,8 +149,9 @@ function DashboardLayoutContent({
   const [isResizing, setIsResizing] = useState(false);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const activeGroupRef = useRef<string | null>(null);
   const activePath = location || "/";
-  const activeMenuItem = menuItems.find(item => item.path === activePath);
+  const activeMenuItem = menuItems.find(item => isNavigationItemActive(item.path, activePath));
   const groupedMenuItems = menuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
     const group = item.group ?? "Navegação";
     groups[group] = [...(groups[group] ?? []), item];
@@ -153,7 +162,8 @@ function DashboardLayoutContent({
 
   const isGroupOpen = (group: string, items: DashboardMenuItem[]) => {
     if (groupOverrides[group] !== undefined) return groupOverrides[group];
-    return !isMobile || !memberOfficeNavigation || items.length === 1 || items.some(item => item.path === activePath);
+    if (!memberOfficeNavigation || isCollapsed) return true;
+    return items.some(item => isNavigationItemActive(item.path, activePath));
   };
 
   const toggleGroup = (group: string, items: DashboardMenuItem[]) => {
@@ -170,15 +180,14 @@ function DashboardLayoutContent({
   }, [isCollapsed]);
 
   useEffect(() => {
-    if (!isMobile || !memberOfficeNavigation) return;
+    if (!memberOfficeNavigation) return;
     const activeGroup = Object.entries(groupedMenuItems).find(([, items]) =>
-      items.some(item => item.path === activePath),
-    )?.[0];
-    if (!activeGroup) return;
-    setGroupOverrides(current => (
-      current[activeGroup] === true ? current : { ...current, [activeGroup]: true }
-    ));
-  }, [activePath, groupedMenuItems, isMobile, memberOfficeNavigation]);
+      items.some(item => isNavigationItemActive(item.path, activePath)),
+    )?.[0] ?? null;
+    if (activeGroupRef.current === activeGroup) return;
+    activeGroupRef.current = activeGroup;
+    setGroupOverrides(activeGroup ? { [activeGroup]: true } : {});
+  }, [activePath, groupedMenuItems, memberOfficeNavigation]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -244,7 +253,7 @@ function DashboardLayoutContent({
               const menuContent = (
                 <SidebarMenu>
                   {items.map(item => {
-                    const isActive = activePath === item.path;
+                    const isActive = isNavigationItemActive(item.path, activePath);
                     return (
                       <SidebarMenuItem key={item.path}>
                         <SidebarMenuButton

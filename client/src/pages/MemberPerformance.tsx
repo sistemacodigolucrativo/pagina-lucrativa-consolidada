@@ -4,7 +4,7 @@ import { Award, ChartNoAxesCombined, History, Trophy } from "lucide-react";
 
 const menu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Meu desempenho", path: "/membros/pontos", group: "Resultados" },
-  { icon: History, label: "Histórico de pontos", path: "/membros/historico", group: "Resultados" },
+  { icon: History, label: "Pontos e níveis", path: "/membros/pontos-niveis", group: "Resultados" },
 ];
 
 function statusLabel(status: "pending" | "posted" | "void") {
