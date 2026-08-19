@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 const menu: DashboardMenuItem[] = [
-  { icon: LayoutDashboard, label: "Escritório", path: "/membros", group: "Navegação" },
-  { icon: GraduationCap, label: "Academia", path: "/membros/academia", group: "Crescimento" },
-  { icon: BookOpenCheck, label: "Biblioteca de e-books", path: "/membros/ebooks", group: "Crescimento" },
+  { icon: LayoutDashboard, label: "Visão geral", path: "/membros", group: "Navegação" },
+  { icon: GraduationCap, label: "Academia de execução", path: "/membros/academia", group: "Crescimento" },
+  { icon: BookOpenCheck, label: "E-books", path: "/membros/ebooks", group: "Crescimento" },
 ];
 
 const levelLabel = { fundamentos: "Fundamentos", pratica: "Prática", avancado: "Avançado" } as const;
@@ -35,7 +35,7 @@ export default function MemberCourses() {
       <DashboardLayout menuItems={menu} title="Escritório Virtual">
         <main className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-8">
           <button type="button" onClick={() => setLocation("/membros/academia")} className="inline-flex items-center gap-2 text-sm font-medium text-amber-200 transition hover:text-amber-100">
-            <ArrowLeft className="size-4" />Voltar para a Academia
+            <ArrowLeft className="size-4" />Voltar para a Academia de execução
           </button>
           {currentCourse.isLoading ? (
             <section className="flex min-h-96 items-center justify-center gap-2 rounded-2xl border border-white/10 bg-zinc-950/60 text-sm text-zinc-400">
@@ -44,7 +44,7 @@ export default function MemberCourses() {
           ) : course ? (
             <section className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60">
               <header className="border-b border-white/10 p-4 sm:p-6">
-                <span className="text-xs uppercase tracking-[0.16em] text-amber-300">{course.category || "Área de estudo"} · {levelLabel[course.level]}</span>
+                <span className="text-xs uppercase tracking-[0.16em] text-amber-300">{course.category || "Academia de execução"} · {levelLabel[course.level]}</span>
                 <h1 className="mt-2 text-2xl font-semibold text-white sm:text-3xl">{course.title}</h1>
                 {course.summary && <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-300">{course.summary}</p>}
                 <div className="mt-4 flex flex-wrap items-center gap-3">
@@ -72,9 +72,9 @@ export default function MemberCourses() {
     <DashboardLayout menuItems={menu} title="Escritório Virtual">
       <main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8">
         <header className="space-y-2">
-          <span className="text-xs uppercase tracking-[0.16em] text-amber-300">Área de estudo</span>
-          <h1 className="text-3xl font-semibold text-white">Academia Página Lucrativa</h1>
-          <p className="max-w-3xl text-sm leading-6 text-zinc-300">Selecione uma formação para abrir o e-book no leitor integrado. O progresso é individual e fica salvo no seu Escritório Virtual.</p>
+          <span className="text-xs uppercase tracking-[0.16em] text-amber-300">Academia de execução</span>
+          <h1 className="text-3xl font-semibold text-white">Aprenda e aplique</h1>
+          <p className="max-w-3xl text-sm leading-6 text-zinc-300">Selecione um curso publicado para estudar no leitor integrado e registrar seu progresso individual no Escritório Virtual.</p>
         </header>
         {courses.isLoading ? <p className="text-sm text-zinc-400">Carregando cursos...</p> : courses.data?.length ? (
           <section className="grid gap-4 lg:grid-cols-2">
@@ -92,7 +92,7 @@ export default function MemberCourses() {
                   <div className="flex items-center justify-between text-sm"><span className="text-zinc-400">Progresso individual</span><strong className="text-amber-200">{course.progressPercent}%</strong></div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-amber-300 transition-all" style={{ width: `${course.progressPercent}%` }} /></div>
                   <div className="mt-4 flex flex-wrap items-center gap-2">
-                    <button type="button" onClick={() => setLocation(`/membros/curso/${course.routeKey}`)} className="inline-flex items-center gap-1 rounded-lg bg-amber-300 px-3 py-2 text-sm font-semibold text-black"><PlayCircle className="size-4" />Abrir material</button>
+                    <button type="button" onClick={() => setLocation(`/membros/curso/${course.routeKey}`)} className="inline-flex items-center gap-1 rounded-lg bg-amber-300 px-3 py-2 text-sm font-semibold text-black"><PlayCircle className="size-4" />Abrir material de execução</button>
                     <button type="button" disabled={updateProgress.isPending || course.progressPercent >= 100} onClick={() => updateProgress.mutate({ courseId: course.id, progressPercent: Math.min(100, course.progressPercent + 20) })} className="rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-100 disabled:opacity-50">{course.progressPercent >= 100 ? "Concluído" : "Avançar 20%"}</button>
                     <span className="ml-auto text-xs text-zinc-500">{course.durationMinutes ? `${course.durationMinutes} min` : "Duração a definir"}</span>
                   </div>
@@ -100,7 +100,7 @@ export default function MemberCourses() {
               </article>
             ))}
           </section>
-        ) : <section className="rounded-2xl border border-dashed border-white/15 bg-zinc-950/40 p-7 text-sm leading-6 text-zinc-300">Nenhum curso com material publicado está disponível no momento. A administração pode vincular e publicar novos conteúdos pela Academia.</section>}
+        ) : <section className="rounded-2xl border border-dashed border-white/15 bg-zinc-950/40 p-7 text-sm leading-6 text-zinc-300">Nenhum curso com material publicado está disponível no momento. A administração pode vincular e publicar novos conteúdos pela Academia de execução.</section>}
       </main>
     </DashboardLayout>
   );

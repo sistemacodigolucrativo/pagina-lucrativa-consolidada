@@ -24,6 +24,6 @@ describe("gestão de solicitações públicas", () => {
     expect(app).toContain('path="/pedido/acompanhar" component={ApplicationTracking}');
     expect(app).toContain('path="/admin/pedidos" component={AdminApplications}');
     expect(home).toContain("data.trackingCode");
-    expect(confirmation).toContain("Acompanhar pedido");
+    expect(confirmation).toContain("Acompanhar solicitação");
   });
 });

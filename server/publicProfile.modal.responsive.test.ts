@@ -21,7 +21,7 @@ describe("public profile summary and modal", () => {
     expect(homeSource).toContain("affiliate-profile-presenter");
     expect(homeSource).toContain("publicProfileName");
     expect(homeSource).toContain("publicSocialLinks");
-    expect(homeSource).toContain(">Ver mais</button>");
+    expect(homeSource).toContain(">Ver perfil</button>");
     expect(homeSource).not.toContain("reference-presenter");
     expect(homeSource).toContain("footer-whatsapp");
     expect(homeSource).toContain("affiliate-profile-modal-backdrop");

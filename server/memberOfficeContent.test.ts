@@ -7,12 +7,12 @@ describe("memberOfficeNavigation", () => {
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
 
     expect(labels).toEqual([
-      "Escritório",
+      "Minha conta",
       "Comece por aqui",
-      "Seus e-mails no sistema",
-      "Ferramentas administrativas",
-      "Complemento",
-      "Área de estudo",
+      "Comunicação",
+      "Minha operação",
+      "Conteúdos e materiais",
+      "Academia",
     ]);
     expect(memberOfficeModuleCount).toBe(51);
     expect(new Set(paths).size).toBe(paths.length);

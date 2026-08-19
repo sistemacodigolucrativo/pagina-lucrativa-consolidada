@@ -24,8 +24,8 @@ describe("rotas funcionais do Escritório Virtual", () => {
 
   it("especializa os atalhos compartilhados com a ação pertinente de cada rota", () => {
     expect(getMemberOperationContext("/membros/como-divulgar")).toMatchObject({ title: "Saiba como divulgar", anchorId: "profile" });
-    expect(getMemberOperationContext("/membros/campanhas")).toMatchObject({ title: "Encurtador de URL e campanhas", anchorId: "profile" });
-    expect(getMemberOperationContext("/membros/convites")).toMatchObject({ title: "Convidar amigos", anchorId: "convites" });
+    expect(getMemberOperationContext("/membros/campanhas")).toMatchObject({ title: "Links & campanhas", anchorId: "profile" });
+    expect(getMemberOperationContext("/membros/convites")).toMatchObject({ title: "Preparar convites", anchorId: "convites" });
   });
 
   it("diferencia automações como preparação registrada, sem alegar disparo externo", () => {

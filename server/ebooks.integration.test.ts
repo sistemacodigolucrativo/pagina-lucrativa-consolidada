@@ -19,7 +19,7 @@ describe("módulo de e-books", () => {
     const navigation = await readFile(path.join(root, "shared/memberOfficeContent.ts"), "utf8");
     expect(app).toContain('path="/membros/ebooks" component={EbookReader}');
     expect(app).toContain('path="/admin/ebooks" component={AdminEbooks}');
-    expect(navigation).toContain('label: "Biblioteca de e-books", path: "/membros/ebooks"');
+    expect(navigation).toContain('label: "E-books", path: "/membros/ebooks"');
   });
 
   it("mantém o HTML em um iframe isolado, responsivo e expansível no leitor e na prévia administrativa", async () => {
