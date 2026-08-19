@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { ArrowDown, ArrowUpRight, Menu, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -12,107 +12,100 @@ const deliveryImage = "/manus-storage/imported-sprint-delivery_c100fe4d.jpg";
 
 const contentBlocks = [
   {
-    eyebrow: "",
-    title: "A Página Lucrativa é sucesso absoluto!",
+    eyebrow: "O problema de começar sozinho",
+    title: "Começar no digital não deveria exigir construir tudo sozinho.",
     body: [
-      "A internet abriu portas para novas formas de ganhar dinheiro e desenvolver atividades profissionais sem sair de casa.",
-      "Cada vez mais pessoas estão descobrindo que o ambiente digital oferece inúmeras oportunidades para quem deseja conquistar independência financeira.",
-      "Criamos um sistema perfeito para qualquer pessoa trabalhar na internet diretamente de casa. Ele foi ajustado para jovens, estudantes, donas de casa, aposentados, gestantes ou qualquer pessoa que deseja uma renda extra trabalhando na internet.",
+      "Quem quer colocar um projeto na internet costuma descobrir que a primeira etapa não é divulgar: é construir toda a base.",
+      "É preciso decidir o que apresentar, preparar uma página, organizar uma área de acesso, configurar links, reunir materiais, aprender divulgação e encontrar uma forma de acompanhar pedidos e contatos.",
+      "Essa complexidade invisível faz muita gente adiar o projeto antes mesmo de dar o primeiro passo.",
     ],
   },
   {
-    eyebrow: "",
-    title: "Imagine acordar pela manhã, preparar um café com tranquilidade.",
+    eyebrow: "O estado desejado",
+    title: "E se a estrutura principal já estivesse pronta?",
     body: [
-      "Imagine acordar pela manhã, preparar um café com tranquilidade e, ao ligar o computador ou pegar o celular, encontrar sua caixa de e-mails cheia de notificações com a mensagem: “Você acaba de receber um pagamento!”.",
-      "Para muitas pessoas, essa cena ainda parece distante ou até mesmo um sonho difícil de alcançar.",
+      "Em vez de começar diante de uma tela em branco, imagine receber uma base digital que já reúne os primeiros caminhos da operação.",
+      "Você entra, entende o que está disponível, personaliza seus dados, aprende a utilizar os recursos e começa a movimentar o seu projeto com mais clareza.",
     ],
   },
   {
-    eyebrow: "",
-    title: "A Pagina Lucrativa se destaca no mercado digital por oferecer uma oportunidade única no Brasil.",
+    eyebrow: "O mecanismo",
+    title: "Conheça a Estrutura Digital Replicável.",
     body: [
-      "A Pagina Lucrativa se destaca no mercado digital por oferecer uma oportunidade única no Brasil, permitindo que o participante receba 100% do valor da inscrição de cada convidado diretamente em sua conta, sem a presença de intermediários ou atravessadores que reduzam os ganhos.",
-      "Diferente de muitos modelos existentes na internet, onde as comissões são divididas entre diversas plataformas, aqui o processo é simples, rápido e transparente, garantindo que o esforço de divulgação seja recompensado de forma direta.",
+      "A Página Lucrativa organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
+      "A jornada é simples de entender: entre, receba a estrutura, personalize, aprenda, divulgue e acompanhe sua operação.",
+      "Replicável aqui significa repetir uma base de operação; não significa copiar resultados, receber dinheiro automaticamente ou ter vendas garantidas.",
     ],
   },
   {
-    eyebrow: "",
-    title: "Escritório Virtual Completo e Moderno:",
+    eyebrow: "O produto real",
+    title: "Página Lucrativa não é apenas uma página.",
     body: [
-      "Você não precisa criar nada, nem entender de tecnologia. A Página já está pronta, é sua, e o lucro também.",
-      "Nosso sistema entrega tudo mastigado, com suporte completo. Agora, só falta você dar o primeiro passo.",
+      "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, produtos, conteúdos, cursos, contatos e registros da sua própria operação.",
+      "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em movimento — sem precisar começar pela construção da tecnologia.",
     ],
   },
   {
-    eyebrow: "",
-    title: "Um dos fatores que mais chamam a atenção na Pagina Lucrativa é que você recebe ganhos de forma direta.",
+    eyebrow: "A jornada",
+    title: "Da ativação aos primeiros passos da sua operação.",
     body: [
-      "Um dos fatores que mais chamam a atenção na Pagina Lucrativa é que você recebe ganhos de forma direta. Em muitos sistemas tradicionais, os pagamentos passam por diversos intermediários antes de chegar ao divulgador. Isso pode gerar atrasos e até mesmo reduzir os valores recebidos.",
-      "Na Página Lucrativa, os pagamentos dos seus indicados são realizados diretamente na sua conta. Essa transferência direta proporciona mais segurança e transparência no processo financeiro dos usuários.",
-      "Uma das grandes vantagens de possuir uma página própria é a autonomia que ela proporciona ao seu proprietário. Quando a página pertence ao próprio usuário, ele tem total liberdade para administrar seu funcionamento e acompanhar os resultados gerados.",
+      "Depois do pedido, a jornada continua: acompanhe a solicitação, receba as orientações reais de acesso, complete seu perfil, configure seus dados, personalize sua presença e conheça a oferta.",
+      "Em seguida, aprenda a divulgar, crie seu primeiro link ou campanha e acompanhe visitas, contatos e pedidos conforme sua operação gerar esses registros.",
     ],
   },
   {
-    eyebrow: "",
-    title: "A internet revolucionou a forma de fazer negócios.",
+    eyebrow: "O que existe por trás",
+    title: "Um Escritório Virtual para organizar o que você precisa acompanhar.",
     body: [
-      "A internet revolucionou a forma como as pessoas realizam negócios e constroem novas fontes de renda. Hoje é possível desenvolver atividades completamente online, utilizando apenas um computador ou celular conectado à rede.",
-      "Esse cenário tem despertado o interesse de milhares de pessoas que buscam novas oportunidades financeiras. Entre as estratégias que mais têm crescido no ambiente digital está a criação da Página Lucrativa.",
-      "No entanto, com o crescimento das oportunidades oferecidas pela internet, essa realidade tem se tornado cada vez mais comum para quem decide explorar o potencial do mundo digital.",
-      "Hoje, milhares de pessoas já descobriram que é possível gerar renda online de forma prática, utilizando apenas um computador ou um smartphone conectado à internet.",
-      "Com pagamentos rápidos e um sistema fácil de entender, essa estrutura tem chamado a atenção de muitas pessoas que buscam uma forma prática e eficiente de gerar renda pela internet.",
+      "Dentro da estrutura, você encontra página pública, perfil personalizado, link pessoal, campanhas, pedidos atribuídos, contatos consentidos, produtos, cursos, e-books, materiais, suporte e acompanhamento financeiro.",
+      "Os módulos aparecem de acordo com o que está publicado e disponível para sua conta. A proposta é centralizar a execução, não prometer que tudo acontece sozinho.",
     ],
   },
   {
-    eyebrow: "",
-    title: "Receber pagamentos online é, sem dúvida, uma das melhores sensações que alguém pode experimentar.",
+    eyebrow: "A comparação",
+    title: "O que você teria de montar se começasse sozinho?",
     body: [
-      "Receber pagamentos online é, sem dúvida, uma das melhores sensações que alguém pode experimentar, e posso afirmar que essa tem sido a frase que mais tenho lido nos últimos tempos.",
-      "Em um mundo cada vez mais conectado, muitas pessoas estão descobrindo que a internet não serve apenas para entretenimento ou comunicação, mas também pode se transformar em uma poderosa ferramenta para gerar renda.",
-      "A sensação de abrir o e-mail ou o aplicativo de pagamentos e encontrar uma notificação informando que um valor acabou de ser creditado na sua conta é algo extremamente gratificante. Esse tipo de experiência mostra que o esforço investido no ambiente digital pode realmente trazer resultados concretos.",
-      "Para quem nunca viveu isso, pode parecer algo distante, mas a realidade é que milhares de pessoas já estão experimentando essa transformação em suas vidas financeiras.",
-      "Além disso, um dos grandes atrativos é a possibilidade de recuperar o investimento já na primeira venda, o que torna a oportunidade ainda mais acessível e motivadora para quem deseja começar a ganhar dinheiro online.",
+      "Produto ou oferta, site, landing page, área do usuário, autenticação, banco de dados, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
+      "É justamente essa etapa de construção que a Página Lucrativa reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
     ],
   },
   {
-    eyebrow: "",
-    title: "Recupere seu investimento já na primeira venda!",
+    eyebrow: "A facilidade real",
+    title: "Você não precisa saber programar para começar.",
     body: [
-      "Um sistema simples, exclusivo e pronto para uso que permite a qualquer pessoa começar a ganhar dinheiro na internet com apenas uma compra.",
-      "Diferente de muitos modelos digitais que exigem investimentos constantes ou processos complicados, aqui toda a base já está preparada para funcionar, facilitando o início mesmo para quem não possui experiência no mercado online.",
-      "A partir dessa estrutura, o usuário pode focar apenas na divulgação e no crescimento do projeto, aproveitando um sistema pensado para gerar oportunidades de lucro de forma contínua ao longo do tempo.",
-      "Essa praticidade e acessibilidade tornam o modelo extremamente atrativo para quem busca uma forma mais simples e direta de começar a ganhar dinheiro pela internet.",
+      "A infraestrutura tecnológica já foi desenvolvida. O Escritório Virtual apresenta os caminhos disponíveis e concentra as configurações que pertencem à sua conta.",
+      "Isso não elimina o aprendizado nem a execução comercial. Significa que você não precisa criar sistemas do zero antes de aprender a operar um projeto digital.",
     ],
   },
   {
-    eyebrow: "",
-    title: "Ao possuir uma Página Lucrativa funcionando no ambiente digital, o usuário passa a contar com uma estrutura que permanece ativa 24 horas por dia.",
+    eyebrow: "Seu ativo digital",
+    title: "Sua estrutura pode permanecer disponível online.",
     body: [
-      "Ao possuir uma Página Lucrativa funcionando no ambiente digital, o usuário passa a contar com uma estrutura que permanece ativa 24 horas por dia, permitindo que oportunidades de ganhos possam surgir a qualquer momento.",
-      "Isso significa que, mesmo enquanto a pessoa está descansando, se divertindo ou realizando outras atividades, sua página continua disponível na internet, pronta para receber visitantes e gerar resultados.",
-      "Essa possibilidade de ter um sistema trabalhando continuamente amplia as chances de crescimento e torna o trabalho online uma alternativa cada vez mais atrativa para quem busca independência financeira e novas oportunidades de renda.",
+      "Uma página pública pode continuar disponível na internet enquanto sua operação estiver ativa, permitindo que as pessoas encontrem a apresentação e os caminhos que você configurou.",
+      "Disponibilidade online não é promessa de renda 24 horas. Visitas, contatos, pedidos e resultados dependem da divulgação, da oferta, do público e da execução real.",
     ],
   },
   {
-    eyebrow: "",
-    title: "Desde 2011 Ajudando Pessoas Reais a Ganharem Dinheiro de Verdade:",
+    eyebrow: "A prova que importa",
+    title: "A estrutura precisa fazer sentido antes de qualquer promessa de resultado.",
     body: [
-      "A Página Lucrativa está ativa desde 2011 e já reuniu mais de 60 mil usuários em todo o Brasil e até mesmo em outros países, demonstrando sua presença consolidada no ambiente digital.",
-      "Ao longo de mais de 14 anos, o sistema vem mostrando que é possível explorar oportunidades de renda pela internet de forma simples, direta e acessível.",
-      "Essa combinação de tempo de mercado, grande número de participantes e facilidade de acesso reforça a proposta de um sistema pensado para quem deseja iniciar atividades online e aproveitar as oportunidades que o mundo digital oferece.",
+      "O que você pode avaliar é concreto: existe uma página, um perfil, um Escritório Virtual, recursos de campanha, pedidos rastreáveis, biblioteca de execução e módulos para acompanhar a operação.",
+      "A Página Lucrativa não promete que a compra, sozinha, produz ganhos. Ela oferece uma base para quem quer começar um projeto digital e buscar resultados através de utilização, divulgação e vendas reais.",
     ],
   },
-  {
-    eyebrow: "",
-    title: "Não perca mais tempo! Imagine quanto você está deixando de ganhar ao não participar da Página Lucrativa.",
-    body: [
-      "Neste momento, milhares de pessoas estão navegando na internet em busca de oportunidades para iniciar um negócio online e ganhar dinheiro sem precisar sair de casa. Esse cenário mostra como a demanda por renda digital tem crescido cada vez mais.",
-      "Muitas dessas pessoas procuram justamente um sistema simples e acessível para começar, e é aí que surge a oportunidade de apresentar a Página Lucrativa.",
-      "Ao indicar ou vender uma Página Lucrativa para quem está buscando esse tipo de oportunidade, você não apenas ajuda outras pessoas a iniciarem no mundo do trabalho online, como também pode gerar ganhos para si mesmo.",
-      "Dessa forma, além de contribuir para que outros descubram novas possibilidades na internet, você ainda pode transformar essa atividade em uma excelente fonte de renda extra.",
-    ],
-  },
+];
+
+const faqItems = [
+  ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital da Página Lucrativa: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
+  ["É somente uma página?", "Não. A página é a porta de entrada. O ecossistema inclui painel de operação, perfil público, link pessoal, campanhas, pedidos, produtos, contatos, cursos, e-books, materiais, suporte e registros financeiros, conforme os módulos disponíveis."],
+  ["Preciso criar um produto ou saber programação?", "Você não precisa desenvolver a infraestrutura tecnológica do zero. A plataforma também permite cadastrar produtos próprios para revisão, mas a criação de uma oferta, a divulgação e a operação comercial continuam sendo responsabilidades do membro."],
+  ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
+  ["Como funciona o recebimento?", "O Escritório Virtual permite organizar preferências como PIX, PayPal, PagSeguro e dados bancários, além de acompanhar lançamentos no extrato. Essas áreas armazenam informações e registros; não processam pagamentos automaticamente."],
+  ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e uma base de operação. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
+  ["O que acontece depois que eu faço o pedido?", "O formulário registra seus dados e gera um código de acompanhamento. Depois, você acompanha o status e recebe as orientações reais sobre pagamento, liberação de acesso e personalização, conforme o fluxo administrativo vigente."],
+  ["Existe mensalidade ou garantia?", "A página deve seguir a condição comercial vigente informada no processo de ativação. O formulário não deve esconder custos, etapas ou condições. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
+  ["Posso acessar pelo celular?", "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta."],
+  ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar respostas administrativas. O suporte não representa garantia de aprovação, venda ou resultado financeiro."],
 ];
 
 function Brand({ compact = false }: { compact?: boolean }) {
@@ -124,7 +117,7 @@ function Eyebrow({ children }: { children: string }) {
 }
 
 function JoinButton({ className = "" }: { className?: string }) {
-  return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Faça parte <ArrowUpRight size={16} /></a>;
+  return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Quero conhecer a estrutura <ArrowUpRight size={16} /></a>;
 }
 
 export default function Home() {
@@ -185,9 +178,9 @@ export default function Home() {
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
         <nav className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
           <a href="#inicio" onClick={closeMenu}>Início</a>
-          <a href="#videos" onClick={closeMenu}>Depoimentos</a>
-          <a href="/personalizar" onClick={closeMenu}>Personalizar</a>
-          <a href="/membros" onClick={closeMenu}>Escritório Virtual</a>
+          <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
+          <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
+          <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
         </nav>
         <div className="nav-actions"><JoinButton /></div>
       </div>
@@ -219,57 +212,61 @@ export default function Home() {
                 <div className="affiliate-profile-summary">
                   {affiliate.data.photoUrl ? <img src={affiliate.data.photoUrl} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
                   <div className="affiliate-profile-summary-main">
-                    <span className="affiliate-profile-kicker">Oportunidade apresentada pelo Empreendedor Digital:</span>
+                    <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por:</span>
                     <strong className="affiliate-profile-presenter">Apresentador(a) da Página Lucrativa</strong>
                     <strong className="affiliate-profile-name">{publicProfileName}</strong>
-                    {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público</span>}
+                    {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
                   </div>
-                  <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver mais</button>
+                  <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button>
                 </div>
               </section>
             ) : null}
-            <div className="sales-kicker">A Página Lucrativa é sucesso absoluto!</div>
-            <h1>Tenha sua <span>Página Lucrativa</span> Online e Receba <span>PAGAMENTOS</span> de <span className="hero-price">R$50,00</span> em Sua Conta PagSeguro ou PIX.</h1>
-            <p>Sem Intermediários e Sem Atravessadores, Aqui a Página é Sua e <strong>Lucra 100%!</strong></p>
-            <div className="sales-actions"><JoinButton /><a href="#f" className="btn btn-ghost">Faça parte <ArrowDown size={16} /></a></div>
-            <div className="sales-trust"><span className="sales-pulse" />A Página já está pronta, é sua, e o lucro também.</div>
+            <div className="sales-kicker">Para quem quer começar no digital sem começar do zero</div>
+            <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
+            <p>Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
+            <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
+            <div className="sales-trust"><span className="sales-pulse" />A estrutura já existe. Você personaliza e coloca sua operação em movimento.</div>
           </div>
           <div className="sales-hero-side reveal-item reveal-delay">
             <div className="hero-photo-wrap"><img src={heroImage} alt="Pessoa planejando sua operação digital" /><div className="photo-overlay" aria-hidden="true" /></div>
-            <div className="sales-author-badge"><strong>Página Lucrativa</strong><span>·</span> desde 2011</div>
-            <div className="sprint-stamp"><span>página</span><strong>sua<br />e pronta</strong><small>para divulgar</small></div>
-            <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>personalize<br />e comece</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · indicação · ganhos</span></div>
+            <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
+            <div className="sprint-stamp"><span>estrutura</span><strong>pronta<br />para operar</strong><small>personalize e comece</small></div>
+            <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>personalize<br />e acompanhe</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · campanhas · pedidos</span></div>
           </div>
         </div>
       </section>
 
-      <section className="sales-proof" aria-label="Informações institucionais">
-        <div className="shell sales-proof-grid"><div><strong>14 Anos</strong><span>de Sucesso Na Internet!</span></div><div><strong>SUCESSO ABSOLUTO!</strong><span>+ DE 63231 Usuários Ativos!</span></div></div>
+      <section className="sales-proof" aria-label="O que a estrutura reúne">
+        <div className="shell sales-proof-grid"><div><strong>Estrutura digital</strong><span>página · perfil · escritório</span></div><div><strong>Operação organizada</strong><span>campanhas · pedidos · conteúdos</span></div></div>
       </section>
 
-      {contentBlocks.map((block, index) => <section className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.title}>
+      {contentBlocks.map((block, index) => <section id={index === 0 ? "como-funciona" : index === 3 ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.title}>
         <div className="shell reference-copy-grid">
           <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
-          <div>{block.eyebrow && <Eyebrow>{block.eyebrow}</Eyebrow>}<h2>{block.title}</h2><div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
-          {index === 2 && <div className="reference-image-frame"><img src={methodImage} alt="Organização de um sistema de trabalho online" /></div>}
-          {index === 5 && <div className="reference-image-frame"><img src={deliveryImage} alt="Materiais de trabalho organizados" /></div>}
+          <div><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2><div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
+          {index === 2 && <div className="reference-image-frame"><img src={methodImage} alt="Organização de uma estrutura de operação digital" /></div>}
+          {index === 5 && <div className="reference-image-frame"><img src={deliveryImage} alt="Materiais organizados para apoiar uma operação digital" /></div>}
         </div>
       </section>)}
 
       <section className="sales-section reference-videos" id="videos">
-        <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Depoimentos e apresentações</Eyebrow><h2>Conheça a <span>Página Lucrativa.</span></h2></div><p>Vídeos públicos incorporados da referência para explicar o sistema e a jornada de empreendedor digital.</p></div><div className="reference-video-grid"><iframe title="Seja um Empreendedor Digital da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Página Lucrativa Uma Ideia Um Sonho" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
+        <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
+      </section>
+
+      <section className="sales-section sales-faq" id="faq">
+        <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div><Eyebrow>Antes de começar</Eyebrow><h2>Clareza para decidir com segurança.</h2><div className="copy-stack"><p>Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.</p>{faqItems.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></div>
       </section>
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-          <div className="offer-copy"><h2>Faça parte da <span>Página Lucrativa.</span></h2><p>Para colocar a Página Lucrativa para funcionar para você e lhe render LUCROS reais, você precisa efetuar um único pagamento de R$ 50,00 para a pessoa que está lhe convidando.</p><div className="sales-notes"><span>À VISTA R$ 50,00</span><span>ou até 12x de R$ 5,17</span></div><p className="offer-closing">Esse modelo de negócio digital tem chamado a atenção justamente pela sua simplicidade e potencial de crescimento. Assim, cada vez mais pessoas estão descobrindo que é possível ganhar dinheiro através de uma página na internet.</p></div>
+          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com uma <span>estrutura digital pronta.</span></h2><p>Você não está solicitando apenas uma página. Está solicitando acesso a uma base de operação para personalizar, aprender, divulgar e acompanhar seu projeto digital.</p><div className="sales-notes"><span>Acesso inicial: R$ 50,00</span><span>Condição informada no processo de ativação</span></div><p className="offer-closing">O resultado não é automático nem garantido. A estrutura organiza o ponto de partida; pedidos, vendas e ganhos dependem da sua execução e das regras reais da operação.</p></div>
           <form className="sales-price-card application-form" onSubmit={submitApplication}>
-            <div className="application-seal" aria-hidden="true"><span>PL</span><small>página</small><b>pedido</b></div><div className="sales-price">À VISTA R$ 50,00 <small>ou até 12x de R$ 5,17</small></div><h3>(Preencha Agora Formulário Acima)</h3><p>A pessoa que receber o pagamento, vai lhe enviar uma senha especial para você personalizar sua Página Lucrativa.</p>
-            <label className="application-field"><span>Nome</span><input name="fullName" autoComplete="name" required minLength={3} placeholder="Seu nome completo" /></label>
-            <label className="application-field"><span>Email</span><input name="email" type="email" autoComplete="email" required maxLength={320} value={applicationContact.email} onChange={event => setApplicationContact(current => ({ ...current, email: normalizeEmail(event.target.value) }))} placeholder="voce@email.com" /></label>
+            <div className="application-seal" aria-hidden="true"><span>PL</span><small>estrutura</small><b>pedido</b></div><div className="sales-price">R$ 50,00 <small>valor de entrada informado nesta oferta</small></div><h3>Solicite a ativação da sua estrutura</h3><p>Preencha seus dados para registrar o pedido. Você receberá um código de acompanhamento e as orientações reais sobre pagamento, liberação e personalização.</p>
+            <label className="application-field"><span>Nome completo</span><input name="fullName" autoComplete="name" required minLength={3} placeholder="Seu nome completo" /></label>
+            <label className="application-field"><span>E-mail</span><input name="email" type="email" autoComplete="email" required maxLength={320} value={applicationContact.email} onChange={event => setApplicationContact(current => ({ ...current, email: normalizeEmail(event.target.value) }))} placeholder="voce@email.com" /></label>
             <label className="application-field"><span>WhatsApp</span><PhoneInput name="whatsapp" required value={applicationContact.whatsapp} onChange={whatsapp => setApplicationContact(current => ({ ...current, whatsapp }))} placeholder="(00) 0 0000-0000" /></label>
             {application.error && <p className="application-error" role="alert">{application.error.message}</p>}
-            <button className="btn btn-primary" type="submit" disabled={application.isPending}>{application.isPending ? "Registrando pedido..." : "Realizar pedido"}<ArrowUpRight size={16} /></button><small>Seus dados serão usados apenas para acompanhar este pedido.</small>
+            <button className="btn btn-primary" type="submit" disabled={application.isPending}>{application.isPending ? "Registrando solicitação..." : "Solicitar ativação"}<ArrowUpRight size={16} /></button><small>Seus dados serão usados para registrar e acompanhar esta solicitação. O formulário não processa o pagamento automaticamente.</small>
           </form>
         </div>
       </section>
