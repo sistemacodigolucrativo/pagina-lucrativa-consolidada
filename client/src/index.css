@@ -472,3 +472,64 @@ img { display: block; max-width: 100%; }
   * { @apply border-border outline-ring/50; }
   button:not(:disabled), [role="button"]:not([aria-disabled="true"]), a[href] { @apply cursor-pointer; }
 }
+
+
+/* Banner superior da campanha — imagem fornecida pelo projeto */
+.top-promo-banner {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  overflow: hidden;
+  background: #050708;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.top-promo-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: min(50vw, 31rem);
+  object-fit: cover;
+  object-position: center;
+}
+
+.top-promo-close {
+  position: absolute;
+  top: clamp(0.55rem, 1.5vw, 1.1rem);
+  left: clamp(0.55rem, 1.5vw, 1.1rem);
+  display: inline-flex;
+  width: clamp(2.15rem, 4vw, 2.8rem);
+  height: clamp(2.15rem, 4vw, 2.8rem);
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: #dc2626;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 999px;
+  box-shadow: 0 0.35rem 1.25rem rgba(0, 0, 0, 0.48);
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+
+.top-promo-close:hover {
+  background: #ef4444;
+  transform: scale(1.06);
+}
+
+.top-promo-close:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+@media (max-width: 640px) {
+  .top-promo-banner img {
+    min-height: 11rem;
+    max-height: 48vw;
+    object-fit: cover;
+  }
+
+  .top-promo-close {
+    top: 0.45rem;
+    left: 0.45rem;
+  }
+}

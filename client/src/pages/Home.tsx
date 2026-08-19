@@ -120,8 +120,18 @@ function JoinButton({ className = "" }: { className?: string }) {
   return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Quero conhecer a estrutura <ArrowUpRight size={16} /></a>;
 }
 
+function TopPromoBanner({ onClose }: { onClose: () => void }) {
+  return <section className="top-promo-banner" aria-label="Apresentação do Código Lucrativo">
+    <img src="/codigo-lucrativo-banner.png" alt="Seu negócio digital pronto para começar, com Página Lucrativa, Escritório Virtual, ferramentas e treinamentos." />
+    <button type="button" className="top-promo-close" aria-label="Fechar imagem de apresentação" onClick={onClose}>
+      <X size={22} strokeWidth={3} aria-hidden="true" />
+    </button>
+  </section>;
+}
+
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showTopPromoBanner, setShowTopPromoBanner] = useState(true);
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [showFloatingCta, setShowFloatingCta] = useState(false);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
@@ -172,6 +182,7 @@ export default function Home() {
   const closeMenu = () => setMenuOpen(false);
 
   return <div className="sales-page reference-page">
+    {showTopPromoBanner ? <TopPromoBanner onClose={() => setShowTopPromoBanner(false)} /> : null}
     <header className="site-header">
       <div className="shell nav">
         <a href="#inicio" aria-label="Página Lucrativa — início" onClick={closeMenu}><Brand /></a>
