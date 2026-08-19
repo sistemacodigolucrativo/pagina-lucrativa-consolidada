@@ -6,7 +6,7 @@ import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PhoneInput } from "@/components/PhoneInput";
 
-const heroImage = "/manus-storage/imported-sprint-hero_2aa66410.jpg";
+const heroImage = "/assets/hero.jpg";
 const mechanismImage = "/structure-mechanism.png";
 const journeyImage = "/structure-journey.png";
 const valueStackImage = "/structure-value-stack.png";
@@ -232,7 +232,7 @@ export default function Home() {
                 </div>
               </section>
             ) : null}
-            <div className="sales-kicker">Para quem quer começar no digital sem começar do zero</div>
+            <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
             <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
             {showTopPromoBanner ? <TopPromoBanner onClose={() => setShowTopPromoBanner(false)} /> : null}
             <p>Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
@@ -249,16 +249,20 @@ export default function Home() {
       </section>
 
       <section className="sales-proof" aria-label="O que a estrutura reúne">
-        <div className="shell sales-proof-grid"><div><strong>Estrutura digital</strong><span>página · perfil · escritório</span></div><div><strong>Operação organizada</strong><span>campanhas · pedidos · conteúdos</span></div></div>
+        <div className="shell sales-proof-grid">
+          <div className="sales-proof-group"><strong>Estrutura digital</strong><div className="sales-proof-items"><span>Página</span><span>Perfil</span><span>Escritório</span></div></div>
+          <div className="sales-proof-group"><strong>Operação organizada</strong><div className="sales-proof-items"><span>Campanhas</span><span>Pedidos</span><span>Conteúdos</span></div></div>
+        </div>
       </section>
 
       {contentBlocks.map((block, index) => <section id={index === 0 ? "como-funciona" : index === 3 ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.title}>
         <div className="shell reference-copy-grid">
           <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
-          <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2><div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
-          {index === 2 && <div className="reference-image-frame"><img src={mechanismImage} alt="Estrutura digital conectando página pública, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento" loading="lazy" /></div>}
-          {index === 4 && <div className="reference-image-frame"><img src={journeyImage} alt="Jornada visual de ativação, personalização, aprendizado, divulgação e acompanhamento" loading="lazy" /></div>}
-          {index === 6 && <div className="reference-image-frame"><img src={valueStackImage} alt="Comparação visual entre construir componentes desconectados sozinho e operar uma estrutura digital organizada" loading="lazy" /></div>}
+          <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2>
+            {index === 3 && <div className="reference-image-frame inline-reference-image"><img src={mechanismImage} alt="Estrutura digital conectando página pública, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento" loading="lazy" /></div>}
+            {index === 5 && <div className="reference-image-frame inline-reference-image"><img src={journeyImage} alt="Jornada visual de ativação, personalização, aprendizado, divulgação e acompanhamento" loading="lazy" /></div>}
+            {index === 7 && <div className="reference-image-frame inline-reference-image"><img src={valueStackImage} alt="Comparação visual entre construir componentes desconectados sozinho e operar uma estrutura digital organizada" loading="lazy" /></div>}
+            <div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
         </div>
       </section>)}
 
