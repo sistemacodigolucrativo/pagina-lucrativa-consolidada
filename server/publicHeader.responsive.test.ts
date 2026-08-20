@@ -4,6 +4,15 @@ import { resolve } from "node:path";
 
 const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
 const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+const internalLinkSources = [
+  "client/src/pages/ApplicationConfirmation.tsx",
+  "client/src/pages/Home.tsx",
+  "client/src/pages/MemberAccount.tsx",
+  "client/src/pages/MemberAffiliateOrders.tsx",
+  "client/src/pages/MemberOffice.tsx",
+  "client/src/pages/MemberTraffic.tsx",
+  "client/src/pages/PersonalizeAccess.tsx",
+].map(file => readFileSync(resolve(process.cwd(), file), "utf8"));
 
 describe("public responsive header and hero layout", () => {
   it("renders one header before the hero profile presentation", () => {
@@ -97,5 +106,10 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('href={withAppBase("/preview")}');
     expect(homeSource).not.toContain('previewOpen');
     expect(homeSource).not.toContain('preview-area');
+  });
+
+  it("keeps native internal links inside the configured app base", () => {
+    for (const source of internalLinkSources) expect(source).toContain("withAppBase");
+    expect(homeSource).toContain('href={withAppBase("/acesso")}');
   });
 });

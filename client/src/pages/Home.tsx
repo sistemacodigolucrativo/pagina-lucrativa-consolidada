@@ -105,7 +105,7 @@ export default function Home() {
           <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
           <a href={withAppBase("/preview")} onClick={closeMenu}>Preview</a>
           <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
-          <a href="/acesso" className="nav-login" onClick={closeMenu}>Entrar</a>
+          <a href={withAppBase("/acesso")} className="nav-login" onClick={closeMenu}>Entrar</a>
         </nav>
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
