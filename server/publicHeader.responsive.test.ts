@@ -85,6 +85,14 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).not.toContain('.top-promo-close');
   });
 
+  it("uses one normal YouTube example video with only the play control", () => {
+    expect((homeSource.match(/<iframe/g) ?? []).length).toBe(1);
+    expect(homeSource).toContain('className="reference-video-single"');
+    expect(homeSource).toContain('https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE?controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3');
+    expect(homeSource).not.toContain("reference-video-grid");
+    expect(homeSource).not.toContain("p2gEqGmKHkw");
+  });
+
   it("renders a structural member chat FAB without chat behavior", () => {
     expect(homeSource).toContain('className="member-chat-fab"');
     expect(homeSource).toContain('aria-label="Chat de membros"');
