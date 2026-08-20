@@ -25,6 +25,8 @@ import {
   getAdminContacts,
   getAdminActivities,
   getMemberCampaigns,
+  getMemberOperationAnalytics,
+  getMemberOperationConversions,
   getMemberOverview,
   getMemberFinance,
   createMemberFinanceEntry,
@@ -225,6 +227,8 @@ export const appRouter = router({
   member: router({
     overview: protectedProcedure.query(({ ctx }) => getMemberOverview(ctx.user.id)),
     campaigns: protectedProcedure.query(({ ctx }) => getMemberCampaigns(ctx.user.id)),
+    analytics: protectedProcedure.input(z.object({ period: z.enum(["7d", "30d", "90d", "all"]).default("30d") })).query(({ ctx, input }) => getMemberOperationAnalytics(ctx.user.id, input.period)),
+    conversions: protectedProcedure.input(z.object({ period: z.enum(["7d", "30d", "90d", "all"]).default("30d") })).query(({ ctx, input }) => getMemberOperationConversions(ctx.user.id, input.period)),
     createCampaign: protectedProcedure.input(campaignInput).mutation(({ ctx, input }) => createMemberCampaign(ctx.user.id, input)),
     deleteCampaign: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => deleteMemberCampaign(ctx.user.id, input.id)),
     products: protectedProcedure.query(({ ctx }) => getMemberProducts(ctx.user.id)),

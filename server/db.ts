@@ -1,4 +1,4 @@
-import { and, desc, eq, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -213,6 +213,69 @@ export async function createMemberCampaign(userId: number, input: { name: string
   if (!db) throw new Error("Banco de dados indisponível.");
   const result = await db.insert(campaignLinks).values({ userId, ...input });
   return { id: Number(result[0].insertId) };
+}
+
+export type CampaignAnalyticsPeriod = "7d" | "30d" | "90d" | "all";
+
+function getAnalyticsStart(period: CampaignAnalyticsPeriod) {
+  if (period === "all") return null;
+  const days = period === "7d" ? 7 : period === "90d" ? 90 : 30;
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+}
+
+export async function getMemberOperationAnalytics(userId: number, period: CampaignAnalyticsPeriod = "30d") {
+  const db = await getDb();
+  if (!db) return { period, campaigns: [], totals: { campaigns: 0, clicks: 0, uniqueVisitors: 0, sessions: 0, conversions: 0, leads: 0, applications: 0 }, recentEvents: [] };
+  const start = getAnalyticsStart(period);
+  const eventWhere = start ? and(eq(campaignClickEvents.userId, userId), gte(campaignClickEvents.occurredAt, start)) : eq(campaignClickEvents.userId, userId);
+  const conversionWhere = start ? and(eq(campaignConversions.userId, userId), gte(campaignConversions.occurredAt, start)) : eq(campaignConversions.userId, userId);
+  const [campaignRows, clickTotals, visitorTotals, sessionTotals, conversionTotals, leadTotals, applicationTotals, clickByCampaign, conversionByCampaign, recentEvents] = await Promise.all([
+    db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)).orderBy(desc(campaignLinks.createdAt)),
+    db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere),
+    db.select({ value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.visitorId})` }).from(campaignClickEvents).where(eventWhere),
+    db.select({ value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.sessionId})` }).from(campaignClickEvents).where(eventWhere),
+    db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(conversionWhere),
+    db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "lead"))),
+    db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "application"))),
+    db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
+    db.select({ campaignId: campaignConversions.campaignId, value: sql<number>`COUNT(*)` }).from(campaignConversions).where(conversionWhere).groupBy(campaignConversions.campaignId),
+    db.select({ campaignId: campaignClickEvents.campaignId, occurredAt: campaignClickEvents.occurredAt, visitorId: campaignClickEvents.visitorId, deviceType: campaignClickEvents.deviceType, referrerOrigin: campaignClickEvents.referrerOrigin }).from(campaignClickEvents).where(eventWhere).orderBy(desc(campaignClickEvents.occurredAt)).limit(50),
+  ]);
+  const clickMap = new Map(clickByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
+  const conversionMap = new Map(conversionByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
+  const campaigns = campaignRows.map(campaign => ({ ...campaign, eventClicks: clickMap.get(campaign.id) ?? 0, periodConversions: conversionMap.get(campaign.id) ?? 0 }));
+  return {
+    period,
+    campaigns,
+    totals: {
+      campaigns: campaignRows.length,
+      clicks: Number(clickTotals[0]?.value ?? 0),
+      uniqueVisitors: Number(visitorTotals[0]?.value ?? 0),
+      sessions: Number(sessionTotals[0]?.value ?? 0),
+      conversions: Number(conversionTotals[0]?.value ?? 0),
+      leads: Number(leadTotals[0]?.value ?? 0),
+      applications: Number(applicationTotals[0]?.value ?? 0),
+    },
+    recentEvents,
+  };
+}
+
+export async function getMemberOperationConversions(userId: number, period: CampaignAnalyticsPeriod = "30d") {
+  const db = await getDb();
+  if (!db) return [];
+  const start = getAnalyticsStart(period);
+  const where = start ? and(eq(campaignConversions.userId, userId), gte(campaignConversions.occurredAt, start)) : eq(campaignConversions.userId, userId);
+  return db.select({
+    id: campaignConversions.id,
+    campaignId: campaignConversions.campaignId,
+    campaignName: campaignLinks.name,
+    conversionType: campaignConversions.conversionType,
+    entityType: campaignConversions.entityType,
+    entityId: campaignConversions.entityId,
+    valueCents: campaignConversions.valueCents,
+    captureMode: campaignConversions.captureMode,
+    occurredAt: campaignConversions.occurredAt,
+  }).from(campaignConversions).innerJoin(campaignLinks, eq(campaignConversions.campaignId, campaignLinks.id)).where(where).orderBy(desc(campaignConversions.occurredAt)).limit(200);
 }
 
 type CampaignClickMetadata = {
