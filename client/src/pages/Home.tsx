@@ -182,7 +182,7 @@ export default function Home() {
       })}
 
       <section className="sales-section reference-videos" id="videos">
-        <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Este vídeo é um material de apresentação da estrutura digital e poderá ser substituído quando o vídeo definitivo estiver disponível.</p></div><div className="reference-video-single"><iframe title="Vídeo de apresentação da estrutura digital" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE?controls=0&modestbranding=1&rel=0&playsinline=1&disablekb=1&fs=0&iv_load_policy=3" allow="autoplay; encrypted-media; picture-in-picture" /></div></div>
+        <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
       </section>
 
       <section className="sales-section sales-faq" id="faq">
