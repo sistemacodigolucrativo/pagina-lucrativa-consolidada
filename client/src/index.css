@@ -344,6 +344,8 @@ img { display: block; max-width: 100%; }
 .reference-image-frame img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; }
 .reference-copy-content > .inline-reference-image { position: relative; top: auto; width: min(100%, 720px); margin: 12px 0 24px; }
 .reference-copy-content > .inline-reference-image img { object-fit: contain; background: #01281B; }
+.reference-copy-content > .comparison-image-fill { width: 100%; }
+.reference-copy-content > .comparison-image-fill img { object-fit: cover; }
 .reference-videos { background: linear-gradient(135deg, #011514, #000105); }
 .reference-video-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 44px; }
 .reference-video-grid iframe { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); border-radius: 15px; background: #111; }

@@ -175,7 +175,7 @@ export default function Home() {
           <div className="shell reference-copy-grid">
             <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
             <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2>
-              {sectionImage ? <div className="reference-image-frame inline-reference-image"><img src={sectionImage} alt={block.defaultAlt} loading="lazy" /></div> : null}
+              {sectionImage ? <div className={`reference-image-frame inline-reference-image ${block.id === "comparison" ? "comparison-image-fill" : ""}`}><img src={sectionImage} alt={block.defaultAlt} loading="lazy" /></div> : null}
               <div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
           </div>
         </section>;

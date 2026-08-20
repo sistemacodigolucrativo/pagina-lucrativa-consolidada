@@ -72,7 +72,9 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('const sectionImages = trpc.public.salesSectionImages.useQuery();');
     expect(homeSource).toContain('const resolveSectionImage = (sectionId: string, fallback: string | null) => {');
     expect(homeSource).toContain('key={block.id}');
-    expect(homeSource).toContain('{sectionImage ? <div className="reference-image-frame inline-reference-image">');
+    expect(homeSource).toContain('comparison-image-fill');
+    expect(cssSource).toContain('.reference-copy-content > .comparison-image-fill { width: 100%; }');
+    expect(cssSource).toContain('.comparison-image-fill img { object-fit: cover; }');
     expect(homeSource).toContain('section.id !== "hero_operation"');
   });
 
