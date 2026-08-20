@@ -76,7 +76,7 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
     ],
   },
   {
-    label: "Ajuda",
+    label: "Apoio",
     items: [
       { icon: "support", label: "Fale conosco", path: "/membros/fale-conosco" },
       { icon: "testimonial", label: "Enviar depoimento", path: "/membros/fazer-depoimento" },
