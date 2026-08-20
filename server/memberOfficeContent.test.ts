@@ -18,12 +18,11 @@ describe("memberOfficeNavigation", () => {
       "Desempenho",
       "Ajuda",
     ]);
-    expect(memberOfficeModuleCount).toBe(35);
+    expect(memberOfficeModuleCount).toBe(29);
     expect(new Set(paths).size).toBe(paths.length);
     expect(paths).toEqual(expect.arrayContaining([
       "/membros/mensagem-especial",
       "/membros/operacao",
-      "/membros/campanhas",
       "/membros/pontos",
       "/membros/ebooks",
       "/membros/fale-conosco",
@@ -52,12 +51,6 @@ describe("memberOfficeNavigation", () => {
       "/membros/produtos",
     ]);
     expect(itemsFor("Divulgação & Contatos")).toEqual([
-      "/membros/campanhas",
-      "/membros/historico",
-      "/membros/top-visitas",
-      "/membros/emails-interessados",
-      "/membros/emails-whatsapp",
-      "/membros/emails-site",
       "/membros/automacoes",
     ]);
   });

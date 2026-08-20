@@ -45,12 +45,6 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
   {
     label: "Divulgação & Contatos",
     items: [
-      { icon: "campaigns", label: "Campanhas e links", path: "/membros/campanhas" },
-      { icon: "traffic", label: "Histórico de visitas", path: "/membros/historico" },
-      { icon: "topVisits", label: "Top de visitas", path: "/membros/top-visitas" },
-      { icon: "contacts", label: "Contatos — interessados", path: "/membros/emails-interessados" },
-      { icon: "contacts", label: "Contatos — WhatsApp", path: "/membros/emails-whatsapp" },
-      { icon: "communications", label: "Comunicações do site", path: "/membros/emails-site" },
       { icon: "automation", label: "Automações", path: "/membros/automacoes" },
     ],
   },

@@ -15,6 +15,48 @@ const defaultContext: MemberOperationContext = {
 };
 
 const routeContexts: Record<string, MemberOperationContext> = {
+  "/membros/operacao": {
+    eyebrow: "Central operacional",
+    title: "Minha operação",
+    description: "Acompanhe campanhas, tráfego, conversões, contatos e histórico no mesmo espaço de trabalho.",
+    actionNote: "Use as abas da central para alternar entre os dados da sua operação.",
+    anchorId: null,
+  },
+  "/membros/operacao/campanhas": {
+    eyebrow: "Central operacional",
+    title: "Campanhas",
+    description: "Crie links rastreáveis e acompanhe a origem dos acessos.",
+    actionNote: "O destino é derivado automaticamente do seu perfil público.",
+    anchorId: null,
+  },
+  "/membros/operacao/trafego": {
+    eyebrow: "Central operacional",
+    title: "Tráfego",
+    description: "Veja cliques, visitantes únicos e sessões por período.",
+    actionNote: "Filtre os eventos para comparar os canais de divulgação.",
+    anchorId: null,
+  },
+  "/membros/operacao/conversoes": {
+    eyebrow: "Central operacional",
+    title: "Conversões",
+    description: "Acompanhe leads e aplicações atribuídas às suas campanhas.",
+    actionNote: "Conversões automáticas e registros manuais permanecem identificados.",
+    anchorId: null,
+  },
+  "/membros/operacao/contatos": {
+    eyebrow: "Central operacional",
+    title: "Contatos",
+    description: "Registre contatos consentidos e prepare comunicações dentro da central.",
+    actionNote: "Nenhuma mensagem externa é enviada automaticamente.",
+    anchorId: null,
+  },
+  "/membros/operacao/historico": {
+    eyebrow: "Central operacional",
+    title: "Histórico",
+    description: "Consulte os eventos de clique registrados no período selecionado.",
+    actionNote: "Os dados são apresentados por campanha e origem conhecida.",
+    anchorId: null,
+  },
   "/membros/configuracoes": {
     eyebrow: "Perfil do membro",
     title: "Minha página e perfil",

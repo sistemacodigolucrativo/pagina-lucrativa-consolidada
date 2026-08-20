@@ -4,7 +4,7 @@ import { memberOfficeModuleCount, memberOfficeNavigation } from "./memberOfficeC
 describe("catálogo do Escritório Virtual", () => {
   it("mantém as rotas de recebimento e pedidos próprios disponíveis para qualquer titular", () => {
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
-    expect(memberOfficeModuleCount).toBe(35);
+    expect(memberOfficeModuleCount).toBe(29);
     expect(paths).toContain("/membros/recebimentos");
     expect(paths).toContain("/membros/meus-pedidos");
     expect(paths).toContain("/membros/fale-conosco");
