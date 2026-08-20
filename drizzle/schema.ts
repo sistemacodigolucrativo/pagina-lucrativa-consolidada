@@ -192,12 +192,62 @@ export const campaignLinks = mysqlTable("campaignLinks", {
   name: varchar("name", { length: 160 }).notNull(),
   slug: varchar("slug", { length: 128 }).notNull(),
   destinationUrl: varchar("destinationUrl", { length: 1024 }).notNull(),
+  source: varchar("source", { length: 96 }),
+  medium: varchar("medium", { length: 96 }),
+  content: varchar("content", { length: 160 }),
+  status: mysqlEnum("status", ["active", "paused", "archived"]).default("active").notNull(),
   clicks: int("clicks").default(0).notNull(),
   leads: int("leads").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  archivedAt: timestamp("archivedAt"),
 }, table => ({
-  userIndex: index("campaign_links_user_idx").on(table.userId),
-  slugUnique: uniqueIndex("campaign_links_slug_unique").on(table.slug),
+  userCreatedIndex: index("campaign_links_user_created_idx").on(table.userId, table.createdAt),
+  userStatusIndex: index("campaign_links_user_status_idx").on(table.userId, table.status),
+  userSlugUnique: uniqueIndex("campaign_links_user_slug_unique").on(table.userId, table.slug),
+}));
+
+export const campaignClickEvents = mysqlTable("campaignClickEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  userId: int("userId").notNull(),
+  visitorId: varchar("visitorId", { length: 64 }).notNull(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  referrerOrigin: varchar("referrerOrigin", { length: 255 }),
+  userAgentCategory: varchar("userAgentCategory", { length: 48 }),
+  deviceType: varchar("deviceType", { length: 32 }),
+  utmSource: varchar("utmSource", { length: 96 }),
+  utmMedium: varchar("utmMedium", { length: 96 }),
+  utmCampaign: varchar("utmCampaign", { length: 160 }),
+  utmContent: varchar("utmContent", { length: 160 }),
+  landingPath: varchar("landingPath", { length: 512 }),
+}, table => ({
+  campaignDateIndex: index("campaign_click_events_campaign_date_idx").on(table.campaignId, table.occurredAt),
+  userDateIndex: index("campaign_click_events_user_date_idx").on(table.userId, table.occurredAt),
+  visitorIndex: index("campaign_click_events_visitor_idx").on(table.visitorId),
+  sessionIndex: index("campaign_click_events_session_idx").on(table.sessionId),
+}));
+
+export const campaignAttributions = mysqlTable("campaignAttributions", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  userId: int("userId").notNull(),
+  visitorId: varchar("visitorId", { length: 64 }).notNull(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  firstOccurredAt: timestamp("firstOccurredAt").defaultNow().notNull(),
+  lastOccurredAt: timestamp("lastOccurredAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  source: varchar("source", { length: 96 }),
+  medium: varchar("medium", { length: 96 }),
+  campaignName: varchar("campaignName", { length: 160 }),
+  content: varchar("content", { length: 160 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  campaignDateIndex: index("campaign_attributions_campaign_date_idx").on(table.campaignId, table.lastOccurredAt),
+  userDateIndex: index("campaign_attributions_user_date_idx").on(table.userId, table.lastOccurredAt),
+  userVisitorSessionUnique: uniqueIndex("campaign_attributions_user_visitor_session_unique").on(table.userId, table.visitorId, table.sessionId),
 }));
 
 export const products = mysqlTable("products", {
@@ -336,6 +386,7 @@ export const memberContacts = mysqlTable("memberContacts", {
   source: varchar("source", { length: 160 }).notNull(),
   consentAt: timestamp("consentAt").defaultNow().notNull(),
   consentNote: text("consentNote"),
+  captureType: mysqlEnum("captureType", ["manual", "campaign", "organic"]).default("manual").notNull(),
   status: mysqlEnum("status", ["new", "contacted", "qualified", "archived"]).default("new").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
