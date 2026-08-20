@@ -115,12 +115,14 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("shows a complete environment-aware tracking URL for each campaign", () => {
+    expect(operationsSource).toContain('const referralUrl =');
     expect(operationsSource).toContain('const appHomeUrl =');
     expect(operationsSource).toContain('const campaignUrl =');
     expect(operationsSource).toContain('href={campaignUrl(item.slug)}');
     expect(operationsSource).toContain('Use este link para rastrear acessos vindos de');
     expect(operationsSource).toContain('onClick={() => copyCampaignLink(item.id, item.slug)}');
     expect(operationsSource).toContain("Copiar link");
-    expect(operationsSource).toContain("O link rastreável será gerado automaticamente");
+    expect(operationsSource).toContain("O link rastreável será gerado após o cadastro.");
+    expect(operationsSource).toContain('readOnly type="url"');
   });
 });
