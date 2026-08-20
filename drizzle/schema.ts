@@ -258,6 +258,7 @@ export const campaignConversions = mysqlTable("campaignConversions", {
   visitorId: varchar("visitorId", { length: 64 }),
   sessionId: varchar("sessionId", { length: 64 }),
   conversionType: mysqlEnum("conversionType", ["lead", "application", "order", "sale", "commission"]).notNull(),
+  status: mysqlEnum("status", ["active", "reversed"]).default("active").notNull(),
   entityType: varchar("entityType", { length: 48 }).notNull(),
   entityId: int("entityId"),
   valueCents: int("valueCents").default(0).notNull(),
@@ -289,6 +290,7 @@ export const transactions = mysqlTable("transactions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   createdBy: int("createdBy"),
+  campaignId: int("campaignId"),
   type: mysqlEnum("type", ["sale", "commission", "adjustment", "withdrawal"]).notNull(),
   description: varchar("description", { length: 320 }).notNull(),
   amountCents: int("amountCents").notNull(),
@@ -299,6 +301,7 @@ export const transactions = mysqlTable("transactions", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({
   userDateIndex: index("transactions_user_date_idx").on(table.userId, table.occurredAt),
+  campaignIndex: index("transactions_campaign_idx").on(table.campaignId),
 }));
 
 export const courses = mysqlTable("courses", {

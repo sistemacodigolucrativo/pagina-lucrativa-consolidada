@@ -15,10 +15,14 @@ describe("lançamentos financeiros", () => {
   });
   it("restringe consulta, criação e aprovação financeira à administração quando apropriado", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     expect(router).toContain("transactions: adminProcedure.query");
     expect(router).toContain("createTransaction: adminProcedure.input");
     expect(router).toContain("updateTransaction: adminProcedure.input");
     expect(router).toContain('z.enum(["pending", "posted", "void"])');
+    expect(router).toContain("campaignId: z.number().int().positive().nullable().optional()");
+    expect(db).toContain("syncTransactionCampaignConversion");
+    expect(db).toContain('transaction.status === "void" ? "reversed" : "active"');
   });
   it("registra as rotas financeiras de membro e administração", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");

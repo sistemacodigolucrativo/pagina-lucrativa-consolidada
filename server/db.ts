@@ -149,17 +149,20 @@ export async function getFinanceMembers() {
   if (!db) return [];
   return db.select({ id: users.id, name: users.name, email: users.email }).from(users).orderBy(users.id);
 }
-export async function createAdminTransaction(adminId: number, input: { userId: number; type: "sale" | "commission" | "adjustment" | "withdrawal"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
+export async function createAdminTransaction(adminId: number, input: { userId: number; campaignId?: number | null; type: "sale" | "commission" | "adjustment" | "withdrawal"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const amountCents = input.type === "withdrawal" ? -Math.abs(input.amountCents) : Math.abs(input.amountCents);
-  const result = await db.insert(transactions).values({ ...input, description: input.description.trim(), amountCents, createdBy: adminId });
-  return { id: Number(result[0].insertId) };
+  const result = await db.insert(transactions).values({ ...input, campaignId: input.campaignId ?? null, description: input.description.trim(), amountCents, createdBy: adminId });
+  const id = Number(result[0].insertId);
+  if (input.campaignId && input.status !== "pending") await syncTransactionCampaignConversion(id);
+  return { id };
 }
 export async function updateAdminTransaction(transactionId: number, input: { status: "pending" | "posted" | "void"; adminNote?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   await db.update(transactions).set({ status: input.status, adminNote: input.adminNote?.trim() || null }).where(eq(transactions.id, transactionId));
+  await syncTransactionCampaignConversion(transactionId);
   return { success: true } as const;
 }
 
@@ -228,7 +231,7 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
   if (!db) return { period, campaigns: [], totals: { campaigns: 0, clicks: 0, uniqueVisitors: 0, sessions: 0, conversions: 0, leads: 0, applications: 0 }, recentEvents: [] };
   const start = getAnalyticsStart(period);
   const eventWhere = start ? and(eq(campaignClickEvents.userId, userId), gte(campaignClickEvents.occurredAt, start)) : eq(campaignClickEvents.userId, userId);
-  const conversionWhere = start ? and(eq(campaignConversions.userId, userId), gte(campaignConversions.occurredAt, start)) : eq(campaignConversions.userId, userId);
+  const conversionWhere = start ? and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"), gte(campaignConversions.occurredAt, start)) : and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"));
   const [campaignRows, clickTotals, visitorTotals, sessionTotals, conversionTotals, leadTotals, applicationTotals, clickByCampaign, conversionByCampaign, recentEvents] = await Promise.all([
     db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)).orderBy(desc(campaignLinks.createdAt)),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere),
@@ -264,7 +267,7 @@ export async function getMemberOperationConversions(userId: number, period: Camp
   const db = await getDb();
   if (!db) return [];
   const start = getAnalyticsStart(period);
-  const where = start ? and(eq(campaignConversions.userId, userId), gte(campaignConversions.occurredAt, start)) : eq(campaignConversions.userId, userId);
+  const where = start ? and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"), gte(campaignConversions.occurredAt, start)) : and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"));
   return db.select({
     id: campaignConversions.id,
     campaignId: campaignConversions.campaignId,
@@ -273,6 +276,7 @@ export async function getMemberOperationConversions(userId: number, period: Camp
     entityType: campaignConversions.entityType,
     entityId: campaignConversions.entityId,
     valueCents: campaignConversions.valueCents,
+    status: campaignConversions.status,
     captureMode: campaignConversions.captureMode,
     occurredAt: campaignConversions.occurredAt,
   }).from(campaignConversions).innerJoin(campaignLinks, eq(campaignConversions.campaignId, campaignLinks.id)).where(where).orderBy(desc(campaignConversions.occurredAt)).limit(200);
@@ -390,6 +394,7 @@ type CampaignConversionInput = {
   visitorId?: string | null;
   sessionId?: string | null;
   conversionType: "lead" | "application" | "order" | "sale" | "commission";
+  status?: "active" | "reversed";
   entityType: string;
   entityId?: number | null;
   valueCents?: number;
@@ -417,7 +422,10 @@ export async function recordCampaignConversion(input: CampaignConversionInput) {
     eq(campaignConversions.entityId, input.entityId),
     eq(campaignConversions.conversionType, input.conversionType),
   )).limit(1);
-  if (existing?.[0]) return { id: existing[0].id, created: false } as const;
+  if (existing?.[0]) {
+    await db.update(campaignConversions).set({ status: input.status ?? "active", valueCents: Math.max(0, input.valueCents ?? 0) }).where(eq(campaignConversions.id, existing[0].id));
+    return { id: existing[0].id, created: false } as const;
+  }
   const result = await db.insert(campaignConversions).values({
     campaignId: input.campaignId,
     userId: input.userId,
@@ -425,6 +433,7 @@ export async function recordCampaignConversion(input: CampaignConversionInput) {
     visitorId: input.visitorId ?? null,
     sessionId: input.sessionId ?? null,
     conversionType: input.conversionType,
+    status: input.status ?? "active",
     entityType: input.entityType,
     entityId: input.entityId ?? null,
     valueCents: Math.max(0, input.valueCents ?? 0),
@@ -432,6 +441,26 @@ export async function recordCampaignConversion(input: CampaignConversionInput) {
     occurredAt: input.occurredAt ?? new Date(),
   });
   return { id: Number(result[0].insertId), created: true } as const;
+}
+
+async function syncTransactionCampaignConversion(transactionId: number) {
+  const db = await getDb();
+  if (!db) return;
+  const rows = await db.select({ id: transactions.id, userId: transactions.userId, campaignId: transactions.campaignId, type: transactions.type, amountCents: transactions.amountCents, status: transactions.status, occurredAt: transactions.occurredAt }).from(transactions).where(eq(transactions.id, transactionId)).limit(1);
+  const transaction = rows[0];
+  if (!transaction?.campaignId || !["sale", "commission"].includes(transaction.type)) return;
+  const conversionType = transaction.type === "sale" ? "sale" : "commission";
+  await recordCampaignConversion({
+    campaignId: transaction.campaignId,
+    userId: transaction.userId,
+    conversionType,
+    entityType: "transaction",
+    entityId: transaction.id,
+    valueCents: Math.abs(transaction.amountCents),
+    status: transaction.status === "void" ? "reversed" : "active",
+    captureMode: "manual",
+    occurredAt: transaction.occurredAt,
+  });
 }
 
 export async function deleteMemberCampaign(userId: number, campaignId: number) {
