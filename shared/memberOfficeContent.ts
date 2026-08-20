@@ -78,7 +78,6 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
   {
     label: "Ajuda",
     items: [
-      { icon: "faq", label: "Perguntas frequentes", path: "/membros/perguntas-frequentes" },
       { icon: "support", label: "Fale conosco", path: "/membros/fale-conosco" },
       { icon: "testimonial", label: "Enviar depoimento", path: "/membros/fazer-depoimento" },
     ],
