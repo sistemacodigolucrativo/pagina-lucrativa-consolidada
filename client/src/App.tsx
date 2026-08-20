@@ -7,6 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MemberOffice from "./pages/MemberOffice";
 import MemberOperations from "./pages/MemberOperations";
+import MemberOperationCenter from "./pages/MemberOperationCenter";
 import EbookReader from "./pages/EbookReader";
 import AdminEbooks from "./pages/AdminEbooks";
 import MemberProducts from "./pages/MemberProducts";
@@ -52,7 +53,12 @@ function AppRoutes() {
     <Route path="/personalizar" component={PersonalizeAccess} />
     <Route path="/acesso" component={DemoLogin} />
     <Route path="/senha-especial/:code" component={SpecialAccessPublic} />
-    <Route path="/membros/operacao" component={MemberOperations} />
+    <Route path="/membros/operacao" component={MemberOperationCenter} />
+    <Route path="/membros/operacao/campanhas" component={MemberOperationCenter} />
+    <Route path="/membros/operacao/trafego" component={MemberOperationCenter} />
+    <Route path="/membros/operacao/conversoes" component={MemberOperationCenter} />
+    <Route path="/membros/operacao/contatos" component={MemberOperationCenter} />
+    <Route path="/membros/operacao/historico" component={MemberOperationCenter} />
     <Route path="/membros/ebooks" component={EbookReader} />
     <Route path="/membros/produtos" component={MemberProducts} />
     <Route path="/membros/rede" component={MemberReferrals} />
