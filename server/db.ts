@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -210,6 +210,16 @@ export async function createMemberCampaign(userId: number, input: { name: string
   if (!db) throw new Error("Banco de dados indisponível.");
   const result = await db.insert(campaignLinks).values({ userId, ...input });
   return { id: Number(result[0].insertId) };
+}
+
+export async function resolvePublicCampaignAndRecordClick(slug: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select({ id: campaignLinks.id, destinationUrl: campaignLinks.destinationUrl }).from(campaignLinks).where(eq(campaignLinks.slug, slug)).limit(1);
+  const campaign = rows[0];
+  if (!campaign) return null;
+  await db.update(campaignLinks).set({ clicks: sql`${campaignLinks.clicks} + 1` }).where(eq(campaignLinks.id, campaign.id));
+  return campaign;
 }
 
 export async function deleteMemberCampaign(userId: number, campaignId: number) {
@@ -820,6 +830,9 @@ export async function createMemberContact(userId: number, input: { campaignId?: 
     if (!campaign[0]) throw new Error("Campanha não encontrada para esta conta.");
   }
   const result = await db.insert(memberContacts).values({ userId, campaignId: input.campaignId ?? null, name: input.name, email: input.email, whatsapp: input.whatsapp ?? null, source: input.source, consentNote: input.consentNote ?? null });
+  if (input.campaignId) {
+    await db.update(campaignLinks).set({ leads: sql`${campaignLinks.leads} + 1` }).where(eq(campaignLinks.id, input.campaignId));
+  }
   const id = Number(result[0].insertId);
   await recordMemberActivity(userId, "contact_created", "contact", id, `Contato consentido registrado: ${input.name}.`);
   return { id };

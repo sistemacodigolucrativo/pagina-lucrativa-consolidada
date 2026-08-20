@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
 const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+const operationsSource = readFileSync(resolve(process.cwd(), "client/src/pages/MemberOperations.tsx"), "utf8");
 const internalLinkSources = [
   "client/src/pages/ApplicationConfirmation.tsx",
   "client/src/pages/Home.tsx",
@@ -111,5 +112,12 @@ describe("public responsive header and hero layout", () => {
   it("keeps native internal links inside the configured app base", () => {
     for (const source of internalLinkSources) expect(source).toContain("withAppBase");
     expect(homeSource).toContain('href={withAppBase("/acesso")}');
+  });
+
+  it("shows a complete environment-aware tracking URL for each campaign", () => {
+    expect(operationsSource).toContain('const appHomeUrl =');
+    expect(operationsSource).toContain('const campaignUrl =');
+    expect(operationsSource).toContain('href={campaignUrl(item.slug)}');
+    expect(operationsSource).toContain("O link rastreável será gerado automaticamente");
   });
 });
