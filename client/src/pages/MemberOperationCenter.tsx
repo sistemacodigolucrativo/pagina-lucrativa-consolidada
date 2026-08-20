@@ -45,12 +45,14 @@ export default function MemberOperationCenter() {
   const [campaignForm, setCampaignForm] = useState({ name: "", slug: "", destinationUrl: "" });
   const [copiedId, setCopiedId] = useState<number | null>(null);
   const [contact, setContact] = useState({ name: "", email: "", whatsapp: "", source: "", campaignId: "", consentNote: "", consent: false });
+  const [invitation, setInvitation] = useState({ contactId: "", channel: "link" as "link" | "email" | "whatsapp", message: "" });
   const utils = trpc.useUtils();
   const profile = trpc.member.profile.useQuery();
   const analytics = trpc.member.analytics.useQuery({ period });
   const campaigns = trpc.member.campaigns.useQuery();
   const conversions = trpc.member.conversions.useQuery({ period });
   const contacts = trpc.member.contacts.useQuery();
+  const invitations = trpc.member.invitations.useQuery();
 
   const profileSlug = profile.data?.slug;
   const referralUrl = typeof window !== "undefined" && profileSlug ? `${window.location.origin}${withAppBase(`/?afiliado=${encodeURIComponent(profileSlug)}`)}` : "";
@@ -88,6 +90,14 @@ export default function MemberOperationCenter() {
     },
     onError: error => toast.error(error.message),
   });
+  const createInvitation = trpc.member.createInvitation.useMutation({
+    onSuccess: async () => {
+      setInvitation({ contactId: "", channel: "link", message: "" });
+      await utils.member.invitations.invalidate();
+      toast.success("Comunicação preparada.");
+    },
+    onError: error => toast.error(error.message),
+  });
 
   const orderedCampaigns = useMemo(() => [...(analytics.data?.campaigns ?? [])].sort((a, b) => (b.eventClicks - a.eventClicks) || (b.periodConversions - a.periodConversions) || a.name.localeCompare(b.name)), [analytics.data?.campaigns]);
   const copyLink = async (id: number, slug: string) => {
@@ -116,6 +126,10 @@ export default function MemberOperationCenter() {
       consentNote: contact.consentNote || null,
       consent: true,
     });
+  };
+  const submitInvitation = (event: FormEvent) => {
+    event.preventDefault();
+    createInvitation.mutate({ contactId: invitation.contactId ? Number(invitation.contactId) : null, channel: invitation.channel, message: invitation.message || null });
   };
 
   const title = activeTab === "campaigns" ? "Campanhas" : activeTab === "traffic" ? "Tráfego" : activeTab === "conversions" ? "Conversões" : activeTab === "contacts" ? "Contatos" : activeTab === "history" ? "Histórico" : "Minha operação";
@@ -197,6 +211,17 @@ export default function MemberOperationCenter() {
           <Panel title="Contatos registrados" icon={<UsersRound className="size-5 text-emerald-300" />}>
             {contacts.data?.length ? <div className="space-y-3">{contacts.data.map(item => <article key={item.id} className="rounded-xl border border-white/10 bg-black/30 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-medium text-white">{item.name}</h3><p className="text-sm text-zinc-400">{item.email}{item.whatsapp ? ` · ${item.whatsapp}` : ""}</p><p className="mt-1 text-xs text-emerald-200">{item.captureType === "campaign" ? "Lead associado a campanha" : "Contato manual"} · {item.source}</p></div><select value={item.status} onChange={event => updateContact.mutate({ id: item.id, status: event.target.value as ContactStatus })} className="rounded-lg border border-white/15 bg-black px-2 py-2 text-sm text-white"><option value="new">Novo</option><option value="contacted">Contatado</option><option value="qualified">Qualificado</option><option value="archived">Arquivado</option></select></div></article>)}</div> : <Empty text="Nenhum contato consentido registrado." />}
           </Panel>
+          <div className="lg:col-span-2">
+            <form onSubmit={submitInvitation} className="grid gap-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5 lg:grid-cols-[1fr_1fr_2fr_auto] lg:items-end">
+              <label className="text-sm text-zinc-200">Contato<select value={invitation.contactId} onChange={event => setInvitation({ ...invitation, contactId: event.target.value })} className={fieldClass}><option value="">Sem contato específico</option>{contacts.data?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+              <label className="text-sm text-zinc-200">Canal previsto<select value={invitation.channel} onChange={event => setInvitation({ ...invitation, channel: event.target.value as "link" | "email" | "whatsapp" })} className={fieldClass}><option value="link">Link manual</option><option value="email">E-mail manual</option><option value="whatsapp">WhatsApp manual</option></select></label>
+              <label className="text-sm text-zinc-200">Anotação ou mensagem prevista<textarea value={invitation.message} onChange={event => setInvitation({ ...invitation, message: event.target.value })} className={`${fieldClass} min-h-10`} /></label>
+              <button disabled={createInvitation.isPending} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"><Link2 className="size-4" />Preparar comunicação</button>
+            </form>
+            <Panel title="Comunicações preparadas" icon={<Link2 className="size-5 text-emerald-300" />}>
+              {invitations.data?.length ? <div className="divide-y divide-white/10">{invitations.data.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-3 py-3"><div><strong className="text-sm text-white">{item.channel === "whatsapp" ? "WhatsApp" : item.channel === "email" ? "E-mail" : "Link"}</strong><p className="text-sm text-zinc-400">{item.message || "Sem anotação"}</p></div><span className="text-xs text-zinc-500">{formatDate(item.createdAt)}</span></div>)}</div> : <Empty text="Nenhuma comunicação preparada." />}
+            </Panel>
+          </div>
         </section>}
 
         {activeTab === "history" && <Panel title="Histórico de eventos" icon={<History className="size-5 text-emerald-300" />}>
