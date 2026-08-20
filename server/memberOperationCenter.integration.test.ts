@@ -25,6 +25,13 @@ describe("central Minha operação", () => {
     expect(center).toContain("navigator.clipboard.writeText");
   });
 
+  it("mantém o suporte separado da central e o exibe em Fale conosco", async () => {
+    const page = await readFile(path.join(root, "client/src/pages/MemberOperations.tsx"), "utf8");
+    expect(page).toContain('context.anchorId === "support" && <section id="support"');
+    expect(page).toContain("Solicitar suporte");
+    expect(page).toContain("createTicket.mutate(ticket)");
+  });
+
   it("registra as rotas canônicas sem remover os destinos legados", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     expect(app).toContain('path="/membros/operacao" component={MemberOperationCenter}');
