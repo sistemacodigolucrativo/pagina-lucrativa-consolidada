@@ -7,6 +7,7 @@ import {
   campaignLinks,
   campaignClickEvents,
   campaignAttributions,
+  campaignConversions,
   courseProgress,
   courses,
   ebooks,
@@ -317,6 +318,57 @@ export async function resolvePublicMemberCampaignAndRecordClick(memberSlug: stri
   if (!member) return null;
   const campaign = await getActiveCampaignWhere(and(eq(campaignLinks.userId, member.userId), eq(campaignLinks.slug, campaignSlug)));
   return campaign ? recordCampaignClick(campaign, metadata) : null;
+}
+
+type CampaignConversionInput = {
+  campaignId: number;
+  userId: number;
+  attributionId?: number | null;
+  visitorId?: string | null;
+  sessionId?: string | null;
+  conversionType: "lead" | "application" | "order" | "sale" | "commission";
+  entityType: string;
+  entityId?: number | null;
+  valueCents?: number;
+  captureMode?: "automatic" | "manual";
+  occurredAt?: Date;
+};
+
+export async function getValidCampaignAttribution(userId: number, visitorId: string, sessionId: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(campaignAttributions).where(and(
+    eq(campaignAttributions.userId, userId),
+    eq(campaignAttributions.visitorId, visitorId),
+    eq(campaignAttributions.sessionId, sessionId),
+  )).limit(1);
+  const attribution = rows[0];
+  return attribution && attribution.expiresAt.getTime() >= Date.now() ? attribution : null;
+}
+
+export async function recordCampaignConversion(input: CampaignConversionInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const existing = input.entityId == null ? null : await db.select({ id: campaignConversions.id }).from(campaignConversions).where(and(
+    eq(campaignConversions.entityType, input.entityType),
+    eq(campaignConversions.entityId, input.entityId),
+    eq(campaignConversions.conversionType, input.conversionType),
+  )).limit(1);
+  if (existing?.[0]) return { id: existing[0].id, created: false } as const;
+  const result = await db.insert(campaignConversions).values({
+    campaignId: input.campaignId,
+    userId: input.userId,
+    attributionId: input.attributionId ?? null,
+    visitorId: input.visitorId ?? null,
+    sessionId: input.sessionId ?? null,
+    conversionType: input.conversionType,
+    entityType: input.entityType,
+    entityId: input.entityId ?? null,
+    valueCents: Math.max(0, input.valueCents ?? 0),
+    captureMode: input.captureMode ?? "automatic",
+    occurredAt: input.occurredAt ?? new Date(),
+  });
+  return { id: Number(result[0].insertId), created: true } as const;
 }
 
 export async function deleteMemberCampaign(userId: number, campaignId: number) {
@@ -806,7 +858,16 @@ export async function updateAdminEbook(ebookId: number, input: Omit<EbookInput, 
   await db.update(ebooks).set({ ...input, publishedAt: input.status === "published" ? new Date() : null }).where(eq(ebooks.id, ebookId));
   return { success: true } as const;
 }
-export async function createApplication(input: ApplicationInput) {
+type CampaignRequestLike = { headers?: { cookie?: string | string[] } };
+
+function readCampaignCookie(request: CampaignRequestLike | undefined, name: string) {
+  const raw = request?.headers?.cookie;
+  const cookieHeader = Array.isArray(raw) ? raw.join(";") : raw ?? "";
+  const entry = cookieHeader.split(";").map(value => value.trim()).find(value => value.startsWith(`${name}=`));
+  return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null;
+}
+
+export async function createApplication(input: ApplicationInput, request?: CampaignRequestLike) {
   const db = await getDb();
   if (!db) throw new Error("O banco de dados não está disponível no momento.");
   const trackingCode = `PL-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
@@ -822,7 +883,25 @@ export async function createApplication(input: ApplicationInput) {
     affiliateSlug: owner[0] ? affiliateSlug : null,
     ownerUserId: owner[0]?.userId ?? null,
   });
-  return { id: Number(result[0].insertId), trackingCode };
+  const id = Number(result[0].insertId);
+  const visitorId = readCampaignCookie(request, "pl_visitor");
+  const sessionId = readCampaignCookie(request, "pl_session");
+  if (owner[0] && visitorId && sessionId) {
+    const attribution = await getValidCampaignAttribution(owner[0].userId, visitorId, sessionId);
+    if (attribution) {
+      await recordCampaignConversion({
+        campaignId: attribution.campaignId,
+        userId: owner[0].userId,
+        attributionId: attribution.id,
+        visitorId,
+        sessionId,
+        conversionType: "application",
+        entityType: "application",
+        entityId: id,
+      });
+    }
+  }
+  return { id, trackingCode };
 }
 
 export async function getMemberAffiliateApplications(userId: number) {
@@ -926,11 +1005,14 @@ export async function createMemberContact(userId: number, input: { campaignId?: 
     const campaign = await db.select({ id: campaignLinks.id }).from(campaignLinks).where(and(eq(campaignLinks.id, input.campaignId), eq(campaignLinks.userId, userId))).limit(1);
     if (!campaign[0]) throw new Error("Campanha não encontrada para esta conta.");
   }
-  const result = await db.insert(memberContacts).values({ userId, campaignId: input.campaignId ?? null, name: input.name, email: input.email, whatsapp: input.whatsapp ?? null, source: input.source, consentNote: input.consentNote ?? null });
+  const result = await db.insert(memberContacts).values({ userId, campaignId: input.campaignId ?? null, name: input.name, email: input.email, whatsapp: input.whatsapp ?? null, source: input.source, consentNote: input.consentNote ?? null, captureType: input.campaignId ? "campaign" : "manual" });
   if (input.campaignId) {
     await db.update(campaignLinks).set({ leads: sql`${campaignLinks.leads} + 1` }).where(eq(campaignLinks.id, input.campaignId));
   }
   const id = Number(result[0].insertId);
+  if (input.campaignId) {
+    await recordCampaignConversion({ campaignId: input.campaignId, userId, conversionType: "lead", entityType: "memberContact", entityId: id, captureMode: "manual" });
+  }
   await recordMemberActivity(userId, "contact_created", "contact", id, `Contato consentido registrado: ${input.name}.`);
   return { id };
 }

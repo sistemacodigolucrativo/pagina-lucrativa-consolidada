@@ -266,7 +266,7 @@ export const appRouter = router({
     updateSpecialAccess: protectedProcedure.input(specialAccessInput).mutation(({ ctx, input }) => updateMemberSpecialAccess(ctx.user.id, input)),
   }),
   applications: router({
-    submit: publicProcedure.input(applicationInputSchema).mutation(({ input }) => createApplication(input)),
+    submit: publicProcedure.input(applicationInputSchema).mutation(({ ctx, input }) => createApplication(input, ctx.req)),
     lookup: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24), email: normalizedEmailZodSchema })).query(({ input }) => getApplicationTracking(input.trackingCode, input.email)),
   }),
   public: router({

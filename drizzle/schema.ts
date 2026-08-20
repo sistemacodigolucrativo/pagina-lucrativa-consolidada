@@ -250,6 +250,26 @@ export const campaignAttributions = mysqlTable("campaignAttributions", {
   userVisitorSessionUnique: uniqueIndex("campaign_attributions_user_visitor_session_unique").on(table.userId, table.visitorId, table.sessionId),
 }));
 
+export const campaignConversions = mysqlTable("campaignConversions", {
+  id: int("id").autoincrement().primaryKey(),
+  campaignId: int("campaignId").notNull(),
+  userId: int("userId").notNull(),
+  attributionId: int("attributionId"),
+  visitorId: varchar("visitorId", { length: 64 }),
+  sessionId: varchar("sessionId", { length: 64 }),
+  conversionType: mysqlEnum("conversionType", ["lead", "application", "order", "sale", "commission"]).notNull(),
+  entityType: varchar("entityType", { length: 48 }).notNull(),
+  entityId: int("entityId"),
+  valueCents: int("valueCents").default(0).notNull(),
+  captureMode: mysqlEnum("captureMode", ["automatic", "manual"]).default("automatic").notNull(),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({
+  campaignDateIndex: index("campaign_conversions_campaign_date_idx").on(table.campaignId, table.occurredAt),
+  userDateIndex: index("campaign_conversions_user_date_idx").on(table.userId, table.occurredAt),
+  entityUnique: uniqueIndex("campaign_conversions_entity_unique").on(table.entityType, table.entityId, table.conversionType),
+}));
+
 export const products = mysqlTable("products", {
   id: int("id").autoincrement().primaryKey(),
   ownerId: int("ownerId").notNull(),
