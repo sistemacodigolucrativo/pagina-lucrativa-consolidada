@@ -110,7 +110,7 @@ export const PUBLIC_SALES_SECTIONS = [
   },
   {
     id: "proof_matters",
-    eyebrow: "A prova que importa",
+    eyebrow: "O produto que se vende",
     title: "A estrutura precisa fazer sentido antes de qualquer promessa de resultado.",
     body: [
       "O que você pode avaliar é concreto: existe uma página, um perfil, um Escritório Virtual, recursos de campanha, pedidos rastreáveis, biblioteca de execução e módulos para acompanhar a operação.",
