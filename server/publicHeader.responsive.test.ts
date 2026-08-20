@@ -118,6 +118,7 @@ describe("public responsive header and hero layout", () => {
     expect(operationsSource).toContain('const referralUrl =');
     expect(operationsSource).toContain('const appHomeUrl =');
     expect(operationsSource).toContain('const campaignUrl =');
+    expect(operationsSource).toContain('const path = memberSlug ? `/r/${encodeURIComponent(memberSlug)}/${encodeURIComponent(slug)}`');
     expect(operationsSource).toContain('href={campaignUrl(item.slug)}');
     expect(operationsSource).toContain('Use este link para rastrear acessos vindos de');
     expect(operationsSource).toContain('onClick={() => copyCampaignLink(item.id, item.slug)}');

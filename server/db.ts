@@ -1,10 +1,12 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
   applications,
   campaignLinks,
+  campaignClickEvents,
+  campaignAttributions,
   courseProgress,
   courses,
   ebooks,
@@ -212,14 +214,109 @@ export async function createMemberCampaign(userId: number, input: { name: string
   return { id: Number(result[0].insertId) };
 }
 
-export async function resolvePublicCampaignAndRecordClick(slug: string) {
+type CampaignClickMetadata = {
+  visitorId: string;
+  sessionId: string;
+  occurredAt: Date;
+  referrerOrigin?: string | null;
+  userAgentCategory?: string | null;
+  deviceType?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
+  utmContent?: string | null;
+  landingPath?: string | null;
+};
+
+type PublicCampaign = {
+  id: number;
+  userId: number;
+  name: string;
+  slug: string;
+  destinationUrl: string;
+  source: string | null;
+  medium: string | null;
+  content: string | null;
+  status: "active" | "paused" | "archived";
+};
+
+async function recordCampaignClick(campaign: PublicCampaign, metadata: CampaignClickMetadata) {
+  const db = await getDb();
+  if (!db || campaign.status !== "active") return null;
+  const expiresAt = new Date(metadata.occurredAt.getTime() + 30 * 24 * 60 * 60 * 1000);
+  await db.transaction(async tx => {
+    await tx.insert(campaignClickEvents).values({
+      campaignId: campaign.id,
+      userId: campaign.userId,
+      visitorId: metadata.visitorId,
+      sessionId: metadata.sessionId,
+      occurredAt: metadata.occurredAt,
+      referrerOrigin: metadata.referrerOrigin ?? null,
+      userAgentCategory: metadata.userAgentCategory ?? null,
+      deviceType: metadata.deviceType ?? null,
+      utmSource: metadata.utmSource ?? campaign.source ?? null,
+      utmMedium: metadata.utmMedium ?? campaign.medium ?? null,
+      utmCampaign: metadata.utmCampaign ?? campaign.name,
+      utmContent: metadata.utmContent ?? campaign.content ?? null,
+      landingPath: metadata.landingPath ?? null,
+    });
+    await tx.insert(campaignAttributions).values({
+      campaignId: campaign.id,
+      userId: campaign.userId,
+      visitorId: metadata.visitorId,
+      sessionId: metadata.sessionId,
+      firstOccurredAt: metadata.occurredAt,
+      lastOccurredAt: metadata.occurredAt,
+      expiresAt,
+      source: metadata.utmSource ?? campaign.source ?? null,
+      medium: metadata.utmMedium ?? campaign.medium ?? null,
+      campaignName: metadata.utmCampaign ?? campaign.name,
+      content: metadata.utmContent ?? campaign.content ?? null,
+    }).onDuplicateKeyUpdate({ set: {
+      campaignId: campaign.id,
+      lastOccurredAt: metadata.occurredAt,
+      expiresAt,
+      source: metadata.utmSource ?? campaign.source ?? null,
+      medium: metadata.utmMedium ?? campaign.medium ?? null,
+      campaignName: metadata.utmCampaign ?? campaign.name,
+      content: metadata.utmContent ?? campaign.content ?? null,
+    }});
+    await tx.update(campaignLinks).set({ clicks: sql`${campaignLinks.clicks} + 1` }).where(eq(campaignLinks.id, campaign.id));
+  });
+  return campaign;
+}
+
+async function getActiveCampaignWhere(where: SQL | undefined) {
+  if (!where) return null;
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select({ id: campaignLinks.id, destinationUrl: campaignLinks.destinationUrl }).from(campaignLinks).where(eq(campaignLinks.slug, slug)).limit(1);
-  const campaign = rows[0];
-  if (!campaign) return null;
-  await db.update(campaignLinks).set({ clicks: sql`${campaignLinks.clicks} + 1` }).where(eq(campaignLinks.id, campaign.id));
-  return campaign;
+  const rows = await db.select({
+    id: campaignLinks.id,
+    userId: campaignLinks.userId,
+    name: campaignLinks.name,
+    slug: campaignLinks.slug,
+    destinationUrl: campaignLinks.destinationUrl,
+    source: campaignLinks.source,
+    medium: campaignLinks.medium,
+    content: campaignLinks.content,
+    status: campaignLinks.status,
+  }).from(campaignLinks).where(where).limit(1);
+  return rows[0] && rows[0].status === "active" ? rows[0] as PublicCampaign : null;
+}
+
+export async function resolvePublicCampaignAndRecordClick(slug: string, metadata: CampaignClickMetadata) {
+  const campaign = await getActiveCampaignWhere(eq(campaignLinks.slug, slug));
+  return campaign ? recordCampaignClick(campaign, metadata) : null;
+}
+
+export async function resolvePublicMemberCampaignAndRecordClick(memberSlug: string, campaignSlug: string, metadata: CampaignClickMetadata) {
+  const db = await getDb();
+  if (!db) return null;
+  const members = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.slug, memberSlug)).limit(1);
+  const member = members[0];
+  if (!member) return null;
+  const campaign = await getActiveCampaignWhere(and(eq(campaignLinks.userId, member.userId), eq(campaignLinks.slug, campaignSlug)));
+  return campaign ? recordCampaignClick(campaign, metadata) : null;
 }
 
 export async function deleteMemberCampaign(userId: number, campaignId: number) {

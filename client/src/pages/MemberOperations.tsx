@@ -24,7 +24,11 @@ export default function MemberOperations() {
   const appOrigin = typeof window === "undefined" ? "" : window.location.origin;
   const referralUrl = profile.data?.slug && appOrigin ? `${appOrigin}${withAppBase(`/?afiliado=${encodeURIComponent(profile.data.slug)}`)}` : "";
   const appHomeUrl = referralUrl || (appOrigin ? `${appOrigin}${withAppBase("/")}` : "");
-  const campaignUrl = (slug: string) => typeof window === "undefined" ? `/${slug}` : `${window.location.origin}${withAppBase(`/${slug}`)}`;
+  const campaignUrl = (slug: string) => {
+    const memberSlug = profile.data?.slug;
+    const path = memberSlug ? `/r/${encodeURIComponent(memberSlug)}/${encodeURIComponent(slug)}` : `/${encodeURIComponent(slug)}`;
+    return typeof window === "undefined" ? path : `${window.location.origin}${withAppBase(path)}`;
+  };
   const contacts = trpc.member.contacts.useQuery(); const invitations = trpc.member.invitations.useQuery(); const activities = trpc.member.activities.useQuery();
   const [campaign, setCampaign] = useState({ name: "", slug: "", destinationUrl: appHomeUrl }); const [profileForm, setProfileForm] = useState({ slug: "", bio: "", whatsapp: "", websiteUrl: "" }); const [ticket, setTicket] = useState({ subject: "", message: "" });
   const [contact, setContact] = useState({ name: "", email: "", whatsapp: "", source: "", campaignId: "", consentNote: "", consent: false }); const [invitation, setInvitation] = useState({ contactId: "", channel: "link" as "link" | "email" | "whatsapp", message: "" });
