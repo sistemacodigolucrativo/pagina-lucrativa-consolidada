@@ -342,6 +342,10 @@ export const applications = mysqlTable("applications", {
   ownerUserId: int("ownerUserId"),
   affiliateSlug: varchar("affiliateSlug", { length: 96 }),
   status: mysqlEnum("status", ["pending", "contacted", "approved", "archived"]).default("pending").notNull(),
+  paymentStatus: mysqlEnum("paymentStatus", ["not_started", "awaiting_payment", "receipt_received", "confirmed", "rejected"]).default("awaiting_payment").notNull(),
+  activationStatus: mysqlEnum("activationStatus", ["not_started", "access_issued", "personalization_started", "member_activated", "cancelled"]).default("not_started").notNull(),
+  offerAmountCents: int("offerAmountCents").default(5000).notNull(),
+  selectedPaymentMethod: varchar("selectedPaymentMethod", { length: 120 }),
   adminNote: text("adminNote"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -354,6 +358,72 @@ export const applications = mysqlTable("applications", {
 
 export type Application = typeof applications.$inferSelect;
 export type InsertApplication = typeof applications.$inferInsert;
+
+export const memberPaymentLinks = mysqlTable("memberPaymentLinks", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  label: varchar("label", { length: 120 }).notNull(),
+  paymentUrl: varchar("paymentUrl", { length: 1024 }).notNull(),
+  isEnabled: int("isEnabled").default(1).notNull(),
+  sortOrder: int("sortOrder").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  userSortIndex: index("member_payment_links_user_sort_idx").on(table.userId, table.sortOrder),
+  enabledIndex: index("member_payment_links_enabled_idx").on(table.userId, table.isEnabled),
+}));
+
+export const applicationPaymentReceipts = mysqlTable("applicationPaymentReceipts", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  ownerUserId: int("ownerUserId").notNull(),
+  storageKey: varchar("storageKey", { length: 1024 }).notNull(),
+  fileUrl: varchar("fileUrl", { length: 1024 }).notNull(),
+  contentType: varchar("contentType", { length: 80 }).notNull(),
+  originalName: varchar("originalName", { length: 255 }),
+  fileSize: int("fileSize").default(0).notNull(),
+  status: mysqlEnum("status", ["pending", "approved", "rejected"]).default("pending").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  reviewedAt: timestamp("reviewedAt"),
+  reviewedBy: int("reviewedBy"),
+}, table => ({
+  applicationDateIndex: index("application_payment_receipts_application_date_idx").on(table.applicationId, table.createdAt),
+  ownerStatusIndex: index("application_payment_receipts_owner_status_idx").on(table.ownerUserId, table.status),
+}));
+
+export const memberNotifications = mysqlTable("memberNotifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: varchar("type", { length: 80 }).notNull(),
+  title: varchar("title", { length: 180 }).notNull(),
+  message: text("message").notNull(),
+  entityType: varchar("entityType", { length: 80 }).notNull(),
+  entityId: int("entityId").notNull(),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => ({
+  userReadDateIndex: index("member_notifications_user_read_date_idx").on(table.userId, table.readAt, table.createdAt),
+  entityIndex: index("member_notifications_entity_idx").on(table.entityType, table.entityId),
+}));
+
+export const applicationAccessTokens = mysqlTable("applicationAccessTokens", {
+  id: int("id").autoincrement().primaryKey(),
+  applicationId: int("applicationId").notNull(),
+  ownerUserId: int("ownerUserId").notNull(),
+  publicCode: varchar("publicCode", { length: 48 }).notNull(),
+  tokenHash: varchar("tokenHash", { length: 255 }).notNull(),
+  status: mysqlEnum("status", ["active", "revoked", "used"]).default("active").notNull(),
+  accessCount: int("accessCount").default(0).notNull(),
+  lastAccessAt: timestamp("lastAccessAt"),
+  expiresAt: timestamp("expiresAt"),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  createdBy: int("createdBy").notNull(),
+}, table => ({
+  codeUnique: uniqueIndex("application_access_tokens_code_unique").on(table.publicCode),
+  applicationStatusIndex: index("application_access_tokens_application_status_idx").on(table.applicationId, table.status),
+  ownerStatusIndex: index("application_access_tokens_owner_status_idx").on(table.ownerUserId, table.status),
+}));
 
 export const managedContent = mysqlTable("managedContent", {
   id: int("id").autoincrement().primaryKey(),

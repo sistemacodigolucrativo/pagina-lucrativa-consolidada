@@ -79,7 +79,7 @@ export default function Home() {
     ["Youtube", affiliate.data.youtubeUrl],
   ].filter((entry): entry is [string, string] => Boolean(entry[1])) : [];
   const application = trpc.applications.submit.useMutation({
-    onSuccess: data => setLocation(`/pedido/confirmacao?codigo=${encodeURIComponent(data.trackingCode)}`),
+    onSuccess: data => setLocation(`/pedido/${encodeURIComponent(data.trackingCode)}/pagamento`),
   });
 
   function submitApplication(event: FormEvent<HTMLFormElement>) {

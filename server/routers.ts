@@ -9,6 +9,7 @@ import {
   createAdminEbook,
   createApplication,
   getApplicationTracking,
+  getApplicationPaymentPage,
   updateAdminApplication,
   createMemberCampaign,
   createMemberTicket,
@@ -35,7 +36,10 @@ import {
   getMemberProfile,
   getMemberAccount,
   getMemberReceivingPreference,
+  getMemberPaymentLinks,
   getMemberAffiliateApplications,
+  getMemberAffiliateApplication,
+  getMemberNotifications,
   getMemberTickets,
   getMemberContacts,
   getMemberInvitations,
@@ -64,6 +68,10 @@ import {
   uploadMemberProfilePhoto,
   updateMemberAccount,
   updateMemberReceivingPreference,
+  updateMemberPaymentLinks,
+  uploadApplicationPaymentReceipt,
+  markMemberNotificationRead,
+  reviewPaymentReceipt,
   updateMemberContact,
   setAdminReferralLink,
   getAdminReferralLinks,
@@ -90,6 +98,7 @@ import {
   upsertAdminPublicSalesSectionImage,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
+import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema } from "@shared/applications";
 import { z } from "zod";
 
 const campaignInput = z.object({
@@ -244,7 +253,13 @@ export const appRouter = router({
     }),
     receiving: protectedProcedure.query(({ ctx }) => getMemberReceivingPreference(ctx.user.id)),
     updateReceiving: protectedProcedure.input(receivingPreferenceInput).mutation(({ ctx, input }) => updateMemberReceivingPreference(ctx.user.id, input)),
+    paymentLinks: protectedProcedure.query(({ ctx }) => getMemberPaymentLinks(ctx.user.id)),
+    updatePaymentLinks: protectedProcedure.input(memberPaymentLinksInputSchema).mutation(({ ctx, input }) => updateMemberPaymentLinks(ctx.user.id, input)),
     affiliateApplications: protectedProcedure.query(({ ctx }) => getMemberAffiliateApplications(ctx.user.id)),
+    affiliateApplication: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ ctx, input }) => getMemberAffiliateApplication(ctx.user.id, input.id)),
+    reviewPaymentReceipt: protectedProcedure.input(z.object({ applicationId: z.number().int().positive(), receiptId: z.number().int().positive(), status: z.enum(["approved", "rejected"]) })).mutation(({ ctx, input }) => reviewPaymentReceipt(ctx.user.id, input)),
+    notifications: protectedProcedure.query(({ ctx }) => getMemberNotifications(ctx.user.id)),
+    markNotificationRead: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => markMemberNotificationRead(ctx.user.id, input.id)),
     tickets: protectedProcedure.query(({ ctx }) => getMemberTickets(ctx.user.id)),
     createTicket: protectedProcedure.input(ticketInput).mutation(({ ctx, input }) => createMemberTicket(ctx.user.id, input)),
     content: protectedProcedure.query(() => getPublishedContent()),
@@ -266,6 +281,8 @@ export const appRouter = router({
   applications: router({
     submit: publicProcedure.input(applicationInputSchema).mutation(({ ctx, input }) => createApplication(input, ctx.req)),
     lookup: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24), email: normalizedEmailZodSchema })).query(({ input }) => getApplicationTracking(input.trackingCode, input.email)),
+    paymentPage: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24) })).query(({ input }) => getApplicationPaymentPage(input.trackingCode)),
+    uploadReceipt: publicProcedure.input(applicationReceiptUploadSchema).mutation(({ input }) => uploadApplicationPaymentReceipt(input)),
   }),
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),

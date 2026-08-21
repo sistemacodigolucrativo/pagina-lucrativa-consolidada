@@ -1,9 +1,11 @@
 import { and, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
   applications,
+  applicationAccessTokens,
+  applicationPaymentReceipts,
   campaignLinks,
   campaignClickEvents,
   campaignAttributions,
@@ -14,6 +16,8 @@ import {
   InsertUser,
   managedContent,
   memberAccountDetails,
+  memberNotifications,
+  memberPaymentLinks,
   memberProfiles,
   receivingPreferences,
   specialAccessPages,
@@ -28,7 +32,7 @@ import {
   transactions,
   users,
 } from "../drizzle/schema";
-import type { ApplicationInput } from "@shared/applications";
+import { OFFER_AMOUNT_CENTS, type ApplicationInput, type ApplicationPersonalizationInput, type ApplicationReceiptUpload, type MemberPaymentLinkInput } from "@shared/applications";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
 import { hashPassword } from "./credentialHash";
@@ -92,6 +96,24 @@ export async function getUserByOpenId(openId: string) {
   if (!db) return undefined;
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return result[0];
+}
+
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const normalized = email.trim().toLowerCase();
+  const result = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
+  return result[0];
+}
+
+export async function authenticateLocalUser(identifier: string, password: string) {
+  const user = await getUserByEmail(identifier);
+  if (!user?.passwordHash) return null;
+  const candidateHash = hashPassword(password);
+  const stored = Buffer.from(user.passwordHash, "hex");
+  const candidate = Buffer.from(candidateHash, "hex");
+  if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) return null;
+  return user;
 }
 
 export async function getMemberOverview(userId: number) {
@@ -796,6 +818,28 @@ export async function updateMemberReceivingPreference(userId: number, input: Mem
   return getMemberReceivingPreference(userId);
 }
 
+export async function getMemberPaymentLinks(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(memberPaymentLinks).where(eq(memberPaymentLinks.userId, userId)).orderBy(memberPaymentLinks.sortOrder, memberPaymentLinks.id);
+}
+
+export async function updateMemberPaymentLinks(userId: number, input: { links: MemberPaymentLinkInput[] }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.delete(memberPaymentLinks).where(eq(memberPaymentLinks.userId, userId));
+  if (input.links.length) {
+    await db.insert(memberPaymentLinks).values(input.links.map((link, index) => ({
+      userId,
+      label: link.label.trim(),
+      paymentUrl: link.paymentUrl.trim(),
+      isEnabled: link.isEnabled ? 1 : 0,
+      sortOrder: link.sortOrder ?? index,
+    })));
+  }
+  return getMemberPaymentLinks(userId);
+}
+
 export async function getPublicAffiliateProfile(slug: string) {
   const db = await getDb();
   if (!db) return null;
@@ -951,6 +995,9 @@ export async function createApplication(input: ApplicationInput, request?: Campa
     trackingCode,
     affiliateSlug: owner[0] ? affiliateSlug : null,
     ownerUserId: owner[0]?.userId ?? null,
+    paymentStatus: "awaiting_payment",
+    activationStatus: "not_started",
+    offerAmountCents: OFFER_AMOUNT_CENTS,
   });
   const id = Number(result[0].insertId);
   const visitorId = readCampaignCookie(request, "pl_visitor");
@@ -976,13 +1023,137 @@ export async function createApplication(input: ApplicationInput, request?: Campa
 export async function getMemberAffiliateApplications(userId: number) {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(applications).where(eq(applications.ownerUserId, userId)).orderBy(desc(applications.createdAt));
+  const rows = await db.select().from(applications).where(eq(applications.ownerUserId, userId)).orderBy(desc(applications.createdAt));
+  const receipts = await db.select().from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.ownerUserId, userId));
+  const tokens = await db.select().from(applicationAccessTokens).where(eq(applicationAccessTokens.ownerUserId, userId));
+  return rows.map(application => ({
+    ...application,
+    receiptCount: receipts.filter(receipt => receipt.applicationId === application.id).length,
+    latestReceiptStatus: receipts.filter(receipt => receipt.applicationId === application.id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]?.status ?? null,
+    accessStatus: tokens.filter(token => token.applicationId === application.id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]?.status ?? null,
+  }));
 }
+
+export async function getMemberAffiliateApplication(userId: number, applicationId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(applications).where(and(eq(applications.id, applicationId), eq(applications.ownerUserId, userId))).limit(1);
+  const application = rows[0];
+  if (!application) return null;
+  const [receipts, tokens] = await Promise.all([
+    db.select().from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.applicationId, application.id), eq(applicationPaymentReceipts.ownerUserId, userId))).orderBy(desc(applicationPaymentReceipts.createdAt)),
+    db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.applicationId, application.id), eq(applicationAccessTokens.ownerUserId, userId))).orderBy(desc(applicationAccessTokens.createdAt)),
+  ]);
+  return { application, receipts, activeAccess: tokens.find(token => token.status === "active") ?? null, accessHistory: tokens };
+}
+
 export async function getApplicationTracking(trackingCode: string, email: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select({ id: applications.id, status: applications.status, adminNote: applications.adminNote, createdAt: applications.createdAt, updatedAt: applications.updatedAt }).from(applications).where(and(eq(applications.trackingCode, trackingCode), eq(applications.email, email))).limit(1);
+  const rows = await db.select({ id: applications.id, status: applications.status, paymentStatus: applications.paymentStatus, activationStatus: applications.activationStatus, adminNote: applications.adminNote, createdAt: applications.createdAt, updatedAt: applications.updatedAt }).from(applications).where(and(eq(applications.trackingCode, trackingCode), eq(applications.email, email))).limit(1);
   return rows[0] ?? null;
+}
+
+export async function getApplicationPaymentPage(trackingCode: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const rows = await db.select().from(applications).where(eq(applications.trackingCode, trackingCode.trim().toUpperCase())).limit(1);
+  const application = rows[0];
+  if (!application) return null;
+  const ownerId = application.ownerUserId;
+  const [sponsorRows, profileRows, receivingRows, checkoutLinks, receiptRows] = ownerId ? await Promise.all([
+    db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, ownerId)).limit(1),
+    db.select().from(memberProfiles).where(eq(memberProfiles.userId, ownerId)).limit(1),
+    db.select().from(receivingPreferences).where(eq(receivingPreferences.userId, ownerId)).limit(1),
+    db.select().from(memberPaymentLinks).where(and(eq(memberPaymentLinks.userId, ownerId), eq(memberPaymentLinks.isEnabled, 1))).orderBy(memberPaymentLinks.sortOrder, memberPaymentLinks.id),
+    db.select().from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.applicationId, application.id)).orderBy(desc(applicationPaymentReceipts.createdAt)),
+  ]) : [[], [], [], [], []];
+  return {
+    application,
+    sponsor: sponsorRows[0] ? { ...sponsorRows[0], profile: profileRows[0] ?? null } : null,
+    receiving: receivingRows[0] ?? null,
+    paymentLinks: checkoutLinks,
+    receipts: receiptRows,
+  };
+}
+
+function parseReceiptDataUrl(input: ApplicationReceiptUpload) {
+  const escaped = input.contentType.replace("/", "\\/");
+  const match = input.dataUrl.match(new RegExp(`^data:${escaped};base64,([A-Za-z0-9+/=\\s]+)$`));
+  if (!match) throw new Error("Arquivo inválido.");
+  const buffer = Buffer.from(match[1].replace(/\s/g, ""), "base64");
+  if (!buffer.length || buffer.length > 5 * 1024 * 1024) throw new Error("O comprovante deve ter no máximo 5 MB.");
+  return buffer;
+}
+
+function receiptExtension(contentType: ApplicationReceiptUpload["contentType"]) {
+  if (contentType === "image/jpeg") return "jpg";
+  if (contentType === "image/png") return "png";
+  if (contentType === "image/webp") return "webp";
+  return "pdf";
+}
+
+function sanitizeOriginalName(name: string | null | undefined) {
+  return name?.replace(/[^A-Za-z0-9_. -]/g, "").replace(/\s+/g, " ").trim().slice(0, 255) || null;
+}
+
+export async function uploadApplicationPaymentReceipt(input: ApplicationReceiptUpload) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const rows = await db.select().from(applications).where(eq(applications.trackingCode, input.trackingCode.trim().toUpperCase())).limit(1);
+  const application = rows[0];
+  if (!application?.ownerUserId) throw new Error("Pedido não encontrado ou sem responsável definido.");
+  const buffer = parseReceiptDataUrl(input);
+  const extension = receiptExtension(input.contentType);
+  const stored = await storagePut(`payment-receipts/${application.ownerUserId}/${application.id}/${randomUUID()}.${extension}`, buffer, input.contentType);
+  const receiptResult = await db.insert(applicationPaymentReceipts).values({
+    applicationId: application.id,
+    ownerUserId: application.ownerUserId,
+    storageKey: stored.key,
+    fileUrl: stored.url,
+    contentType: input.contentType,
+    originalName: sanitizeOriginalName(input.originalName),
+    fileSize: buffer.length,
+    status: "pending",
+  });
+  await db.update(applications).set({ paymentStatus: "receipt_received", selectedPaymentMethod: "PIX" }).where(eq(applications.id, application.id));
+  await db.insert(memberNotifications).values({
+    userId: application.ownerUserId,
+    type: "payment_receipt_received",
+    title: "Novo comprovante recebido",
+    message: `Nome: ${application.fullName}\nE-mail: ${application.email}\nWhatsApp: ${application.whatsapp}`,
+    entityType: "application",
+    entityId: application.id,
+  });
+  return { id: Number(receiptResult[0].insertId), status: "pending" as const };
+}
+
+export async function getMemberNotifications(userId: number) {
+  const db = await getDb();
+  if (!db) return { unreadCount: 0, items: [] };
+  const items = await db.select().from(memberNotifications).where(eq(memberNotifications.userId, userId)).orderBy(desc(memberNotifications.createdAt)).limit(20);
+  return { unreadCount: items.filter(item => !item.readAt).length, items };
+}
+
+export async function markMemberNotificationRead(userId: number, notificationId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const rows = await db.select().from(memberNotifications).where(and(eq(memberNotifications.id, notificationId), eq(memberNotifications.userId, userId))).limit(1);
+  if (!rows[0]) throw new Error("Notificação não encontrada.");
+  await db.update(memberNotifications).set({ readAt: new Date() }).where(eq(memberNotifications.id, notificationId));
+  return rows[0];
+}
+
+export async function reviewPaymentReceipt(userId: number, input: { applicationId: number; receiptId: number; status: "approved" | "rejected" }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const rows = await db.select().from(applications).where(and(eq(applications.id, input.applicationId), eq(applications.ownerUserId, userId))).limit(1);
+  if (!rows[0]) throw new Error("Pedido não encontrado.");
+  const receiptRows = await db.select().from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.id, input.receiptId), eq(applicationPaymentReceipts.applicationId, input.applicationId), eq(applicationPaymentReceipts.ownerUserId, userId))).limit(1);
+  if (!receiptRows[0]) throw new Error("Comprovante não encontrado.");
+  await db.update(applicationPaymentReceipts).set({ status: input.status, reviewedAt: new Date(), reviewedBy: userId }).where(eq(applicationPaymentReceipts.id, input.receiptId));
+  await db.update(applications).set({ paymentStatus: input.status === "approved" ? "confirmed" : "rejected", status: input.status === "approved" ? "approved" : "contacted" }).where(eq(applications.id, input.applicationId));
+  return { success: true } as const;
 }
 export async function updateAdminApplication(applicationId: number, input: { status: "pending" | "contacted" | "approved" | "archived"; adminNote?: string | null }) {
   const db = await getDb();
