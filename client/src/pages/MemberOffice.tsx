@@ -1,12 +1,25 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { formatCurrency } from "@shared/dashboard";
 import { ChevronRight, Copy } from "lucide-react";
 import { memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
 const menuItems: DashboardMenuItem[] = memberDashboardMenuItems;
+const overviewOnboardingStorageBase = "pagina-lucrativa.member-office-onboarding.dismissed";
+const overviewOnboardingSteps = [
+  "01 — Complete seu perfil e seus dados de conta.",
+  "02 — Configure suas preferências de recebimento.",
+  "03 — Personalize sua página e sua apresentação.",
+  "04 — Entenda a oferta e como os pedidos são atribuídos.",
+  "05 — Aprenda a divulgar na Academia e na biblioteca.",
+  "06 — Crie seu primeiro link ou campanha.",
+  "07 — Comece a divulgar para o público adequado.",
+  "08 — Acompanhe visitas, contatos e pedidos registrados.",
+];
 
 const moduleDetails: Record<string, { eyebrow: string; title: string; detail: string; notes: string[] }> = {
   "/membros/mensagem-especial": { eyebrow: "Acesso e personalização", title: "Mensagem e senha especial", detail: "Organize a mensagem que acompanha o acesso de personalização da sua página.", notes: ["A senha de personalização é enviada após a confirmação do pedido.", "Mantenha instruções claras e não compartilhe credenciais em áreas públicas."] },
@@ -47,11 +60,67 @@ function ModulePanel({ detail }: { detail: { eyebrow: string; title: string; det
   return <><SectionIntro eyebrow={detail.eyebrow} title={detail.title} detail={detail.detail} /><section className="office-guidance"><span className="office-guidance-mark">PL</span><div><span className="office-eyebrow">Orientação operacional</span><h2>Conteúdo preparado para a sua operação.</h2><p>O módulo reproduz a navegação e a finalidade observadas na referência, mas não replica dados privados nem conteúdo atribuído a terceiros.</p><ul>{detail.notes.map(note => <li key={note}>{note}</li>)}</ul></div></section></>;
 }
 
+function OverviewOnboardingModal({ open, onDismiss }: { open: boolean; onDismiss: () => void }) {
+  if (!open) return null;
+
+  return <div className="office-onboarding-backdrop" role="presentation">
+    <section className="office-onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="office-onboarding-title">
+      <div className="office-onboarding-content">
+        <div className="office-onboarding-intro">
+          <span className="office-eyebrow">Sua estrutura digital</span>
+          <h2 id="office-onboarding-title">Organize sua operação em um só lugar.</h2>
+          <p>O Escritório Virtual reúne os caminhos disponíveis para você personalizar, aprender, divulgar e acompanhar sua estrutura.</p>
+        </div>
+        <section className="office-onboarding-guidance">
+          <span className="office-guidance-mark">PL</span>
+          <div>
+            <span className="office-eyebrow">Jornada de primeiros passos</span>
+            <h3>Ative a estrutura por etapas.</h3>
+            <p>Você não precisa abrir todos os módulos de uma vez. Siga uma sequência simples e avance conforme sua operação estiver pronta.</p>
+            <ul>
+              {overviewOnboardingSteps.map(step => <li key={step}>{step}</li>)}
+            </ul>
+          </div>
+        </section>
+      </div>
+      <div className="office-onboarding-actions">
+        <a className="office-action" href={withAppBase("/membros/como-divulgar")}>Comece por aqui<ChevronRight size={16} /></a>
+        <button type="button" className="office-onboarding-dismiss" onClick={onDismiss}>Dispensar</button>
+      </div>
+    </section>
+  </div>;
+}
+
 export default function MemberOffice() {
   const [location] = useLocation();
+  const auth = useAuth();
   const overview = trpc.member.overview.useQuery();
   const campaigns = trpc.member.campaigns.useQuery();
   const academy = trpc.member.academy.useQuery();
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const onboardingStorageKey = useMemo(() => auth.user?.id ? `${overviewOnboardingStorageBase}.${auth.user.id}` : overviewOnboardingStorageBase, [auth.user?.id]);
+
+  useEffect(() => {
+    if (location !== "/membros" || !auth.user) {
+      setOnboardingOpen(false);
+      return;
+    }
+    setOnboardingOpen(localStorage.getItem(onboardingStorageKey) !== "1");
+  }, [auth.user, location, onboardingStorageKey]);
+
+  useEffect(() => {
+    if (!onboardingOpen) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = originalOverflow;
+    };
+  }, [onboardingOpen]);
+
+  const dismissOnboarding = () => {
+    localStorage.setItem(onboardingStorageKey, "1");
+    setOnboardingOpen(false);
+  };
 
   const renderBody = () => {
     if (overview.isLoading) return <LoadingPanel />;
@@ -74,8 +143,8 @@ export default function MemberOffice() {
       return <ModulePanel detail={{ eyebrow: active?.group ?? "Escritório virtual", title: active?.label ?? "Módulo do escritório", detail: "A estrutura deste módulo foi preparada para receber dados e conteúdos próprios da sua operação.", notes: ["Nenhum dado da conta de referência foi copiado para esta área.", "O conteúdo será alimentado por materiais e registros autorizados."] }} />;
     }
 
-    return <><SectionIntro eyebrow="Sua estrutura digital" title="Organize sua operação em um só lugar." detail="O Escritório Virtual reúne os caminhos disponíveis para você personalizar, aprender, divulgar e acompanhar sua estrutura." action="Comece por aqui" actionHref="/membros/como-divulgar" /><section className="office-guidance"><span className="office-guidance-mark">PL</span><div><span className="office-eyebrow">Jornada de primeiros passos</span><h2>Ative a estrutura por etapas.</h2><p>Você não precisa abrir todos os módulos de uma vez. Siga uma sequência simples e avance conforme sua operação estiver pronta.</p><ul><li>01 — Complete seu perfil e seus dados de conta.</li><li>02 — Configure suas preferências de recebimento.</li><li>03 — Personalize sua página e sua apresentação.</li><li>04 — Entenda a oferta e como os pedidos são atribuídos.</li><li>05 — Aprenda a divulgar na Academia e na biblioteca.</li><li>06 — Crie seu primeiro link ou campanha.</li><li>07 — Comece a divulgar para o público adequado.</li><li>08 — Acompanhe visitas, contatos e pedidos registrados.</li></ul></div></section><section className="office-stat-grid"><article><span>Movimentações registradas</span><strong>{formatCurrency(data?.balanceCents ?? 0)}</strong><small>Consulte o extrato e os status</small></article><article><span>Links & campanhas</span><strong>{data?.campaignCount ?? 0}</strong><small>{data?.campaignClicks ?? 0} cliques registrados</small></article><article><span>Suporte aberto</span><strong>{data?.openTicketCount ?? 0}</strong><small>Solicitações em acompanhamento</small></article></section><section className="office-workspace"><article><span className="office-eyebrow">Divulgação</span><h2>Organize seus links.</h2><p>Crie uma campanha para cada canal e acompanhe a movimentação registrada sem perder a origem da divulgação.</p><a href={withAppBase("/membros/campanhas")}>Abrir links & campanhas <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Minha operação</span><h2>Acompanhe seus registros.</h2><p>Consulte pedidos, contatos, resultados e preferências de recebimento conforme os dados da sua conta.</p><a href={withAppBase("/membros/ganhos")}>Ver meus resultados <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Academia</span><h2>Aprenda e aplique.</h2><p>Encontre cursos e materiais publicados para apoiar a execução diária da sua operação digital.</p><a href={withAppBase("/membros/academia")}>Abrir Academia <ChevronRight size={15} /></a></article></section></>;
+    return <><section className="office-stat-grid"><article><span>Movimentações registradas</span><strong>{formatCurrency(data?.balanceCents ?? 0)}</strong><small>Consulte o extrato e os status</small></article><article><span>Links & campanhas</span><strong>{data?.campaignCount ?? 0}</strong><small>{data?.campaignClicks ?? 0} cliques registrados</small></article><article><span>Suporte aberto</span><strong>{data?.openTicketCount ?? 0}</strong><small>Solicitações em acompanhamento</small></article></section><section className="office-workspace"><article><span className="office-eyebrow">Divulgação</span><h2>Organize seus links.</h2><p>Crie uma campanha para cada canal e acompanhe a movimentação registrada sem perder a origem da divulgação.</p><a href={withAppBase("/membros/campanhas")}>Abrir links & campanhas <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Minha operação</span><h2>Acompanhe seus registros.</h2><p>Consulte pedidos, contatos, resultados e preferências de recebimento conforme os dados da sua conta.</p><a href={withAppBase("/membros/ganhos")}>Ver meus resultados <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Academia</span><h2>Aprenda e aplique.</h2><p>Encontre cursos e materiais publicados para apoiar a execução diária da sua operação digital.</p><a href={withAppBase("/membros/academia")}>Abrir Academia <ChevronRight size={15} /></a></article></section></>;
   };
 
-  return <DashboardLayout menuItems={menuItems} title="Página Lucrativa"><div className="office-page">{renderBody()}</div></DashboardLayout>;
+  return <DashboardLayout menuItems={menuItems} title="Página Lucrativa"><div className="office-page">{renderBody()}</div><OverviewOnboardingModal open={onboardingOpen} onDismiss={dismissOnboarding} /></DashboardLayout>;
 }
