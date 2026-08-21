@@ -1625,6 +1625,50 @@ export async function unlockPublicSpecialAccess(publicCode: string, password: st
   return { destinationUrl: page.destinationUrl };
 }
 
+export async function completeApplicationPersonalization(input: ApplicationPersonalizationInput) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const tokenRows = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.publicCode, input.publicCode), eq(applicationAccessTokens.status, "active"))).limit(1);
+  const token = tokenRows[0];
+  if (!token || !verifySpecialAccessPassword(input.accessToken, token.tokenHash)) throw new Error("Acesso inválido ou expirado.");
+  const applicationRows = await db.select().from(applications).where(and(eq(applications.id, token.applicationId), eq(applications.paymentStatus, "confirmed"))).limit(1);
+  const application = applicationRows[0];
+  if (!application?.ownerUserId) throw new Error("Pedido não encontrado ou ainda não aprovado.");
+  const normalizedEmail = input.email.trim().toLowerCase();
+  const openId = `application:${token.publicCode}`;
+  const existingUsers = await db.select({ id: users.id, openId: users.openId, email: users.email }).from(users).where(eq(users.email, normalizedEmail)).limit(1);
+  const existingUser = existingUsers[0] ?? null;
+  if (existingUser && existingUser.openId !== openId) throw new Error("Já existe uma conta com este e-mail. Use outro e-mail ou solicite suporte.");
+  let userId = existingUser?.id ?? 0;
+  if (userId) {
+    await db.update(users).set({ name: input.name.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password" }).where(eq(users.id, userId));
+  } else {
+    const result = await db.insert(users).values({ openId, name: input.name.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
+    userId = Number(result[0].insertId);
+  }
+  const normalizedSlug = input.slug.trim().toLowerCase();
+  const existingSlugRows = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.slug, normalizedSlug)).limit(1);
+  if (existingSlugRows[0] && existingSlugRows[0].userId !== userId) throw new Error("Este identificador de página já está em uso. Escolha outro identificador.");
+  await db.insert(memberProfiles).values({
+    userId,
+    slug: normalizedSlug,
+    bio: input.bio?.trim() || null,
+    whatsapp: input.whatsapp,
+  }).onDuplicateKeyUpdate({ set: { slug: normalizedSlug, bio: input.bio?.trim() || null, whatsapp: input.whatsapp } });
+  await db.insert(receivingPreferences).values({
+    userId,
+    holderName: input.name.trim(),
+    method: "pix",
+    receivingKey: input.pixKey?.trim() || null,
+    pixType: input.pixType?.trim() || null,
+    pixKey: input.pixKey?.trim() || null,
+  }).onDuplicateKeyUpdate({ set: { holderName: input.name.trim(), method: "pix", receivingKey: input.pixKey?.trim() || null, pixType: input.pixType?.trim() || null, pixKey: input.pixKey?.trim() || null } });
+  await db.insert(referralLinks).values({ sponsorId: application.ownerUserId, referredUserId: userId, status: "active" }).onDuplicateKeyUpdate({ set: { sponsorId: application.ownerUserId, status: "active" } });
+  await db.update(applicationAccessTokens).set({ status: "used", usedAt: new Date() }).where(eq(applicationAccessTokens.id, token.id));
+  await db.update(applications).set({ activationStatus: "member_activated", status: "approved" }).where(eq(applications.id, application.id));
+  return { success: true, email: normalizedEmail } as const;
+}
+
 export async function getAdminSpecialAccessPages() {
   const db = await getDb();
   if (!db) return [];

@@ -1,4 +1,5 @@
 import { trpc } from "@/lib/trpc";
+import { withAppBase } from "@/lib/devPath";
 import { KeyRound, Loader2, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { useRoute } from "wouter";
@@ -9,7 +10,7 @@ export default function SpecialAccessPublic() {
   const code = params?.code ?? "";
   const page = trpc.public.specialAccess.useQuery({ code }, { enabled: Boolean(code) });
   const [password, setPassword] = useState("");
-  const unlock = trpc.public.unlockSpecialAccess.useMutation({ onSuccess: data => window.location.assign(data.destinationUrl), onError: error => toast.error(error.message) });
+  const unlock = trpc.public.unlockSpecialAccess.useMutation({ onSuccess: data => { sessionStorage.setItem(`pl-application-access-${code}`, password); window.location.assign(withAppBase(data.destinationUrl)); }, onError: error => toast.error(error.message) });
   const submit = (event: FormEvent) => { event.preventDefault(); if (!password) return toast.error("Informe a senha de acesso."); unlock.mutate({ code, password }); };
   if (page.isLoading) return <main className="grid min-h-screen place-items-center bg-[#050505] p-6 text-zinc-300"><Loader2 className="size-7 animate-spin text-emerald-300" /></main>;
   if (!page.data) return <main className="grid min-h-screen place-items-center bg-[#050505] p-6"><section className="max-w-md rounded-2xl border border-white/10 bg-zinc-950 p-7 text-center"><ShieldCheck className="mx-auto size-7 text-emerald-300" /><h1 className="mt-4 text-xl font-semibold text-white">Acesso indisponível</h1><p className="mt-2 text-sm leading-6 text-zinc-400">Este link não está publicado, foi pausado ou não existe mais.</p></section></main>;

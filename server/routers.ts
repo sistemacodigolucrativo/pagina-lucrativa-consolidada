@@ -1,7 +1,7 @@
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
-import { applicationInputSchema } from "@shared/applications";
+import { applicationInputSchema, applicationPersonalizationSchema } from "@shared/applications";
 import { normalizedEmailZodSchema, optionalPhoneZodSchema } from "@shared/contactValidation";
 import { httpUrlZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, positiveCentsZodSchema, signedPointsZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
 import {
@@ -72,6 +72,7 @@ import {
   uploadApplicationPaymentReceipt,
   markMemberNotificationRead,
   reviewPaymentReceipt,
+  completeApplicationPersonalization,
   updateMemberContact,
   setAdminReferralLink,
   getAdminReferralLinks,
@@ -296,6 +297,7 @@ export const appRouter = router({
     specialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getPublicSpecialAccess(input.code)),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
     unlockSpecialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48), password: z.string().min(1).max(128) })).mutation(({ input }) => unlockPublicSpecialAccess(input.code, input.password)),
+    completePersonalization: publicProcedure.input(applicationPersonalizationSchema).mutation(({ input }) => completeApplicationPersonalization(input)),
   }),
   admin: router({
     overview: adminProcedure.query(() => getAdminOverview()),

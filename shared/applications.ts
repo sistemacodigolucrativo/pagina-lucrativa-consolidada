@@ -63,7 +63,7 @@ export const applicationPersonalizationSchema = z.object({
   whatsapp: phoneZodSchema,
   slug: z.string().trim().toLowerCase().regex(/^(?=.*[a-z0-9])[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
   bio: z.string().trim().max(2000).optional().nullable(),
-  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres.").max(128),
+  password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres.").max(128).regex(/[A-Za-z]/, "A senha deve conter pelo menos uma letra.").regex(/\d/, "A senha deve conter pelo menos um número."),
   pixType: z.string().trim().max(64).optional().nullable(),
   pixKey: z.string().trim().max(255).optional().nullable(),
 });
