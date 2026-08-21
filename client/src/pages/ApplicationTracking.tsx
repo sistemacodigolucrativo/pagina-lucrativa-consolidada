@@ -13,7 +13,7 @@ function formatCurrency(cents: number) {
 
 export default function ApplicationTracking() {
   const [, setLocation] = useLocation();
-  const initialCode = new URLSearchParams(window.location.search).get("codigo") ?? "";
+  const initialCode = (typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo") ?? "").trim().toUpperCase();
   const [trackingCode, setTrackingCode] = useState(initialCode);
   const [email, setEmail] = useState("");
   const [query, setQuery] = useState<{ trackingCode: string; email: string } | null>(null);
@@ -47,6 +47,7 @@ export default function ApplicationTracking() {
     <span className="office-eyebrow">Acompanhamento do pedido</span>
     <h1>Acompanhe sua ativação.</h1>
     <p>Informe o código de acompanhamento e o mesmo e-mail utilizado no pedido. O código identifica o pedido; ele não é senha de personalização.</p>
+    {trackingCode ? <p className="tracking-code-warning">Copie este código e salve em um local seguro. Você precisará dele para acompanhar sua ativação.</p> : null}
 
     <form className="office-form-grid access-form" onSubmit={submit}>
       <label className="office-form-full"><span>Código do pedido</span><input value={trackingCode} onChange={event => setTrackingCode(event.target.value.toUpperCase())} required placeholder="PL-XXXXXXXXXXXX" /></label>
