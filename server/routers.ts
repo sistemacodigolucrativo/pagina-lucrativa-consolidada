@@ -20,6 +20,7 @@ import {
   getAdminEbook,
   getAdminEbooks,
   getAdminOverview,
+  getAdminPlatformSettings,
   getAdminTickets,
   getAdminContacts,
   getAdminActivities,
@@ -48,6 +49,7 @@ import {
   getPublicSalesSectionImages,
   getAdminPublicSalesSectionImages,
   getPublicAffiliateProfile,
+  getPublicPlatformSettings,
   getPublishedEbook,
   getPublishedEbooks,
   getPublishedCourses,
@@ -100,6 +102,7 @@ import {
   updateAdminSpecialAccessPage,
   removeAdminPublicSalesSectionImage,
   upsertAdminPublicSalesSectionImage,
+  updateAdminPlatformSettings,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema } from "@shared/applications";
@@ -310,12 +313,15 @@ export const appRouter = router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
     specialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getPublicSpecialAccess(input.code)),
     applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
+    platformSettings: publicProcedure.query(() => getPublicPlatformSettings()),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
     unlockSpecialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48), password: z.string().min(1).max(128) })).mutation(({ input }) => unlockPublicSpecialAccess(input.code, input.password)),
     completePersonalization: publicProcedure.input(applicationPersonalizationSchema).mutation(({ input }) => completeApplicationPersonalization(input)),
   }),
   admin: router({
     overview: adminProcedure.query(() => getAdminOverview()),
+    platformSettings: adminProcedure.query(() => getAdminPlatformSettings()),
+    updatePlatformSettings: adminProcedure.input(z.object({ hideExternalPreviewNotice: z.boolean() })).mutation(({ ctx, input }) => updateAdminPlatformSettings(ctx.user.id, input)),
     applications: adminProcedure.query(() => getRecentApplications(100)),
     updateApplication: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "contacted", "approved", "archived"]), adminNote: z.string().max(2000).optional() })).mutation(({ input }) => updateAdminApplication(input.id, input)),
     transactions: adminProcedure.query(() => getAdminTransactions()),

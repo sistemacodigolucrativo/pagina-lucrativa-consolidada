@@ -42,6 +42,14 @@ export const publicSalesSectionImages = mysqlTable("publicSalesSectionImages", {
   updatedIndex: index("public_sales_section_images_updated_idx").on(table.updatedAt),
 }));
 
+export const platformSettings = mysqlTable("platformSettings", {
+  key: varchar("key", { length: 96 }).primaryKey(),
+  value: text("value").notNull(),
+  updatedBy: int("updatedBy"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
 export const memberAccountDetails = mysqlTable("memberAccountDetails", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

@@ -1,5 +1,6 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { trpc } from "@/lib/trpc";
 import NotFound from "@/pages/NotFound";
 import { useEffect } from "react";
 import { Route, Router as WouterRouter, Switch } from "wouter";
@@ -156,41 +157,30 @@ function AppRoutes() {
 }
 function App() {
   const base = DEV_PREFIX;
+  const platformSettings = trpc.public.platformSettings.useQuery(undefined, { staleTime: 30_000 });
   useEffect(() => {
-    const storageKey = "pl-preview-notice-dismissed";
+    if (!platformSettings.data?.hideExternalPreviewNotice) return;
     const message = "This page is not live and cannot be shared directly. Please publish to get a public link.";
-    const getNoticeElement = (target: EventTarget | null) => {
-      let element = target instanceof HTMLElement ? target : null;
-      while (element && element !== document.body) {
-        const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
-        if (text.includes(message)) return element;
-        element = element.parentElement;
-      }
-      return null;
+    const canHideElement = (element: HTMLElement) => {
+      if (element === document.body || element === document.documentElement || element.id === "root") return false;
+      if (element.querySelector("#root, main, [role='main'], .office-page, .access-page, .sales-page")) return false;
+      const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
+      if (!text.includes(message) || text.length > message.length + 80) return false;
+      const style = window.getComputedStyle(element);
+      const rect = element.getBoundingClientRect();
+      return (style.position === "fixed" || style.position === "sticky" || rect.height <= 140) && rect.width > 120 && rect.height > 0;
     };
-    const hideDismissedNotice = () => {
-      if (window.localStorage.getItem(storageKey) !== "1") return;
+    const hidePreviewNotice = () => {
       for (const element of Array.from(document.body.querySelectorAll<HTMLElement>("body *"))) {
-        const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
-        if (!text.includes(message)) continue;
-        element.style.setProperty("display", "none", "important");
+        if (canHideElement(element)) element.style.setProperty("display", "none", "important");
       }
     };
-    const dismissOnClick = (event: MouseEvent) => {
-      const notice = getNoticeElement(event.target);
-      if (!notice) return;
-      window.localStorage.setItem(storageKey, "1");
-      notice.style.setProperty("display", "none", "important");
-    };
-    hideDismissedNotice();
-    const observer = new MutationObserver(hideDismissedNotice);
+    hidePreviewNotice();
+    const observer = new MutationObserver(hidePreviewNotice);
     observer.observe(document.body, { childList: true, subtree: true });
-    document.addEventListener("click", dismissOnClick, true);
-    return () => {
-      observer.disconnect();
-      document.removeEventListener("click", dismissOnClick, true);
-    };
-  }, []);
+    const interval = window.setInterval(hidePreviewNotice, 1000);
+    return () => { observer.disconnect(); window.clearInterval(interval); };
+  }, [platformSettings.data?.hideExternalPreviewNotice]);
   return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;

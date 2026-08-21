@@ -1,0 +1,11 @@
+CREATE TABLE IF NOT EXISTS platformSettings (
+  `key` VARCHAR(96) NOT NULL PRIMARY KEY,
+  `value` TEXT NOT NULL,
+  updatedBy INT NULL,
+  createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT INTO platformSettings (`key`, `value`)
+VALUES ('hideExternalPreviewNotice', 'false')
+ON DUPLICATE KEY UPDATE `key` = VALUES(`key`);

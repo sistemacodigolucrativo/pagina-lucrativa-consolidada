@@ -27,6 +27,7 @@ import {
   memberActivities,
   memberTestimonials,
   pointEntries,
+  platformSettings,
   publicSalesSectionImages,
   supportTickets,
   transactions,
@@ -39,6 +40,7 @@ import { hashPassword } from "./credentialHash";
 import { getPublicSalesSection } from "../shared/publicSalesSections";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
+const HIDE_EXTERNAL_PREVIEW_NOTICE_KEY = "hideExternalPreviewNotice";
 let _db: ReturnType<typeof drizzle> | null = null;
 
 export async function getDb() {
@@ -1268,6 +1270,34 @@ export async function getAdminOverview() {
     grossVolumeCents: transactionRows.reduce((total, transaction) => total + transaction.amountCents, 0),
     pendingApplicationCount: applicationRows.filter(application => application.status === "pending").length,
   };
+}
+
+function parseBooleanSetting(value: string | null | undefined, fallback = false) {
+  if (value === "true") return true;
+  if (value === "false") return false;
+  return fallback;
+}
+
+export async function getPublicPlatformSettings() {
+  const db = await getDb();
+  if (!db) return { hideExternalPreviewNotice: false };
+  const rows = await db.select().from(platformSettings).where(eq(platformSettings.key, HIDE_EXTERNAL_PREVIEW_NOTICE_KEY)).limit(1);
+  return { hideExternalPreviewNotice: parseBooleanSetting(rows[0]?.value, false) };
+}
+
+export async function getAdminPlatformSettings() {
+  return getPublicPlatformSettings();
+}
+
+export async function updateAdminPlatformSettings(adminId: number, input: { hideExternalPreviewNotice: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  await db.insert(platformSettings).values({
+    key: HIDE_EXTERNAL_PREVIEW_NOTICE_KEY,
+    value: String(input.hideExternalPreviewNotice),
+    updatedBy: adminId,
+  }).onDuplicateKeyUpdate({ set: { value: String(input.hideExternalPreviewNotice), updatedBy: adminId } });
+  return getAdminPlatformSettings();
 }
 
 export async function getAdminContent() {
