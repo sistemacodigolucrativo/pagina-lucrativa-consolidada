@@ -66,16 +66,11 @@ function OverviewOnboardingModal({ open, onDismiss }: { open: boolean; onDismiss
   return <div className="office-onboarding-backdrop" role="presentation">
     <section className="office-onboarding-modal" role="dialog" aria-modal="true" aria-labelledby="office-onboarding-title">
       <div className="office-onboarding-content">
-        <div className="office-onboarding-intro">
-          <span className="office-eyebrow">Sua estrutura digital</span>
-          <h2 id="office-onboarding-title">Organize sua operação em um só lugar.</h2>
-          <p>O Escritório Virtual reúne os caminhos disponíveis para você personalizar, aprender, divulgar e acompanhar sua estrutura.</p>
-        </div>
         <section className="office-onboarding-guidance">
           <span className="office-guidance-mark">PL</span>
           <div>
             <span className="office-eyebrow">Jornada de primeiros passos</span>
-            <h3>Ative a estrutura por etapas.</h3>
+            <h3 id="office-onboarding-title">Ative a estrutura por etapas.</h3>
             <p>Você não precisa abrir todos os módulos de uma vez. Siga uma sequência simples e avance conforme sua operação estiver pronta.</p>
             <ul>
               {overviewOnboardingSteps.map(step => <li key={step}>{step}</li>)}
@@ -145,7 +140,7 @@ export default function MemberOffice() {
       return <ModulePanel detail={{ eyebrow: active?.group ?? "Escritório virtual", title: active?.label ?? "Módulo do escritório", detail: "A estrutura deste módulo foi preparada para receber dados e conteúdos próprios da sua operação.", notes: ["Nenhum dado da conta de referência foi copiado para esta área.", "O conteúdo será alimentado por materiais e registros autorizados."] }} />;
     }
 
-    return <><section className="office-stat-grid"><article><span>Movimentações registradas</span><strong>{formatCurrency(data?.balanceCents ?? 0)}</strong><small>Consulte o extrato e os status</small></article><article><span>Links & campanhas</span><strong>{data?.campaignCount ?? 0}</strong><small>{data?.campaignClicks ?? 0} cliques registrados</small></article><article><span>Suporte aberto</span><strong>{data?.openTicketCount ?? 0}</strong><small>Solicitações em acompanhamento</small></article></section><section className="office-workspace"><article><span className="office-eyebrow">Divulgação</span><h2>Organize seus links.</h2><p>Crie uma campanha para cada canal e acompanhe a movimentação registrada sem perder a origem da divulgação.</p><a href={withAppBase("/membros/campanhas")}>Abrir links & campanhas <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Minha operação</span><h2>Acompanhe seus registros.</h2><p>Consulte pedidos, contatos, resultados e preferências de recebimento conforme os dados da sua conta.</p><a href={withAppBase("/membros/ganhos")}>Ver meus resultados <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Academia</span><h2>Aprenda e aplique.</h2><p>Encontre cursos e materiais publicados para apoiar a execução diária da sua operação digital.</p><a href={withAppBase("/membros/academia")}>Abrir Academia <ChevronRight size={15} /></a></article></section></>;
+    return <><SectionIntro eyebrow="Sua estrutura digital" title="Organize sua operação em um só lugar." detail="O Escritório Virtual reúne os caminhos disponíveis para você personalizar, aprender, divulgar e acompanhar sua estrutura." /><section className="office-stat-grid"><article><span>Movimentações registradas</span><strong>{formatCurrency(data?.balanceCents ?? 0)}</strong><small>Consulte o extrato e os status</small></article><article><span>Links & campanhas</span><strong>{data?.campaignCount ?? 0}</strong><small>{data?.campaignClicks ?? 0} cliques registrados</small></article><article><span>Suporte aberto</span><strong>{data?.openTicketCount ?? 0}</strong><small>Solicitações em acompanhamento</small></article></section><section className="office-workspace"><article><span className="office-eyebrow">Divulgação</span><h2>Organize seus links.</h2><p>Crie uma campanha para cada canal e acompanhe a movimentação registrada sem perder a origem da divulgação.</p><a href={withAppBase("/membros/campanhas")}>Abrir links & campanhas <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Minha operação</span><h2>Acompanhe seus registros.</h2><p>Consulte pedidos, contatos, resultados e preferências de recebimento conforme os dados da sua conta.</p><a href={withAppBase("/membros/ganhos")}>Ver meus resultados <ChevronRight size={15} /></a></article><article><span className="office-eyebrow">Academia</span><h2>Aprenda e aplique.</h2><p>Encontre cursos e materiais publicados para apoiar a execução diária da sua operação digital.</p><a href={withAppBase("/membros/academia")}>Abrir Academia <ChevronRight size={15} /></a></article></section></>;
   };
 
   return <DashboardLayout menuItems={menuItems} title="Página Lucrativa"><div className="office-page">{renderBody()}</div><OverviewOnboardingModal open={onboardingOpen} onDismiss={dismissOnboarding} /></DashboardLayout>;
