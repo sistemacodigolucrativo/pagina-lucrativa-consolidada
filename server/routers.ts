@@ -176,14 +176,14 @@ export const receivingPreferenceInput = z.object({
   pixKey: z.string().trim().max(255).optional().nullable(),
 }).superRefine((value, context) => {
   if (value.method === "pix" && !value.receivingKey && !value.pixKey) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixKey"], message: "Informe a chave PIX." });
-  if (value.method === "pix" && value.receivingKey && !pixKeyZodSchema.safeParse(value.receivingKey).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe uma chave PIX válida." });
+  if (value.method === "pix" && value.receivingKey && !value.pixKey && !pixKeyZodSchema.safeParse(value.receivingKey).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe uma chave PIX válida." });
   if (value.pixKey && !value.pixType) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixType"], message: "Selecione o tipo da chave PIX." });
   if (value.pixKey && value.pixType && !validatePixKeyByType(value.pixKey, value.pixType)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixKey"], message: "A chave PIX não corresponde ao tipo selecionado." });
 }).transform(value => {
   const normalizedTypedPixKey = value.pixKey && value.pixType ? normalizePixKeyByType(value.pixKey, value.pixType) : value.pixKey?.trim() || null;
   return {
     ...value,
-    receivingKey: value.method === "pix" ? (value.receivingKey ? normalizePixKey(value.receivingKey) : normalizedTypedPixKey) : value.receivingKey?.trim() || null,
+    receivingKey: value.method === "pix" ? (normalizedTypedPixKey || (value.receivingKey ? normalizePixKey(value.receivingKey) : null)) : value.receivingKey?.trim() || null,
     pixKey: normalizedTypedPixKey,
   };
 });

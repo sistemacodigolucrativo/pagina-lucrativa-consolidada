@@ -14,6 +14,15 @@ describe("contrato tRPC de Tipo da chave PIX", () => {
     expect(result.success).toBe(true);
   });
 
+  it("aceita celular com DDD 99 no formato informado pelo usuário", () => {
+    const result = receivingPreferenceInput.safeParse({ ...base, receivingKey: "(99) 9 9999-9999", pixType: "celular", pixKey: "(99) 9 9999-9999" });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data.receivingKey).toBe("(99) 9 9999-9999");
+      expect(result.data.pixKey).toBe("(99) 9 9999-9999");
+    }
+  });
+
   it("aceita CPF com máscara no formato solicitado", () => {
     const result = receivingPreferenceInput.safeParse({ ...base, pixType: "cpf", pixKey: "111.111.111-11" });
     expect(result.success).toBe(true);
