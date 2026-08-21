@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import { useEffect } from "react";
 import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -155,6 +156,41 @@ function AppRoutes() {
 }
 function App() {
   const base = DEV_PREFIX;
+  useEffect(() => {
+    const storageKey = "pl-preview-notice-dismissed";
+    const message = "This page is not live and cannot be shared directly. Please publish to get a public link.";
+    const getNoticeElement = (target: EventTarget | null) => {
+      let element = target instanceof HTMLElement ? target : null;
+      while (element && element !== document.body) {
+        const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
+        if (text.includes(message)) return element;
+        element = element.parentElement;
+      }
+      return null;
+    };
+    const hideDismissedNotice = () => {
+      if (window.localStorage.getItem(storageKey) !== "1") return;
+      for (const element of Array.from(document.body.querySelectorAll<HTMLElement>("body *"))) {
+        const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
+        if (!text.includes(message)) continue;
+        element.style.setProperty("display", "none", "important");
+      }
+    };
+    const dismissOnClick = (event: MouseEvent) => {
+      const notice = getNoticeElement(event.target);
+      if (!notice) return;
+      window.localStorage.setItem(storageKey, "1");
+      notice.style.setProperty("display", "none", "important");
+    };
+    hideDismissedNotice();
+    const observer = new MutationObserver(hideDismissedNotice);
+    observer.observe(document.body, { childList: true, subtree: true });
+    document.addEventListener("click", dismissOnClick, true);
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("click", dismissOnClick, true);
+    };
+  }, []);
   return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;
