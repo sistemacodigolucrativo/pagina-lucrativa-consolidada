@@ -793,6 +793,16 @@ export type MemberReceivingUpdateInput = {
   bank2Account?: string | null;
   bank2Type?: "checking" | "savings" | null;
   bank2Holder?: string | null;
+  bank3Name?: string | null;
+  bank3Agency?: string | null;
+  bank3Account?: string | null;
+  bank3Type?: "checking" | "savings" | null;
+  bank3Holder?: string | null;
+  bank4Name?: string | null;
+  bank4Agency?: string | null;
+  bank4Account?: string | null;
+  bank4Type?: "checking" | "savings" | null;
+  bank4Holder?: string | null;
   pixType?: string | null;
   pixKey?: string | null;
 };
@@ -827,8 +837,29 @@ export async function updateMemberReceivingPreference(userId: number, input: Mem
     bank2Account: input.bank2Account?.trim() || null,
     bank2Type: input.bank2Type || null,
     bank2Holder: input.bank2Holder?.trim() || null,
+    bank3Name: input.bank3Name?.trim() || null,
+    bank3Agency: input.bank3Agency?.trim() || null,
+    bank3Account: input.bank3Account?.trim() || null,
+    bank3Type: input.bank3Type || null,
+    bank3Holder: input.bank3Holder?.trim() || null,
+    bank4Name: input.bank4Name?.trim() || null,
+    bank4Agency: input.bank4Agency?.trim() || null,
+    bank4Account: input.bank4Account?.trim() || null,
+    bank4Type: input.bank4Type || null,
+    bank4Holder: input.bank4Holder?.trim() || null,
     pixType: input.pixType?.trim() || null,
     pixKey: input.pixKey?.trim() || null,
+  };
+  await db.insert(receivingPreferences).values(values).onDuplicateKeyUpdate({ set: values });
+  return getMemberReceivingPreference(userId);
+}
+
+export async function markMemberReceivingResponsibleUseModalSeen(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const values = {
+    userId,
+    responsibleUseModalSeenAt: new Date(),
   };
   await db.insert(receivingPreferences).values(values).onDuplicateKeyUpdate({ set: values });
   return getMemberReceivingPreference(userId);
