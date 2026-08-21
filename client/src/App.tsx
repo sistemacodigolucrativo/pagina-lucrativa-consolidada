@@ -158,6 +158,7 @@ function App() {
   const base = DEV_PREFIX;
   useEffect(() => {
     const message = "This page is not live and cannot be shared directly. Please publish to get a public link.";
+    const fragments = ["This page is not live", "cannot be shared directly", "public link"];
     const getElementStyle = (element: HTMLElement) => window.getComputedStyle(element);
     const getNoticeContainer = (element: HTMLElement) => {
       let current: HTMLElement | null = element;
@@ -165,24 +166,41 @@ function App() {
       while (current && current !== document.body) {
         const style = getElementStyle(current);
         if (style.position === "fixed" || style.position === "sticky") return current;
-        if (current.parentElement === document.body) fallback = current;
+        if (current.parentElement === document.body && !["root", "app", "main"].includes(current.id)) fallback = current;
         current = current.parentElement;
       }
       return fallback;
     };
+    const hasPreviewNotice = (text: string | null | undefined) => {
+      const compact = text?.replace(/\s+/g, " ").trim() ?? "";
+      return compact.includes(message) || fragments.every(fragment => compact.includes(fragment));
+    };
     const removePreviewNotice = () => {
       const containers = new Set<HTMLElement>();
-      for (const element of Array.from(document.body.querySelectorAll<HTMLElement>("body *"))) {
-        const text = element.textContent?.replace(/\s+/g, " ").trim();
-        if (!text?.includes(message)) continue;
-        containers.add(getNoticeContainer(element));
+      const roots: ParentNode[] = [document.documentElement];
+      for (const element of Array.from(document.documentElement.querySelectorAll<HTMLElement>("*"))) {
+        if (element.shadowRoot) roots.push(element.shadowRoot);
+      }
+      for (const root of roots) {
+        for (const element of Array.from(root.querySelectorAll<HTMLElement>("*"))) {
+          if (!hasPreviewNotice(element.textContent)) continue;
+          const compact = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
+          if (compact.length > 400 && element.id === "root") continue;
+          containers.add(getNoticeContainer(element));
+        }
       }
       Array.from(containers).forEach(container => container.remove());
     };
     removePreviewNotice();
     const observer = new MutationObserver(removePreviewNotice);
-    observer.observe(document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    const interval = window.setInterval(removePreviewNotice, 500);
+    const stopInterval = window.setTimeout(() => window.clearInterval(interval), 30000);
+    return () => {
+      observer.disconnect();
+      window.clearInterval(interval);
+      window.clearTimeout(stopInterval);
+    };
   }, []);
   return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
