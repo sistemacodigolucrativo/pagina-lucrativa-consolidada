@@ -22,9 +22,10 @@ function readFileAsDataUrl(file: File) {
 }
 
 export default function ApplicationPayment() {
-  const [, routeParams] = useRoute("/pedido/:trackingCode/pagamento");
+  const [, instructionParams] = useRoute("/pedido/:trackingCode/pagamento/instrucoes");
+  const [, legacyParams] = useRoute("/pedido/:trackingCode/pagamento");
   const queryCode = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo") ?? "";
-  const trackingCode = (routeParams?.trackingCode ?? queryCode).trim().toUpperCase();
+  const trackingCode = (instructionParams?.trackingCode ?? legacyParams?.trackingCode ?? queryCode).trim().toUpperCase();
   const payment = trpc.applications.paymentPage.useQuery({ trackingCode }, { enabled: Boolean(trackingCode), retry: false });
   const uploadReceipt = trpc.applications.uploadReceipt.useMutation({
     onSuccess: async () => {

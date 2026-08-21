@@ -74,7 +74,7 @@ export default function ApplicationTracking() {
     </section> : null}
 
     <div className="access-actions">
-      {result?.nextAction === "pay" || result?.nextAction === "retry_receipt" ? <a className="btn btn-primary" href={withAppBase(`/pedido/${encodeURIComponent(result.trackingCode ?? "")}/pagamento`)}>Ir para pagamento <ArrowRight size={16} /></a> : null}
+      {result?.nextAction === "pay" || result?.nextAction === "retry_receipt" ? <a className="btn btn-primary" href={withAppBase(`/pedido/${encodeURIComponent(result.trackingCode ?? "")}/pagamento`)}>Ir para meios de pagamento <ArrowRight size={16} /></a> : null}
       <Link href="/" className="btn btn-ghost">Voltar à estrutura</Link>
     </div>
   </div></main>;
