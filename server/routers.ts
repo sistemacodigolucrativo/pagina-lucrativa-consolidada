@@ -163,11 +163,18 @@ export const receivingPreferenceInput = z.object({
   pixType: z.string().trim().max(64).optional().nullable(),
   pixKey: z.string().trim().max(255).optional().nullable(),
 }).superRefine((value, context) => {
-  if (value.method === "pix" && !value.receivingKey) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe a chave PIX." });
+  if (value.method === "pix" && !value.receivingKey && !value.pixKey) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixKey"], message: "Informe a chave PIX." });
   if (value.method === "pix" && value.receivingKey && !pixKeyZodSchema.safeParse(value.receivingKey).success) context.addIssue({ code: z.ZodIssueCode.custom, path: ["receivingKey"], message: "Informe uma chave PIX válida." });
   if (value.pixKey && !value.pixType) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixType"], message: "Selecione o tipo da chave PIX." });
   if (value.pixKey && value.pixType && !validatePixKeyByType(value.pixKey, value.pixType)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixKey"], message: "A chave PIX não corresponde ao tipo selecionado." });
-}).transform(value => ({ ...value, receivingKey: value.method === "pix" && value.receivingKey ? normalizePixKey(value.receivingKey) : value.receivingKey?.trim() || null, pixKey: value.pixKey && value.pixType ? normalizePixKeyByType(value.pixKey, value.pixType) : value.pixKey?.trim() || null }));
+}).transform(value => {
+  const normalizedTypedPixKey = value.pixKey && value.pixType ? normalizePixKeyByType(value.pixKey, value.pixType) : value.pixKey?.trim() || null;
+  return {
+    ...value,
+    receivingKey: value.method === "pix" ? (value.receivingKey ? normalizePixKey(value.receivingKey) : normalizedTypedPixKey) : value.receivingKey?.trim() || null,
+    pixKey: normalizedTypedPixKey,
+  };
+});
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
 const courseInput = z.object({
   title: z.string().trim().min(3).max(240),
