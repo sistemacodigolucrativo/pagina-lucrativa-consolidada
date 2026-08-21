@@ -76,6 +76,7 @@ export const memberProfiles = mysqlTable("memberProfiles", {
   websiteUrl: varchar("websiteUrl", { length: 512 }),
   photoUrl: varchar("photoUrl", { length: 1024 }),
   facebookUrl: varchar("facebookUrl", { length: 512 }),
+  instagramUrl: varchar("instagramUrl", { length: 512 }),
   twitterUrl: varchar("twitterUrl", { length: 512 }),
   linkedinUrl: varchar("linkedinUrl", { length: 512 }),
   youtubeUrl: varchar("youtubeUrl", { length: 512 }),

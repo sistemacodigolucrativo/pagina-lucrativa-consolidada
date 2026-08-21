@@ -1,11 +1,10 @@
-import { ArrowRight, CheckCircle2, Clipboard, ClipboardCheck, Search, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, ClipboardCheck, Search, XCircle } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { normalizeEmail } from "@shared/contactValidation";
 import { applicationActivationStatusLabel, applicationPaymentStatusLabel } from "@shared/applications";
-import { toast } from "sonner";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
@@ -39,11 +38,6 @@ export default function ApplicationTracking() {
     const nextEmail = normalizeEmail(email);
     setQuery({ trackingCode: nextCode, email: nextEmail });
     setLocation(`/pedido/acompanhar?codigo=${encodeURIComponent(nextCode)}`);
-  }
-
-  async function copy(value: string, label: string) {
-    await navigator.clipboard.writeText(value);
-    toast.success(`${label} copiado.`);
   }
 
   return <main className="access-page"><div className="access-card">
@@ -81,11 +75,10 @@ export default function ApplicationTracking() {
 
     {result && state === "approved" && result.access ? <section className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-4 text-left">
       <span className="text-xs uppercase tracking-[0.16em] text-emerald-200">Personalização liberada</span>
-      <h2 className="mt-2 text-xl font-semibold text-white">Senha especial</h2>
-      {result.access.password ? <code className="mt-3 block break-all rounded-xl bg-black/40 p-3 text-lg font-semibold text-emerald-100">{result.access.password}</code> : <p className="mt-3 text-sm leading-6 text-emerald-50">A senha foi liberada, mas não pôde ser recuperada automaticamente. Solicite nova liberação ao responsável.</p>}
+      <h2 className="mt-2 text-xl font-semibold text-white">Crie sua senha de acesso</h2>
+      <p className="mt-3 text-sm leading-6 text-emerald-50">Seu pagamento foi aprovado. Agora escolha a senha que será usada com o e-mail do pedido para acessar o Escritório Virtual.</p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        {result.access.password ? <button type="button" onClick={() => copy(result.access!.password!, "Senha especial")} className="btn btn-ghost"><Clipboard size={16} /> Copiar senha</button> : null}
-        <a className="btn btn-primary" href={withAppBase(result.access.specialAccessUrl)}>Personalizar minha Página Lucrativa <ArrowRight size={16} /></a>
+        <a className="btn btn-primary" href={withAppBase(result.access.personalizationUrl)}>Personalizar minha Página Lucrativa <ArrowRight size={16} /></a>
       </div>
     </section> : null}
 

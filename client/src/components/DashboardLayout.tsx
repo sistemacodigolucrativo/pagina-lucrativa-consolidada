@@ -163,6 +163,10 @@ function DashboardLayoutContent({
   }, {});
   const isMobile = useIsMobile();
   const memberOfficeNavigation = isMemberOfficeNavigation(menuItems);
+  const initialProfileStatus = trpc.member.initialProfileStatus.useQuery(undefined, {
+    enabled: memberOfficeNavigation && user?.role === "user",
+    retry: false,
+  });
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notifications = trpc.member.notifications.useQuery(undefined, {
     enabled: memberOfficeNavigation && user?.role === "user",
@@ -196,13 +200,17 @@ function DashboardLayoutContent({
 
   useEffect(() => {
     if (!memberOfficeNavigation) return;
+    if (initialProfileStatus.data?.required && activePath !== "/membros/perfil-inicial") {
+      setLocation("/membros/perfil-inicial");
+      return;
+    }
     const activeGroup = Object.entries(groupedMenuItems).find(([, items]) =>
       items.some(item => isNavigationItemActive(item.path, activePath)),
     )?.[0] ?? null;
     if (activeGroupRef.current === activeGroup) return;
     activeGroupRef.current = activeGroup;
     setGroupOverrides(activeGroup ? { [activeGroup]: true } : {});
-  }, [activePath, groupedMenuItems, memberOfficeNavigation]);
+  }, [activePath, groupedMenuItems, initialProfileStatus.data?.required, memberOfficeNavigation, setLocation]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {

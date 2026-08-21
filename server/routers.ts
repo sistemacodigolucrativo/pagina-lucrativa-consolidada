@@ -73,6 +73,9 @@ import {
   markMemberNotificationRead,
   reviewPaymentReceipt,
   completeApplicationPersonalization,
+  getApplicationPersonalizationAccess,
+  getMemberInitialProfileStatus,
+  completeMemberInitialPublicProfile,
   updateMemberContact,
   setAdminReferralLink,
   getAdminReferralLinks,
@@ -116,6 +119,7 @@ export const profileInput = z.object({
   whatsapp: optionalPhoneZodSchema,
   websiteUrl: httpUrlZodSchema.max(512).optional().nullable(),
   facebookUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  instagramUrl: httpUrlZodSchema.max(512).optional().nullable(),
   twitterUrl: httpUrlZodSchema.max(512).optional().nullable(),
   linkedinUrl: httpUrlZodSchema.max(512).optional().nullable(),
   youtubeUrl: httpUrlZodSchema.max(512).optional().nullable(),
@@ -127,6 +131,13 @@ export const profileInput = z.object({
   district: z.string().trim().max(120).optional().nullable(),
   city: z.string().trim().max(120).optional().nullable(),
   state: z.string().trim().max(80).optional().nullable(),
+});
+
+const initialPublicProfileInput = z.object({
+  name: z.string().trim().min(2, "Informe seu nome.").max(180),
+  whatsapp: optionalPhoneZodSchema.refine(value => Boolean(value), "Informe seu WhatsApp."),
+  facebookUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  instagramUrl: httpUrlZodSchema.max(512).optional().nullable(),
 });
 export const profilePhotoInput = z.object({
   dataUrl: z.string().regex(/^data:image\/(?:jpeg|png|gif);base64,[A-Za-z0-9+/=\s]+$/).max(1_450_000),
@@ -235,7 +246,8 @@ export const appRouter = router({
       const token = createDemoSession(account);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, { ...cookieOptions, sameSite: cookieOptions.secure ? "none" : "lax", maxAge: 1000 * 60 * 60 * 12 });
-      return { role: account.role } as const;
+      const profileStatus = account.id && account.role === "user" ? await getMemberInitialProfileStatus(account.id) : { required: false };
+      return { role: account.role, needsInitialProfile: profileStatus.required } as const;
     }),
   }),
   member: router({
@@ -253,6 +265,8 @@ export const appRouter = router({
     updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),
+    initialProfileStatus: protectedProcedure.query(({ ctx }) => getMemberInitialProfileStatus(ctx.user.id)),
+    completeInitialPublicProfile: protectedProcedure.input(initialPublicProfileInput).mutation(({ ctx, input }) => completeMemberInitialPublicProfile(ctx.user.id, { ...input, whatsapp: input.whatsapp! })),
     uploadProfilePhoto: protectedProcedure.input(profilePhotoInput).mutation(({ ctx, input }) => uploadMemberProfilePhoto(ctx.user.id, input)),
     account: protectedProcedure.query(({ ctx }) => getMemberAccount(ctx.user.id)),
     updateAccount: protectedProcedure.input(accountInput).mutation(({ ctx, input }) => {
@@ -295,6 +309,7 @@ export const appRouter = router({
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
     specialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getPublicSpecialAccess(input.code)),
+    applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
     unlockSpecialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48), password: z.string().min(1).max(128) })).mutation(({ input }) => unlockPublicSpecialAccess(input.code, input.password)),
     completePersonalization: publicProcedure.input(applicationPersonalizationSchema).mutation(({ input }) => completeApplicationPersonalization(input)),

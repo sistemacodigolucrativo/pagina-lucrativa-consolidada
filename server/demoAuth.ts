@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type { User } from "../drizzle/schema";
-import { getStoredPasswordHashByOpenId } from "./db";
+import { authenticateLocalUser, getStoredPasswordHashByOpenId } from "./db";
 import { hashDemoCredential, hashPassword, hashesMatch } from "./credentialHash";
 
 export const DEMO_SESSION_COOKIE_NAME = process.env.VITE_DEV_PREFIX ? "pl_demo_session_dev" : "pl_demo_session";
@@ -12,10 +12,12 @@ export const demoLoginInputSchema = z.object({
 });
 
 export type DemoAccount = {
+  id?: number;
   username: string;
   openId: string;
   name: string;
   email: string;
+  loginMethod?: string | null;
   role: "admin" | "user";
 };
 
@@ -23,6 +25,10 @@ type DemoSessionPayload = {
   openId: string;
   role: DemoAccount["role"];
   expiresAt: number;
+  id?: number;
+  name?: string;
+  email?: string;
+  loginMethod?: string | null;
 };
 
 const DEMO_SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
@@ -75,25 +81,37 @@ function readSessionPayload(token: string): DemoSessionPayload | null {
 export async function resolveDemoAccount(username: string, password: string): Promise<DemoAccount | null> {
   const normalizedUsername = username.trim().toLowerCase();
   const matched = demoAccounts.find(account => account.username === normalizedUsername);
-  if (!matched) return null;
-  const storedPasswordHash = await getStoredPasswordHashByOpenId(matched.openId);
-  const valid = storedPasswordHash
-    ? hashesMatch(storedPasswordHash, hashPassword(password))
-    : hashesMatch(matched.credentialHash, hashDemoCredential(normalizedUsername, password));
-  if (!valid) return null;
-  const { credentialHash: _credentialHash, ...account } = matched;
-  return account;
+  if (matched) {
+    const storedPasswordHash = await getStoredPasswordHashByOpenId(matched.openId);
+    const valid = storedPasswordHash
+      ? hashesMatch(storedPasswordHash, hashPassword(password))
+      : hashesMatch(matched.credentialHash, hashDemoCredential(normalizedUsername, password));
+    if (!valid) return null;
+    const { credentialHash: _credentialHash, ...account } = matched;
+    return account;
+  }
+  const localUser = await authenticateLocalUser(normalizedUsername, password);
+  if (!localUser) return null;
+  return {
+    id: localUser.id,
+    username: localUser.email ?? normalizedUsername,
+    openId: localUser.openId,
+    name: localUser.name ?? localUser.email ?? "Membro Página Lucrativa",
+    email: localUser.email ?? normalizedUsername,
+    loginMethod: localUser.loginMethod,
+    role: localUser.role,
+  };
 }
 
 export function toDemoUser(account: DemoAccount): User {
   const now = new Date();
   return {
-    id: account.role === "admin" ? 1 : 2,
+    id: account.id ?? (account.role === "admin" ? 1 : 2),
     openId: account.openId,
     name: account.name,
     email: account.email,
     passwordHash: null,
-    loginMethod: "local_demo",
+    loginMethod: account.loginMethod ?? "local_demo",
     role: account.role,
     createdAt: now,
     updatedAt: now,
@@ -103,8 +121,12 @@ export function toDemoUser(account: DemoAccount): User {
 
 export function createDemoSession(account: DemoAccount) {
   return signSessionPayload({
+    id: account.id,
     openId: account.openId,
     role: account.role,
+    name: account.name,
+    email: account.email,
+    loginMethod: account.loginMethod ?? "local_demo",
     expiresAt: Date.now() + DEMO_SESSION_DURATION_MS,
   });
 }
@@ -113,6 +135,17 @@ export function resolveDemoSession(token: string | undefined) {
   if (!token) return null;
   const payload = readSessionPayload(token);
   if (!payload) return null;
+  if (payload.id && payload.name && payload.email) {
+    return toDemoUser({
+      id: payload.id,
+      username: payload.email,
+      openId: payload.openId,
+      name: payload.name,
+      email: payload.email,
+      loginMethod: payload.loginMethod,
+      role: payload.role,
+    });
+  }
   const account = demoAccounts.find(candidate => candidate.openId === payload.openId && candidate.role === payload.role);
   return account ? toDemoUser(account) : null;
 }

@@ -40,6 +40,7 @@ import ApplicationPersonalization from "./pages/ApplicationPersonalization";
 import MemberProfile from "./pages/MemberProfile";
 import MemberAccount from "./pages/MemberAccount";
 import MemberGettingStarted from "./pages/MemberGettingStarted";
+import MemberInitialPublicProfile from "./pages/MemberInitialPublicProfile";
 import MemberSupport from "./pages/MemberSupport";
 import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
 import { DEV_PREFIX } from "./lib/devPath";
@@ -82,6 +83,7 @@ function AppRoutes() {
     <Route path="/membros/meus-dados" component={MemberAccount} />
     <Route path="/membros/configuracoes" component={MemberProfile} />
     <Route path="/membros/como-divulgar" component={MemberGettingStarted} />
+    <Route path="/membros/perfil-inicial" component={MemberInitialPublicProfile} />
     <Route path="/membros/fale-conosco" component={MemberSupport} />
     <Route path="/membros/campanhas" component={MemberLegacyRedirect} />
     <Route path="/membros/convites" component={MemberLegacyRedirect} />

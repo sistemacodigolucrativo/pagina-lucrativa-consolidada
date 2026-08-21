@@ -28,7 +28,7 @@ export const applicationPaymentStatusLabel = {
 
 export const applicationActivationStatusLabel = {
   not_started: "Acesso não liberado",
-  access_issued: "Senha emitida",
+  access_issued: "Personalização liberada",
   personalization_started: "Personalização iniciada",
   member_activated: "Membro ativado",
   cancelled: "Cancelado",
@@ -57,15 +57,7 @@ export const applicationReceiptUploadSchema = z.object({
 
 export const applicationPersonalizationSchema = z.object({
   publicCode: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48),
-  accessToken: z.string().min(8).max(128),
-  name: z.string().trim().min(2).max(180),
-  email: normalizedEmailZodSchema,
-  whatsapp: phoneZodSchema,
-  slug: z.string().trim().toLowerCase().regex(/^(?=.*[a-z0-9])[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
-  bio: z.string().trim().max(2000).optional().nullable(),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres.").max(128).regex(/[A-Za-z]/, "A senha deve conter pelo menos uma letra.").regex(/\d/, "A senha deve conter pelo menos um número."),
-  pixType: z.string().trim().max(64).optional().nullable(),
-  pixKey: z.string().trim().max(255).optional().nullable(),
 });
 
 export type MemberPaymentLinkInput = z.infer<typeof memberPaymentLinkInputSchema>;

@@ -16,6 +16,7 @@ const field = "mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 
 const urlFields = [
   ["websiteUrl", "URL do seu Website"],
   ["facebookUrl", "URL do seu perfil no Facebook"],
+  ["instagramUrl", "URL do seu perfil no Instagram"],
   ["twitterUrl", "Twitter"],
   ["linkedinUrl", "Linkedin"],
   ["youtubeUrl", "Youtube"],
@@ -27,6 +28,7 @@ type ProfileForm = {
   whatsapp: string;
   websiteUrl: string;
   facebookUrl: string;
+  instagramUrl: string;
   twitterUrl: string;
   linkedinUrl: string;
   youtubeUrl: string;
@@ -41,7 +43,7 @@ type ProfileForm = {
 };
 
 const emptyForm: ProfileForm = {
-  slug: "", bio: "", whatsapp: "", websiteUrl: "", facebookUrl: "", twitterUrl: "", linkedinUrl: "", youtubeUrl: "", skype: "",
+  slug: "", bio: "", whatsapp: "", websiteUrl: "", facebookUrl: "", instagramUrl: "", twitterUrl: "", linkedinUrl: "", youtubeUrl: "", skype: "",
   address: "", addressNumber: "", addressComplement: "", postalCode: "", district: "", city: "", state: "",
 };
 
@@ -59,6 +61,7 @@ export default function MemberProfile() {
       whatsapp: normalizePhone(profile.data.whatsapp),
       websiteUrl: profile.data.websiteUrl ?? "",
       facebookUrl: profile.data.facebookUrl ?? "",
+      instagramUrl: profile.data.instagramUrl ?? "",
       twitterUrl: profile.data.twitterUrl ?? "",
       linkedinUrl: profile.data.linkedinUrl ?? "",
       youtubeUrl: profile.data.youtubeUrl ?? "",
@@ -100,6 +103,7 @@ export default function MemberProfile() {
       whatsapp: form.whatsapp || null,
       websiteUrl: form.websiteUrl ? normalizeHttpUrl(form.websiteUrl) : null,
       facebookUrl: form.facebookUrl ? normalizeHttpUrl(form.facebookUrl) : null,
+      instagramUrl: form.instagramUrl ? normalizeHttpUrl(form.instagramUrl) : null,
       twitterUrl: form.twitterUrl ? normalizeHttpUrl(form.twitterUrl) : null,
       linkedinUrl: form.linkedinUrl ? normalizeHttpUrl(form.linkedinUrl) : null,
       youtubeUrl: form.youtubeUrl ? normalizeHttpUrl(form.youtubeUrl) : null,

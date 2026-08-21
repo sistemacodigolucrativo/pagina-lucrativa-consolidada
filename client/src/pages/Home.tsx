@@ -74,6 +74,7 @@ export default function Home() {
   const publicSocialLinks = affiliate.data ? [
     ["Website", affiliate.data.websiteUrl],
     ["Facebook", affiliate.data.facebookUrl],
+    ["Instagram", affiliate.data.instagramUrl],
     ["Twitter", affiliate.data.twitterUrl],
     ["Linkedin", affiliate.data.linkedinUrl],
     ["Youtube", affiliate.data.youtubeUrl],
@@ -122,7 +123,7 @@ export default function Home() {
         <div className="affiliate-profile-modal-details">
           {publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}><span>{label}</span><strong>{url}</strong></a>)}
           {affiliate.data.skype ? <div><span>Skype</span><strong>{affiliate.data.skype}</strong></div> : null}
-          {affiliate.data.whatsapp ? <a href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><span>WhatsApp</span><strong>{affiliate.data.whatsapp}</strong></a> : null}
+          {affiliate.data.whatsapp ? <a href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><span>Contato</span><strong>WhatsApp</strong></a> : null}
         </div>
         <button type="button" className="affiliate-profile-modal-action btn btn-ghost" onClick={() => setProfileDetailsOpen(false)}>Fechar</button>
       </section>

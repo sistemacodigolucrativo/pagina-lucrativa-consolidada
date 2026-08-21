@@ -99,21 +99,29 @@ export async function getUserByOpenId(openId: string) {
 }
 
 export async function getUserByEmail(email: string) {
-  const db = await getDb();
-  if (!db) return undefined;
-  const normalized = email.trim().toLowerCase();
-  const result = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
-  return result[0];
+  try {
+    const db = await getDb();
+    if (!db) return undefined;
+    const normalized = email.trim().toLowerCase();
+    const result = await db.select().from(users).where(eq(users.email, normalized)).limit(1);
+    return result[0];
+  } catch {
+    return undefined;
+  }
 }
 
 export async function authenticateLocalUser(identifier: string, password: string) {
-  const user = await getUserByEmail(identifier);
-  if (!user?.passwordHash) return null;
-  const candidateHash = hashPassword(password);
-  const stored = Buffer.from(user.passwordHash, "hex");
-  const candidate = Buffer.from(candidateHash, "hex");
-  if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) return null;
-  return user;
+  try {
+    const user = await getUserByEmail(identifier);
+    if (!user?.passwordHash) return null;
+    const candidateHash = hashPassword(password);
+    const stored = Buffer.from(user.passwordHash, "hex");
+    const candidate = Buffer.from(candidateHash, "hex");
+    if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) return null;
+    return user;
+  } catch {
+    return null;
+  }
 }
 
 export async function getMemberOverview(userId: number) {
@@ -682,10 +690,14 @@ export async function getStoredPasswordHash(userId: number) {
 }
 
 export async function getStoredPasswordHashByOpenId(openId: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const rows = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.openId, openId)).limit(1);
-  return rows[0]?.passwordHash ?? null;
+  try {
+    const db = await getDb();
+    if (!db) return null;
+    const rows = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.openId, openId)).limit(1);
+    return rows[0]?.passwordHash ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export async function updateMemberAccount(userId: number, input: MemberAccountUpdateInput) {
@@ -703,6 +715,7 @@ type MemberProfileUpdateInput = {
   whatsapp?: string | null;
   websiteUrl?: string | null;
   facebookUrl?: string | null;
+  instagramUrl?: string | null;
   twitterUrl?: string | null;
   linkedinUrl?: string | null;
   youtubeUrl?: string | null;
@@ -728,6 +741,7 @@ export async function updateMemberProfile(userId: number, input: MemberProfileUp
     whatsapp: cleanOptional(input.whatsapp),
     websiteUrl: cleanOptional(input.websiteUrl),
     facebookUrl: cleanOptional(input.facebookUrl),
+    instagramUrl: cleanOptional(input.instagramUrl),
     twitterUrl: cleanOptional(input.twitterUrl),
     linkedinUrl: cleanOptional(input.linkedinUrl),
     youtubeUrl: cleanOptional(input.youtubeUrl),
@@ -851,6 +865,7 @@ export async function getPublicAffiliateProfile(slug: string) {
     whatsapp: memberProfiles.whatsapp,
     websiteUrl: memberProfiles.websiteUrl,
     facebookUrl: memberProfiles.facebookUrl,
+    instagramUrl: memberProfiles.instagramUrl,
     twitterUrl: memberProfiles.twitterUrl,
     linkedinUrl: memberProfiles.linkedinUrl,
     youtubeUrl: memberProfiles.youtubeUrl,
@@ -1063,10 +1078,11 @@ export async function getMemberAffiliateApplication(userId: number, applicationI
   return { application, receipts, activeAccess: tokens.find(token => token.status === "active") ?? null, accessHistory: tokens };
 }
 
-export async function getApplicationTracking(trackingCode: string, email: string) {
+export async function getApplicationTracking(inputTrackingCode: string, email: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select().from(applications).where(and(eq(applications.trackingCode, trackingCode.trim().toUpperCase()), eq(applications.email, email.trim().toLowerCase()))).limit(1);
+  const trackingCode = inputTrackingCode.trim().toUpperCase();
+  const rows = await db.select().from(applications).where(and(eq(applications.trackingCode, trackingCode), eq(applications.email, email.trim().toLowerCase()))).limit(1);
   const application = rows[0];
   if (!application) return null;
   const receiptRows = await db.select().from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.applicationId, application.id)).orderBy(desc(applicationPaymentReceipts.createdAt)).limit(1);
@@ -1101,8 +1117,7 @@ export async function getApplicationTracking(trackingCode: string, email: string
     nextAction: application.paymentStatus === "confirmed" ? "personalize" : application.paymentStatus === "rejected" ? "retry_receipt" : application.paymentStatus === "receipt_received" ? "wait_review" : "pay",
     access: activeToken ? {
       publicCode: activeToken.publicCode,
-      password: decryptAccessToken(activeToken.encryptedToken),
-      specialAccessUrl: `/senha-especial/${activeToken.publicCode}`,
+      personalizationUrl: `/personalizar?codigo=${activeToken.publicCode}`,
     } : null,
   };
 }
@@ -1625,48 +1640,95 @@ export async function unlockPublicSpecialAccess(publicCode: string, password: st
   return { destinationUrl: page.destinationUrl };
 }
 
+function slugFromName(name: string, userId: number) {
+  const base = name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 72) || "membro";
+  return `${base}-${userId}`.slice(0, 96);
+}
+
+export async function getApplicationPersonalizationAccess(publicCode: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const tokenRows = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.publicCode, publicCode), eq(applicationAccessTokens.status, "active"))).limit(1);
+  const token = tokenRows[0];
+  if (!token) return null;
+  const applicationRows = await db.select({
+    id: applications.id,
+    fullName: applications.fullName,
+    email: applications.email,
+    paymentStatus: applications.paymentStatus,
+    activationStatus: applications.activationStatus,
+  }).from(applications).where(and(eq(applications.id, token.applicationId), eq(applications.paymentStatus, "confirmed"))).limit(1);
+  const application = applicationRows[0];
+  if (!application) return null;
+  return {
+    publicCode,
+    fullName: application.fullName,
+    email: application.email,
+    activationStatus: application.activationStatus,
+  };
+}
+
 export async function completeApplicationPersonalization(input: ApplicationPersonalizationInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const tokenRows = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.publicCode, input.publicCode), eq(applicationAccessTokens.status, "active"))).limit(1);
   const token = tokenRows[0];
-  if (!token || !verifySpecialAccessPassword(input.accessToken, token.tokenHash)) throw new Error("Acesso inválido ou expirado.");
+  if (!token) throw new Error("Acesso inválido ou expirado.");
   const applicationRows = await db.select().from(applications).where(and(eq(applications.id, token.applicationId), eq(applications.paymentStatus, "confirmed"))).limit(1);
   const application = applicationRows[0];
   if (!application?.ownerUserId) throw new Error("Pedido não encontrado ou ainda não aprovado.");
-  const normalizedEmail = input.email.trim().toLowerCase();
+  const normalizedEmail = application.email.trim().toLowerCase();
   const openId = `application:${token.publicCode}`;
   const existingUsers = await db.select({ id: users.id, openId: users.openId, email: users.email }).from(users).where(eq(users.email, normalizedEmail)).limit(1);
   const existingUser = existingUsers[0] ?? null;
   if (existingUser && existingUser.openId !== openId) throw new Error("Já existe uma conta com este e-mail. Use outro e-mail ou solicite suporte.");
   let userId = existingUser?.id ?? 0;
   if (userId) {
-    await db.update(users).set({ name: input.name.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password" }).where(eq(users.id, userId));
+    await db.update(users).set({ name: application.fullName.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", lastSignedIn: new Date() }).where(eq(users.id, userId));
   } else {
-    const result = await db.insert(users).values({ openId, name: input.name.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
+    const result = await db.insert(users).values({ openId, name: application.fullName.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
     userId = Number(result[0].insertId);
   }
-  const normalizedSlug = input.slug.trim().toLowerCase();
-  const existingSlugRows = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.slug, normalizedSlug)).limit(1);
-  if (existingSlugRows[0] && existingSlugRows[0].userId !== userId) throw new Error("Este identificador de página já está em uso. Escolha outro identificador.");
-  await db.insert(memberProfiles).values({
-    userId,
-    slug: normalizedSlug,
-    bio: input.bio?.trim() || null,
-    whatsapp: input.whatsapp,
-  }).onDuplicateKeyUpdate({ set: { slug: normalizedSlug, bio: input.bio?.trim() || null, whatsapp: input.whatsapp } });
-  await db.insert(receivingPreferences).values({
-    userId,
-    holderName: input.name.trim(),
-    method: "pix",
-    receivingKey: input.pixKey?.trim() || null,
-    pixType: input.pixType?.trim() || null,
-    pixKey: input.pixKey?.trim() || null,
-  }).onDuplicateKeyUpdate({ set: { holderName: input.name.trim(), method: "pix", receivingKey: input.pixKey?.trim() || null, pixType: input.pixType?.trim() || null, pixKey: input.pixKey?.trim() || null } });
   await db.insert(referralLinks).values({ sponsorId: application.ownerUserId, referredUserId: userId, status: "active" }).onDuplicateKeyUpdate({ set: { sponsorId: application.ownerUserId, status: "active" } });
   await db.update(applicationAccessTokens).set({ status: "used", usedAt: new Date() }).where(eq(applicationAccessTokens.id, token.id));
-  await db.update(applications).set({ activationStatus: "member_activated", status: "approved" }).where(eq(applications.id, application.id));
+  await db.update(applications).set({ activationStatus: "personalization_started", status: "approved" }).where(eq(applications.id, application.id));
   return { success: true, email: normalizedEmail } as const;
+}
+
+export async function getMemberInitialProfileStatus(userId: number) {
+  const db = await getDb();
+  if (!db) return { required: false };
+  const rows = await db.select({ slug: memberProfiles.slug, whatsapp: memberProfiles.whatsapp }).from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1);
+  const profile = rows[0] ?? null;
+  return { required: !profile?.slug || !profile?.whatsapp, profile };
+}
+
+export async function completeMemberInitialPublicProfile(userId: number, input: { name: string; whatsapp: string; facebookUrl?: string | null; instagramUrl?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const userRows = await db.select({ email: users.email, openId: users.openId }).from(users).where(eq(users.id, userId)).limit(1);
+  const userOpenId = userRows[0]?.openId ?? null;
+  const normalizedName = input.name.trim();
+  const slug = slugFromName(normalizedName, userId);
+  await db.update(users).set({ name: normalizedName }).where(eq(users.id, userId));
+  await db.insert(memberProfiles).values({
+    userId,
+    slug,
+    whatsapp: input.whatsapp,
+    facebookUrl: cleanOptional(input.facebookUrl),
+    instagramUrl: cleanOptional(input.instagramUrl),
+  }).onDuplicateKeyUpdate({ set: {
+    slug,
+    whatsapp: input.whatsapp,
+    facebookUrl: cleanOptional(input.facebookUrl),
+    instagramUrl: cleanOptional(input.instagramUrl),
+  } });
+  if (userOpenId?.startsWith("application:")) {
+    const publicCode = userOpenId.replace("application:", "");
+    const tokenRows = await db.select({ applicationId: applicationAccessTokens.applicationId }).from(applicationAccessTokens).where(eq(applicationAccessTokens.publicCode, publicCode)).limit(1);
+    if (tokenRows[0]) await db.update(applications).set({ activationStatus: "member_activated" }).where(eq(applications.id, tokenRows[0].applicationId));
+  }
+  return { success: true, slug } as const;
 }
 
 export async function getAdminSpecialAccessPages() {

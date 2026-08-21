@@ -17,7 +17,7 @@ export default function DemoLogin() {
   const login = trpc.auth.demoLogin.useMutation({
     onSuccess: async account => {
       await utils.auth.me.invalidate();
-      setLocation(account.role === "admin" ? "/admin" : "/membros");
+      setLocation(account.role === "admin" ? "/admin" : account.needsInitialProfile ? "/membros/perfil-inicial" : "/membros");
     },
     onError: error => setFormError(error.message),
   });
