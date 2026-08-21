@@ -12,7 +12,6 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Gestão" },
   { icon: Mail, label: "Comunicações", path: "/admin/comunicacoes", group: "Gestão" },
   { icon: KeyRound, label: "Mensagem senha especial", path: "/admin/mensagem-especial", group: "Gestão" },
-  { icon: Layers3, label: "Catálogo", path: "/admin/produtos", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },

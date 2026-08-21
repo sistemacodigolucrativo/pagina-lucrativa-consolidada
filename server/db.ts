@@ -22,7 +22,6 @@ import {
   memberInvitations,
   memberActivities,
   memberTestimonials,
-  products,
   pointEntries,
   publicSalesSectionImages,
   supportTickets,
@@ -98,10 +97,9 @@ export async function getUserByOpenId(openId: string) {
 export async function getMemberOverview(userId: number) {
   const db = await getDb();
   if (!db) return null;
-  const [profileRows, links, productRows, transactionRows, recentTransactions, tickets] = await Promise.all([
+  const [profileRows, links, transactionRows, recentTransactions, tickets] = await Promise.all([
     db.select().from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1),
     db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)),
-    db.select().from(products).where(eq(products.ownerId, userId)),
     db.select().from(transactions).where(eq(transactions.userId, userId)),
     db.select().from(transactions).where(eq(transactions.userId, userId)).orderBy(desc(transactions.occurredAt)).limit(5),
     db.select().from(supportTickets).where(and(eq(supportTickets.userId, userId), eq(supportTickets.status, "open"))),
@@ -110,8 +108,6 @@ export async function getMemberOverview(userId: number) {
     profile: profileRows[0] ?? null,
     campaignCount: links.length,
     campaignClicks: links.reduce((total, link) => total + link.clicks, 0),
-    productCount: productRows.length,
-    activeProductCount: productRows.filter(product => product.status === "active").length,
     balanceCents: transactionRows.reduce((total, transaction) => total + transaction.amountCents, 0),
     openTicketCount: tickets.length,
     recentTransactions,
@@ -211,7 +207,7 @@ export async function getMemberCampaigns(userId: number) {
   return db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)).orderBy(desc(campaignLinks.createdAt));
 }
 
-export async function createMemberCampaign(userId: number, input: { name: string; slug: string; destinationUrl: string }) {
+export async function createMemberCampaign(userId: number, input: { name: string; slug: string; destinationUrl: string; source?: string | null; medium?: string | null; content?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const result = await db.insert(campaignLinks).values({ userId, ...input });
@@ -232,7 +228,7 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
   const start = getAnalyticsStart(period);
   const eventWhere = start ? and(eq(campaignClickEvents.userId, userId), gte(campaignClickEvents.occurredAt, start)) : eq(campaignClickEvents.userId, userId);
   const conversionWhere = start ? and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"), gte(campaignConversions.occurredAt, start)) : and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"));
-  const [campaignRows, clickTotals, visitorTotals, sessionTotals, conversionTotals, leadTotals, applicationTotals, clickByCampaign, conversionByCampaign, recentEvents] = await Promise.all([
+  const [campaignRows, clickTotals, visitorTotals, sessionTotals, conversionTotals, leadTotals, applicationTotals, clickByCampaign, visitorsByCampaign, sessionsByCampaign, conversionByCampaign, recentEvents] = await Promise.all([
     db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)).orderBy(desc(campaignLinks.createdAt)),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere),
     db.select({ value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.visitorId})` }).from(campaignClickEvents).where(eventWhere),
@@ -241,12 +237,22 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "lead"))),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "application"))),
     db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
+    db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.visitorId})` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
+    db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.sessionId})` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
     db.select({ campaignId: campaignConversions.campaignId, value: sql<number>`COUNT(*)` }).from(campaignConversions).where(conversionWhere).groupBy(campaignConversions.campaignId),
     db.select({ campaignId: campaignClickEvents.campaignId, occurredAt: campaignClickEvents.occurredAt, visitorId: campaignClickEvents.visitorId, deviceType: campaignClickEvents.deviceType, referrerOrigin: campaignClickEvents.referrerOrigin }).from(campaignClickEvents).where(eventWhere).orderBy(desc(campaignClickEvents.occurredAt)).limit(50),
   ]);
   const clickMap = new Map(clickByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
+  const visitorMap = new Map(visitorsByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
+  const sessionMap = new Map(sessionsByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
   const conversionMap = new Map(conversionByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
-  const campaigns = campaignRows.map(campaign => ({ ...campaign, eventClicks: clickMap.get(campaign.id) ?? 0, periodConversions: conversionMap.get(campaign.id) ?? 0 }));
+  const campaigns = campaignRows.map(campaign => ({
+    ...campaign,
+    eventClicks: clickMap.get(campaign.id) ?? 0,
+    uniqueVisitors: visitorMap.get(campaign.id) ?? 0,
+    sessions: sessionMap.get(campaign.id) ?? 0,
+    periodConversions: conversionMap.get(campaign.id) ?? 0,
+  }));
   return {
     period,
     campaigns,
@@ -470,35 +476,6 @@ export async function deleteMemberCampaign(userId: number, campaignId: number) {
   return { success: true } as const;
 }
 
-export async function getMemberProducts(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(products).where(eq(products.ownerId, userId)).orderBy(desc(products.updatedAt));
-}
-
-export async function createMemberProduct(ownerId: number, input: { title: string; description?: string | null; category?: string | null; priceCents: number }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const result = await db.insert(products).values({ ownerId, ...input, status: "draft" });
-  return { id: Number(result[0].insertId), status: "draft" as const };
-}
-export async function updateMemberProduct(ownerId: number, productId: number, input: { title: string; description?: string | null; category?: string | null; priceCents: number }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(products).set({ ...input, status: "draft" }).where(and(eq(products.id, productId), eq(products.ownerId, ownerId)));
-  return { success: true } as const;
-}
-export async function getAdminProducts() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(products).orderBy(desc(products.updatedAt));
-}
-export async function updateAdminProductStatus(productId: number, status: "draft" | "active" | "archived") {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(products).set({ status }).where(eq(products.id, productId));
-  return { success: true } as const;
-}
 export async function getPublishedCourses() {
   const db = await getDb();
   if (!db) return [];
@@ -1023,12 +1000,11 @@ export async function getRecentApplications(limit = 20) {
 export async function getAdminOverview() {
   const db = await getDb();
   if (!db) return null;
-  const [memberRows, productRows, courseRows, transactionRows, applicationRows] = await Promise.all([
-    db.select().from(users), db.select().from(products), db.select().from(courses), db.select().from(transactions), db.select().from(applications),
+  const [memberRows, courseRows, transactionRows, applicationRows] = await Promise.all([
+    db.select().from(users), db.select().from(courses), db.select().from(transactions), db.select().from(applications),
   ]);
   return {
     memberCount: memberRows.filter(user => user.role === "user").length,
-    activeProductCount: productRows.filter(product => product.status === "active").length,
     publishedCourseCount: courseRows.filter(course => course.isPublished === 1).length,
     grossVolumeCents: transactionRows.reduce((total, transaction) => total + transaction.amountCents, 0),
     pendingApplicationCount: applicationRows.filter(application => application.status === "pending").length,

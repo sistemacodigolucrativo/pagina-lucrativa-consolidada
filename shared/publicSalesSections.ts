@@ -47,7 +47,7 @@ export const PUBLIC_SALES_SECTIONS = [
     eyebrow: "O produto real",
     title: "Página Lucrativa não é apenas uma página.",
     body: [
-      "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, produtos, conteúdos, cursos, contatos e registros da sua própria operação.",
+      "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria operação.",
       "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em movimento — sem precisar começar pela construção da tecnologia.",
     ],
     defaultImage: "/product-real.png",
@@ -69,7 +69,7 @@ export const PUBLIC_SALES_SECTIONS = [
     eyebrow: "O que existe por trás",
     title: "Um Escritório Virtual para organizar o que você precisa acompanhar.",
     body: [
-      "Dentro da estrutura, você encontra página pública, perfil personalizado, link pessoal, campanhas, pedidos atribuídos, contatos consentidos, produtos, cursos, e-books, materiais, suporte e acompanhamento financeiro.",
+      "Dentro da estrutura, você encontra página pública, perfil personalizado, link pessoal, campanhas, pedidos atribuídos, contatos consentidos, cursos, e-books, materiais, suporte e acompanhamento financeiro.",
       "Os módulos aparecem de acordo com o que está publicado e disponível para sua conta. A proposta é centralizar a execução, não prometer que tudo acontece sozinho.",
     ],
     defaultImage: "/behind-structure.png",

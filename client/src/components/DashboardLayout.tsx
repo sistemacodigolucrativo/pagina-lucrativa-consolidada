@@ -66,7 +66,9 @@ function isAcademyCourseRoute(path: string) {
 }
 
 function isNavigationItemActive(itemPath: string, activePath: string) {
-  return itemPath === activePath || (itemPath === "/membros/academia" && isAcademyCourseRoute(activePath));
+  return itemPath === activePath
+    || (itemPath === "/membros/academia" && isAcademyCourseRoute(activePath))
+    || (itemPath === "/membros/operacao" && activePath.startsWith("/membros/operacao/"));
 }
 
 export default function DashboardLayout({

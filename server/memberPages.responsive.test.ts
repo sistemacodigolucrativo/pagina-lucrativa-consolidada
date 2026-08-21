@@ -5,7 +5,6 @@ import { describe, expect, it } from "vitest";
 const pages = [
   "MemberCommunications.tsx",
   "MemberPersonalization.tsx",
-  "MemberProducts.tsx",
   "MemberReceiving.tsx",
   "MemberTestimonial.tsx",
 ] as const;

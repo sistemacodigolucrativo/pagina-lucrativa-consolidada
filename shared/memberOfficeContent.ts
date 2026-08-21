@@ -10,8 +10,9 @@ export type MemberOfficeNavigationGroup = {
 };
 
 /**
- * Mapa global de navegação do membro. Os paths são contratos de rota e não devem
- * ser alterados quando apenas a arquitetura de informação ou o label mudarem.
+ * Navegação principal do membro organizada pela jornada real de uso.
+ * Rotas legadas permanecem compatíveis em App.tsx, mas não devem reaparecer
+ * como ferramentas duplicadas no menu.
  */
 export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
   {
@@ -32,51 +33,41 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
     ],
   },
   {
-    label: "Vendas & Rede",
+    label: "Vendas",
     items: [
       { icon: "orders", label: "Meus pedidos", path: "/membros/meus-pedidos" },
       { icon: "earnings", label: "Ganhos e extrato", path: "/membros/ganhos" },
-      { icon: "network", label: "Meus indicados", path: "/membros/rede" },
-      { icon: "invite", label: "Convidar pessoas", path: "/membros/convites" },
-      { icon: "sponsor", label: "Meu patrocinador", path: "/membros/patrocinador" },
-      { icon: "products", label: "Meus produtos", path: "/membros/produtos" },
     ],
   },
   {
-    label: "Divulgação & Contatos",
+    label: "Rede",
     items: [
-      { icon: "automation", label: "Automações", path: "/membros/automacoes" },
+      { icon: "network", label: "Minha rede", path: "/membros/rede" },
     ],
   },
   {
-    label: "Conteúdos & Materiais",
+    label: "Conteúdo",
     items: [
-      { icon: "blog", label: "Blog", path: "/membros/blog" },
       { icon: "articles", label: "Artigos", path: "/membros/artigos" },
       { icon: "materials", label: "Materiais e downloads", path: "/membros/materiais" },
-      { icon: "bonus", label: "Bônus e materiais extras", path: "/membros/bonus" },
-      { icon: "classified", label: "Classificados", path: "/membros/classificados" },
     ],
   },
   {
-    label: "Academia",
+    label: "Capacitação",
     items: [
       { icon: "academy", label: "Academia", path: "/membros/academia" },
       { icon: "ebooks", label: "Biblioteca de e-books", path: "/membros/ebooks" },
+      { icon: "certificate", label: "Certificados", path: "/membros/cartao-certificado" },
     ],
   },
   {
     label: "Desempenho",
     items: [
       { icon: "performance", label: "Meu desempenho", path: "/membros/pontos" },
-      { icon: "levels", label: "Pontos e níveis", path: "/membros/pontos-niveis" },
-      { icon: "ranking", label: "Ranking de pontos", path: "/membros/ranking" },
-      { icon: "results", label: "Ranking de resultados", path: "/membros/mais-lucrativos" },
-      { icon: "certificate", label: "Certificados", path: "/membros/cartao-certificado" },
     ],
   },
   {
-    label: "Apoio",
+    label: "Ajuda",
     items: [
       { icon: "support", label: "Fale conosco", path: "/membros/fale-conosco" },
       { icon: "testimonial", label: "Enviar depoimento", path: "/membros/fazer-depoimento" },

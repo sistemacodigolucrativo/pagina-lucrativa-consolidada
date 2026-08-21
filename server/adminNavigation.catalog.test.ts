@@ -5,10 +5,10 @@ const appSource = readFileSync(new URL("../client/src/App.tsx", import.meta.url)
 const adminNavigationSource = readFileSync(new URL("../client/src/lib/adminNavigation.ts", import.meta.url), "utf8");
 
 describe("navegação administrativa", () => {
-  it("direciona Catálogo para a manutenção de produtos com rota registrada", () => {
-    expect(adminNavigationSource).toContain('label: "Catálogo", path: "/admin/produtos"');
-    expect(adminNavigationSource).not.toContain('path: "/admin/catalogo"');
-    expect(appSource).toContain('<Route path="/admin/produtos" component={AdminProducts} />');
+  it("não expõe a curadoria de produtos removida", () => {
+    expect(adminNavigationSource).not.toContain('path: "/admin/produtos"');
+    expect(adminNavigationSource).not.toContain('label: "Catálogo"');
+    expect(appSource).not.toContain('component={AdminProducts}');
   });
 
   it("normaliza catálogos locais administrativos no layout compartilhado", () => {

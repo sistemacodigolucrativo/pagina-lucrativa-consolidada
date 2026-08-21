@@ -45,7 +45,6 @@ const iconByKey: Record<string, LucideIcon> = {
   network: UsersRound,
   invite: Send,
   sponsor: UserCog,
-  products: Boxes,
   campaigns: Link2,
   traffic: History,
   topVisits: ChartNoAxesCombined,

@@ -3,7 +3,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { applicationInputSchema } from "@shared/applications";
 import { normalizedEmailZodSchema, optionalPhoneZodSchema } from "@shared/contactValidation";
-import { httpUrlZodSchema, nonNegativeCentsZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, positiveCentsZodSchema, signedPointsZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
+import { httpUrlZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, positiveCentsZodSchema, signedPointsZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
 import {
   createAdminContent,
   createAdminEbook,
@@ -14,13 +14,11 @@ import {
   createMemberTicket,
   createMemberContact,
   createMemberInvitation,
-  createMemberProduct,
   deleteMemberCampaign,
   getAdminContent,
   getAdminEbook,
   getAdminEbooks,
   getAdminOverview,
-  getAdminProducts,
   getAdminTickets,
   getAdminContacts,
   getAdminActivities,
@@ -34,7 +32,6 @@ import {
   getFinanceMembers,
   createAdminTransaction,
   updateAdminTransaction,
-  getMemberProducts,
   getMemberProfile,
   getMemberAccount,
   getMemberReceivingPreference,
@@ -61,7 +58,6 @@ import {
   updateAdminContent,
   updateAdminContentStatus,
   updateAdminEbook,
-  updateAdminProductStatus,
   updateAdminTicket,
   updateAdminContact,
   updateMemberProfile,
@@ -69,7 +65,6 @@ import {
   updateMemberAccount,
   updateMemberReceivingPreference,
   updateMemberContact,
-  updateMemberProduct,
   setAdminReferralLink,
   getAdminReferralLinks,
   getReferralMembers,
@@ -101,6 +96,9 @@ const campaignInput = z.object({
   name: z.string().trim().min(3).max(160),
   slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(128),
   destinationUrl: httpUrlZodSchema,
+  source: z.string().trim().max(96).optional().nullable(),
+  medium: z.string().trim().max(96).optional().nullable(),
+  content: z.string().trim().max(160).optional().nullable(),
 });
 export const profileInput = z.object({
   slug: z.string().trim().toLowerCase().regex(/^(?=.*[a-z0-9])[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
@@ -162,7 +160,6 @@ export const receivingPreferenceInput = z.object({
   if (value.pixKey && value.pixType && !validatePixKeyByType(value.pixKey, value.pixType)) context.addIssue({ code: z.ZodIssueCode.custom, path: ["pixKey"], message: "A chave PIX não corresponde ao tipo selecionado." });
 }).transform(value => ({ ...value, receivingKey: value.method === "pix" && value.receivingKey ? normalizePixKey(value.receivingKey) : value.receivingKey?.trim() || null, pixKey: value.pixKey && value.pixType ? normalizePixKeyByType(value.pixKey, value.pixType) : value.pixKey?.trim() || null }));
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
-const productInput = z.object({ title: z.string().trim().min(3).max(240), description: z.string().trim().max(8000).optional().nullable(), category: z.string().trim().max(96).optional().nullable(), priceCents: nonNegativeCentsZodSchema });
 const courseInput = z.object({
   title: z.string().trim().min(3).max(240),
   summary: z.string().trim().max(8000).optional().nullable(),
@@ -231,9 +228,6 @@ export const appRouter = router({
     conversions: protectedProcedure.input(z.object({ period: z.enum(["7d", "30d", "90d", "all"]).default("30d") })).query(({ ctx, input }) => getMemberOperationConversions(ctx.user.id, input.period)),
     createCampaign: protectedProcedure.input(campaignInput).mutation(({ ctx, input }) => createMemberCampaign(ctx.user.id, input)),
     deleteCampaign: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => deleteMemberCampaign(ctx.user.id, input.id)),
-    products: protectedProcedure.query(({ ctx }) => getMemberProducts(ctx.user.id)),
-    createProduct: protectedProcedure.input(productInput).mutation(({ ctx, input }) => createMemberProduct(ctx.user.id, input)),
-    updateProduct: protectedProcedure.input(productInput.extend({ id: z.number().int().positive() })).mutation(({ ctx, input }) => { const { id, ...product } = input; return updateMemberProduct(ctx.user.id, id, product); }),
     finance: protectedProcedure.query(({ ctx }) => getMemberFinance(ctx.user.id)),
     createFinanceEntry: protectedProcedure.input(z.object({ type: z.enum(["sale", "withdrawal"]), description: z.string().trim().min(3).max(320), amountCents: positiveCentsZodSchema })).mutation(({ ctx, input }) => createMemberFinanceEntry(ctx.user.id, input)),
     academy: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
@@ -291,8 +285,6 @@ export const appRouter = router({
     createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
     updateCourse: adminProcedure.input(courseInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...course } = input; return updateAdminCourse(id, course); }),
     updateCoursePublication: adminProcedure.input(z.object({ id: z.number().int().positive(), isPublished: z.boolean() })).mutation(({ input }) => updateAdminCoursePublication(input.id, input.isPublished)),
-    products: adminProcedure.query(() => getAdminProducts()),
-    updateProductStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "active", "archived"]) })).mutation(({ input }) => updateAdminProductStatus(input.id, input.status)),
     content: adminProcedure.query(() => getAdminContent()),
     createContent: adminProcedure.input(contentInput).mutation(({ ctx, input }) => createAdminContent({ ...input, createdBy: ctx.user.id })),
     updateContent: adminProcedure.input(contentInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...content } = input; return updateAdminContent(id, content); }),

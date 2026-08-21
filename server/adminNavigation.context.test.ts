@@ -9,7 +9,8 @@ describe("navegação administrativa contextual", () => {
   it("mantém uma entrada única para catálogo e inclui a supervisão de comunicações", () => {
     const navigation = read("client/src/lib/adminNavigation.ts");
     expect(navigation).toContain('label: "Comunicações", path: "/admin/comunicacoes"');
-    expect((navigation.match(/path: "\/admin\/produtos"/g) ?? [])).toHaveLength(1);
+    expect(navigation).not.toContain('path: "/admin/produtos"');
+    expect(navigation).not.toContain('label: "Catálogo"');
   });
 
   it("aplica a navegação administrativa aos módulos de pedidos, financeiro e comunicações", () => {

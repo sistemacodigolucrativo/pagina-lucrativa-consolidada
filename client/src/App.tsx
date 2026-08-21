@@ -6,11 +6,9 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MemberOffice from "./pages/MemberOffice";
-import MemberOperations from "./pages/MemberOperations";
 import MemberOperationCenter from "./pages/MemberOperationCenter";
 import EbookReader from "./pages/EbookReader";
 import AdminEbooks from "./pages/AdminEbooks";
-import MemberProducts from "./pages/MemberProducts";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
 import MemberReceiving from "./pages/MemberReceiving";
@@ -20,7 +18,6 @@ import MemberCourses from "./pages/MemberCourses";
 import AdminCourses from "./pages/AdminCourses";
 import AdminTransactions from "./pages/AdminTransactions";
 import AdminPerformance from "./pages/AdminPerformance";
-import AdminProducts from "./pages/AdminProducts";
 import AdminPublications from "@/pages/AdminPublications";
 import AdminSalesImages from "@/pages/AdminSalesImages";
 import Preview from "@/pages/Preview";
@@ -29,12 +26,10 @@ import AdminOperations from "./pages/AdminOperations";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationTracking from "./pages/ApplicationTracking";
 import AdminApplications from "./pages/AdminApplications";
-import MemberCommunications from "./pages/MemberCommunications";
 import AdminCommunications from "./pages/AdminCommunications";
 import MemberReferrals from "./pages/MemberReferrals";
 import AdminReferrals from "./pages/AdminReferrals";
 import MemberPersonalization from "./pages/MemberPersonalization";
-import MemberTraffic from "./pages/MemberTraffic";
 import MemberCredentials from "./pages/MemberCredentials";
 import MemberTestimonial from "./pages/MemberTestimonial";
 import AdminTestimonials from "./pages/AdminTestimonials";
@@ -42,6 +37,9 @@ import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 import MemberProfile from "./pages/MemberProfile";
 import MemberAccount from "./pages/MemberAccount";
+import MemberGettingStarted from "./pages/MemberGettingStarted";
+import MemberSupport from "./pages/MemberSupport";
+import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
 import { DEV_PREFIX } from "./lib/devPath";
 import SpecialAccessPublic from "./pages/SpecialAccessPublic";
 import AdminSpecialAccess from "./pages/AdminSpecialAccess";
@@ -59,38 +57,55 @@ function AppRoutes() {
     <Route path="/membros/operacao/conversoes" component={MemberOperationCenter} />
     <Route path="/membros/operacao/contatos" component={MemberOperationCenter} />
     <Route path="/membros/operacao/historico" component={MemberOperationCenter} />
+    <Route path="/membros/operacao/:campaignId" component={MemberOperationCenter} />
     <Route path="/membros/ebooks" component={EbookReader} />
-    <Route path="/membros/produtos" component={MemberProducts} />
+    <Route path="/membros/produtos" component={MemberLegacyRedirect} />
     <Route path="/membros/rede" component={MemberReferrals} />
-    <Route path="/membros/patrocinador" component={MemberReferrals} />
-    <Route path="/membros/blog" component={MemberPublications} />
+
+
     <Route path="/membros/classificados" component={MemberPublications} />
     <Route path="/membros/materiais" component={MemberPublications} />
-    <Route path="/membros/bonus" component={MemberPublications} />
+
     <Route path="/membros/artigos" component={MemberPublications} />
     <Route path="/membros/perguntas-frequentes" component={MemberPublications} />
-    <Route path="/membros/emails-site" component={MemberCommunications} />
-    <Route path="/membros/emails-interessados" component={MemberCommunications} />
-    <Route path="/membros/emails-whatsapp" component={MemberCommunications} />
-    <Route path="/membros/automacoes" component={MemberCommunications} />
+
+
+
+
     <Route path="/membros/mensagem-especial" component={MemberPersonalization} />
     <Route path="/membros/fazer-depoimento" component={MemberTestimonial} />
     <Route path="/membros/meus-dados" component={MemberAccount} />
     <Route path="/membros/configuracoes" component={MemberProfile} />
-    <Route path="/membros/como-divulgar" component={MemberOperations} />
-    <Route path="/membros/campanhas" component={MemberOperations} />
-    <Route path="/membros/convites" component={MemberOperations} />
-    <Route path="/membros/fale-conosco" component={MemberOperations} />
+    <Route path="/membros/como-divulgar" component={MemberGettingStarted} />
+    <Route path="/membros/fale-conosco" component={MemberSupport} />
+    <Route path="/membros/campanhas" component={MemberLegacyRedirect} />
+    <Route path="/membros/convites" component={MemberLegacyRedirect} />
+    <Route path="/membros/historico" component={MemberLegacyRedirect} />
+    <Route path="/membros/top-visitas" component={MemberLegacyRedirect} />
+    <Route path="/membros/emails-site" component={MemberLegacyRedirect} />
+    <Route path="/membros/emails-interessados" component={MemberLegacyRedirect} />
+    <Route path="/membros/emails-whatsapp" component={MemberLegacyRedirect} />
+    <Route path="/membros/automacoes" component={MemberLegacyRedirect} />
+    <Route path="/membros/patrocinador" component={MemberLegacyRedirect} />
+    <Route path="/membros/pontos-niveis" component={MemberLegacyRedirect} />
+    <Route path="/membros/ranking" component={MemberLegacyRedirect} />
+    <Route path="/membros/mais-lucrativos" component={MemberLegacyRedirect} />
+    <Route path="/membros/blog" component={MemberLegacyRedirect} />
+    <Route path="/membros/bonus" component={MemberLegacyRedirect} />
+
+
+
+
     <Route path="/membros/cartao-certificado" component={MemberCredentials} />
-    <Route path="/membros/historico" component={MemberTraffic} />
-    <Route path="/membros/top-visitas" component={MemberTraffic} />
+
+
     <Route path="/membros/ganhos" component={MemberEarnings} />
     <Route path="/membros/recebimentos" component={MemberReceiving} />
     <Route path="/membros/meus-pedidos" component={MemberAffiliateOrders} />
     <Route path="/membros/pontos" component={MemberPerformance} />
-    <Route path="/membros/pontos-niveis" component={MemberPerformance} />
-    <Route path="/membros/ranking" component={MemberPerformance} />
-    <Route path="/membros/mais-lucrativos" component={MemberPerformance} />
+
+
+
     <Route path="/membros/academia" component={MemberCourses} />
     <Route path="/membros/curso-google-ads" component={MemberCourses} />
     <Route path="/membros/curso-facebook-ads" component={MemberCourses} />
@@ -114,7 +129,6 @@ function AppRoutes() {
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
-    <Route path="/admin/produtos" component={AdminProducts} />
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/imagens" component={AdminSalesImages} />
