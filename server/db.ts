@@ -1,6 +1,6 @@
 import { and, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
   applications,
@@ -1050,8 +1050,30 @@ export async function getMemberAffiliateApplication(userId: number, applicationI
 export async function getApplicationTracking(trackingCode: string, email: string) {
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select({ id: applications.id, status: applications.status, paymentStatus: applications.paymentStatus, activationStatus: applications.activationStatus, adminNote: applications.adminNote, createdAt: applications.createdAt, updatedAt: applications.updatedAt }).from(applications).where(and(eq(applications.trackingCode, trackingCode), eq(applications.email, email))).limit(1);
-  return rows[0] ?? null;
+  const rows = await db.select().from(applications).where(and(eq(applications.trackingCode, trackingCode.trim().toUpperCase()), eq(applications.email, email.trim().toLowerCase()))).limit(1);
+  const application = rows[0];
+  if (!application) return null;
+  const receiptRows = await db.select().from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.applicationId, application.id)).orderBy(desc(applicationPaymentReceipts.createdAt)).limit(1);
+  const activeTokens = application.paymentStatus === "confirmed"
+    ? await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.applicationId, application.id), eq(applicationAccessTokens.status, "active"))).orderBy(desc(applicationAccessTokens.createdAt)).limit(1)
+    : [];
+  const activeToken = activeTokens[0] ?? null;
+  return {
+    trackingCode: application.trackingCode,
+    createdAt: application.createdAt,
+    updatedAt: application.updatedAt,
+    offerAmountCents: application.offerAmountCents,
+    status: application.status,
+    paymentStatus: application.paymentStatus,
+    activationStatus: application.activationStatus,
+    latestReceiptStatus: receiptRows[0]?.status ?? null,
+    nextAction: application.paymentStatus === "confirmed" ? "personalize" : application.paymentStatus === "rejected" ? "retry_receipt" : application.paymentStatus === "receipt_received" ? "wait_review" : "pay",
+    access: activeToken ? {
+      publicCode: activeToken.publicCode,
+      password: decryptAccessToken(activeToken.encryptedToken),
+      specialAccessUrl: `/senha-especial/${activeToken.publicCode}`,
+    } : null,
+  };
 }
 
 export async function getApplicationPaymentPage(trackingCode: string) {
@@ -1152,7 +1174,14 @@ export async function reviewPaymentReceipt(userId: number, input: { applicationI
   const receiptRows = await db.select().from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.id, input.receiptId), eq(applicationPaymentReceipts.applicationId, input.applicationId), eq(applicationPaymentReceipts.ownerUserId, userId))).limit(1);
   if (!receiptRows[0]) throw new Error("Comprovante não encontrado.");
   await db.update(applicationPaymentReceipts).set({ status: input.status, reviewedAt: new Date(), reviewedBy: userId }).where(eq(applicationPaymentReceipts.id, input.receiptId));
-  await db.update(applications).set({ paymentStatus: input.status === "approved" ? "confirmed" : "rejected", status: input.status === "approved" ? "approved" : "contacted" }).where(eq(applications.id, input.applicationId));
+  if (input.status === "approved") {
+    await ensureApplicationAccessToken(rows[0], userId);
+  }
+  await db.update(applications).set({
+    paymentStatus: input.status === "approved" ? "confirmed" : "rejected",
+    activationStatus: input.status === "approved" ? "access_issued" : "not_started",
+    status: input.status === "approved" ? "approved" : "contacted",
+  }).where(eq(applications.id, input.applicationId));
   return { success: true } as const;
 }
 export async function updateAdminApplication(applicationId: number, input: { status: "pending" | "contacted" | "approved" | "archived"; adminNote?: string | null }) {
@@ -1401,6 +1430,59 @@ function verifySpecialAccessPassword(password: string, passwordHash: string | nu
   return timingSafeEqual(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
 }
 
+function accessTokenEncryptionKey() {
+  const secret = ENV.cookieSecret || process.env.JWT_SECRET || "pagina-lucrativa-local-access-token-key";
+  return createHash("sha256").update(secret).digest();
+}
+
+function encryptAccessToken(token: string) {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv("aes-256-gcm", accessTokenEncryptionKey(), iv);
+  const encrypted = Buffer.concat([cipher.update(token, "utf8"), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString("base64url")}.${tag.toString("base64url")}.${encrypted.toString("base64url")}`;
+}
+
+function decryptAccessToken(payload: string | null) {
+  if (!payload) return null;
+  const [ivRaw, tagRaw, encryptedRaw] = payload.split(".");
+  if (!ivRaw || !tagRaw || !encryptedRaw) return null;
+  try {
+    const decipher = createDecipheriv("aes-256-gcm", accessTokenEncryptionKey(), Buffer.from(ivRaw, "base64url"));
+    decipher.setAuthTag(Buffer.from(tagRaw, "base64url"));
+    return Buffer.concat([decipher.update(Buffer.from(encryptedRaw, "base64url")), decipher.final()]).toString("utf8");
+  } catch {
+    return null;
+  }
+}
+
+function generateReadableAccessToken() {
+  return randomBytes(6).toString("base64url").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
+}
+
+async function ensureApplicationAccessToken(application: typeof applications.$inferSelect, createdBy: number) {
+  if (!application.ownerUserId) throw new Error("Pedido sem responsável.");
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const existing = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.applicationId, application.id), eq(applicationAccessTokens.status, "active"))).orderBy(desc(applicationAccessTokens.createdAt)).limit(1);
+  if (existing[0]) {
+    return { tokenRow: existing[0], plainToken: decryptAccessToken(existing[0].encryptedToken) };
+  }
+  const plainToken = generateReadableAccessToken();
+  const publicCode = randomUUID().replace(/-/g, "").slice(0, 16);
+  await db.insert(applicationAccessTokens).values({
+    applicationId: application.id,
+    ownerUserId: application.ownerUserId,
+    publicCode,
+    tokenHash: hashSpecialAccessPassword(plainToken),
+    encryptedToken: encryptAccessToken(plainToken),
+    status: "active",
+    createdBy,
+  });
+  const created = await db.select().from(applicationAccessTokens).where(eq(applicationAccessTokens.publicCode, publicCode)).limit(1);
+  return { tokenRow: created[0], plainToken };
+}
+
 function newSpecialAccessCode() {
   return randomUUID().replace(/-/g, "").slice(0, 16);
 }
@@ -1463,6 +1545,19 @@ export async function updateMemberSpecialAccess(userId: number, input: SpecialAc
 export async function getPublicSpecialAccess(publicCode: string) {
   const db = await getDb();
   if (!db) return null;
+  const applicationTokenRows = await db.select({
+    publicCode: applicationAccessTokens.publicCode,
+    fullName: applications.fullName,
+    status: applicationAccessTokens.status,
+  }).from(applicationAccessTokens).innerJoin(applications, eq(applications.id, applicationAccessTokens.applicationId)).where(and(eq(applicationAccessTokens.publicCode, publicCode), eq(applicationAccessTokens.status, "active"), eq(applications.paymentStatus, "confirmed"))).limit(1);
+  if (applicationTokenRows[0]) {
+    return {
+      publicCode: applicationTokenRows[0].publicCode,
+      title: "Personalização liberada",
+      message: `Pagamento aprovado. Use a senha especial recebida para continuar a personalização da sua Página Lucrativa.`,
+      buttonLabel: "Personalizar minha Página Lucrativa",
+    };
+  }
   const rows = await db.select({ publicCode: specialAccessPages.publicCode, title: specialAccessPages.title, message: specialAccessPages.message, buttonLabel: specialAccessPages.buttonLabel }).from(specialAccessPages).where(and(eq(specialAccessPages.publicCode, publicCode), eq(specialAccessPages.status, "published"))).limit(1);
   return rows[0] ?? null;
 }
@@ -1470,6 +1565,15 @@ export async function getPublicSpecialAccess(publicCode: string) {
 export async function unlockPublicSpecialAccess(publicCode: string, password: string) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
+  const applicationTokenRows = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.publicCode, publicCode), eq(applicationAccessTokens.status, "active"))).limit(1);
+  const applicationToken = applicationTokenRows[0];
+  if (applicationToken) {
+    const applicationRows = await db.select().from(applications).where(and(eq(applications.id, applicationToken.applicationId), eq(applications.paymentStatus, "confirmed"))).limit(1);
+    if (!applicationRows[0] || !verifySpecialAccessPassword(password, applicationToken.tokenHash)) throw new Error("Senha inválida ou acesso indisponível.");
+    await db.update(applicationAccessTokens).set({ accessCount: applicationToken.accessCount + 1, lastAccessAt: new Date() }).where(eq(applicationAccessTokens.id, applicationToken.id));
+    await db.update(applications).set({ activationStatus: "personalization_started" }).where(eq(applications.id, applicationToken.applicationId));
+    return { destinationUrl: `/personalizar?codigo=${encodeURIComponent(publicCode)}` };
+  }
   const rows = await db.select().from(specialAccessPages).where(and(eq(specialAccessPages.publicCode, publicCode), eq(specialAccessPages.status, "published"))).limit(1);
   const page = rows[0];
   if (!page || !verifySpecialAccessPassword(password, page.passwordHash)) throw new Error("Senha inválida ou acesso indisponível.");

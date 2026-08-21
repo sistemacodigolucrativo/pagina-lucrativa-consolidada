@@ -412,6 +412,7 @@ export const applicationAccessTokens = mysqlTable("applicationAccessTokens", {
   ownerUserId: int("ownerUserId").notNull(),
   publicCode: varchar("publicCode", { length: 48 }).notNull(),
   tokenHash: varchar("tokenHash", { length: 255 }).notNull(),
+  encryptedToken: varchar("encryptedToken", { length: 512 }),
   status: mysqlEnum("status", ["active", "revoked", "used"]).default("active").notNull(),
   accessCount: int("accessCount").default(0).notNull(),
   lastAccessAt: timestamp("lastAccessAt"),

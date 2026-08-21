@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
+  Bell,
   ChevronDown,
   LayoutDashboard,
   LogOut,
@@ -37,6 +38,7 @@ import {
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { trpc } from "@/lib/trpc";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import {
   isMemberOfficeNavigation,
@@ -161,6 +163,17 @@ function DashboardLayoutContent({
   }, {});
   const isMobile = useIsMobile();
   const memberOfficeNavigation = isMemberOfficeNavigation(menuItems);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notifications = trpc.member.notifications.useQuery(undefined, {
+    enabled: memberOfficeNavigation && user?.role === "user",
+    refetchInterval: 30000,
+  });
+  const markNotificationRead = trpc.member.markNotificationRead.useMutation({
+    onSuccess: async notification => {
+      await notifications.refetch();
+      if (notification.entityType === "application") setLocation(`/membros/meus-pedidos`);
+    },
+  });
 
   const isGroupOpen = (group: string, items: DashboardMenuItem[]) => {
     if (groupOverrides[group] !== undefined) return groupOverrides[group];
@@ -353,6 +366,18 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        {memberOfficeNavigation && user?.role === "user" ? (
+          <div className="fixed right-4 top-4 z-50">
+            <button type="button" aria-label={`Notificações${notifications.data?.unreadCount ? `: ${notifications.data.unreadCount} não lidas` : ""}`} onClick={() => setNotificationsOpen(current => !current)} className="relative inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-zinc-950/95 text-zinc-100 shadow-xl backdrop-blur transition hover:border-emerald-300/40 hover:text-emerald-200">
+              <Bell className="size-4" />
+              {notifications.data?.unreadCount ? <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-emerald-300 px-1.5 py-0.5 text-center text-[10px] font-bold text-black">{notifications.data.unreadCount}</span> : null}
+            </button>
+            {notificationsOpen ? <section className="absolute right-0 mt-2 max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950 p-3 shadow-2xl">
+              <h2 className="px-2 pb-2 text-sm font-medium text-white">Notificações</h2>
+              {notifications.isLoading ? <p className="px-2 py-3 text-sm text-zinc-400">Carregando...</p> : notifications.data?.items.length ? <div className="space-y-2">{notifications.data.items.map(item => <button key={item.id} type="button" onClick={() => markNotificationRead.mutate({ id: item.id })} className="block w-full rounded-xl border border-white/10 bg-black/25 p-3 text-left text-sm transition hover:bg-white/[0.04]"><div className="flex items-start justify-between gap-3"><strong className="text-white">{item.title}</strong>{!item.readAt ? <span className="mt-1 size-2 shrink-0 rounded-full bg-emerald-300" aria-label="Não lida" /> : null}</div><p className="mt-1 line-clamp-2 whitespace-pre-wrap text-xs leading-5 text-zinc-400">{item.message}</p><time className="mt-2 block text-[11px] text-zinc-500">{new Date(item.createdAt).toLocaleString("pt-BR")}</time></button>)}</div> : <p className="px-2 py-3 text-sm text-zinc-400">Nenhuma notificação.</p>}
+            </section> : null}
+          </div>
+        ) : null}
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
