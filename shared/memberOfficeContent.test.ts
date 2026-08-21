@@ -5,6 +5,11 @@ describe("catálogo do Escritório Virtual", () => {
   it("mantém uma navegação enxuta, sem ferramentas duplicadas", () => {
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
     expect(memberOfficeModuleCount).toBe(18);
+    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
+      icon: "operation",
+      label: "Central de Divulgação",
+      path: "/membros/operacao",
+    });
     expect(paths).toContain("/membros/como-divulgar");
     expect(paths).toContain("/membros/operacao");
     expect(paths).toContain("/membros/recebimentos");

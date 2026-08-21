@@ -62,6 +62,13 @@ Ao rejeitar:
 - `/pedido/acompanhar`
 - `/senha-especial/:code`
 - `/membros/meus-pedidos`
+- `/membros/operacao/*` mantém as rotas técnicas da Central de Divulgação, incluindo campanhas, tráfego, conversões, contatos e histórico.
+
+## Navegação do membro
+
+A área anteriormente apresentada ao membro como `Minha operação` passou a ser apresentada como `Central de Divulgação`.
+
+As rotas técnicas `/membros/operacao/*` foram preservadas por compatibilidade e estabilidade arquitetural. A seção `/membros/operacao/campanhas` é exibida ao membro como `Campanhas`, sem renomear o domínio técnico interno de campanhas.
 
 ## Segurança
 

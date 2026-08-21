@@ -20,7 +20,7 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
     items: [
       { icon: "overview", label: "Visão geral", path: "/membros" },
       { icon: "how", label: "Primeiros passos", path: "/membros/como-divulgar" },
-      { icon: "operation", label: "Minha operação", path: "/membros/operacao" },
+      { icon: "operation", label: "Central de Divulgação", path: "/membros/operacao" },
     ],
   },
   {

@@ -20,6 +20,11 @@ describe("memberOfficeNavigation", () => {
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
     expect(new Set(paths).size).toBe(paths.length);
     expect(itemsFor("Início")).toEqual(["/membros", "/membros/como-divulgar", "/membros/operacao"]);
+    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
+      icon: "operation",
+      label: "Central de Divulgação",
+      path: "/membros/operacao",
+    });
     expect(itemsFor("Rede")).toEqual(["/membros/rede"]);
     expect(itemsFor("Desempenho")).toEqual(["/membros/pontos"]);
   });

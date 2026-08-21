@@ -12,14 +12,14 @@ type Period = "7d" | "30d" | "90d" | "all";
 type ContactStatus = "new" | "contacted" | "qualified" | "archived";
 
 const menu: DashboardMenuItem[] = [
-  { icon: BarChart3, label: "Minha operação", path: "/membros/operacao", group: "Início" },
+  { icon: BarChart3, label: "Central de Divulgação", path: "/membros/operacao", group: "Início" },
   { icon: Link2, label: "Minha página e perfil", path: "/membros/configuracoes", group: "Minha página" },
   { icon: UsersRound, label: "Minha rede", path: "/membros/rede", group: "Rede" },
 ];
 
 const tabs = [
   { key: "overview", label: "Visão geral", path: "/membros/operacao" },
-  { key: "campaigns", label: "Operações", path: "/membros/operacao/campanhas" },
+  { key: "campaigns", label: "Campanhas", path: "/membros/operacao/campanhas" },
   { key: "traffic", label: "Tráfego", path: "/membros/operacao/trafego" },
   { key: "conversions", label: "Conversões", path: "/membros/operacao/conversoes" },
   { key: "contacts", label: "Contatos", path: "/membros/operacao/contatos" },
@@ -71,14 +71,14 @@ export default function MemberOperationCenter() {
     onSuccess: async () => {
       setCampaignForm({ name: "", slug: "", destinationUrl: referralUrl, source: "", medium: "social", content: "" });
       await Promise.all([utils.member.campaigns.invalidate(), utils.member.analytics.invalidate()]);
-      toast.success("Operação criada.");
+      toast.success("Campanha criada.");
     },
     onError: error => toast.error(error.message),
   });
   const deleteCampaign = trpc.member.deleteCampaign.useMutation({
     onSuccess: async () => {
       await Promise.all([utils.member.campaigns.invalidate(), utils.member.analytics.invalidate()]);
-      toast.success("Operação removida.");
+      toast.success("Campanha removida.");
     },
     onError: error => toast.error(error.message),
   });
@@ -151,26 +151,32 @@ export default function MemberOperationCenter() {
     createInvitation.mutate({ contactId: invitation.contactId ? Number(invitation.contactId) : null, channel: invitation.channel, message: invitation.message || null });
   };
 
-  const title = activeTab === "detail" ? (selectedCampaign?.name ?? "Operação") : activeTab === "campaigns" ? "Operações" : activeTab === "traffic" ? "Tráfego" : activeTab === "conversions" ? "Conversões" : activeTab === "contacts" ? "Contatos" : activeTab === "history" ? "Histórico" : "Minha operação";
+  const title = activeTab === "detail" ? (selectedCampaign?.name ?? "Campanha") : activeTab === "campaigns" ? "Campanhas" : activeTab === "traffic" ? "Tráfego" : activeTab === "conversions" ? "Conversões" : activeTab === "contacts" ? "Contatos" : activeTab === "history" ? "Histórico" : "Visão geral";
   const description = activeTab === "overview"
-    ? "Veja primeiro as métricas globais. Depois abra cada operação para entender exatamente qual origem está gerando acessos e resultados."
+    ? "Acompanhe em um só lugar o desempenho das suas campanhas de divulgação."
     : activeTab === "campaigns"
-      ? "Crie operações rastreáveis para Facebook, Instagram, WhatsApp ou qualquer outra origem que você queira medir."
+      ? "Crie e gerencie campanhas de divulgação com links rastreáveis."
       : activeTab === "detail"
-        ? "Métricas exclusivas desta operação no período selecionado."
-        : "Acompanhe dados próprios da sua operação com filtros por período e identificação de origem.";
+        ? "Métricas exclusivas desta campanha no período selecionado."
+        : activeTab === "traffic"
+          ? "Acompanhe acessos, visitantes e sessões gerados pelas suas campanhas."
+          : activeTab === "conversions"
+            ? "Acompanhe as conversões e os resultados gerados pelas suas campanhas de divulgação."
+            : activeTab === "contacts"
+              ? "Organize contatos consentidos e comunicações vinculadas às suas campanhas."
+              : "Consulte os registros recentes da sua divulgação por período e origem.";
 
   return (
     <DashboardLayout menuItems={menu} title="Escritório Virtual">
       <main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8">
         <header className="space-y-2">
-          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Central operacional</span>
-          {activeTab === "detail" ? <a href={withAppBase("/membros/operacao/campanhas")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white"><ArrowLeft className="size-4" />Voltar para operações</a> : null}
+          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Central de Divulgação</span>
+          {activeTab === "detail" ? <a href={withAppBase("/membros/operacao/campanhas")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white"><ArrowLeft className="size-4" />Voltar para campanhas</a> : null}
           <h1 className="text-3xl font-semibold text-white">{title}</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">{description}</p>
         </header>
 
-        {activeTab !== "detail" ? <nav className="flex min-w-0 gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-zinc-950/60 p-2" aria-label="Abas de Minha operação">
+        {activeTab !== "detail" ? <nav className="flex min-w-0 gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-zinc-950/60 p-2" aria-label="Abas da Central de Divulgação">
           {tabs.map(tab => <a key={tab.key} href={withAppBase(tab.path)} className={`shrink-0 rounded-xl px-3 py-2 text-sm transition ${activeTab === tab.key ? "bg-emerald-300 font-semibold text-black" : "text-zinc-300 hover:bg-white/10 hover:text-white"}`}>{tab.label}</a>)}
         </nav> : null}
 
@@ -183,53 +189,53 @@ export default function MemberOperationCenter() {
 
         {activeTab === "overview" && <section className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <Metric label="Operações" value={analytics.data?.totals.campaigns ?? 0} detail="links rastreáveis" />
-            <Metric label="Cliques" value={analytics.data?.totals.clicks ?? 0} detail="todas as operações" accent />
-            <Metric label="Visitantes únicos" value={analytics.data?.totals.uniqueVisitors ?? 0} detail="todas as operações" />
-            <Metric label="Sessões" value={analytics.data?.totals.sessions ?? 0} detail="todas as operações" />
-            <Metric label="Conversões" value={analytics.data?.totals.conversions ?? 0} detail="todas as operações" />
+            <Metric label="Campanhas" value={analytics.data?.totals.campaigns ?? 0} detail="links rastreáveis" />
+            <Metric label="Cliques" value={analytics.data?.totals.clicks ?? 0} detail="todas as campanhas" accent />
+            <Metric label="Visitantes únicos" value={analytics.data?.totals.uniqueVisitors ?? 0} detail="todas as campanhas" />
+            <Metric label="Sessões" value={analytics.data?.totals.sessions ?? 0} detail="todas as campanhas" />
+            <Metric label="Conversões" value={analytics.data?.totals.conversions ?? 0} detail="todas as campanhas" />
           </div>
-          <Panel title="Desempenho por operação" icon={<MousePointerClick className="size-5 text-emerald-300" />}>
-            {orderedCampaigns.length ? <div className="space-y-3">{orderedCampaigns.map(item => <OperationSummary key={item.id} item={item} />)}</div> : <Empty text="Você ainda não criou nenhuma operação. Crie seu primeiro link rastreável para começar a medir sua divulgação." />}
+          <Panel title="Desempenho por campanha" icon={<MousePointerClick className="size-5 text-emerald-300" />}>
+            {orderedCampaigns.length ? <div className="space-y-3">{orderedCampaigns.map(item => <OperationSummary key={item.id} item={item} />)}</div> : <Empty text="Você ainda não criou nenhuma campanha. Crie seu primeiro link rastreável para começar a medir sua divulgação." />}
           </Panel>
         </section>}
 
         {activeTab === "campaigns" && <section className="space-y-6">
           <form onSubmit={submitCampaign} className="grid gap-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5 lg:grid-cols-2">
-            <div className="lg:col-span-2"><h2 className="font-medium text-white">Criar nova operação</h2><p className="mt-1 text-sm text-zinc-400">O slug identifica a origem no seu link. Exemplo: facebook, instagram-bio ou whatsapp-grupo.</p></div>
-            <label className="text-sm text-zinc-200">Nome da operação<input required value={campaignForm.name} onChange={event => setCampaignForm({ ...campaignForm, name: event.target.value })} className={fieldClass} placeholder="Facebook — Perfil" /></label>
+            <div className="lg:col-span-2"><h2 className="font-medium text-white">Criar nova campanha</h2><p className="mt-1 text-sm text-zinc-400">O slug identifica a origem no seu link. Exemplo: facebook, instagram-bio ou whatsapp-grupo.</p></div>
+            <label className="text-sm text-zinc-200">Nome da campanha<input required value={campaignForm.name} onChange={event => setCampaignForm({ ...campaignForm, name: event.target.value })} className={fieldClass} placeholder="Facebook - Perfil" /></label>
             <label className="text-sm text-zinc-200">Slug<input required value={campaignForm.slug} onChange={event => setCampaignForm({ ...campaignForm, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} className={fieldClass} placeholder="facebook" /></label>
             <label className="text-sm text-zinc-200">Origem<select value={campaignForm.source} onChange={event => setCampaignForm({ ...campaignForm, source: event.target.value })} className={fieldClass}><option value="">Outra / não definida</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="youtube">YouTube</option><option value="google">Google</option><option value="tiktok">TikTok</option></select></label>
             <label className="text-sm text-zinc-200">Meio<select value={campaignForm.medium} onChange={event => setCampaignForm({ ...campaignForm, medium: event.target.value })} className={fieldClass}><option value="social">Social</option><option value="messaging">Mensagem</option><option value="paid">Anúncio pago</option><option value="organic">Orgânico</option><option value="referral">Indicação</option><option value="other">Outro</option></select></label>
             <label className="text-sm text-zinc-200">Identificação do conteúdo<input value={campaignForm.content} onChange={event => setCampaignForm({ ...campaignForm, content: event.target.value })} className={fieldClass} placeholder="reels-01, bio, grupo-a..." /></label>
             <label className="text-sm text-zinc-200">Destino automático<input readOnly value={campaignForm.destinationUrl} className={`${fieldClass} cursor-not-allowed text-zinc-400`} placeholder="Configure sua Página Lucrativa" /></label>
-            <div className="lg:col-span-2"><button disabled={createCampaign.isPending || !profileSlug} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"><Plus className="size-4" />Criar operação</button>{!profileSlug ? <a href={withAppBase("/membros/configuracoes")} className="ml-3 text-sm text-amber-200 underline">Configure sua página primeiro</a> : null}</div>
+            <div className="lg:col-span-2"><button disabled={createCampaign.isPending || !profileSlug} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"><Plus className="size-4" />Criar campanha</button>{!profileSlug ? <a href={withAppBase("/membros/configuracoes")} className="ml-3 text-sm text-amber-200 underline">Configure sua página primeiro</a> : null}</div>
           </form>
-          <Panel title="Minhas operações" icon={<Link2 className="size-5 text-emerald-300" />}>
-            {campaigns.data?.length ? <div className="space-y-3">{campaigns.data.map(item => <CampaignRow key={item.id} campaign={item} analytics={orderedCampaigns.find(row => row.id === item.id)} profileSlug={profileSlug} copiedId={copiedId} onCopy={copyLink} onDelete={id => deleteCampaign.mutate({ id })} />)}</div> : <Empty text="Nenhuma operação criada ainda." />}
+          <Panel title="Minhas campanhas" icon={<Link2 className="size-5 text-emerald-300" />}>
+            {campaigns.data?.length ? <div className="space-y-3">{campaigns.data.map(item => <CampaignRow key={item.id} campaign={item} analytics={orderedCampaigns.find(row => row.id === item.id)} profileSlug={profileSlug} copiedId={copiedId} onCopy={copyLink} onDelete={id => deleteCampaign.mutate({ id })} />)}</div> : <Empty text="Nenhuma campanha criada ainda." />}
           </Panel>
         </section>}
 
         {activeTab === "detail" && (selectedCampaign ? <section className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-            <Metric label="Cliques" value={selectedCampaign.eventClicks} detail="nesta operação" accent />
-            <Metric label="Visitantes únicos" value={selectedCampaign.uniqueVisitors} detail="nesta operação" />
-            <Metric label="Sessões" value={selectedCampaign.sessions} detail="nesta operação" />
-            <Metric label="Conversões" value={selectedCampaign.periodConversions} detail="nesta operação" />
+            <Metric label="Cliques" value={selectedCampaign.eventClicks} detail="nesta campanha" accent />
+            <Metric label="Visitantes únicos" value={selectedCampaign.uniqueVisitors} detail="nesta campanha" />
+            <Metric label="Sessões" value={selectedCampaign.sessions} detail="nesta campanha" />
+            <Metric label="Conversões" value={selectedCampaign.periodConversions} detail="nesta campanha" />
             <article className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4"><span className="text-xs uppercase tracking-wider text-zinc-500">Taxa de conversão</span><strong className="mt-2 block text-3xl text-white">{conversionRate(selectedCampaign.periodConversions, selectedCampaign.uniqueVisitors)}</strong><small className="mt-1 block text-zinc-500">conversões ÷ visitantes</small></article>
           </div>
-          <Panel title="Identificação da operação" icon={<Link2 className="size-5 text-emerald-300" />}>
+          <Panel title="Identificação da campanha" icon={<Link2 className="size-5 text-emerald-300" />}>
             <div className="grid gap-4 md:grid-cols-2"><Info label="Link rastreável" value={campaignUrl(profileSlug, selectedCampaign.slug)} /><Info label="Slug" value={selectedCampaign.slug} /><Info label="Origem" value={selectedCampaign.source || "Não definida"} /><Info label="Meio" value={selectedCampaign.medium || "Não definido"} /><Info label="Conteúdo" value={selectedCampaign.content || "Não definido"} /><Info label="Status" value={selectedCampaign.status} /></div>
           </Panel>
-          <Panel title="Conversões desta operação" icon={<ClipboardList className="size-5 text-emerald-300" />}>
-            {selectedConversions.length ? <div className="divide-y divide-white/10">{selectedConversions.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><h3 className="font-medium text-white">{item.conversionType}</h3><p className="text-sm text-zinc-400">{item.captureMode === "automatic" ? "Atribuída automaticamente" : "Registrada manualmente"}</p></div><span className="text-sm text-zinc-500">{formatDate(item.occurredAt)}</span></div>)}</div> : <Empty text="Nenhuma conversão atribuída a esta operação no período." />}
+          <Panel title="Conversões desta campanha" icon={<ClipboardList className="size-5 text-emerald-300" />}>
+            {selectedConversions.length ? <div className="divide-y divide-white/10">{selectedConversions.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><h3 className="font-medium text-white">{item.conversionType}</h3><p className="text-sm text-zinc-400">{item.captureMode === "automatic" ? "Atribuída automaticamente" : "Registrada manualmente"}</p></div><span className="text-sm text-zinc-500">{formatDate(item.occurredAt)}</span></div>)}</div> : <Empty text="Nenhuma conversão atribuída a esta campanha no período." />}
           </Panel>
-          <Panel title="Atividade recente desta operação" icon={<History className="size-5 text-emerald-300" />}>
-            {selectedEvents.length ? <div className="divide-y divide-white/10">{selectedEvents.map((event, index) => <div key={`${event.campaignId}-${event.occurredAt.toString()}-${index}`} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><h3 className="font-medium text-white">Clique registrado</h3><p className="text-sm text-zinc-400">{event.deviceType || "dispositivo não informado"}{event.referrerOrigin ? ` · ${event.referrerOrigin}` : ""}</p></div><span className="text-sm text-zinc-500">{formatDate(event.occurredAt)}</span></div>)}</div> : <Empty text="Nenhum evento recente desta operação no período." />}
+          <Panel title="Atividade recente desta campanha" icon={<History className="size-5 text-emerald-300" />}>
+            {selectedEvents.length ? <div className="divide-y divide-white/10">{selectedEvents.map((event, index) => <div key={`${event.campaignId}-${event.occurredAt.toString()}-${index}`} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><h3 className="font-medium text-white">Clique registrado</h3><p className="text-sm text-zinc-400">{event.deviceType || "dispositivo não informado"}{event.referrerOrigin ? ` · ${event.referrerOrigin}` : ""}</p></div><span className="text-sm text-zinc-500">{formatDate(event.occurredAt)}</span></div>)}</div> : <Empty text="Nenhum evento recente desta campanha no período." />}
           </Panel>
-        </section> : <Empty text="Operação não encontrada ou sem dados disponíveis." />)}
+        </section> : <Empty text="Campanha não encontrada ou sem dados disponíveis." />)}
 
-        {activeTab === "traffic" && <Panel title="Tráfego por operação" icon={<MousePointerClick className="size-5 text-emerald-300" />}>
+        {activeTab === "traffic" && <Panel title="Tráfego por campanha" icon={<MousePointerClick className="size-5 text-emerald-300" />}>
           <div className="mb-5 grid gap-4 sm:grid-cols-3"><Metric label="Cliques" value={analytics.data?.totals.clicks ?? 0} detail="globais" accent /><Metric label="Visitantes únicos" value={analytics.data?.totals.uniqueVisitors ?? 0} detail="globais" /><Metric label="Sessões" value={analytics.data?.totals.sessions ?? 0} detail="globais" /></div>
           {orderedCampaigns.length ? <div className="space-y-3">{orderedCampaigns.map(item => <OperationSummary key={item.id} item={item} />)}</div> : <Empty text="Ainda não há eventos de tráfego." />}
         </Panel>}
@@ -242,18 +248,18 @@ export default function MemberOperationCenter() {
         {activeTab === "contacts" && <section className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">
           <form onSubmit={submitContact} className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
             <div className="flex items-center gap-2 text-white"><UsersRound className="size-5 text-emerald-300" /><h2 className="font-medium">Registrar contato consentido</h2></div>
-            <p className="text-sm leading-6 text-zinc-400">Salve somente contatos que autorizaram o registro. Associe uma operação quando souber a origem.</p>
+            <p className="text-sm leading-6 text-zinc-400">Salve somente contatos que autorizaram o registro. Associe uma campanha quando souber a origem.</p>
             <label className="block text-sm text-zinc-200">Nome<input required value={contact.name} onChange={event => setContact({ ...contact, name: event.target.value })} className={fieldClass} /></label>
             <label className="block text-sm text-zinc-200">E-mail<input required type="email" value={contact.email} onChange={event => setContact({ ...contact, email: event.target.value })} className={fieldClass} /></label>
             <label className="block text-sm text-zinc-200">WhatsApp<PhoneInput value={contact.whatsapp} onChange={whatsapp => setContact({ ...contact, whatsapp })} className={fieldClass} /></label>
             <label className="block text-sm text-zinc-200">Origem<input required value={contact.source} onChange={event => setContact({ ...contact, source: event.target.value })} className={fieldClass} placeholder="Facebook, conversa presencial..." /></label>
-            <label className="block text-sm text-zinc-200">Operação associada<select value={contact.campaignId} onChange={event => setContact({ ...contact, campaignId: event.target.value })} className={fieldClass}><option value="">Sem operação</option>{campaigns.data?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+            <label className="block text-sm text-zinc-200">Campanha associada<select value={contact.campaignId} onChange={event => setContact({ ...contact, campaignId: event.target.value })} className={fieldClass}><option value="">Sem campanha</option>{campaigns.data?.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
             <label className="block text-sm text-zinc-200">Registro do consentimento<textarea value={contact.consentNote} onChange={event => setContact({ ...contact, consentNote: event.target.value })} className={`${fieldClass} min-h-20`} /></label>
             <label className="flex items-start gap-2 text-sm text-zinc-200"><input required type="checkbox" checked={contact.consent} onChange={event => setContact({ ...contact, consent: event.target.checked })} className="mt-1" />Confirmo que há consentimento explícito.</label>
             <button disabled={createContact.isPending} className="inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"><UsersRound className="size-4" />Registrar contato</button>
           </form>
           <Panel title="Contatos registrados" icon={<UsersRound className="size-5 text-emerald-300" />}>
-            {contacts.data?.length ? <div className="space-y-3">{contacts.data.map(item => <article key={item.id} className="rounded-xl border border-white/10 bg-black/30 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-medium text-white">{item.name}</h3><p className="text-sm text-zinc-400">{item.email}{item.whatsapp ? ` · ${item.whatsapp}` : ""}</p><p className="mt-1 text-xs text-emerald-200">{item.captureType === "campaign" ? "Lead associado a operação" : "Contato manual"} · {item.source}</p></div><select value={item.status} onChange={event => updateContact.mutate({ id: item.id, status: event.target.value as ContactStatus })} className="rounded-lg border border-white/15 bg-black px-2 py-2 text-sm text-white"><option value="new">Novo</option><option value="contacted">Contatado</option><option value="qualified">Qualificado</option><option value="archived">Arquivado</option></select></div></article>)}</div> : <Empty text="Nenhum contato consentido registrado." />}
+            {contacts.data?.length ? <div className="space-y-3">{contacts.data.map(item => <article key={item.id} className="rounded-xl border border-white/10 bg-black/30 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-medium text-white">{item.name}</h3><p className="text-sm text-zinc-400">{item.email}{item.whatsapp ? ` · ${item.whatsapp}` : ""}</p><p className="mt-1 text-xs text-emerald-200">{item.captureType === "campaign" ? "Lead associado a campanha" : "Contato manual"} · {item.source}</p></div><select value={item.status} onChange={event => updateContact.mutate({ id: item.id, status: event.target.value as ContactStatus })} className="rounded-lg border border-white/15 bg-black px-2 py-2 text-sm text-white"><option value="new">Novo</option><option value="contacted">Contatado</option><option value="qualified">Qualificado</option><option value="archived">Arquivado</option></select></div></article>)}</div> : <Empty text="Nenhum contato consentido registrado." />}
           </Panel>
           <div className="lg:col-span-2 space-y-4">
             <form onSubmit={submitInvitation} className="grid gap-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5 lg:grid-cols-[1fr_1fr_2fr_auto] lg:items-end">
@@ -269,7 +275,7 @@ export default function MemberOperationCenter() {
         </section>}
 
         {activeTab === "history" && <Panel title="Histórico de eventos" icon={<History className="size-5 text-emerald-300" />}>
-          {analytics.data?.recentEvents.length ? <div className="divide-y divide-white/10">{analytics.data.recentEvents.map((event, index) => { const operation = orderedCampaigns.find(item => item.id === event.campaignId); return <div key={`${event.campaignId}-${event.occurredAt.toString()}-${index}`} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><a href={withAppBase(`/membros/operacao/${event.campaignId}`)} className="font-medium text-white hover:text-emerald-200">{operation?.name ?? `Operação #${event.campaignId}`}</a><p className="text-sm text-zinc-400">Clique · {event.deviceType || "dispositivo não informado"}{event.referrerOrigin ? ` · ${event.referrerOrigin}` : ""}</p></div><span className="text-sm text-zinc-500">{formatDate(event.occurredAt)}</span></div>; })}</div> : <Empty text="Nenhum evento registrado no período." />}
+          {analytics.data?.recentEvents.length ? <div className="divide-y divide-white/10">{analytics.data.recentEvents.map((event, index) => { const campaign = orderedCampaigns.find(item => item.id === event.campaignId); return <div key={`${event.campaignId}-${event.occurredAt.toString()}-${index}`} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><a href={withAppBase(`/membros/operacao/${event.campaignId}`)} className="font-medium text-white hover:text-emerald-200">{campaign?.name ?? `Campanha #${event.campaignId}`}</a><p className="text-sm text-zinc-400">Clique · {event.deviceType || "dispositivo não informado"}{event.referrerOrigin ? ` · ${event.referrerOrigin}` : ""}</p></div><span className="text-sm text-zinc-500">{formatDate(event.occurredAt)}</span></div>; })}</div> : <Empty text="Nenhum evento registrado no período." />}
         </Panel>}
       </main>
     </DashboardLayout>

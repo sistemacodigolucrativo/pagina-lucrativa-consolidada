@@ -5,7 +5,7 @@ import { BarChart3, Check, Circle, CreditCard, ExternalLink, Link2, MousePointer
 
 const menu: DashboardMenuItem[] = [
   { icon: Circle, label: "Primeiros passos", path: "/membros/como-divulgar", group: "Início" },
-  { icon: BarChart3, label: "Minha operação", path: "/membros/operacao", group: "Início" },
+  { icon: BarChart3, label: "Central de Divulgação", path: "/membros/operacao", group: "Início" },
   { icon: UserRound, label: "Minha página e perfil", path: "/membros/configuracoes", group: "Minha página" },
 ];
 
@@ -41,31 +41,31 @@ export default function MemberGettingStarted() {
     },
     {
       title: "Configure seus recebimentos",
-      description: "Informe como os recebimentos vinculados à sua operação devem ser tratados.",
+      description: "Informe como os recebimentos vinculados às suas campanhas devem ser tratados.",
       path: "/membros/recebimentos",
       action: receivingReady ? "Revisar recebimentos" : "Configurar recebimentos",
       done: receivingReady,
       icon: <WalletCards className="size-5" />,
     },
     {
-      title: "Crie sua primeira operação",
+      title: "Crie sua primeira campanha de divulgação",
       description: "Crie um link rastreável para Facebook, Instagram, WhatsApp ou qualquer outra origem que você queira medir.",
       path: "/membros/operacao/campanhas",
-      action: operationReady ? "Ver minhas operações" : "Criar primeira operação",
+      action: operationReady ? "Ver minhas campanhas" : "Criar primeira campanha",
       done: operationReady,
       icon: <Link2 className="size-5" />,
     },
     {
       title: "Faça sua primeira divulgação",
-      description: "Copie o link de uma operação e divulgue. O sistema registrará os acessos automaticamente.",
+      description: "Copie o link de uma campanha e divulgue. O sistema registrará os acessos automaticamente.",
       path: "/membros/operacao/campanhas",
-      action: "Abrir minhas operações",
+      action: "Abrir minhas campanhas",
       done: firstClick,
       icon: <MousePointerClick className="size-5" />,
     },
     {
       title: "Acompanhe suas métricas",
-      description: "Compare métricas globais e o desempenho individual de cada operação criada.",
+      description: "Compare métricas globais e o desempenho de cada campanha.",
       path: "/membros/operacao",
       action: "Ver métricas globais",
       done: firstClick,
@@ -73,7 +73,7 @@ export default function MemberGettingStarted() {
     },
     {
       title: "Acompanhe seus resultados",
-      description: "Quando houver conversões atribuídas, identifique qual operação gerou o resultado.",
+      description: "Veja as conversões geradas pelas suas campanhas e acompanhe seus resultados.",
       path: "/membros/operacao/conversoes",
       action: "Ver conversões",
       done: firstConversion,

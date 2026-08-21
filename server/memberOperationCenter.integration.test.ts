@@ -4,21 +4,22 @@ import path from "node:path";
 
 const root = process.env.PROJECT_ROOT || process.cwd();
 
-describe("central Minha operação", () => {
-  it("exibe visão global e operações individuais no mesmo domínio", async () => {
+describe("Central de Divulgação", () => {
+  it("exibe visão global e campanhas individuais no mesmo domínio", async () => {
     const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
+    expect(center).toContain("Central de Divulgação");
     expect(center).toContain("Visão geral");
-    expect(center).toContain("Operações");
+    expect(center).toContain("Campanhas");
     expect(center).toContain("Tráfego");
     expect(center).toContain("Conversões");
     expect(center).toContain("Contatos");
     expect(center).toContain("Histórico");
-    expect(center).toContain("Métricas exclusivas desta operação");
+    expect(center).toContain("Métricas exclusivas desta campanha");
     expect(center).toContain("Ver métricas");
     expect(center).toContain("trpc.member.analytics.useQuery");
   });
 
-  it("mantém links rastreáveis copiáveis e cria operações com origem", async () => {
+  it("mantém links rastreáveis copiáveis e cria campanhas com origem", async () => {
     const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
     expect(center).toContain("Copiar link");
     expect(center).toContain("Origem");
@@ -33,7 +34,7 @@ describe("central Minha operação", () => {
     expect(page).toContain("Nova solicitação");
     expect(page).toContain("Minhas solicitações");
     expect(page).toContain("createTicket.mutate(form)");
-    expect(page).not.toContain("Criar nova operação");
+    expect(page).not.toContain("Criar nova campanha");
   });
 
   it("mantém destinos legados via redirect", async () => {
