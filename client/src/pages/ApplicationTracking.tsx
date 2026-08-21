@@ -11,6 +11,11 @@ function formatCurrency(cents: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
 }
 
+function whatsappUrl(whatsapp: string | null | undefined) {
+  const digits = whatsapp?.replace(/\D/g, "") ?? "";
+  return digits ? `https://wa.me/${digits}` : null;
+}
+
 export default function ApplicationTracking() {
   const [, setLocation] = useLocation();
   const initialCode = (typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo") ?? "").trim().toUpperCase();
@@ -55,13 +60,23 @@ export default function ApplicationTracking() {
       <button className="btn btn-primary" type="submit"><Search size={16} /> Acompanhar pedido</button>
     </form>
 
-    {lookup.isFetching ? <p className="access-note">Consultando o andamento do pedido...</p> : lookup.error ? <p className="application-error">Não localizamos um pedido com estes dados.</p> : result && state ? <section className="access-steps">
+    {lookup.isFetching ? <p className="access-note">Consultando o andamento do pedido...</p> : lookup.error ? <p className="application-error">Não localizamos um pedido com estes dados. Confira se o código e o e-mail foram digitados corretamente, ou se este pedido realmente existe.</p> : result && state ? <section className="access-steps">
       <div><b>PL</b><span><strong>Código de acompanhamento: {result.trackingCode}</strong><br />Registrado em {new Date(result.createdAt).toLocaleDateString("pt-BR")} · Valor: {formatCurrency(result.offerAmountCents)}</span></div>
-      {state === "awaiting" ? <div><b>01</b><span><strong>Aguardando pagamento</strong><br />Seu pedido foi registrado, mas ainda não identificamos a confirmação do pagamento.</span></div> : null}
-      {state === "receipt" ? <div><b>02</b><span><strong>Comprovante recebido</strong><br />Recebemos seu comprovante. Ele está aguardando análise do responsável.</span></div> : null}
+      {state === "awaiting" ? <div><b>01</b><span><strong>Aguardando pagamento</strong><br />Aguarde mais algumas horas. Se o seu pagamento não for confirmado nesta mesma tela, depois de 4 horas úteis você terá acesso aos dados de contato do seu patrocinador.</span></div> : null}
+      {state === "receipt" ? <div><b>02</b><span><strong>Comprovante recebido</strong><br />Aguarde mais algumas horas. Se o seu pagamento não for confirmado nesta mesma tela, depois de 4 horas úteis você terá acesso aos dados de contato do seu patrocinador.</span></div> : null}
       {state === "rejected" ? <div><b><XCircle size={18} /></b><span><strong>Pagamento não aprovado</strong><br />Não foi possível confirmar seu pagamento. Se necessário, volte para a tela de pagamento e envie novo comprovante.</span></div> : null}
       {state === "approved" ? <div><b><CheckCircle2 size={18} /></b><span><strong>Pagamento aprovado</strong><br />Sua Página Lucrativa foi liberada para personalização.</span></div> : null}
       <div><b>→</b><span><strong>Pagamento:</strong> {applicationPaymentStatusLabel[result.paymentStatus]}<br /><strong>Acesso:</strong> {applicationActivationStatusLabel[result.activationStatus]}</span></div>
+    </section> : null}
+
+    {result?.sponsorContact ? <section className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 p-4 text-left">
+      <span className="text-xs uppercase tracking-[0.16em] text-red-200">Contato do patrocinador</span>
+      <h2 className="mt-2 text-xl font-semibold text-white">{result.sponsorContact.name}</h2>
+      <p className="mt-2 text-sm leading-6 text-red-50">Já passaram 4 horas úteis sem confirmação. Use estes dados para falar com o responsável pela sua ativação.</p>
+      <div className="mt-4 grid gap-3 text-sm">
+        {result.sponsorContact.email ? <a className="rounded-xl border border-white/10 bg-black/25 p-3 text-white hover:bg-white/5" href={`mailto:${result.sponsorContact.email}`}><strong>E-mail:</strong> {result.sponsorContact.email}</a> : null}
+        {result.sponsorContact.whatsapp ? <a className="rounded-xl border border-white/10 bg-black/25 p-3 text-white hover:bg-white/5" href={whatsappUrl(result.sponsorContact.whatsapp) ?? undefined} target="_blank" rel="noreferrer"><strong>WhatsApp:</strong> {result.sponsorContact.whatsapp}</a> : null}
+      </div>
     </section> : null}
 
     {result && state === "approved" && result.access ? <section className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-4 text-left">

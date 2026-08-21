@@ -1058,10 +1058,20 @@ export async function getApplicationTracking(trackingCode: string, email: string
   const application = rows[0];
   if (!application) return null;
   const receiptRows = await db.select().from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.applicationId, application.id)).orderBy(desc(applicationPaymentReceipts.createdAt)).limit(1);
+  const sponsorRows = application.ownerUserId
+    ? await db.select({
+      name: users.name,
+      email: users.email,
+      whatsapp: memberProfiles.whatsapp,
+    }).from(users).leftJoin(memberProfiles, eq(memberProfiles.userId, users.id)).where(eq(users.id, application.ownerUserId)).limit(1)
+    : [];
   const activeTokens = application.paymentStatus === "confirmed"
     ? await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.applicationId, application.id), eq(applicationAccessTokens.status, "active"))).orderBy(desc(applicationAccessTokens.createdAt)).limit(1)
     : [];
   const activeToken = activeTokens[0] ?? null;
+  const contactReferenceDate = receiptRows[0]?.createdAt ?? application.createdAt;
+  const canShowSponsorContact = application.paymentStatus !== "confirmed" && hasBusinessHoursElapsed(contactReferenceDate, new Date(), 4);
+  const sponsor = sponsorRows[0] ?? null;
   return {
     trackingCode: application.trackingCode,
     createdAt: application.createdAt,
@@ -1071,6 +1081,11 @@ export async function getApplicationTracking(trackingCode: string, email: string
     paymentStatus: application.paymentStatus,
     activationStatus: application.activationStatus,
     latestReceiptStatus: receiptRows[0]?.status ?? null,
+    sponsorContact: canShowSponsorContact && sponsor ? {
+      name: sponsor.name,
+      email: sponsor.email,
+      whatsapp: sponsor.whatsapp,
+    } : null,
     nextAction: application.paymentStatus === "confirmed" ? "personalize" : application.paymentStatus === "rejected" ? "retry_receipt" : application.paymentStatus === "receipt_received" ? "wait_review" : "pay",
     access: activeToken ? {
       publicCode: activeToken.publicCode,
@@ -1078,6 +1093,19 @@ export async function getApplicationTracking(trackingCode: string, email: string
       specialAccessUrl: `/senha-especial/${activeToken.publicCode}`,
     } : null,
   };
+}
+
+function hasBusinessHoursElapsed(start: Date, end: Date, requiredHours: number) {
+  if (end <= start) return false;
+  let elapsedMs = 0;
+  let cursor = new Date(start);
+  while (cursor < end && elapsedMs < requiredHours * 60 * 60 * 1000) {
+    const next = new Date(Math.min(cursor.getTime() + 60 * 60 * 1000, end.getTime()));
+    const day = cursor.getUTCDay();
+    if (day >= 1 && day <= 5) elapsedMs += next.getTime() - cursor.getTime();
+    cursor = next;
+  }
+  return elapsedMs >= requiredHours * 60 * 60 * 1000;
 }
 
 export async function getApplicationPaymentPage(trackingCode: string) {
