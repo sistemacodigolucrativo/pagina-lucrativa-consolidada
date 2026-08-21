@@ -124,37 +124,36 @@ export default function ApplicationPaymentMethods() {
         </aside>
       </section>
 
-      {pixModalOpen ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="pix-payment-modal-title">
-        <section className="max-h-[min(90dvh,720px)] w-full max-w-2xl overflow-y-auto rounded-3xl border border-emerald-300/25 bg-zinc-950 p-5 shadow-2xl sm:p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Pagamento via PIX</span><h2 id="pix-payment-modal-title" className="mt-2 text-2xl font-semibold text-white">Dados para pagamento</h2><p className="mt-2 text-sm leading-6 text-zinc-400">Depois de realizar o PIX, envie o comprovante para análise. Isso não aprova o pagamento automaticamente.</p></div>
-            <button type="button" onClick={() => setPixModalOpen(false)} aria-label="Fechar modal PIX" className="inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 hover:text-white"><X className="size-4" /></button>
+      {pixModalOpen ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 px-3 py-4 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="pix-payment-modal-title">
+        <section className="max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-emerald-300/25 bg-zinc-950 p-4 shadow-2xl sm:p-5">
+          <div className="flex items-center justify-between gap-3">
+            <div><span className="text-[10px] uppercase tracking-[0.16em] text-emerald-300">PIX</span><h2 id="pix-payment-modal-title" className="mt-1 text-xl font-semibold text-white">Dados de pagamento</h2></div>
+            <button type="button" onClick={() => setPixModalOpen(false)} aria-label="Fechar modal PIX" className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 hover:text-white"><X className="size-4" /></button>
           </div>
 
-          <div className="mt-5 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-xl border border-white/10 bg-black/25 p-4"><span className="text-xs uppercase tracking-wider text-zinc-500">Recebedor</span><strong className="mt-1 block text-white">{sponsorName}</strong></div>
-            <div className="rounded-xl border border-white/10 bg-black/25 p-4"><span className="text-xs uppercase tracking-wider text-zinc-500">Valor</span><strong className="mt-1 block text-white">{formatCurrency(application.offerAmountCents)}</strong></div>
+          <div className="mt-4 grid gap-2">
+            <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2.5"><span className="text-[10px] uppercase tracking-wider text-zinc-500">Recebedor</span><strong className="mt-0.5 block truncate text-sm text-white">{sponsorName}</strong></div>
+            <div className="rounded-xl border border-white/10 bg-black/25 px-3 py-2.5"><span className="text-[10px] uppercase tracking-wider text-zinc-500">Valor</span><strong className="mt-0.5 block text-lg text-white">{formatCurrency(application.offerAmountCents)}</strong></div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-4">
-            <span className="text-xs uppercase tracking-wider text-emerald-200">Chave PIX</span>
-            <code className="mt-2 block break-all text-sm text-emerald-50">{pixKey}</code>
-            <button type="button" onClick={copyPix} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-emerald-300/40 px-3 py-2 text-sm font-semibold text-emerald-50 hover:bg-emerald-300/10"><Clipboard className="size-4" />Copiar chave PIX</button>
+          <div className="mt-3 rounded-xl border border-emerald-300/20 bg-emerald-300/10 px-3 py-3">
+            <span className="text-[10px] uppercase tracking-wider text-emerald-200">Chave PIX</span>
+            <code className="mt-1.5 block break-all text-sm leading-5 text-emerald-50">{pixKey}</code>
+            <button type="button" onClick={copyPix} className="mt-2 inline-flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-3 py-1.5 text-xs font-semibold text-emerald-50 hover:bg-emerald-300/10"><Clipboard className="size-3.5" />Copiar chave PIX</button>
           </div>
 
-          <div className="mt-4 rounded-xl border border-white/10 bg-black/25 p-4">
-            <span className="text-sm font-medium text-white">Enviar comprovante</span>
-            <p className="mt-1 text-xs leading-5 text-zinc-500">Formatos aceitos: JPG, PNG, WEBP ou PDF até 5 MB.</p>
-            <label className="mt-3 flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 px-4 py-3 text-sm text-zinc-200 hover:border-emerald-300/40 hover:text-emerald-100">
-              <UploadCloud className="size-4" />{receiptFile ? receiptFile.name : "Selecionar arquivo"}
+          <div className="mt-3 rounded-xl border border-white/10 bg-black/25 px-3 py-3">
+            <span className="text-sm font-medium text-white">Comprovante</span>
+            <label className="mt-2 flex min-h-10 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-white/20 px-3 py-2 text-xs text-zinc-200 hover:border-emerald-300/40 hover:text-emerald-100">
+              <UploadCloud className="size-3.5" />{receiptFile ? receiptFile.name : "Selecionar arquivo"}
               <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" disabled={uploadReceipt.isPending} onChange={handleReceiptFile} />
             </label>
             {receiptFile ? <p className="mt-2 inline-flex items-center gap-2 text-xs text-emerald-200"><CheckCircle2 className="size-3.5" />Arquivo selecionado</p> : null}
           </div>
 
-          <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <button type="button" onClick={() => setPixModalOpen(false)} className="inline-flex min-h-11 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-white hover:bg-white/5">Fechar</button>
-            <button type="button" onClick={submitReceipt} disabled={uploadReceipt.isPending || !receiptFile} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60">{uploadReceipt.isPending ? <Loader2 className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}{uploadReceipt.isPending ? "Enviando..." : "Confirmar envio"}</button>
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            <button type="button" onClick={() => setPixModalOpen(false)} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/15 px-3 py-2 text-xs font-semibold text-white hover:bg-white/5">Fechar</button>
+            <button type="button" onClick={submitReceipt} disabled={uploadReceipt.isPending || !receiptFile} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-3 py-2 text-xs font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60">{uploadReceipt.isPending ? <Loader2 className="size-3.5 animate-spin" /> : <UploadCloud className="size-3.5" />}{uploadReceipt.isPending ? "Enviando..." : "Enviar"}</button>
           </div>
         </section>
       </div> : null}
