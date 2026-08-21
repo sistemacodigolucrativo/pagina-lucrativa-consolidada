@@ -2,14 +2,12 @@ import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, ShieldCheck } from "lucide-react";
 import { FormEvent, useMemo, useState } from "react";
-import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 const field = "mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-3 text-white outline-none ring-emerald-300/50 focus:ring-2";
 
 export default function ApplicationPersonalization() {
-  const [location] = useLocation();
-  const publicCode = useMemo(() => new URLSearchParams(location.split("?")[1] ?? "").get("codigo")?.trim().toLowerCase() ?? "", [location]);
+  const publicCode = useMemo(() => typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo")?.trim().toLowerCase() ?? "", []);
   const access = trpc.public.applicationPersonalizationAccess.useQuery({ code: publicCode }, { enabled: Boolean(publicCode), retry: false });
   const [doneEmail, setDoneEmail] = useState("");
   const [password, setPassword] = useState("");
