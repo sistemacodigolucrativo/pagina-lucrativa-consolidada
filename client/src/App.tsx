@@ -158,13 +158,26 @@ function App() {
   const base = DEV_PREFIX;
   useEffect(() => {
     const message = "This page is not live and cannot be shared directly. Please publish to get a public link.";
+    const getElementStyle = (element: HTMLElement) => window.getComputedStyle(element);
+    const getNoticeContainer = (element: HTMLElement) => {
+      let current: HTMLElement | null = element;
+      let fallback: HTMLElement = element;
+      while (current && current !== document.body) {
+        const style = getElementStyle(current);
+        if (style.position === "fixed" || style.position === "sticky") return current;
+        if (current.parentElement === document.body) fallback = current;
+        current = current.parentElement;
+      }
+      return fallback;
+    };
     const removePreviewNotice = () => {
+      const containers = new Set<HTMLElement>();
       for (const element of Array.from(document.body.querySelectorAll<HTMLElement>("body *"))) {
         const text = element.textContent?.replace(/\s+/g, " ").trim();
         if (!text?.includes(message)) continue;
-        const childHasMessage = Array.from(element.children).some(child => child.textContent?.replace(/\s+/g, " ").trim().includes(message));
-        if (!childHasMessage) element.remove();
+        containers.add(getNoticeContainer(element));
       }
+      Array.from(containers).forEach(container => container.remove());
     };
     removePreviewNotice();
     const observer = new MutationObserver(removePreviewNotice);
