@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import { useEffect } from "react";
 import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -155,6 +156,21 @@ function AppRoutes() {
 }
 function App() {
   const base = DEV_PREFIX;
+  useEffect(() => {
+    const message = "This page is not live and cannot be shared directly. Please publish to get a public link.";
+    const removePreviewNotice = () => {
+      for (const element of Array.from(document.body.querySelectorAll<HTMLElement>("body *"))) {
+        const text = element.textContent?.replace(/\s+/g, " ").trim();
+        if (!text?.includes(message)) continue;
+        const childHasMessage = Array.from(element.children).some(child => child.textContent?.replace(/\s+/g, " ").trim().includes(message));
+        if (!childHasMessage) element.remove();
+      }
+    };
+    removePreviewNotice();
+    const observer = new MutationObserver(removePreviewNotice);
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
   return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;
