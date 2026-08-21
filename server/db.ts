@@ -1030,12 +1030,22 @@ export async function getMemberAffiliateApplications(userId: number) {
   const rows = await db.select().from(applications).where(eq(applications.ownerUserId, userId)).orderBy(desc(applications.createdAt));
   const receipts = await db.select().from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.ownerUserId, userId));
   const tokens = await db.select().from(applicationAccessTokens).where(eq(applicationAccessTokens.ownerUserId, userId));
-  return rows.map(application => ({
-    ...application,
-    receiptCount: receipts.filter(receipt => receipt.applicationId === application.id).length,
-    latestReceiptStatus: receipts.filter(receipt => receipt.applicationId === application.id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]?.status ?? null,
-    accessStatus: tokens.filter(token => token.applicationId === application.id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]?.status ?? null,
-  }));
+  return rows.map(application => {
+    const applicationReceipts = receipts.filter(receipt => receipt.applicationId === application.id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+    const latestReceipt = applicationReceipts[0] ?? null;
+    return {
+      ...application,
+      receiptCount: applicationReceipts.length,
+      latestReceiptStatus: latestReceipt?.status ?? null,
+      latestReceiptReviewedAt: latestReceipt?.reviewedAt ?? null,
+      accessStatus: tokens.filter(token => token.applicationId === application.id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]?.status ?? null,
+    };
+  }).filter(application => !shouldHideRejectedApplication(application.paymentStatus, application.latestReceiptStatus, application.latestReceiptReviewedAt));
+}
+
+function shouldHideRejectedApplication(paymentStatus: string, latestReceiptStatus: string | null, reviewedAt: Date | null) {
+  if (paymentStatus !== "rejected" || latestReceiptStatus !== "rejected" || !reviewedAt) return false;
+  return Date.now() - reviewedAt.getTime() >= 48 * 60 * 60 * 1000;
 }
 
 export async function getMemberAffiliateApplication(userId: number, applicationId: number) {
@@ -1048,6 +1058,8 @@ export async function getMemberAffiliateApplication(userId: number, applicationI
     db.select().from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.applicationId, application.id), eq(applicationPaymentReceipts.ownerUserId, userId))).orderBy(desc(applicationPaymentReceipts.createdAt)),
     db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.applicationId, application.id), eq(applicationAccessTokens.ownerUserId, userId))).orderBy(desc(applicationAccessTokens.createdAt)),
   ]);
+  const latestReceipt = receipts[0] ?? null;
+  if (shouldHideRejectedApplication(application.paymentStatus, latestReceipt?.status ?? null, latestReceipt?.reviewedAt ?? null)) return null;
   return { application, receipts, activeAccess: tokens.find(token => token.status === "active") ?? null, accessHistory: tokens };
 }
 
