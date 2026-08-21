@@ -35,16 +35,21 @@ import MemberPersonalization from "./pages/MemberPersonalization";
 import MemberCredentials from "./pages/MemberCredentials";
 import MemberTestimonial from "./pages/MemberTestimonial";
 import AdminTestimonials from "./pages/AdminTestimonials";
-import PersonalizeAccess from "./pages/PersonalizeAccess";
 import DemoLogin from "./pages/DemoLogin";
 import MemberProfile from "./pages/MemberProfile";
 import MemberAccount from "./pages/MemberAccount";
 import MemberGettingStarted from "./pages/MemberGettingStarted";
 import MemberSupport from "./pages/MemberSupport";
 import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
-import { DEV_PREFIX } from "./lib/devPath";
+import { DEV_PREFIX, withAppBase } from "./lib/devPath";
 import SpecialAccessPublic from "./pages/SpecialAccessPublic";
 import AdminSpecialAccess from "./pages/AdminSpecialAccess";
+
+function PersonalizeLegacyRedirect() {
+  if (typeof window !== "undefined") window.location.replace(withAppBase("/pedido/acompanhar"));
+  return null;
+}
+
 function AppRoutes() {
   return <Switch>
     <Route path="/" component={Home} />
@@ -52,7 +57,7 @@ function AppRoutes() {
     <Route path="/pedido/:trackingCode/pagamento/instrucoes" component={ApplicationPayment} />
     <Route path="/pedido/:trackingCode/pagamento" component={ApplicationPaymentMethods} />
     <Route path="/pedido/acompanhar" component={ApplicationTracking} />
-    <Route path="/personalizar" component={PersonalizeAccess} />
+    <Route path="/personalizar" component={PersonalizeLegacyRedirect} />
     <Route path="/acesso" component={DemoLogin} />
     <Route path="/senha-especial/:code" component={SpecialAccessPublic} />
     <Route path="/membros/operacao" component={MemberOperationCenter} />
