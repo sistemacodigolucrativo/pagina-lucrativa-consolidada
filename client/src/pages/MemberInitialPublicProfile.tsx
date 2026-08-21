@@ -19,7 +19,7 @@ export default function MemberInitialPublicProfile() {
     onSuccess: async () => {
       await Promise.all([utils.member.initialProfileStatus.invalidate(), utils.member.profile.invalidate(), utils.member.overview.invalidate()]);
       toast.success("Perfil público configurado.");
-      setLocation("/membros");
+      setLocation("/membros?tour=1");
     },
     onError: error => toast.error(error.message),
   });
