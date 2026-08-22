@@ -350,6 +350,8 @@ img { display: block; max-width: 100%; }
 .footer-whatsapp:hover { color: var(--gold-bright); }
 .footer .brand { color: var(--ivory); }
 .floating { position: fixed; right: 22px; bottom: 22px; z-index: 12; }
+.getting-started-return-button { position: fixed; right: 14px; bottom: calc(env(safe-area-inset-bottom, 0px) + 96px); z-index: 70; max-width: calc(100vw - 28px); }
+@media (min-width: 640px) { .getting-started-return-button { right: 24px; bottom: calc(env(safe-area-inset-bottom, 0px) + 34px); } }
 .floating .btn { border-radius: 999px; }
 
 .reference-page .sales-hero { min-height: 750px; }

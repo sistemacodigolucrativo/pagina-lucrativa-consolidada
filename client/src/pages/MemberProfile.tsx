@@ -1,4 +1,5 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import GettingStartedReturnButton from "@/components/GettingStartedReturnButton";
 import { PhoneInput } from "@/components/PhoneInput";
 import { trpc } from "@/lib/trpc";
 import { normalizePhone } from "@shared/contactValidation";
@@ -160,5 +161,5 @@ export default function MemberProfile() {
 
       <aside className="order-1 space-y-4 lg:order-2"><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><ImagePlus size={18} className="text-emerald-300" /><h2 className="font-medium">Foto pessoal</h2></div><p className="mt-3 text-sm leading-6 text-zinc-400">JPG, PNG ou GIF, com até 1 MB, como no formulário original.</p>{profile.data?.photoUrl ? <img src={profile.data.photoUrl} alt="Foto do perfil" className="mt-4 aspect-square w-full rounded-xl border border-white/10 object-cover" /> : <div className="mt-4 flex aspect-square items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-zinc-500">Nenhuma foto enviada</div>}<label className="mt-4 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black"><Upload size={16} />{photoBusy ? "Enviando..." : "Enviar foto"}<input type="file" accept="image/jpeg,image/png,image/gif" className="sr-only" disabled={photoBusy} onChange={handlePhoto} /></label></section><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 text-sm leading-6 text-zinc-400"><div className="flex items-center gap-2 text-white"><Link2 size={18} className="text-emerald-300" /><h2 className="font-medium">Perfil do Autor</h2></div><p className="mt-3">Descrição, WhatsApp, Website e redes sociais ficam associados ao seu perfil público e podem ser usados nas áreas editoriais autorizadas.</p></section></aside>
     </section>
-  </main></DashboardLayout>;
+  </main><GettingStartedReturnButton /></DashboardLayout>;
 }

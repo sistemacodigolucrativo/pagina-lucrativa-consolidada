@@ -1,7 +1,10 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import { getGettingStartedReturnStepFromLocation, type GettingStartedStepId, withGettingStartedStep } from "@/components/GettingStartedReturnButton";
 import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { BarChart3, Check, Circle, CreditCard, ExternalLink, Link2, MousePointerClick, UserRound, WalletCards } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "wouter";
 
 const menu: DashboardMenuItem[] = [
   { icon: Circle, label: "Primeiros passos", path: "/membros/como-divulgar", group: "Início" },
@@ -10,6 +13,7 @@ const menu: DashboardMenuItem[] = [
 ];
 
 type Step = {
+  id: GettingStartedStepId;
   title: string;
   description: string;
   path: string;
@@ -19,10 +23,15 @@ type Step = {
 };
 
 export default function MemberGettingStarted() {
+  const [location] = useLocation();
   const profile = trpc.member.profile.useQuery();
   const receiving = trpc.member.receiving.useQuery();
   const campaigns = trpc.member.campaigns.useQuery();
   const analytics = trpc.member.analytics.useQuery({ period: "all" });
+  const returnedStep = useMemo(() => {
+    return getGettingStartedReturnStepFromLocation(location);
+  }, [location]);
+  const [highlightedStep, setHighlightedStep] = useState<GettingStartedStepId | null>(null);
 
   const profileReady = Boolean(profile.data?.slug && (profile.data?.bio || profile.data?.whatsapp));
   const receivingReady = Boolean(receiving.data?.method && (receiving.data?.receivingKey || receiving.data?.pixKey || receiving.data?.paypalEmail || receiving.data?.pagseguroEmail || receiving.data?.bank1Account));
@@ -30,8 +39,9 @@ export default function MemberGettingStarted() {
   const firstClick = (analytics.data?.totals.clicks ?? 0) > 0;
   const firstConversion = (analytics.data?.totals.conversions ?? 0) > 0;
 
-  const steps: Step[] = [
+  const steps: Step[] = useMemo(() => [
     {
+      id: "profile",
       title: "Configure sua Página Lucrativa",
       description: "Defina seu identificador público, apresentação e os dados que serão exibidos na sua página.",
       path: "/membros/configuracoes",
@@ -40,6 +50,7 @@ export default function MemberGettingStarted() {
       icon: <UserRound className="size-5" />,
     },
     {
+      id: "receiving",
       title: "Configure seus recebimentos",
       description: "Informe como os recebimentos vinculados às suas campanhas devem ser tratados.",
       path: "/membros/recebimentos",
@@ -48,6 +59,7 @@ export default function MemberGettingStarted() {
       icon: <WalletCards className="size-5" />,
     },
     {
+      id: "campaign",
       title: "Crie sua primeira campanha de divulgação",
       description: "Crie um link rastreável para Facebook, Instagram, WhatsApp ou qualquer outra origem que você queira medir.",
       path: "/membros/operacao/campanhas",
@@ -56,6 +68,7 @@ export default function MemberGettingStarted() {
       icon: <Link2 className="size-5" />,
     },
     {
+      id: "disclosure",
       title: "Faça sua primeira divulgação",
       description: "Copie o link de uma campanha e divulgue. O sistema registrará os acessos automaticamente.",
       path: "/membros/operacao/campanhas",
@@ -64,6 +77,7 @@ export default function MemberGettingStarted() {
       icon: <MousePointerClick className="size-5" />,
     },
     {
+      id: "metrics",
       title: "Acompanhe suas métricas",
       description: "Compare métricas globais e o desempenho de cada campanha.",
       path: "/membros/operacao",
@@ -72,6 +86,7 @@ export default function MemberGettingStarted() {
       icon: <BarChart3 className="size-5" />,
     },
     {
+      id: "conversion",
       title: "Conquiste sua primeira conversão",
       description: "Divulgue sua Página Lucrativa e conquiste sua primeira conversão através de uma das suas campanhas. Esta etapa será concluída automaticamente quando o sistema registrar seu primeiro resultado.",
       path: "/membros/operacao/conversoes",
@@ -79,10 +94,27 @@ export default function MemberGettingStarted() {
       done: firstConversion,
       icon: <CreditCard className="size-5" />,
     },
-  ];
+  ], [firstClick, firstConversion, operationReady, profileReady, receivingReady]);
 
   const completed = steps.filter(step => step.done).length;
   const percentage = Math.round((completed / steps.length) * 100);
+
+  useEffect(() => {
+    if (!returnedStep || !steps.some(step => step.id === returnedStep)) return;
+    let highlightTimer: number | undefined;
+    const timer = window.setTimeout(() => {
+      const target = document.getElementById(`getting-started-${returnedStep}`);
+      if (!target) return;
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      target.scrollIntoView({ behavior: prefersReducedMotion ? "auto" : "smooth", block: "center" });
+      setHighlightedStep(returnedStep);
+      highlightTimer = window.setTimeout(() => setHighlightedStep(current => current === returnedStep ? null : current), 2200);
+    }, 120);
+    return () => {
+      window.clearTimeout(timer);
+      if (highlightTimer) window.clearTimeout(highlightTimer);
+    };
+  }, [returnedStep, steps]);
 
   return (
     <DashboardLayout menuItems={menu} title="Escritório Virtual">
@@ -107,7 +139,11 @@ export default function MemberGettingStarted() {
 
         <section className="space-y-3">
           {steps.map((step, index) => (
-            <article key={step.title} className={`rounded-2xl border p-5 ${step.done ? "border-emerald-300/20 bg-emerald-300/5" : "border-white/10 bg-zinc-950/60"}`}>
+            <article
+              key={step.id}
+              id={`getting-started-${step.id}`}
+              className={`scroll-mt-28 rounded-2xl border p-5 transition duration-500 ${highlightedStep === step.id ? "border-emerald-200 bg-emerald-300/10 shadow-lg shadow-emerald-950/40" : step.done ? "border-emerald-300/20 bg-emerald-300/5" : "border-white/10 bg-zinc-950/60"}`}
+            >
               <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 gap-4">
                   <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${step.done ? "bg-emerald-300 text-black" : "bg-white/5 text-zinc-300"}`}>{step.done ? <Check className="size-5" /> : step.icon}</div>
@@ -117,7 +153,7 @@ export default function MemberGettingStarted() {
                     <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">{step.description}</p>
                   </div>
                 </div>
-                <a href={withAppBase(step.path)} className={`shrink-0 rounded-lg px-4 py-2 text-center text-sm font-semibold ${step.done ? "border border-white/15 text-zinc-200 hover:bg-white/5" : "bg-emerald-300 text-black"}`}>{step.action}</a>
+                <a href={withAppBase(withGettingStartedStep(step.path, step.id))} className={`shrink-0 rounded-lg px-4 py-2 text-center text-sm font-semibold ${step.done ? "border border-white/15 text-zinc-200 hover:bg-white/5" : "bg-emerald-300 text-black"}`}>{step.action}</a>
               </div>
             </article>
           ))}

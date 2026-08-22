@@ -1,4 +1,5 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import GettingStartedReturnButton, { getGettingStartedStepFromLocation, withGettingStartedStep } from "@/components/GettingStartedReturnButton";
 import { PhoneInput } from "@/components/PhoneInput";
 import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
@@ -48,6 +49,7 @@ export default function MemberOperationCenter() {
   const detailMatch = pathname.match(/^\/membros\/operacao\/(\d+)$/);
   const selectedCampaignId = detailMatch ? Number(detailMatch[1]) : null;
   const activeTab = selectedCampaignId ? "detail" : (tabs.find(tab => tab.path === pathname)?.key ?? "overview");
+  const onboardingStep = getGettingStartedStepFromLocation(location);
   const [period, setPeriod] = useState<Period>("30d");
   const [campaignForm, setCampaignForm] = useState({ name: "", slug: "", destinationUrl: "", source: "", medium: "social", content: "" });
   const [copiedId, setCopiedId] = useState<number | null>(null);
@@ -181,7 +183,7 @@ export default function MemberOperationCenter() {
             Seção da central
             <select
               value={tabs.find(tab => tab.key === activeTab)?.path ?? "/membros/operacao"}
-              onChange={event => setLocation(event.target.value)}
+              onChange={event => setLocation(onboardingStep ? withGettingStartedStep(event.target.value, onboardingStep) : event.target.value)}
               className="mt-2 w-full rounded-xl border border-white/15 bg-black px-3 py-3 text-sm font-semibold text-white outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300/30"
             >
               {tabs.map(tab => <option key={tab.key} value={tab.path}>{tab.label}</option>)}
@@ -287,6 +289,7 @@ export default function MemberOperationCenter() {
           {analytics.data?.recentEvents.length ? <div className="divide-y divide-white/10">{analytics.data.recentEvents.map((event, index) => { const campaign = orderedCampaigns.find(item => item.id === event.campaignId); return <div key={`${event.campaignId}-${event.occurredAt.toString()}-${index}`} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><a href={withAppBase(`/membros/operacao/${event.campaignId}`)} className="font-medium text-white hover:text-emerald-200">{campaign?.name ?? `Campanha #${event.campaignId}`}</a><p className="text-sm text-zinc-400">Clique · {event.deviceType || "dispositivo não informado"}{event.referrerOrigin ? ` · ${event.referrerOrigin}` : ""}</p></div><span className="text-sm text-zinc-500">{formatDate(event.occurredAt)}</span></div>; })}</div> : <Empty text="Nenhum evento registrado no período." />}
         </Panel>}
       </main>
+      <GettingStartedReturnButton />
     </DashboardLayout>
   );
 }
