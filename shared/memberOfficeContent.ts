@@ -29,7 +29,6 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
       { icon: "page", label: "Minha página e perfil", path: "/membros/configuracoes" },
       { icon: "data", label: "Dados da conta", path: "/membros/meus-dados" },
       { icon: "receiving", label: "Dados de recebimento", path: "/membros/recebimentos" },
-      { icon: "message", label: "Mensagem de acesso", path: "/membros/mensagem-especial" },
     ],
   },
   {

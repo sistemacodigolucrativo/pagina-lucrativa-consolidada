@@ -70,9 +70,15 @@ O membro não registra venda nem solicita saque nessa tela. Registros antigos de
 - `/pedido/:trackingCode/pagamento`
 - `/pedido/confirmacao?codigo=...` mantém compatibilidade e renderiza pagamento.
 - `/pedido/acompanhar`
-- `/senha-especial/:code`
+- `/personalizar?codigo=...`
 - `/membros/meus-pedidos`
 - `/membros/operacao/*` mantém as rotas técnicas da Central de Divulgação, incluindo campanhas, tráfego, conversões, contatos e histórico.
+
+## Fluxos legados removidos
+
+O sistema global antigo de senha especial foi removido da aplicação ativa. As rotas `/senha-especial/:code`, `/membros/mensagem-especial` e `/admin/mensagem-especial` não fazem mais parte do fluxo.
+
+Os dados públicos iniciais da Página Lucrativa passaram a ser coletados durante `/personalizar?codigo=...`, antes do primeiro login. Com isso, o gate pós-login `/membros/perfil-inicial` foi removido.
 
 ## Navegação do membro
 

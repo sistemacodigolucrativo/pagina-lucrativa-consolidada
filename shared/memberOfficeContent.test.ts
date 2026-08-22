@@ -4,7 +4,7 @@ import { memberOfficeModuleCount, memberOfficeNavigation } from "./memberOfficeC
 describe("catálogo do Escritório Virtual", () => {
   it("mantém uma navegação enxuta, sem ferramentas duplicadas", () => {
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
-    expect(memberOfficeModuleCount).toBe(18);
+    expect(memberOfficeModuleCount).toBe(17);
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "operation",
       label: "Central de Divulgação",
@@ -15,6 +15,7 @@ describe("catálogo do Escritório Virtual", () => {
     expect(paths).toContain("/membros/recebimentos");
     expect(paths).toContain("/membros/meus-pedidos");
     expect(paths).toContain("/membros/fale-conosco");
+    expect(paths).not.toContain("/membros/mensagem-especial");
     expect(paths).not.toContain("/membros/produtos");
     expect(paths).not.toContain("/membros/automacoes");
     expect(paths).not.toContain("/membros/ranking");

@@ -16,10 +16,11 @@ describe("memberOfficeNavigation", () => {
       "Desempenho",
       "Ajuda",
     ]);
-    expect(memberOfficeModuleCount).toBe(18);
+    expect(memberOfficeModuleCount).toBe(17);
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
     expect(new Set(paths).size).toBe(paths.length);
     expect(itemsFor("Início")).toEqual(["/membros", "/membros/como-divulgar", "/membros/operacao"]);
+    expect(itemsFor("Minha página")).toEqual(["/membros/configuracoes", "/membros/meus-dados", "/membros/recebimentos"]);
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "operation",
       label: "Central de Divulgação",
@@ -38,6 +39,7 @@ describe("memberOfficeNavigation", () => {
     expect(paths).not.toContain("/membros/blog");
     expect(paths).not.toContain("/membros/bonus");
     expect(paths).not.toContain("/membros/produtos");
+    expect(paths).not.toContain("/membros/mensagem-especial");
   });
 
   it("não semeia dados privados ou depoimentos na navegação", () => {

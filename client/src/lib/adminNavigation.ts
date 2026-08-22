@@ -1,5 +1,5 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, FileText, ImagePlus, KeyRound, Layers3, Mail, UsersRound } from "lucide-react";
+import { BookOpenCheck, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, FileText, ImagePlus, Layers3, Mail, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: BriefcaseBusiness, label: "Meu Escritório", path: "/membros", group: "Atuação pessoal" },
@@ -11,7 +11,6 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: FileText, label: "Pedidos", path: "/admin/pedidos", group: "Gestão" },
   { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Gestão" },
   { icon: Mail, label: "Comunicações", path: "/admin/comunicacoes", group: "Gestão" },
-  { icon: KeyRound, label: "Mensagem senha especial", path: "/admin/mensagem-especial", group: "Gestão" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },

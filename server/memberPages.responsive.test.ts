@@ -3,8 +3,6 @@ import path from "node:path";
 import { describe, expect, it } from "vitest";
 
 const pages = [
-  "MemberCommunications.tsx",
-  "MemberPersonalization.tsx",
   "MemberReceiving.tsx",
   "MemberTestimonial.tsx",
 ] as const;

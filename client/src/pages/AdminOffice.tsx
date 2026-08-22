@@ -4,8 +4,10 @@ import { adminMenu } from "@/lib/adminNavigation";
 import { formatCurrency } from "@shared/dashboard";
 import { BookOpenCheck, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 export default function AdminOffice() {
+  const [location] = useLocation();
   const overview = trpc.admin.overview.useQuery();
   const applications = trpc.admin.applications.useQuery();
   const settings = trpc.admin.platformSettings.useQuery();
@@ -19,6 +21,12 @@ export default function AdminOffice() {
   });
   const data = overview.data;
   const hideExternalPreviewNotice = Boolean(settings.data?.hideExternalPreviewNotice);
+  const currentPath = location.split("?")[0] || "/";
+  const isKnownAdminPath = currentPath === "/admin" || adminMenu.some(item => item.path === currentPath);
+
+  if (!isKnownAdminPath) {
+    return <DashboardLayout menuItems={adminMenu} title="Administração"><div className="office-page admin-page"><section className="office-empty"><span className="office-empty-mark">PL</span><h2>Módulo administrativo indisponível.</h2><p>Este caminho não faz parte da navegação administrativa ativa.</p></section></div></DashboardLayout>;
+  }
 
   return <DashboardLayout menuItems={adminMenu} title="Administração"><div className="office-page admin-page"><div className="office-intro"><div><span className="office-eyebrow">Operação da plataforma</span><h1>Administração</h1><p>Uma leitura objetiva da base de membros, do catálogo e do conteúdo publicado.</p></div></div>
     {overview.isLoading ? <div className="office-loading"><span>Carregando operação</span><i /><i /><i /></div> : overview.error ? <section className="office-empty"><span className="office-empty-mark">PL</span><h2>Área exclusiva da administração.</h2><p>Esta rota só é liberada para contas com permissão administrativa no projeto.</p></section> : <><section className="office-stat-grid"><article><span>Membros ativos</span><strong>{data?.memberCount ?? 0}</strong><small>Contas de membros</small></article><article><span>Pedidos pendentes</span><strong>{data?.pendingApplicationCount ?? 0}</strong><small>Solicitações públicas aguardando acompanhamento</small></article><article><span>Volume registrado</span><strong>{formatCurrency(data?.grossVolumeCents ?? 0)}</strong><small>Transações da base</small></article></section><section className="office-next"><div><span className="office-eyebrow">Configuração visual</span><h2>Ocultar aviso externo de preview.</h2><p>Controle o banner externo em inglês sem depender de clique manual. Quando ativado, o sistema oculta somente o aviso pequeno/fixo correspondente, sem tocar no conteúdo principal.</p><label className="mt-4 inline-flex items-center gap-3 rounded-xl border border-white/10 bg-black/25 px-4 py-3 text-sm text-zinc-200"><input type="checkbox" checked={hideExternalPreviewNotice} disabled={settings.isLoading || updateSettings.isPending} onChange={event => updateSettings.mutate({ hideExternalPreviewNotice: event.target.checked })} className="size-4 accent-emerald-300" />Ocultar banner externo de preview</label></div><EyeOff size={34} /></section><section className="office-next"><div><span className="office-eyebrow">Curadoria</span><h2>{data?.publishedCourseCount ?? 0} cursos disponíveis na academia.</h2><p>Use esta área para acompanhar o que está publicado e decidir os próximos conteúdos de formação.</p></div><BookOpenCheck size={34} /></section><section className="office-list"><span className="office-eyebrow">Pedidos públicos recentes</span>{applications.isLoading ? <div className="office-loading"><span>Carregando pedidos</span><i /><i /><i /></div> : applications.data?.length ? applications.data.map(application => <article key={application.id}><div className="min-w-0"><span className="office-list-code">{application.status}</span><h3>{application.fullName}</h3><p>{application.email} · {application.whatsapp}</p><time className="office-list-mobile-date mt-2 block text-xs text-[var(--muted-strong)] sm:hidden">{new Date(application.createdAt).toLocaleDateString("pt-BR")}</time></div><time className="office-list-desktop-date hidden sm:block">{new Date(application.createdAt).toLocaleDateString("pt-BR")}</time></article>) : <article><div><span className="office-list-code">Sem pedidos</span><h3>Nenhuma solicitação registrada.</h3><p>Os pedidos enviados pelo formulário público aparecerão aqui.</p></div></article>}</section></>}</div></DashboardLayout>;

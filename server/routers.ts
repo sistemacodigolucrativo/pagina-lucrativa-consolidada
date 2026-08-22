@@ -76,8 +76,6 @@ import {
   reviewPaymentReceipt,
   completeApplicationPersonalization,
   getApplicationPersonalizationAccess,
-  getMemberInitialProfileStatus,
-  completeMemberInitialPublicProfile,
   updateMemberContact,
   setAdminReferralLink,
   getAdminReferralLinks,
@@ -94,12 +92,6 @@ import {
   createMemberTestimonial,
   getAdminTestimonials,
   updateAdminTestimonial,
-  getMemberSpecialAccess,
-  updateMemberSpecialAccess,
-  getPublicSpecialAccess,
-  unlockPublicSpecialAccess,
-  getAdminSpecialAccessPages,
-  updateAdminSpecialAccessPage,
   removeAdminPublicSalesSectionImage,
   upsertAdminPublicSalesSectionImage,
   updateAdminPlatformSettings,
@@ -136,12 +128,6 @@ export const profileInput = z.object({
   state: z.string().trim().max(80).optional().nullable(),
 });
 
-const initialPublicProfileInput = z.object({
-  name: z.string().trim().min(2, "Informe seu nome.").max(180),
-  whatsapp: optionalPhoneZodSchema.refine(value => Boolean(value), "Informe seu WhatsApp."),
-  facebookUrl: httpUrlZodSchema.max(512).optional().nullable(),
-  instagramUrl: httpUrlZodSchema.max(512).optional().nullable(),
-});
 export const profilePhotoInput = z.object({
   dataUrl: z.string().regex(/^data:image\/(?:jpeg|png|gif);base64,[A-Za-z0-9+/=\s]+$/).max(1_450_000),
   contentType: z.enum(["image/jpeg", "image/png", "image/gif"]),
@@ -236,14 +222,6 @@ const ebookInput = z.object({
 export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: normalizedEmailZodSchema, whatsapp: optionalPhoneZodSchema, source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
 export const invitationInput = z.object({ contactId: z.number().int().positive().optional().nullable(), channel: z.enum(["link", "email", "whatsapp"]), message: z.string().trim().max(4000).optional().nullable() });
 export const testimonialInput = z.object({ content: z.string().trim().min(30).max(8000), authorConfirmed: z.literal(true) });
-export const specialAccessInput = z.object({
-  title: z.string().trim().min(3).max(160),
-  message: z.string().trim().min(10).max(5000),
-  buttonLabel: z.string().trim().min(2).max(80),
-  destinationUrl: httpUrlZodSchema.max(1024),
-  password: z.string().min(6, "Use pelo menos 6 caracteres na senha.").max(128).optional(),
-  status: z.enum(["draft", "published", "paused"]),
-});
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -259,8 +237,7 @@ export const appRouter = router({
       const token = createDemoSession(account);
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, { ...cookieOptions, sameSite: cookieOptions.secure ? "none" : "lax", maxAge: 1000 * 60 * 60 * 12 });
-      const profileStatus = account.id && account.role === "user" ? await getMemberInitialProfileStatus(account.id) : { required: false };
-      return { role: account.role, needsInitialProfile: profileStatus.required } as const;
+      return { role: account.role } as const;
     }),
   }),
   member: router({
@@ -277,8 +254,6 @@ export const appRouter = router({
     updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),
-    initialProfileStatus: protectedProcedure.query(({ ctx }) => getMemberInitialProfileStatus(ctx.user.id)),
-    completeInitialPublicProfile: protectedProcedure.input(initialPublicProfileInput).mutation(({ ctx, input }) => completeMemberInitialPublicProfile(ctx.user.id, { ...input, whatsapp: input.whatsapp! })),
     uploadProfilePhoto: protectedProcedure.input(profilePhotoInput).mutation(({ ctx, input }) => uploadMemberProfilePhoto(ctx.user.id, input)),
     account: protectedProcedure.query(({ ctx }) => getMemberAccount(ctx.user.id)),
     updateAccount: protectedProcedure.input(accountInput).mutation(({ ctx, input }) => {
@@ -310,8 +285,6 @@ export const appRouter = router({
     performance: protectedProcedure.query(({ ctx }) => getMemberPerformance(ctx.user.id)),
     testimonials: protectedProcedure.query(({ ctx }) => getMemberTestimonials(ctx.user.id)),
     createTestimonial: protectedProcedure.input(testimonialInput).mutation(({ ctx, input }) => createMemberTestimonial(ctx.user.id, input)),
-    specialAccess: protectedProcedure.query(({ ctx }) => getMemberSpecialAccess(ctx.user.id)),
-    updateSpecialAccess: protectedProcedure.input(specialAccessInput).mutation(({ ctx, input }) => updateMemberSpecialAccess(ctx.user.id, input)),
   }),
   applications: router({
     submit: publicProcedure.input(applicationInputSchema).mutation(({ ctx, input }) => createApplication(input, ctx.req)),
@@ -321,11 +294,9 @@ export const appRouter = router({
   }),
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
-    specialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getPublicSpecialAccess(input.code)),
     applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
     platformSettings: publicProcedure.query(() => getPublicPlatformSettings()),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
-    unlockSpecialAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48), password: z.string().min(1).max(128) })).mutation(({ input }) => unlockPublicSpecialAccess(input.code, input.password)),
     completePersonalization: publicProcedure.input(applicationPersonalizationSchema).mutation(({ input }) => completeApplicationPersonalization(input)),
   }),
   admin: router({
@@ -366,11 +337,9 @@ export const appRouter = router({
     updatePointEntry: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]) })).mutation(({ input }) => updateAdminPointEntry(input.id, input)),
     testimonials: adminProcedure.query(() => getAdminTestimonials()),
     updateTestimonial: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "approved", "rejected", "archived"]), adminNote: z.string().trim().max(4000).optional().nullable() })).mutation(({ input }) => updateAdminTestimonial(input.id, input)),
-    specialAccess: adminProcedure.query(() => getAdminSpecialAccessPages()),
     publicSalesSectionImages: adminProcedure.query(() => getAdminPublicSalesSectionImages()),
     upsertPublicSalesSectionImage: adminProcedure.input(publicSalesSectionImageInput).mutation(({ ctx, input }) => upsertAdminPublicSalesSectionImage(ctx.user.id, input.sectionId, input)),
     removePublicSalesSectionImage: adminProcedure.input(z.object({ sectionId: z.string().trim().regex(/^[a-z0-9_]+$/).min(3).max(64) })).mutation(({ input }) => removeAdminPublicSalesSectionImage(input.sectionId)),
-    updateSpecialAccess: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "paused"]), adminNote: z.string().trim().max(2000).optional().nullable() })).mutation(({ input }) => updateAdminSpecialAccessPage(input.id, input)),
     referralMembers: adminProcedure.query(() => getReferralMembers()),
     referralLinks: adminProcedure.query(() => getAdminReferralLinks()),
     setReferralLink: adminProcedure.input(z.object({ sponsorId: z.number().int().positive(), referredUserId: z.number().int().positive(), status: z.enum(["active", "archived"]) })).mutation(({ input }) => setAdminReferralLink(input)),

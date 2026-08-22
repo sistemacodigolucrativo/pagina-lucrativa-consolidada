@@ -22,7 +22,6 @@ const overviewOnboardingSteps = [
 ];
 
 const moduleDetails: Record<string, { eyebrow: string; title: string; detail: string; notes: string[] }> = {
-  "/membros/mensagem-especial": { eyebrow: "Acesso e personalização", title: "Mensagem e senha especial", detail: "Organize a mensagem que acompanha o acesso de personalização da sua página.", notes: ["A senha de personalização é enviada após a confirmação do pedido.", "Mantenha instruções claras e não compartilhe credenciais em áreas públicas."] },
   "/membros/fazer-depoimento": { eyebrow: "Relato autêntico", title: "Compartilhe sua experiência", detail: "Este espaço deve receber apenas um relato próprio, verdadeiro e verificável do membro autenticado.", notes: ["Não publique opiniões em nome de terceiros.", "Imagens de pessoas ou comprovantes exigem autorização do titular antes da publicação."] },
   "/membros/meus-dados": { eyebrow: "Conta", title: "Meus dados", detail: "Confira e mantenha atualizadas as informações necessárias à operação da sua página.", notes: ["Dados de contato e recebimento ficam protegidos na sua conta.", "Evite inserir informações sensíveis em campos de divulgação."] },
   "/membros/como-divulgar": { eyebrow: "Comece por aqui", title: "Saiba como divulgar", detail: "Use seu link de divulgação, explique a proposta com clareza e acompanhe a origem das visitas.", notes: ["Crie uma campanha para cada canal que você deseja medir.", "Prefira materiais autorizados e uma promessa comercial transparente."] },
@@ -137,6 +136,7 @@ export default function MemberOffice() {
     if (moduleDetails[currentPath]) return <ModulePanel detail={moduleDetails[currentPath]} />;
     if (currentPath !== "/membros") {
       const active = menuItems.find(item => item.path === currentPath);
+      if (!active) return <QueryState title="Módulo indisponível." message="Este caminho não faz parte da navegação ativa do Escritório Virtual." />;
       return <ModulePanel detail={{ eyebrow: active?.group ?? "Escritório virtual", title: active?.label ?? "Módulo do escritório", detail: "A estrutura deste módulo foi preparada para receber dados e conteúdos próprios da sua operação.", notes: ["Nenhum dado da conta de referência foi copiado para esta área.", "O conteúdo será alimentado por materiais e registros autorizados."] }} />;
     }
 

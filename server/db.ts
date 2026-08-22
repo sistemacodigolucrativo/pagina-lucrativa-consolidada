@@ -20,7 +20,6 @@ import {
   memberPaymentLinks,
   memberProfiles,
   receivingPreferences,
-  specialAccessPages,
   referralLinks,
   memberContacts,
   memberInvitations,
@@ -1538,21 +1537,10 @@ export async function updateAdminTestimonial(testimonialId: number, input: { sta
   return { success: true } as const;
 }
 
-type SpecialAccessStatus = "draft" | "published" | "paused";
-type SpecialAccessInput = { title: string; message: string; buttonLabel: string; destinationUrl: string; password?: string; status: SpecialAccessStatus };
-
-function hashSpecialAccessPassword(password: string) {
+function hashAccessToken(token: string) {
   const salt = randomUUID();
-  const digest = scryptSync(password, salt, 64).toString("hex");
+  const digest = scryptSync(token, salt, 64).toString("hex");
   return `scrypt$${salt}$${digest}`;
-}
-
-function verifySpecialAccessPassword(password: string, passwordHash: string | null) {
-  if (!passwordHash) return false;
-  const [algorithm, salt, expected] = passwordHash.split("$");
-  if (algorithm !== "scrypt" || !salt || !expected) return false;
-  const actual = scryptSync(password, salt, 64).toString("hex");
-  return timingSafeEqual(Buffer.from(actual, "hex"), Buffer.from(expected, "hex"));
 }
 
 function accessTokenEncryptionKey() {
@@ -1599,111 +1587,13 @@ async function ensureApplicationAccessToken(application: typeof applications.$in
     applicationId: application.id,
     ownerUserId: application.ownerUserId,
     publicCode,
-    tokenHash: hashSpecialAccessPassword(plainToken),
+    tokenHash: hashAccessToken(plainToken),
     encryptedToken: encryptAccessToken(plainToken),
     status: "active",
     createdBy,
   });
   const created = await db.select().from(applicationAccessTokens).where(eq(applicationAccessTokens.publicCode, publicCode)).limit(1);
   return { tokenRow: created[0], plainToken };
-}
-
-function newSpecialAccessCode() {
-  return randomUUID().replace(/-/g, "").slice(0, 16);
-}
-
-async function ensureSpecialAccessPage(userId: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const existing = await db.select().from(specialAccessPages).where(eq(specialAccessPages.userId, userId)).limit(1);
-  if (existing[0]) return existing[0];
-  await db.insert(specialAccessPages).values({
-    userId,
-    publicCode: newSpecialAccessCode(),
-    title: "Acesso especial",
-    message: "Use a senha recebida para continuar para a área preparada especialmente para você.",
-    buttonLabel: "Continuar",
-    destinationUrl: "https://www.ocodigolucrativo.site/",
-    status: "draft",
-  });
-  const created = await db.select().from(specialAccessPages).where(eq(specialAccessPages.userId, userId)).limit(1);
-  return created[0];
-}
-
-function memberSpecialAccessView(page: typeof specialAccessPages.$inferSelect) {
-  return {
-    publicCode: page.publicCode,
-    title: page.title,
-    message: page.message,
-    buttonLabel: page.buttonLabel,
-    destinationUrl: page.destinationUrl,
-    status: page.status,
-    hasPassword: Boolean(page.passwordHash),
-    adminNote: page.adminNote,
-    accessCount: page.accessCount,
-    lastAccessAt: page.lastAccessAt,
-    updatedAt: page.updatedAt,
-  };
-}
-
-export async function getMemberSpecialAccess(userId: number) {
-  return memberSpecialAccessView(await ensureSpecialAccessPage(userId));
-}
-
-export async function updateMemberSpecialAccess(userId: number, input: SpecialAccessInput) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const current = await ensureSpecialAccessPage(userId);
-  const passwordHash = input.password ? hashSpecialAccessPassword(input.password) : current.passwordHash;
-  if (input.status === "published" && !passwordHash) throw new Error("Defina uma senha de acesso antes de publicar a página.");
-  await db.update(specialAccessPages).set({
-    title: input.title,
-    message: input.message,
-    buttonLabel: input.buttonLabel,
-    destinationUrl: input.destinationUrl,
-    passwordHash,
-    status: input.status,
-  }).where(eq(specialAccessPages.userId, userId));
-  return getMemberSpecialAccess(userId);
-}
-
-export async function getPublicSpecialAccess(publicCode: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const applicationTokenRows = await db.select({
-    publicCode: applicationAccessTokens.publicCode,
-    fullName: applications.fullName,
-    status: applicationAccessTokens.status,
-  }).from(applicationAccessTokens).innerJoin(applications, eq(applications.id, applicationAccessTokens.applicationId)).where(and(eq(applicationAccessTokens.publicCode, publicCode), eq(applicationAccessTokens.status, "active"), eq(applications.paymentStatus, "confirmed"))).limit(1);
-  if (applicationTokenRows[0]) {
-    return {
-      publicCode: applicationTokenRows[0].publicCode,
-      title: "Personalização liberada",
-      message: `Pagamento aprovado. Use a senha especial recebida para continuar a personalização da sua Página Lucrativa.`,
-      buttonLabel: "Personalizar minha Página Lucrativa",
-    };
-  }
-  const rows = await db.select({ publicCode: specialAccessPages.publicCode, title: specialAccessPages.title, message: specialAccessPages.message, buttonLabel: specialAccessPages.buttonLabel }).from(specialAccessPages).where(and(eq(specialAccessPages.publicCode, publicCode), eq(specialAccessPages.status, "published"))).limit(1);
-  return rows[0] ?? null;
-}
-
-export async function unlockPublicSpecialAccess(publicCode: string, password: string) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const applicationTokenRows = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.publicCode, publicCode), eq(applicationAccessTokens.status, "active"))).limit(1);
-  const applicationToken = applicationTokenRows[0];
-  if (applicationToken) {
-    const applicationRows = await db.select().from(applications).where(and(eq(applications.id, applicationToken.applicationId), eq(applications.paymentStatus, "confirmed"))).limit(1);
-    if (!applicationRows[0] || !verifySpecialAccessPassword(password, applicationToken.tokenHash)) throw new Error("Senha inválida ou acesso indisponível.");
-    await db.update(applicationAccessTokens).set({ accessCount: applicationToken.accessCount + 1, lastAccessAt: new Date() }).where(eq(applicationAccessTokens.id, applicationToken.id));
-    await db.update(applications).set({ activationStatus: "personalization_started" }).where(eq(applications.id, applicationToken.applicationId));
-    return { destinationUrl: `/personalizar?codigo=${encodeURIComponent(publicCode)}` };
-  }
-  const rows = await db.select().from(specialAccessPages).where(and(eq(specialAccessPages.publicCode, publicCode), eq(specialAccessPages.status, "published"))).limit(1);
-  const page = rows[0];
-  if (!page || !verifySpecialAccessPassword(password, page.passwordHash)) throw new Error("Senha inválida ou acesso indisponível.");
-  await db.update(specialAccessPages).set({ accessCount: page.accessCount + 1, lastAccessAt: new Date() }).where(eq(specialAccessPages.id, page.id));
-  return { destinationUrl: page.destinationUrl };
 }
 
 function slugFromName(name: string, userId: number) {
@@ -1749,34 +1639,14 @@ export async function completeApplicationPersonalization(input: ApplicationPerso
   const existingUser = existingUsers[0] ?? null;
   if (existingUser && existingUser.openId !== openId) throw new Error("Já existe uma conta com este e-mail. Use outro e-mail ou solicite suporte.");
   let userId = existingUser?.id ?? 0;
+  const normalizedName = input.name.trim();
   if (userId) {
-    await db.update(users).set({ name: application.fullName.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", lastSignedIn: new Date() }).where(eq(users.id, userId));
+    await db.update(users).set({ name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", lastSignedIn: new Date() }).where(eq(users.id, userId));
   } else {
-    const result = await db.insert(users).values({ openId, name: application.fullName.trim(), email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
+    const result = await db.insert(users).values({ openId, name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
     userId = Number(result[0].insertId);
   }
-  await db.insert(referralLinks).values({ sponsorId: application.ownerUserId, referredUserId: userId, status: "active" }).onDuplicateKeyUpdate({ set: { sponsorId: application.ownerUserId, status: "active" } });
-  await db.update(applicationAccessTokens).set({ status: "used", usedAt: new Date() }).where(eq(applicationAccessTokens.id, token.id));
-  await db.update(applications).set({ activationStatus: "personalization_started", status: "approved" }).where(eq(applications.id, application.id));
-  return { success: true, email: normalizedEmail } as const;
-}
-
-export async function getMemberInitialProfileStatus(userId: number) {
-  const db = await getDb();
-  if (!db) return { required: false };
-  const rows = await db.select({ slug: memberProfiles.slug, whatsapp: memberProfiles.whatsapp }).from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1);
-  const profile = rows[0] ?? null;
-  return { required: !profile?.slug || !profile?.whatsapp, profile };
-}
-
-export async function completeMemberInitialPublicProfile(userId: number, input: { name: string; whatsapp: string; facebookUrl?: string | null; instagramUrl?: string | null }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const userRows = await db.select({ email: users.email, openId: users.openId }).from(users).where(eq(users.id, userId)).limit(1);
-  const userOpenId = userRows[0]?.openId ?? null;
-  const normalizedName = input.name.trim();
   const slug = slugFromName(normalizedName, userId);
-  await db.update(users).set({ name: normalizedName }).where(eq(users.id, userId));
   await db.insert(memberProfiles).values({
     userId,
     slug,
@@ -1789,25 +1659,8 @@ export async function completeMemberInitialPublicProfile(userId: number, input: 
     facebookUrl: cleanOptional(input.facebookUrl),
     instagramUrl: cleanOptional(input.instagramUrl),
   } });
-  if (userOpenId?.startsWith("application:")) {
-    const publicCode = userOpenId.replace("application:", "");
-    const tokenRows = await db.select({ applicationId: applicationAccessTokens.applicationId }).from(applicationAccessTokens).where(eq(applicationAccessTokens.publicCode, publicCode)).limit(1);
-    if (tokenRows[0]) await db.update(applications).set({ activationStatus: "member_activated" }).where(eq(applications.id, tokenRows[0].applicationId));
-  }
-  return { success: true, slug } as const;
-}
-
-export async function getAdminSpecialAccessPages() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select({ id: specialAccessPages.id, userId: specialAccessPages.userId, publicCode: specialAccessPages.publicCode, title: specialAccessPages.title, status: specialAccessPages.status, adminNote: specialAccessPages.adminNote, accessCount: specialAccessPages.accessCount, lastAccessAt: specialAccessPages.lastAccessAt, updatedAt: specialAccessPages.updatedAt, memberName: users.name, memberEmail: users.email }).from(specialAccessPages).leftJoin(users, eq(specialAccessPages.userId, users.id)).orderBy(desc(specialAccessPages.updatedAt));
-}
-
-export async function updateAdminSpecialAccessPage(id: number, input: { status: SpecialAccessStatus; adminNote?: string | null }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const existing = await db.select({ id: specialAccessPages.id }).from(specialAccessPages).where(eq(specialAccessPages.id, id)).limit(1);
-  if (!existing[0]) throw new Error("Página especial não encontrada.");
-  await db.update(specialAccessPages).set({ status: input.status, adminNote: input.adminNote ?? null }).where(eq(specialAccessPages.id, id));
-  return { success: true } as const;
+  await db.insert(referralLinks).values({ sponsorId: application.ownerUserId, referredUserId: userId, status: "active" }).onDuplicateKeyUpdate({ set: { sponsorId: application.ownerUserId, status: "active" } });
+  await db.update(applicationAccessTokens).set({ status: "used", usedAt: new Date() }).where(eq(applicationAccessTokens.id, token.id));
+  await db.update(applications).set({ activationStatus: "member_activated", status: "approved" }).where(eq(applications.id, application.id));
+  return { success: true, email: normalizedEmail, slug } as const;
 }

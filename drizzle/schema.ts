@@ -143,28 +143,6 @@ export const receivingPreferences = mysqlTable("receivingPreferences", {
   userUnique: uniqueIndex("receiving_preferences_user_unique").on(table.userId),
 }));
 
-export const specialAccessPages = mysqlTable("specialAccessPages", {
-  id: int("id").autoincrement().primaryKey(),
-  userId: int("userId").notNull(),
-  publicCode: varchar("publicCode", { length: 48 }).notNull(),
-  title: varchar("title", { length: 160 }).notNull(),
-  message: text("message").notNull(),
-  buttonLabel: varchar("buttonLabel", { length: 80 }).notNull(),
-  destinationUrl: varchar("destinationUrl", { length: 1024 }).notNull(),
-  passwordHash: varchar("passwordHash", { length: 255 }),
-  status: mysqlEnum("status", ["draft", "published", "paused"]).default("draft").notNull(),
-  adminNote: text("adminNote"),
-  accessCount: int("accessCount").default(0).notNull(),
-  lastAccessAt: timestamp("lastAccessAt"),
-  createdAt: timestamp("createdAt").defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, table => ({
-  userUnique: uniqueIndex("special_access_pages_user_unique").on(table.userId),
-  codeUnique: uniqueIndex("special_access_pages_code_unique").on(table.publicCode),
-  statusIndex: index("special_access_pages_status_idx").on(table.status),
-}));
-
-
 export const referralLinks = mysqlTable("referralLinks", {
   id: int("id").autoincrement().primaryKey(),
   sponsorId: int("sponsorId").notNull(),

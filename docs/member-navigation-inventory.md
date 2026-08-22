@@ -7,7 +7,7 @@ O roteamento de membro está centralizado em `client/src/App.tsx`. A reorganiza�
 | Área | Rotas existentes relevantes |
 |---|---|
 | Início e operação | `/membros`, `/membros/operacao`, `/membros/como-divulgar`, `/membros/campanhas`, `/membros/convites`, `/membros/fale-conosco` |
-| Página, conta e recebimento | `/membros/configuracoes`, `/membros/meus-dados`, `/membros/recebimentos`, `/membros/mensagem-especial` |
+| Página, conta e recebimento | `/membros/configuracoes`, `/membros/meus-dados`, `/membros/recebimentos` |
 | Vendas e rede | `/membros/meus-pedidos`, `/membros/ganhos`, `/membros/rede`, `/membros/patrocinador`, `/membros/produtos` |
 | Divulgação e contatos | `/membros/historico`, `/membros/top-visitas`, `/membros/emails-interessados`, `/membros/emails-whatsapp`, `/membros/emails-site`, `/membros/automacoes` |
 | Conteúdos e materiais | `/membros/blog`, `/membros/artigos`, `/membros/materiais`, `/membros/bonus`, `/membros/classificados` |
@@ -21,7 +21,7 @@ O roteamento de membro está centralizado em `client/src/App.tsx`. A reorganiza�
 
 ## Menus locais encontrados
 
-Dezoito páginas de membro declaram listas `DashboardMenuItem[]` próprias: `MemberAccount`, `MemberAffiliateOrders`, `MemberCommunications`, `MemberCourses`, `MemberCredentials`, `MemberEarnings`, `MemberOffice`, `MemberOperations`, `MemberPerformance`, `MemberPersonalization`, `MemberProducts`, `MemberProfile`, `MemberPublications`, `MemberReceiving`, `MemberReferrals`, `MemberTestimonial`, `MemberTraffic` e `EbookReader`.
+Dezesseis páginas de membro declaram listas `DashboardMenuItem[]` próprias: `MemberAccount`, `MemberAffiliateOrders`, `MemberCourses`, `MemberCredentials`, `MemberEarnings`, `MemberOffice`, `MemberOperations`, `MemberPerformance`, `MemberProducts`, `MemberProfile`, `MemberPublications`, `MemberReceiving`, `MemberReferrals`, `MemberTestimonial`, `MemberTraffic` e `EbookReader`.
 
 O `DashboardLayout` já possui uma substituição central: quando recebe apenas caminhos `/membros` ou `/membros/*`, `isMemberOfficeNavigation` faz o layout renderizar `memberDashboardMenuItems` em vez do menu local recebido pela página. Isso significa que a experiência visual já pode ser unificada alterando o catálogo central, sem reconstruir os módulos e sem editar cada página por necessidade arquitetural. Os menus locais continuam sendo uma fonte de confusão e deverão ser neutralizados ou documentados como entradas legadas somente quando isso for necessário para impedir redefinições futuras.
 

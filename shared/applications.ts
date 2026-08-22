@@ -57,6 +57,10 @@ export const applicationReceiptUploadSchema = z.object({
 
 export const applicationPersonalizationSchema = z.object({
   publicCode: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48),
+  name: z.string().trim().min(2, "Informe seu nome.").max(180),
+  whatsapp: phoneZodSchema,
+  facebookUrl: httpUrlZodSchema.max(512).optional().nullable(),
+  instagramUrl: httpUrlZodSchema.max(512).optional().nullable(),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres.").max(128).regex(/[A-Za-z]/, "A senha deve conter pelo menos uma letra.").regex(/\d/, "A senha deve conter pelo menos um número."),
 });
 

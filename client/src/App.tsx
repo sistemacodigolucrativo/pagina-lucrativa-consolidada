@@ -33,7 +33,6 @@ import AdminApplications from "./pages/AdminApplications";
 import AdminCommunications from "./pages/AdminCommunications";
 import MemberReferrals from "./pages/MemberReferrals";
 import AdminReferrals from "./pages/AdminReferrals";
-import MemberPersonalization from "./pages/MemberPersonalization";
 import MemberCredentials from "./pages/MemberCredentials";
 import MemberTestimonial from "./pages/MemberTestimonial";
 import AdminTestimonials from "./pages/AdminTestimonials";
@@ -42,12 +41,9 @@ import ApplicationPersonalization from "./pages/ApplicationPersonalization";
 import MemberProfile from "./pages/MemberProfile";
 import MemberAccount from "./pages/MemberAccount";
 import MemberGettingStarted from "./pages/MemberGettingStarted";
-import MemberInitialPublicProfile from "./pages/MemberInitialPublicProfile";
 import MemberSupport from "./pages/MemberSupport";
 import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
 import { DEV_PREFIX } from "./lib/devPath";
-import SpecialAccessPublic from "./pages/SpecialAccessPublic";
-import AdminSpecialAccess from "./pages/AdminSpecialAccess";
 
 function AppRoutes() {
   return <Switch>
@@ -58,7 +54,6 @@ function AppRoutes() {
     <Route path="/pedido/acompanhar" component={ApplicationTracking} />
     <Route path="/personalizar" component={ApplicationPersonalization} />
     <Route path="/acesso" component={DemoLogin} />
-    <Route path="/senha-especial/:code" component={SpecialAccessPublic} />
     <Route path="/membros/operacao" component={MemberOperationCenter} />
     <Route path="/membros/operacao/campanhas" component={MemberOperationCenter} />
     <Route path="/membros/operacao/trafego" component={MemberOperationCenter} />
@@ -80,12 +75,10 @@ function AppRoutes() {
 
 
 
-    <Route path="/membros/mensagem-especial" component={MemberPersonalization} />
     <Route path="/membros/fazer-depoimento" component={MemberTestimonial} />
     <Route path="/membros/meus-dados" component={MemberAccount} />
     <Route path="/membros/configuracoes" component={MemberProfile} />
     <Route path="/membros/como-divulgar" component={MemberGettingStarted} />
-    <Route path="/membros/perfil-inicial" component={MemberInitialPublicProfile} />
     <Route path="/membros/fale-conosco" component={MemberSupport} />
     <Route path="/membros/campanhas" component={MemberLegacyRedirect} />
     <Route path="/membros/convites" component={MemberLegacyRedirect} />
@@ -148,7 +141,6 @@ function AppRoutes() {
     <Route path="/admin/pontos" component={AdminPerformance} />
     <Route path="/admin/relatos" component={AdminTestimonials} />
     <Route path="/admin/academia" component={AdminCourses} />
-    <Route path="/admin/mensagem-especial" component={AdminSpecialAccess} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />
