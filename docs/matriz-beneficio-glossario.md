@@ -50,9 +50,9 @@ A ordem importa. A monetização aparece como uso comercial possível da infraes
 | **Pedido** | Solicitação registrada no formulário público com código e status | Venda, pagamento, ganho |
 | **Indicação** | Relação de atribuição de um interessado/membro ao link ou vínculo administrativo | Comissão garantida |
 | **Venda** | Registro financeiro de tipo `sale`, sujeito à regra e conferência da operação | Pedido, indicação, recebimento |
-| **Ganho** | Valor positivo confirmado no extrato, conforme lançamento financeiro | Renda automática, lucro certo |
-| **Saldo confirmado** | Soma dos lançamentos financeiros com status `posted` | Dinheiro disponível na conta bancária |
-| **Transação** | Registro financeiro com tipo, valor e status | Pagamento processado |
+| **Ganho** | Valor informativo de adesões confirmadas diretamente entre comprador e patrocinador | Renda automática, lucro certo, saldo custodiado |
+| **Extrato de adesões** | Relatório derivado de pedidos reais atribuídos ao membro | Carteira, saldo para saque |
+| **Transação** | Registro financeiro legado/administrativo com tipo, valor e status | Pagamento processado pela plataforma |
 | **Recebimento** | Preferência/dado cadastrado pelo membro para receber valores | Transferência automática |
 | **Biblioteca de execução** | Agrupamento comercial de cursos, e-books, artigos, materiais, bônus e FAQs publicados | Centenas de materiais — sem prova |
 | **Academia de execução** | Agrupamento comercial dos cursos publicados com leitura e progresso | Curso garantido — quando ainda não publicado |
@@ -68,7 +68,7 @@ A ordem importa. A monetização aparece como uso comercial possível da infraes
 | Prova de histórico | Texto atual afirma “desde 2011” | Não confirmada no código | Não usar até encontrar fonte documental verificável. |
 | Prova de uso | Estrutura de dados e dashboards persistidos | Parcial | Dizer que o sistema registra e organiza; não afirmar uso massivo. |
 | Prova social | Infraestrutura de depoimentos com autoria confirmada e revisão admin | Funcional, sem depoimentos validados para publicação | Usar somente relatos aprovados e verdadeiros. |
-| Prova de resultado | Transações e extrato existem | Condicional | Nunca apresentar lançamento interno como resultado garantido. |
+| Prova de resultado | Pedidos atribuídos e extrato de adesões existem | Condicional | Nunca apresentar pedido ou valor informativo como resultado garantido. |
 | Prova de facilidade | Jornada de perfil, campanha, academia e painel | Confirmada como experiência de produto | Usar “sem desenvolver tudo do zero”; não usar infantilização. |
 | Prova de suporte | Tickets persistidos e resposta administrativa | Confirmada | Prometer canal de solicitação, não atendimento instantâneo. |
 
@@ -81,7 +81,7 @@ A ordem importa. A monetização aparece como uso comercial possível da infraes
 | “Não sei divulgar.” | “A Academia, a biblioteca e as campanhas ajudam a organizar o aprendizado e a execução. A divulgação continua dependendo da sua iniciativa e dos canais que escolher.” |
 | “Não sei criar site.” | “Você começa com uma página e um perfil público já estruturados; o Escritório Virtual concentra as configurações disponíveis.” |
 | “Como acompanho?” | “O Escritório Virtual reúne pedidos, campanhas, contatos, extrato, perfil, cursos e outros registros disponíveis para sua conta.” |
-| “Como recebo?” | “Você cadastra suas preferências de recebimento e acompanha lançamentos no extrato. A plataforma não processa pagamentos automaticamente; valores e confirmações dependem da operação real.” |
+| “Como recebo?” | “Você cadastra suas preferências de recebimento e acompanha pedidos, pagamentos confirmados e histórico de adesões. A plataforma não processa pagamentos automaticamente; valores e confirmações dependem da operação real.” |
 | “Preciso criar um produto?” | “Não para começar a entender a estrutura. A plataforma permite cadastrar produtos próprios para revisão e oferece conteúdos publicados quando disponíveis.” |
 | “Vou ganhar dinheiro automaticamente?” | “Não. A estrutura fornece infraestrutura e ferramentas; resultados dependem de divulgação, pedidos, vendas reais, conferência e outros fatores da operação.” |
 | “Existe mensalidade?” | “A Home deve responder somente conforme a regra comercial confirmada. Não inserir ‘sem mensalidade’ ou ‘pagamento único’ sem validar a oferta vigente.” |

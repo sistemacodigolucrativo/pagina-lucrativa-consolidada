@@ -1,22 +1,52 @@
-import { FormEvent, useState } from "react";
-import { ArrowDownToLine, CircleDollarSign, Plus, ReceiptText } from "lucide-react";
+import { CircleDollarSign, ClipboardList, ReceiptText } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
+import { withAppBase } from "@/lib/devPath";
 import { memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
 import { formatCurrency } from "@shared/dashboard";
-import { CurrencyInput } from "@/components/NumericInput";
-import { parseCurrencyBR } from "@shared/structuredValidation";
+import { applicationPaymentStatusLabel } from "@shared/applications";
 
-const typeLabel = { sale: "Venda registrada", commission: "Comissão", adjustment: "Ajuste", withdrawal: "Saque" } as const;
-const statusLabel = { pending: "Em análise", posted: "Confirmado", void: "Cancelado" } as const;
 export default function MemberEarnings() {
-  const utils = trpc.useUtils();
   const finance = trpc.member.finance.useQuery();
-  const create = trpc.member.createFinanceEntry.useMutation({ onSuccess: () => { utils.member.finance.invalidate(); setDescription(""); setAmount(""); } });
-  const [type, setType] = useState<"sale" | "withdrawal">("sale");
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  function submit(event: FormEvent<HTMLFormElement>) { event.preventDefault(); const cents = parseCurrencyBR(amount); if (cents === null || cents <= 0 || cents > 100000000) return; create.mutate({ type, description: description.trim(), amountCents: cents }); }
   const data = finance.data;
-  return <DashboardLayout menuItems={memberDashboardMenuItems} title="Meus resultados" subtitle="Acompanhe lançamentos financeiros e envie novas informações para análise administrativa."><div className="office-page"><section className="office-intro"><div><span className="office-eyebrow">Meus resultados</span><h1>Extrato e lançamentos financeiros</h1><p>Os lançamentos enviados por você permanecem em análise até a conferência administrativa. Esta área registra movimentações; ela não processa pagamentos.</p></div></section>{finance.isLoading ? <div className="office-loading"><span>Carregando extrato</span><i /><i /><i /></div> : finance.error ? <section className="office-empty"><CircleDollarSign size={26} /><h2>Não foi possível carregar seu extrato.</h2><p>{finance.error.message}</p></section> : <><section className="office-stat-grid"><article><span>Saldo confirmado</span><strong>{formatCurrency(data?.balanceCents ?? 0)}</strong><small>Somente lançamentos confirmados</small></article><article><span>Ganhos confirmados</span><strong>{formatCurrency(data?.earnedCents ?? 0)}</strong><small>Vendas, comissões e ajustes</small></article><article><span>Em análise</span><strong>{formatCurrency(data?.pendingCents ?? 0)}</strong><small>Registros aguardando conferência</small></article></section><section className="office-section"><div className="office-section-head"><div><span className="office-eyebrow">Registro para análise</span><h2>Informar uma movimentação</h2></div></div><form className="office-form-grid" onSubmit={submit}><label><span>Tipo</span><select value={type} onChange={event => setType(event.target.value as "sale" | "withdrawal")}><option value="sale">Registrar venda</option><option value="withdrawal">Solicitar saque</option></select></label><label><span>Valor em reais</span><CurrencyInput value={amount} onValueChange={setAmount} required placeholder="0,00" /></label><label className="office-form-full"><span>Descrição</span><input value={description} onChange={event => setDescription(event.target.value)} required minLength={3} maxLength={320} placeholder={type === "sale" ? "Ex.: Venda de produto ou serviço" : "Ex.: Solicitação de saque do saldo confirmado"} /></label><button className="btn btn-primary" type="submit" disabled={create.isPending}><Plus size={16} />{create.isPending ? "Registrando..." : "Registrar para análise"}</button>{create.error && <p className="application-error">{create.error.message}</p>}</form></section><section className="office-section"><div className="office-section-head"><div><span className="office-eyebrow">Histórico financeiro</span><h2>Seus lançamentos</h2></div></div>{data?.transactions.length ? <div className="office-stack">{data.transactions.map(entry => <article className="office-card" key={entry.id}><div className="office-card-head"><div><span className="office-list-code">{statusLabel[entry.status]}</span><h3>{typeLabel[entry.type]}</h3><p>{entry.description}</p>{entry.adminNote && <p><strong>Retorno:</strong> {entry.adminNote}</p>}</div><div className={entry.amountCents < 0 ? "finance-negative" : "finance-positive"}>{entry.amountCents < 0 ? "−" : "+"}{formatCurrency(Math.abs(entry.amountCents))}<time>{new Date(entry.occurredAt).toLocaleDateString("pt-BR")}</time></div></div></article>)}</div> : <div className="office-empty"><ReceiptText size={26} /><h2>Seu extrato ainda está vazio.</h2><p>Informe uma venda ou uma solicitação de saque para iniciar o acompanhamento. Cada registro permanece sujeito à conferência.</p></div>}</section></>}</div></DashboardLayout>;
+
+  return <DashboardLayout menuItems={memberDashboardMenuItems} title="Ganhos e extrato" subtitle="Relatório das adesões atribuídas à sua Página Lucrativa.">
+    <div className="office-page">
+      <section className="office-intro">
+        <div>
+          <span className="office-eyebrow">Relatório de adesões</span>
+          <h1>Ganhos e extrato de adesões</h1>
+          <p>Consulte as adesões atribuídas à sua Página Lucrativa e os valores dos pagamentos que você confirmou diretamente com seus compradores. O pagamento ocorre diretamente entre comprador e patrocinador; a Página Lucrativa apenas registra o status da adesão.</p>
+        </div>
+      </section>
+
+      {finance.isLoading ? <div className="office-loading"><span>Carregando relatório</span><i /><i /><i /></div> : finance.error ? <section className="office-empty"><CircleDollarSign size={26} /><h2>Não foi possível carregar seu relatório.</h2><p>{finance.error.message}</p></section> : <>
+        <section className="office-stat-grid">
+          <article><span>Adesões confirmadas</span><strong>{data?.confirmedCount ?? 0}</strong><small>Pedidos com pagamento confirmado</small></article>
+          <article><span>Valor das adesões confirmadas</span><strong>{formatCurrency(data?.confirmedValueCents ?? 0)}</strong><small>Valor informativo dos pagamentos diretos</small></article>
+          <article><span>Aguardando análise</span><strong>{data?.awaitingReviewCount ?? 0}</strong><small>Comprovantes pendentes de conferência</small></article>
+        </section>
+
+        <section className="office-section">
+          <div className="office-section-head">
+            <div><span className="office-eyebrow">Histórico de adesões</span><h2>Pedidos atribuídos à sua página</h2></div>
+            <a className="office-action" href={withAppBase("/membros/meus-pedidos")}>Ver pedidos<ClipboardList size={16} /></a>
+          </div>
+          {data?.entries.length ? <div className="office-stack">{data.entries.map(entry => <article className="office-card" key={entry.id}>
+            <div className="office-card-head">
+              <div>
+                <span className="office-list-code">{entry.trackingCode ?? `Pedido #${entry.id}`}</span>
+                <h3>{entry.trackingCode ?? `Pedido #${entry.id}`} · {entry.fullName}</h3>
+                <p>{applicationPaymentStatusLabel[entry.paymentStatus]} · {new Date(entry.createdAt).toLocaleDateString("pt-BR")}</p>
+              </div>
+              <div className={entry.paymentStatus === "confirmed" ? "finance-positive" : "text-zinc-300"}>
+                {formatCurrency(entry.offerAmountCents)}
+                <time>{new Date(entry.createdAt).toLocaleDateString("pt-BR")}</time>
+              </div>
+            </div>
+          </article>)}</div> : <div className="office-empty"><ReceiptText size={26} /><h2>Nenhuma adesão atribuída ainda.</h2><p>Quando um pedido for atribuído à sua Página Lucrativa, ele aparecerá automaticamente neste relatório. Você não precisa registrar vendas manualmente.</p></div>}
+        </section>
+      </>}
+    </div>
+  </DashboardLayout>;
 }

@@ -46,6 +46,16 @@ Ao rejeitar:
 - `paymentStatus` vira `rejected`;
 - nenhuma credencial especial é liberada.
 
+## Ganhos e extrato
+
+`/membros/ganhos` é um relatório de adesões atribuídas ao patrocinador autenticado.
+
+O relatório é derivado de `applications.ownerUserId` e mostra pedidos, status de pagamento, adesões confirmadas, valor informativo dos pagamentos confirmados e comprovantes aguardando análise.
+
+A área não representa carteira, saldo interno, saque ou custódia de valores. Pagamentos continuam ocorrendo diretamente entre comprador e patrocinador.
+
+O membro não registra venda nem solicita saque nessa tela. Registros antigos de `transactions` permanecem preservados para histórico administrativo e integrações de conversão manual.
+
 ## Tabelas utilizadas
 
 - `applications`

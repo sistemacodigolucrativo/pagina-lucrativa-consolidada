@@ -129,41 +129,46 @@ export async function authenticateLocalUser(identifier: string, password: string
 export async function getMemberOverview(userId: number) {
   const db = await getDb();
   if (!db) return null;
-  const [profileRows, links, transactionRows, recentTransactions, tickets] = await Promise.all([
+  const [profileRows, links, applicationRows, recentApplications, tickets] = await Promise.all([
     db.select().from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1),
     db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)),
-    db.select().from(transactions).where(eq(transactions.userId, userId)),
-    db.select().from(transactions).where(eq(transactions.userId, userId)).orderBy(desc(transactions.occurredAt)).limit(5),
+    db.select().from(applications).where(eq(applications.ownerUserId, userId)),
+    db.select().from(applications).where(eq(applications.ownerUserId, userId)).orderBy(desc(applications.createdAt)).limit(5),
     db.select().from(supportTickets).where(and(eq(supportTickets.userId, userId), eq(supportTickets.status, "open"))),
   ]);
+  const confirmedApplications = applicationRows.filter(application => application.paymentStatus === "confirmed");
   return {
     profile: profileRows[0] ?? null,
     campaignCount: links.length,
     campaignClicks: links.reduce((total, link) => total + link.clicks, 0),
-    balanceCents: transactionRows.reduce((total, transaction) => total + transaction.amountCents, 0),
+    confirmedApplicationCount: confirmedApplications.length,
+    confirmedApplicationValueCents: confirmedApplications.reduce((total, application) => total + application.offerAmountCents, 0),
+    awaitingReviewCount: applicationRows.filter(application => application.paymentStatus === "receipt_received").length,
     openTicketCount: tickets.length,
-    recentTransactions,
+    recentApplications,
   };
 }
 
 export async function getMemberFinance(userId: number) {
   const db = await getDb();
-  if (!db) return { transactions: [], balanceCents: 0, earnedCents: 0, pendingCents: 0 };
-  const transactionsList = await db.select().from(transactions).where(eq(transactions.userId, userId)).orderBy(desc(transactions.occurredAt));
-  const posted = transactionsList.filter(entry => entry.status === "posted");
+  if (!db) return { entries: [], confirmedCount: 0, confirmedValueCents: 0, awaitingReviewCount: 0 };
+  const entries = await db.select({
+    id: applications.id,
+    trackingCode: applications.trackingCode,
+    fullName: applications.fullName,
+    email: applications.email,
+    offerAmountCents: applications.offerAmountCents,
+    paymentStatus: applications.paymentStatus,
+    createdAt: applications.createdAt,
+    updatedAt: applications.updatedAt,
+  }).from(applications).where(eq(applications.ownerUserId, userId)).orderBy(desc(applications.createdAt));
+  const confirmed = entries.filter(entry => entry.paymentStatus === "confirmed");
   return {
-    transactions: transactionsList,
-    balanceCents: posted.reduce((total, entry) => total + entry.amountCents, 0),
-    earnedCents: posted.filter(entry => entry.amountCents > 0).reduce((total, entry) => total + entry.amountCents, 0),
-    pendingCents: transactionsList.filter(entry => entry.status === "pending").reduce((total, entry) => total + entry.amountCents, 0),
+    entries,
+    confirmedCount: confirmed.length,
+    confirmedValueCents: confirmed.reduce((total, entry) => total + entry.offerAmountCents, 0),
+    awaitingReviewCount: entries.filter(entry => entry.paymentStatus === "receipt_received").length,
   };
-}
-export async function createMemberFinanceEntry(userId: number, input: { type: "sale" | "withdrawal"; description: string; amountCents: number }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const amountCents = input.type === "withdrawal" ? -Math.abs(input.amountCents) : Math.abs(input.amountCents);
-  const result = await db.insert(transactions).values({ userId, createdBy: userId, type: input.type, description: input.description.trim(), amountCents, status: "pending" });
-  return { id: Number(result[0].insertId) };
 }
 export async function getAdminTransactions() {
   const db = await getDb();
@@ -177,10 +182,10 @@ export async function getFinanceMembers() {
   if (!db) return [];
   return db.select({ id: users.id, name: users.name, email: users.email }).from(users).orderBy(users.id);
 }
-export async function createAdminTransaction(adminId: number, input: { userId: number; campaignId?: number | null; type: "sale" | "commission" | "adjustment" | "withdrawal"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
+export async function createAdminTransaction(adminId: number, input: { userId: number; campaignId?: number | null; type: "sale" | "commission" | "adjustment"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const amountCents = input.type === "withdrawal" ? -Math.abs(input.amountCents) : Math.abs(input.amountCents);
+  const amountCents = Math.abs(input.amountCents);
   const result = await db.insert(transactions).values({ ...input, campaignId: input.campaignId ?? null, description: input.description.trim(), amountCents, createdBy: adminId });
   const id = Number(result[0].insertId);
   if (input.campaignId && input.status !== "pending") await syncTransactionCampaignConversion(id);
