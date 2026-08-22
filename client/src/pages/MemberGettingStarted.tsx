@@ -72,10 +72,10 @@ export default function MemberGettingStarted() {
       icon: <BarChart3 className="size-5" />,
     },
     {
-      title: "Acompanhe seus resultados",
-      description: "Veja as conversões geradas pelas suas campanhas e acompanhe seus resultados.",
+      title: "Conquiste sua primeira conversão",
+      description: "Divulgue sua Página Lucrativa e conquiste sua primeira conversão através de uma das suas campanhas. Esta etapa será concluída automaticamente quando o sistema registrar seu primeiro resultado.",
       path: "/membros/operacao/conversoes",
-      action: "Ver conversões",
+      action: "Acompanhar conversões",
       done: firstConversion,
       icon: <CreditCard className="size-5" />,
     },
