@@ -19,6 +19,15 @@ describe("Central de Divulgação", () => {
     expect(center).toContain("trpc.member.analytics.useQuery");
   });
 
+  it("mantém as seções em menu dropdown navegável", async () => {
+    const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
+    expect(center).toContain("Menu da Central de Divulgação");
+    expect(center).toContain("Seção da central");
+    expect(center).toContain("onChange={event => setLocation(event.target.value)}");
+    expect(center).toContain("<select");
+    expect(center).not.toContain("overflow-x-auto");
+  });
+
   it("mantém links rastreáveis copiáveis e cria campanhas com origem", async () => {
     const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
     expect(center).toContain("Copiar link");

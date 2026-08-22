@@ -43,7 +43,7 @@ function conversionRate(conversions: number, visitors: number) {
 }
 
 export default function MemberOperationCenter() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const pathname = location.split("?")[0];
   const detailMatch = pathname.match(/^\/membros\/operacao\/(\d+)$/);
   const selectedCampaignId = detailMatch ? Number(detailMatch[1]) : null;
@@ -176,8 +176,17 @@ export default function MemberOperationCenter() {
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">{description}</p>
         </header>
 
-        {activeTab !== "detail" ? <nav className="flex min-w-0 gap-2 overflow-x-auto rounded-2xl border border-white/10 bg-zinc-950/60 p-2" aria-label="Abas da Central de Divulgação">
-          {tabs.map(tab => <a key={tab.key} href={withAppBase(tab.path)} className={`shrink-0 rounded-xl px-3 py-2 text-sm transition ${activeTab === tab.key ? "bg-emerald-300 font-semibold text-black" : "text-zinc-300 hover:bg-white/10 hover:text-white"}`}>{tab.label}</a>)}
+        {activeTab !== "detail" ? <nav className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4" aria-label="Menu da Central de Divulgação">
+          <label className="block text-sm font-medium text-zinc-200">
+            Seção da central
+            <select
+              value={tabs.find(tab => tab.key === activeTab)?.path ?? "/membros/operacao"}
+              onChange={event => setLocation(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-white/15 bg-black px-3 py-3 text-sm font-semibold text-white outline-none transition focus:border-emerald-300 focus:ring-2 focus:ring-emerald-300/30"
+            >
+              {tabs.map(tab => <option key={tab.key} value={tab.path}>{tab.label}</option>)}
+            </select>
+          </label>
         </nav> : null}
 
         <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
