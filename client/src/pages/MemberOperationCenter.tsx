@@ -243,9 +243,9 @@ export default function MemberOperationCenter() {
         {activeTab === "overview" && <section className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <Metric label="Campanhas" value={analytics.data?.totals.campaigns ?? 0} detail="links rastreáveis" />
-            <Metric label="Cliques" value={analytics.data?.totals.clicks ?? 0} detail="todas as campanhas" accent />
-            <Metric label="Visitantes únicos" value={analytics.data?.totals.uniqueVisitors ?? 0} detail="todas as campanhas" />
-            <Metric label="Sessões" value={analytics.data?.totals.sessions ?? 0} detail="todas as campanhas" />
+            <Metric label="Cliques" value={analytics.data?.totals.clicks ?? 0} detail="links de divulgação" accent />
+            <Metric label="Visitantes únicos" value={analytics.data?.totals.uniqueVisitors ?? 0} detail="links de divulgação" />
+            <Metric label="Sessões" value={analytics.data?.totals.sessions ?? 0} detail="links de divulgação" />
             <Metric label="Conversões" value={analytics.data?.totals.conversions ?? 0} detail="todas as campanhas" />
           </div>
           <Panel title="Desempenho por campanha" icon={<MousePointerClick className="size-5 text-emerald-300" />}>

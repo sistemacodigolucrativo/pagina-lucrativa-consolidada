@@ -4,7 +4,7 @@ import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { validateEmail, validatePhoneBR } from "@shared/contactValidation";
 import { validateHttpUrl, validatePixKey, validatePixKeyByType } from "@shared/structuredValidation";
-import { BarChart3, Check, Circle, CreditCard, ExternalLink, Link2, MousePointerClick, UserRound, WalletCards } from "lucide-react";
+import { BarChart3, CheckCircle2, Circle, CircleDashed, CreditCard, ExternalLink, Link2, MousePointerClick, UserRound, WalletCards } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -17,12 +17,17 @@ const menu: DashboardMenuItem[] = [
 type Step = {
   id: GettingStartedStepId;
   title: string;
-  description: string;
   path: string;
   action: string;
+  requirements: Requirement[];
   done: boolean;
   unlocked: boolean;
   icon: React.ReactNode;
+};
+
+type Requirement = {
+  label: string;
+  done: boolean;
 };
 
 function hasText(value: string | null | undefined) {
@@ -47,13 +52,10 @@ export default function MemberGettingStarted() {
   }, [location]);
   const [highlightedStep, setHighlightedStep] = useState<GettingStartedStepId | null>(null);
 
-  const profileReady = Boolean(
-    profile.data?.photoUrl
-    && profile.data?.slug
-    && /^(?=.*[a-z0-9])[a-z0-9-]{3,96}$/.test(profile.data.slug)
-    && validatePhoneBR(profile.data.whatsapp)
-    && hasValidAddress(profile.data),
-  );
+  const profilePhotoReady = Boolean(profile.data?.photoUrl);
+  const profileSlugReady = Boolean(profile.data?.slug && /^(?=.*[a-z0-9])[a-z0-9-]{3,96}$/.test(profile.data.slug));
+  const profileWhatsappReady = validatePhoneBR(profile.data?.whatsapp);
+  const profileAddressReady = hasValidAddress(profile.data);
   const validPix = Boolean(
     receiving.data?.pixType
     && receiving.data?.pixKey
@@ -73,14 +75,13 @@ export default function MemberGettingStarted() {
     || (receiving.data?.pagseguroEnabled && validateEmail(receiving.data.pagseguroEmail))
     || paymentLinks.data?.some(link => Boolean(link.isEnabled) && validateHttpUrl(link.paymentUrl)),
   );
-  const receivingReady = Boolean(
-    hasText(receiving.data?.holderName)
-    && (
-      receiving.data?.method === "pix" ? validPix
-        : receiving.data?.method === "bank_transfer" ? validBankAccounts
-          : receiving.data?.method === "other" ? validOtherReceiving
-            : false
-    ),
+  const receivingHolderReady = hasText(receiving.data?.holderName);
+  const receivingPreferenceReady = receiving.data?.method === "pix" || receiving.data?.method === "bank_transfer" || receiving.data?.method === "other";
+  const receivingMediumReady = Boolean(
+    receiving.data?.method === "pix" ? validPix
+      : receiving.data?.method === "bank_transfer" ? validBankAccounts
+        : receiving.data?.method === "other" ? validOtherReceiving
+          : false,
   );
   const operationReady = Boolean(campaigns.data?.length);
   const firstClick = (analytics.data?.totals.clicks ?? 0) > 0;
@@ -92,63 +93,78 @@ export default function MemberGettingStarted() {
       {
         id: "profile" as const,
         title: "Configure sua Página Lucrativa",
-        description: "Defina foto, identificador, WhatsApp e endereço da sua página.",
         path: "/membros/configuracoes",
-        action: profileReady ? "Revisar minha página" : "Configurar minha página",
-        done: profileReady,
+        action: "Iniciar configuração",
+        requirements: [
+          { label: "Foto de perfil", done: profilePhotoReady },
+          { label: "Identificador da sua página", done: profileSlugReady },
+          { label: "WhatsApp", done: profileWhatsappReady },
+          { label: "Endereço cadastrado", done: profileAddressReady },
+        ],
         icon: <UserRound className="size-5" />,
       },
       {
         id: "receiving" as const,
         title: "Configure seus recebimentos",
-        description: "Informe o titular, a forma preferida e um meio de recebimento utilizável.",
         path: "/membros/recebimentos",
-        action: receivingReady ? "Revisar recebimentos" : "Configurar recebimentos",
-        done: receivingReady,
+        action: "Configurar recebimentos",
+        requirements: [
+          { label: "Nome do titular", done: receivingHolderReady },
+          { label: "Forma preferida de recebimento", done: receivingPreferenceReady },
+          { label: "Pelo menos uma forma de recebimento configurada", done: receivingMediumReady },
+        ],
         icon: <WalletCards className="size-5" />,
       },
       {
         id: "campaign" as const,
         title: "Crie sua primeira campanha de divulgação",
-        description: "Crie um link rastreável para Facebook, Instagram, WhatsApp ou qualquer outra origem que você queira medir.",
         path: "/membros/operacao/campanhas",
-        action: operationReady ? "Ver minhas campanhas" : "Criar primeira campanha",
-        done: operationReady,
+        action: "Criar primeira campanha",
+        requirements: [
+          { label: "Primeira campanha criada", done: operationReady },
+        ],
         icon: <Link2 className="size-5" />,
       },
       {
         id: "disclosure" as const,
         title: "Faça sua primeira divulgação",
-        description: "Copie o link de uma campanha e divulgue. O sistema registrará os acessos automaticamente.",
         path: "/membros/operacao/campanhas",
-        action: "Divulgar links",
-        done: firstClick,
+        action: "Fazer minha divulgação",
+        requirements: [
+          { label: "Primeiro clique no seu link", done: firstClick },
+        ],
         icon: <MousePointerClick className="size-5" />,
       },
       {
         id: "metrics" as const,
         title: "Acompanhe suas métricas",
-        description: "Depois do primeiro acesso registrado, abra a central para consultar suas métricas.",
         path: "/membros/operacao",
-        action: "Ver métricas globais",
-        done: metricsViewed,
+        action: "Acompanhar métricas",
+        requirements: [
+          { label: "Acessou suas métricas", done: metricsViewed },
+        ],
         icon: <BarChart3 className="size-5" />,
       },
       {
         id: "conversion" as const,
         title: "Conquiste sua primeira conversão",
-        description: "Divulgue sua Página Lucrativa e conquiste sua primeira conversão através de uma das suas campanhas. Esta etapa será concluída automaticamente quando o sistema registrar seu primeiro resultado.",
         path: "/membros/operacao/conversoes",
         action: "Acompanhar conversões",
-        done: firstConversion,
+        requirements: [
+          { label: "Primeira conversão gerada", done: firstConversion },
+        ],
         icon: <CreditCard className="size-5" />,
       },
     ];
-    return baseSteps.map((step, index) => ({
+    const stepsWithCompletion = baseSteps.map(step => ({
       ...step,
-      unlocked: index === 0 || baseSteps.slice(0, index).every(previous => previous.done),
+      done: step.requirements.every(requirement => requirement.done),
     }));
-  }, [firstClick, firstConversion, metricsViewed, operationReady, profileReady, receivingReady]);
+    return stepsWithCompletion.map((step, index) => ({
+      ...step,
+      unlocked: index === 0 || stepsWithCompletion.slice(0, index).every(previous => previous.done),
+    }));
+  }, [firstClick, firstConversion, metricsViewed, operationReady, profileAddressReady, profilePhotoReady, profileSlugReady, profileWhatsappReady, receivingHolderReady, receivingMediumReady, receivingPreferenceReady]);
 
   const completed = steps.filter(step => step.done).length;
   const percentage = Math.round((completed / steps.length) * 100);
@@ -211,16 +227,20 @@ export default function MemberGettingStarted() {
             >
               <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
                 <div className="flex min-w-0 gap-4">
-                  <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${step.done ? "bg-emerald-300 text-black" : "bg-white/5 text-zinc-300"}`}>{step.done ? <Check className="size-5" /> : step.icon}</div>
-                  <div>
+                  <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${step.done ? "bg-emerald-300 text-black" : "bg-white/5 text-zinc-300"}`}>{step.icon}</div>
+                  <div className="min-w-0">
                     <p className="text-xs uppercase tracking-wider text-zinc-500">Etapa {index + 1}</p>
                     <h2 className="mt-1 font-medium text-white">{step.title}</h2>
-                    <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">{step.description}</p>
+                    <ul className="mt-4 grid gap-2 sm:grid-cols-2">
+                      {step.requirements.map(requirement => (
+                        <RequirementItem key={requirement.label} requirement={requirement} locked={!step.unlocked && !step.done} />
+                      ))}
+                    </ul>
                   </div>
                 </div>
                 {step.done ? (
                   <p className="shrink-0 rounded-lg border border-emerald-300/25 bg-emerald-300/10 px-4 py-2 text-center text-sm font-semibold text-emerald-100">
-                    Parabéns! Você concluiu a Etapa {index + 1}.
+                    Parabéns! Etapa {index + 1} concluída.
                   </p>
                 ) : step.unlocked ? (
                   <a href={withAppBase(withGettingStartedStep(step.path, step.id))} className="shrink-0 rounded-lg bg-emerald-300 px-4 py-2 text-center text-sm font-semibold text-black">{step.action}</a>
@@ -233,5 +253,23 @@ export default function MemberGettingStarted() {
         </section>
       </main>
     </DashboardLayout>
+  );
+}
+
+function RequirementItem({ requirement, locked }: { requirement: Requirement; locked: boolean }) {
+  const Icon = requirement.done ? CheckCircle2 : CircleDashed;
+  const state = requirement.done ? "Concluído" : "Pendente";
+  return (
+    <li
+      aria-label={`${state}: ${requirement.label}`}
+      className={`flex min-w-0 items-center gap-2 rounded-lg border px-3 py-2 text-sm ${requirement.done
+        ? "border-emerald-300/25 bg-emerald-300/10 text-emerald-100"
+        : locked
+          ? "border-white/10 bg-white/[0.02] text-zinc-500"
+          : "border-white/10 bg-black/20 text-zinc-300"}`}
+    >
+      <Icon className={`size-4 shrink-0 ${requirement.done ? "text-emerald-300" : "text-zinc-500"}`} aria-hidden="true" />
+      <span className="min-w-0 break-words">{requirement.label}</span>
+    </li>
   );
 }

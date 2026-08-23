@@ -50,7 +50,24 @@ describe("Central de Divulgação", () => {
 
   it("bloqueia sequencialmente os cards dos Primeiros Passos", async () => {
     const gettingStarted = await readFile(path.join(root, "client/src/pages/MemberGettingStarted.tsx"), "utf8");
-    expect(gettingStarted).toContain("validatePhoneBR(profile.data.whatsapp)");
+    expect(gettingStarted).toContain("CheckCircle2");
+    expect(gettingStarted).toContain("CircleDashed");
+    expect(gettingStarted).toContain("RequirementItem");
+    expect(gettingStarted).toContain("requirements: [");
+    expect(gettingStarted).toContain('label: "Foto de perfil"');
+    expect(gettingStarted).toContain('label: "Identificador da sua página"');
+    expect(gettingStarted).toContain('label: "WhatsApp"');
+    expect(gettingStarted).toContain('label: "Endereço cadastrado"');
+    expect(gettingStarted).toContain('label: "Nome do titular"');
+    expect(gettingStarted).toContain('label: "Forma preferida de recebimento"');
+    expect(gettingStarted).toContain('label: "Pelo menos uma forma de recebimento configurada"');
+    expect(gettingStarted).toContain('label: "Primeira campanha criada"');
+    expect(gettingStarted).toContain('label: "Primeiro clique no seu link"');
+    expect(gettingStarted).toContain('label: "Acessou suas métricas"');
+    expect(gettingStarted).toContain('label: "Primeira conversão gerada"');
+    expect(gettingStarted).toContain("done: step.requirements.every(requirement => requirement.done)");
+    expect(gettingStarted).toContain("Parabéns! Etapa {index + 1} concluída.");
+    expect(gettingStarted).toContain("validatePhoneBR(profile.data?.whatsapp)");
     expect(gettingStarted).toContain("profile.data?.photoUrl");
     expect(gettingStarted).toContain("hasValidAddress(profile.data)");
     expect(gettingStarted).toContain("hasText(profile.address");
@@ -58,7 +75,7 @@ describe("Central de Divulgação", () => {
     expect(gettingStarted).toContain("validatePixKeyByType");
     expect(gettingStarted).toContain("validBankAccounts");
     expect(gettingStarted).toContain("metricsViewed");
-    expect(gettingStarted).toContain("unlocked: index === 0 || baseSteps.slice(0, index).every(previous => previous.done)");
+    expect(gettingStarted).toContain("unlocked: index === 0 || stepsWithCompletion.slice(0, index).every(previous => previous.done)");
     expect(gettingStarted).toContain("Conclua a etapa anterior");
   });
 
@@ -73,7 +90,25 @@ describe("Central de Divulgação", () => {
     expect(router).toContain("markGettingStartedMetricsViewed");
     expect(db).toContain("markMemberGettingStartedMetricsViewed");
     expect(db).toContain("COUNT(*)");
+    expect(db).toContain("affiliateLinkClickEvents");
     expect(schema).toContain('metricsViewedAt: timestamp("metricsViewedAt")');
+  });
+
+  it("contabiliza a divulgação pelo link principal do afiliado", async () => {
+    const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");
+    const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
+
+    expect(home).toContain("recordAffiliateLinkClick");
+    expect(home).toContain("trackedAffiliateSlug");
+    expect(home).toContain('params.get("utm_source")');
+    expect(router).toContain("recordAffiliateLinkClick");
+    expect(router).toContain("recordPublicAffiliateLinkClick");
+    expect(db).toContain("recordPublicAffiliateLinkClick");
+    expect(db).toContain("affiliateClickTotals");
+    expect(db).toContain("clicks: Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0)");
+    expect(schema).toContain("affiliateLinkClickEvents");
   });
 
   it("mantém links rastreáveis copiáveis e cria campanhas com origem", async () => {
@@ -91,8 +126,8 @@ describe("Central de Divulgação", () => {
     const gettingStarted = await readFile(path.join(root, "client/src/pages/MemberGettingStarted.tsx"), "utf8");
 
     expect(gettingStarted).toContain('id: "disclosure"');
-    expect(gettingStarted).toContain('action: "Divulgar links"');
-    expect(gettingStarted).toContain("done: firstClick");
+    expect(gettingStarted).toContain('action: "Fazer minha divulgação"');
+    expect(gettingStarted).toContain('label: "Primeiro clique no seu link", done: firstClick');
     expect(center).toContain('onboardingStep === "disclosure"');
     expect(center).toContain("Faça sua primeira divulgação");
     expect(center).toContain("Link de indicação");

@@ -70,6 +70,8 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const affiliateSlug = normalizeAffiliateSlug(typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("afiliado"));
   const affiliate = trpc.public.affiliateProfile.useQuery({ slug: affiliateSlug ?? "pagina-lucrativa" }, { enabled: Boolean(affiliateSlug) });
+  const recordAffiliateLinkClick = trpc.public.recordAffiliateLinkClick.useMutation();
+  const [trackedAffiliateSlug, setTrackedAffiliateSlug] = useState<string | null>(null);
   const publicProfileName = affiliate.data?.name || affiliate.data?.slug || "Perfil público";
   const publicSocialLinks = affiliate.data ? [
     ["Website", affiliate.data.websiteUrl],
@@ -82,6 +84,20 @@ export default function Home() {
   const application = trpc.applications.submit.useMutation({
     onSuccess: data => setLocation(`/pedido/${encodeURIComponent(data.trackingCode)}/pagamento`),
   });
+
+  useEffect(() => {
+    if (!affiliateSlug || affiliate.status !== "success" || trackedAffiliateSlug === affiliateSlug) return;
+    const params = new URLSearchParams(window.location.search);
+    setTrackedAffiliateSlug(affiliateSlug);
+    recordAffiliateLinkClick.mutate({
+      slug: affiliateSlug,
+      landingPath: `${window.location.pathname}${window.location.search}`.slice(0, 512),
+      utmSource: params.get("utm_source"),
+      utmMedium: params.get("utm_medium"),
+      utmCampaign: params.get("utm_campaign"),
+      utmContent: params.get("utm_content"),
+    });
+  }, [affiliate.status, affiliateSlug, recordAffiliateLinkClick, trackedAffiliateSlug]);
 
   function submitApplication(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

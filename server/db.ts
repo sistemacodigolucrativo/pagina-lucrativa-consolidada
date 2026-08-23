@@ -6,6 +6,7 @@ import {
   applications,
   applicationAccessTokens,
   applicationPaymentReceipts,
+  affiliateLinkClickEvents,
   campaignLinks,
   campaignClickEvents,
   campaignAttributions,
@@ -263,12 +264,16 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
   if (!db) return { period, campaigns: [], totals: { campaigns: 0, clicks: 0, uniqueVisitors: 0, sessions: 0, conversions: 0, leads: 0, applications: 0 }, recentEvents: [] };
   const start = getAnalyticsStart(period);
   const eventWhere = start ? and(eq(campaignClickEvents.userId, userId), gte(campaignClickEvents.occurredAt, start)) : eq(campaignClickEvents.userId, userId);
+  const affiliateEventWhere = start ? and(eq(affiliateLinkClickEvents.userId, userId), gte(affiliateLinkClickEvents.occurredAt, start)) : eq(affiliateLinkClickEvents.userId, userId);
   const conversionWhere = start ? and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"), gte(campaignConversions.occurredAt, start)) : and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"));
-  const [campaignRows, clickTotals, visitorTotals, sessionTotals, conversionTotals, leadTotals, applicationTotals, clickByCampaign, visitorsByCampaign, sessionsByCampaign, conversionByCampaign, recentEvents] = await Promise.all([
+  const [campaignRows, clickTotals, visitorTotals, sessionTotals, affiliateClickTotals, affiliateVisitorTotals, affiliateSessionTotals, conversionTotals, leadTotals, applicationTotals, clickByCampaign, visitorsByCampaign, sessionsByCampaign, conversionByCampaign, recentEvents] = await Promise.all([
     db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)).orderBy(desc(campaignLinks.createdAt)),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere),
     db.select({ value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.visitorId})` }).from(campaignClickEvents).where(eventWhere),
     db.select({ value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.sessionId})` }).from(campaignClickEvents).where(eventWhere),
+    db.select({ value: sql<number>`COUNT(*)` }).from(affiliateLinkClickEvents).where(affiliateEventWhere),
+    db.select({ value: sql<number>`COUNT(DISTINCT ${affiliateLinkClickEvents.visitorId})` }).from(affiliateLinkClickEvents).where(affiliateEventWhere),
+    db.select({ value: sql<number>`COUNT(DISTINCT ${affiliateLinkClickEvents.sessionId})` }).from(affiliateLinkClickEvents).where(affiliateEventWhere),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(conversionWhere),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "lead"))),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "application"))),
@@ -294,9 +299,9 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
     campaigns,
     totals: {
       campaigns: campaignRows.length,
-      clicks: Number(clickTotals[0]?.value ?? 0),
-      uniqueVisitors: Number(visitorTotals[0]?.value ?? 0),
-      sessions: Number(sessionTotals[0]?.value ?? 0),
+      clicks: Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0),
+      uniqueVisitors: Number(visitorTotals[0]?.value ?? 0) + Number(affiliateVisitorTotals[0]?.value ?? 0),
+      sessions: Number(sessionTotals[0]?.value ?? 0) + Number(affiliateSessionTotals[0]?.value ?? 0),
       conversions: Number(conversionTotals[0]?.value ?? 0),
       leads: Number(leadTotals[0]?.value ?? 0),
       applications: Number(applicationTotals[0]?.value ?? 0),
@@ -427,6 +432,29 @@ export async function resolvePublicMemberCampaignAndRecordClick(memberSlug: stri
   if (!member) return null;
   const campaign = await getActiveCampaignWhere(and(eq(campaignLinks.userId, member.userId), eq(campaignLinks.slug, campaignSlug)));
   return campaign ? recordCampaignClick(campaign, metadata) : null;
+}
+
+export async function recordPublicAffiliateLinkClick(memberSlug: string, metadata: CampaignClickMetadata) {
+  const db = await getDb();
+  if (!db) return null;
+  const members = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.slug, memberSlug)).limit(1);
+  const member = members[0];
+  if (!member) return null;
+  await db.insert(affiliateLinkClickEvents).values({
+    userId: member.userId,
+    visitorId: metadata.visitorId,
+    sessionId: metadata.sessionId,
+    occurredAt: metadata.occurredAt,
+    referrerOrigin: metadata.referrerOrigin ?? null,
+    userAgentCategory: metadata.userAgentCategory ?? null,
+    deviceType: metadata.deviceType ?? null,
+    utmSource: metadata.utmSource ?? "affiliate_link",
+    utmMedium: metadata.utmMedium ?? "referral",
+    utmCampaign: metadata.utmCampaign ?? "link-principal",
+    utmContent: metadata.utmContent ?? null,
+    landingPath: metadata.landingPath ?? null,
+  });
+  return { userId: member.userId };
 }
 
 type CampaignConversionInput = {
@@ -781,8 +809,11 @@ export async function uploadMemberProfilePhoto(userId: number, input: { dataUrl:
 export async function markMemberGettingStartedMetricsViewed(userId: number) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const clickTotals = await db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eq(campaignClickEvents.userId, userId));
-  if (Number(clickTotals[0]?.value ?? 0) <= 0) throw new Error("As métricas só podem ser marcadas após o primeiro acesso registrado.");
+  const [campaignClickTotals, affiliateClickTotals] = await Promise.all([
+    db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eq(campaignClickEvents.userId, userId)),
+    db.select({ value: sql<number>`COUNT(*)` }).from(affiliateLinkClickEvents).where(eq(affiliateLinkClickEvents.userId, userId)),
+  ]);
+  if (Number(campaignClickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0) <= 0) throw new Error("As métricas só podem ser marcadas após o primeiro clique registrado.");
   const profileRows = await db.select({ id: memberProfiles.id }).from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1);
   if (!profileRows[0]) throw new Error("Configure sua Página Lucrativa antes de acompanhar métricas.");
   await db.update(memberProfiles).set({ metricsViewedAt: new Date() }).where(eq(memberProfiles.userId, userId));

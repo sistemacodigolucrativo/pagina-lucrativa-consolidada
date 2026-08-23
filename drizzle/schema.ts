@@ -228,6 +228,26 @@ export const campaignClickEvents = mysqlTable("campaignClickEvents", {
   sessionIndex: index("campaign_click_events_session_idx").on(table.sessionId),
 }));
 
+export const affiliateLinkClickEvents = mysqlTable("affiliateLinkClickEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  visitorId: varchar("visitorId", { length: 64 }).notNull(),
+  sessionId: varchar("sessionId", { length: 64 }).notNull(),
+  occurredAt: timestamp("occurredAt").defaultNow().notNull(),
+  referrerOrigin: varchar("referrerOrigin", { length: 255 }),
+  userAgentCategory: varchar("userAgentCategory", { length: 48 }),
+  deviceType: varchar("deviceType", { length: 32 }),
+  utmSource: varchar("utmSource", { length: 96 }),
+  utmMedium: varchar("utmMedium", { length: 96 }),
+  utmCampaign: varchar("utmCampaign", { length: 160 }),
+  utmContent: varchar("utmContent", { length: 160 }),
+  landingPath: varchar("landingPath", { length: 512 }),
+}, table => ({
+  userDateIndex: index("affiliate_link_click_events_user_date_idx").on(table.userId, table.occurredAt),
+  visitorIndex: index("affiliate_link_click_events_visitor_idx").on(table.visitorId),
+  sessionIndex: index("affiliate_link_click_events_session_idx").on(table.sessionId),
+}));
+
 export const campaignAttributions = mysqlTable("campaignAttributions", {
   id: int("id").autoincrement().primaryKey(),
   campaignId: int("campaignId").notNull(),

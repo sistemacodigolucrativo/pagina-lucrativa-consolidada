@@ -50,6 +50,7 @@ import {
   getPublicSalesSectionImages,
   getAdminPublicSalesSectionImages,
   getPublicAffiliateProfile,
+  recordPublicAffiliateLinkClick,
   getPublicPlatformSettings,
   getPublishedEbook,
   getPublishedEbooks,
@@ -99,7 +100,50 @@ import {
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema } from "@shared/applications";
+import { randomUUID } from "node:crypto";
+import type { Request, Response } from "express";
 import { z } from "zod";
+
+const trackingCookieNames = { visitor: "pl_visitor", session: "pl_session" } as const;
+
+function readTrackingCookie(req: Request, name: string) {
+  const raw = req.headers.cookie ?? "";
+  const entry = raw.split(";").map(value => value.trim()).find(value => value.startsWith(`${name}=`));
+  return entry ? decodeURIComponent(entry.slice(name.length + 1)) : null;
+}
+
+function getOrCreateTrackingCookie(req: Request, res: Response, name: string, maxAge: number) {
+  const current = readTrackingCookie(req, name);
+  const value = current && /^[a-f0-9-]{16,80}$/i.test(current) ? current : randomUUID();
+  const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
+  const cookiePath = appPrefix || "/";
+  const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
+  const attributes = [`${name}=${encodeURIComponent(value)}`, `Max-Age=${Math.floor(maxAge / 1000)}`, `Path=${cookiePath}`, "HttpOnly", "SameSite=Lax"];
+  if (secure) attributes.push("Secure");
+  res.append("Set-Cookie", attributes.join("; "));
+  return value;
+}
+
+function getTrackingOrigin(referer: string | undefined) {
+  if (!referer) return null;
+  try {
+    return new URL(referer).origin.slice(0, 255);
+  } catch {
+    return null;
+  }
+}
+
+function getTrackingQueryValue(value: string | null | undefined) {
+  return typeof value === "string" && value.trim() ? value.trim().slice(0, 160) : null;
+}
+
+function getTrackingUserAgentCategory(userAgent: string) {
+  return /bot|crawler|spider|slurp|headless/i.test(userAgent) ? "bot" : "human";
+}
+
+function getTrackingDeviceType(userAgent: string) {
+  return /mobile|android|iphone|ipad/i.test(userAgent) ? "mobile" : "desktop";
+}
 
 const campaignInput = z.object({
   name: z.string().trim().min(3).max(160),
@@ -296,6 +340,31 @@ export const appRouter = router({
   }),
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
+    recordAffiliateLinkClick: publicProcedure.input(z.object({
+      slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96),
+      landingPath: z.string().trim().max(512).optional().nullable(),
+      utmSource: z.string().trim().max(96).optional().nullable(),
+      utmMedium: z.string().trim().max(96).optional().nullable(),
+      utmCampaign: z.string().trim().max(160).optional().nullable(),
+      utmContent: z.string().trim().max(160).optional().nullable(),
+    })).mutation(({ ctx, input }) => {
+      const visitorId = getOrCreateTrackingCookie(ctx.req, ctx.res, trackingCookieNames.visitor, 365 * 24 * 60 * 60 * 1000);
+      const sessionId = getOrCreateTrackingCookie(ctx.req, ctx.res, trackingCookieNames.session, 30 * 60 * 1000);
+      const userAgent = ctx.req.get("user-agent") ?? "";
+      return recordPublicAffiliateLinkClick(input.slug, {
+        visitorId,
+        sessionId,
+        occurredAt: new Date(),
+        referrerOrigin: getTrackingOrigin(ctx.req.get("referer")),
+        userAgentCategory: getTrackingUserAgentCategory(userAgent),
+        deviceType: getTrackingDeviceType(userAgent),
+        utmSource: getTrackingQueryValue(input.utmSource),
+        utmMedium: getTrackingQueryValue(input.utmMedium),
+        utmCampaign: getTrackingQueryValue(input.utmCampaign),
+        utmContent: getTrackingQueryValue(input.utmContent),
+        landingPath: input.landingPath ?? null,
+      });
+    }),
     applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
     platformSettings: publicProcedure.query(() => getPublicPlatformSettings()),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
