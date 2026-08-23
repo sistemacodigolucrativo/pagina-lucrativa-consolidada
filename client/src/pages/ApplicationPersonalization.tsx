@@ -1,13 +1,14 @@
 import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { PhoneInput } from "@/components/PhoneInput";
-import { normalizePhone } from "@shared/contactValidation";
-import { normalizeHttpUrl } from "@shared/structuredValidation";
+import { normalizePhone, validatePhoneBR } from "@shared/contactValidation";
+import { normalizeHttpUrl, validateHttpUrl } from "@shared/structuredValidation";
 import { ArrowRight, CheckCircle2, Eye, EyeOff, Loader2, Share2, ShieldCheck } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const field = "mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-3 text-white outline-none ring-emerald-300/50 focus:ring-2";
+const errorClass = "mt-1 block text-xs text-red-300";
 
 export default function ApplicationPersonalization() {
   const publicCode = useMemo(() => typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo")?.trim().toLowerCase() ?? "", []);
@@ -16,6 +17,7 @@ export default function ApplicationPersonalization() {
   const [form, setForm] = useState({ name: "", whatsapp: "", facebookUrl: "", instagramUrl: "" });
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form | "password" | "confirmPassword", string>>>({});
   const [showPassword, setShowPassword] = useState(false);
   const complete = trpc.public.completePersonalization.useMutation({
     onSuccess: data => {
@@ -41,13 +43,22 @@ export default function ApplicationPersonalization() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const whatsapp = normalizePhone(form.whatsapp);
+    const nextErrors: Partial<Record<keyof typeof form | "password" | "confirmPassword", string>> = {};
     if (!publicCode) return toast.error("Link de personalização inválido.");
-    if (form.name.trim().length < 2) return toast.error("Informe seu nome com pelo menos 2 caracteres.");
-    if (whatsapp.length < 10) return toast.error("Informe um WhatsApp com DDD.");
-    if (password.length < 6) return toast.error("A senha deve ter pelo menos 6 caracteres.");
-    if (!/[A-Za-z]/.test(password)) return toast.error("A senha deve conter pelo menos uma letra.");
-    if (!/\d/.test(password)) return toast.error("A senha deve conter pelo menos um número.");
-    if (password !== confirmPassword) return toast.error("A confirmação da senha não confere.");
+    if (form.name.trim().length < 2) nextErrors.name = "Informe seu nome com pelo menos 2 caracteres.";
+    if (!validatePhoneBR(whatsapp)) nextErrors.whatsapp = "Informe um WhatsApp com DDD e 10 ou 11 dígitos.";
+    if (form.facebookUrl.trim() && !validateHttpUrl(form.facebookUrl)) nextErrors.facebookUrl = "Informe uma URL válida iniciada por http:// ou https://.";
+    if (form.instagramUrl.trim() && !validateHttpUrl(form.instagramUrl)) nextErrors.instagramUrl = "Informe uma URL válida iniciada por http:// ou https://.";
+    if (password.length < 6) nextErrors.password = "A senha deve ter pelo menos 6 caracteres.";
+    else if (!/[A-Za-z]/.test(password)) nextErrors.password = "A senha deve conter pelo menos uma letra.";
+    else if (!/\d/.test(password)) nextErrors.password = "A senha deve conter pelo menos um número.";
+    if (password !== confirmPassword) nextErrors.confirmPassword = "A confirmação da senha não confere.";
+    if (Object.keys(nextErrors).length) {
+      setErrors(nextErrors);
+      toast.error("Corrija os campos indicados antes de continuar.");
+      return;
+    }
+    setErrors({});
     complete.mutate({
       publicCode,
       name: form.name.trim(),
@@ -73,21 +84,22 @@ export default function ApplicationPersonalization() {
       <span>E-mail de login: {access.data.email}</span>
     </section>
     <section className="grid gap-4">
-      <label className="block text-sm text-zinc-200">Nome público<input required minLength={2} maxLength={180} value={form.name} onChange={event => setForm(current => ({ ...current, name: event.target.value }))} className={field} placeholder="Seu nome" /></label>
-      <label className="block text-sm text-zinc-200">WhatsApp<PhoneInput required value={form.whatsapp} onChange={value => setForm(current => ({ ...current, whatsapp: value }))} className={field} placeholder="DDD e número" /></label>
+      <label className="block text-sm text-zinc-200">Nome público *<input required minLength={2} maxLength={180} value={form.name} onChange={event => { setErrors(current => ({ ...current, name: undefined })); setForm(current => ({ ...current, name: event.target.value })); }} aria-invalid={Boolean(errors.name) || undefined} className={field} placeholder="Seu nome" />{errors.name ? <small className={errorClass} role="alert">{errors.name}</small> : null}</label>
+      <label className="block text-sm text-zinc-200">WhatsApp *<PhoneInput required value={form.whatsapp} onChange={value => { setErrors(current => ({ ...current, whatsapp: undefined })); setForm(current => ({ ...current, whatsapp: value })); }} className={field} placeholder="DDD e número" />{errors.whatsapp ? <small className={errorClass} role="alert">{errors.whatsapp}</small> : null}</label>
       <section className="space-y-4 border-t border-white/10 pt-5">
         <div className="flex items-center gap-2 text-white"><Share2 className="size-4 text-emerald-300" /><h2 className="font-medium">Redes sociais opcionais</h2></div>
-        <label className="block text-sm text-zinc-200">Facebook<input type="url" maxLength={512} value={form.facebookUrl} onChange={event => setForm(current => ({ ...current, facebookUrl: event.target.value }))} className={field} placeholder="https://facebook.com/seu-perfil" /></label>
-        <label className="block text-sm text-zinc-200">Instagram<input type="url" maxLength={512} value={form.instagramUrl} onChange={event => setForm(current => ({ ...current, instagramUrl: event.target.value }))} className={field} placeholder="https://instagram.com/seu-perfil" /></label>
+        <label className="block text-sm text-zinc-200">Facebook <span className="text-zinc-500">(opcional)</span><input type="url" maxLength={512} value={form.facebookUrl} onChange={event => { setErrors(current => ({ ...current, facebookUrl: undefined })); setForm(current => ({ ...current, facebookUrl: event.target.value })); }} aria-invalid={Boolean(errors.facebookUrl) || undefined} className={field} placeholder="https://facebook.com/seu-perfil" />{errors.facebookUrl ? <small className={errorClass} role="alert">{errors.facebookUrl}</small> : null}</label>
+        <label className="block text-sm text-zinc-200">Instagram <span className="text-zinc-500">(opcional)</span><input type="url" maxLength={512} value={form.instagramUrl} onChange={event => { setErrors(current => ({ ...current, instagramUrl: undefined })); setForm(current => ({ ...current, instagramUrl: event.target.value })); }} aria-invalid={Boolean(errors.instagramUrl) || undefined} className={field} placeholder="https://instagram.com/seu-perfil" />{errors.instagramUrl ? <small className={errorClass} role="alert">{errors.instagramUrl}</small> : null}</label>
       </section>
     </section>
-    <label className="block text-sm text-zinc-200">Senha de acesso
+    <label className="block text-sm text-zinc-200">Senha de acesso *
       <div className="relative mt-1">
-        <input required type={showPassword ? "text" : "password"} minLength={6} maxLength={128} value={password} onChange={event => setPassword(event.target.value)} className={`${field} mt-0 pr-12`} aria-describedby="password-rules" />
+        <input required type={showPassword ? "text" : "password"} minLength={6} maxLength={128} value={password} onChange={event => { setErrors(current => ({ ...current, password: undefined })); setPassword(event.target.value); }} aria-invalid={Boolean(errors.password) || undefined} className={`${field} mt-0 pr-12`} aria-describedby="password-rules" />
         <button type="button" onClick={() => setShowPassword(value => !value)} className="absolute inset-y-0 right-0 inline-flex w-12 items-center justify-center text-zinc-400 hover:text-emerald-200" aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}>{showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}</button>
       </div>
+      {errors.password ? <small className={errorClass} role="alert">{errors.password}</small> : null}
     </label>
-    <label className="block text-sm text-zinc-200">Confirmar senha<input required type={showPassword ? "text" : "password"} minLength={6} maxLength={128} value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} className={field} /></label>
+    <label className="block text-sm text-zinc-200">Confirmar senha *<input required type={showPassword ? "text" : "password"} minLength={6} maxLength={128} value={confirmPassword} onChange={event => { setErrors(current => ({ ...current, confirmPassword: undefined })); setConfirmPassword(event.target.value); }} aria-invalid={Boolean(errors.confirmPassword) || undefined} className={field} />{errors.confirmPassword ? <small className={errorClass} role="alert">{errors.confirmPassword}</small> : null}</label>
     <div id="password-rules" className="rounded-lg border border-white/10 bg-black/25 p-3 text-xs leading-5 text-zinc-400">
       <p className="text-zinc-300">Exemplo de senha válida: <strong>pagina123</strong></p>
       <ul className="mt-1 space-y-1">{passwordRules.map(rule => <li key={rule.label} className={rule.ok ? "text-emerald-200" : "text-zinc-500"}>{rule.ok ? "✓" : "•"} {rule.label}</li>)}</ul>

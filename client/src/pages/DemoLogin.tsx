@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, ArrowRight, Eye, EyeOff, LockKeyhole, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
@@ -18,7 +17,7 @@ export default function DemoLogin() {
   const login = trpc.auth.demoLogin.useMutation({
     onSuccess: async account => {
       await utils.auth.me.invalidate();
-      setLocation(withAppBase(account.role === "admin" ? "/admin" : "/membros"));
+      setLocation(account.role === "admin" ? "/admin" : "/membros");
     },
     onError: error => setFormError(error.message),
   });

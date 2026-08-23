@@ -96,6 +96,7 @@ export const memberProfiles = mysqlTable("memberProfiles", {
   district: varchar("district", { length: 120 }),
   city: varchar("city", { length: 120 }),
   state: varchar("state", { length: 80 }),
+  metricsViewedAt: timestamp("metricsViewedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => ({

@@ -1,5 +1,5 @@
 import { withAppBase } from "@/lib/devPath";
-import { ArrowRight } from "lucide-react";
+import { Undo2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
@@ -37,35 +37,20 @@ export function withGettingStartedStep(path: string, stepId: GettingStartedStepI
 export default function GettingStartedReturnButton() {
   const [location] = useLocation();
   const [mounted, setMounted] = useState(false);
-  const [nearPageEnd, setNearPageEnd] = useState(false);
   const step = getGettingStartedStepFromLocation(location);
   useEffect(() => setMounted(true), []);
-  useEffect(() => {
-    if (!mounted || !step) return;
-    const updateNearPageEnd = () => {
-      const documentHeight = document.documentElement.scrollHeight;
-      const viewportBottom = window.scrollY + window.innerHeight;
-      setNearPageEnd(viewportBottom >= documentHeight - 180);
-    };
-    updateNearPageEnd();
-    window.addEventListener("scroll", updateNearPageEnd, { passive: true });
-    window.addEventListener("resize", updateNearPageEnd);
-    return () => {
-      window.removeEventListener("scroll", updateNearPageEnd);
-      window.removeEventListener("resize", updateNearPageEnd);
-    };
-  }, [mounted, step]);
   if (!step || !mounted) return null;
 
   return createPortal(
     <a
       href={getGettingStartedReturnUrl(step)}
+      aria-label="Voltar para Primeiros Passos"
+      title="Voltar para Primeiros Passos"
       data-testid="getting-started-return-button"
-      data-near-page-end={nearPageEnd ? "true" : "false"}
-      className={`getting-started-return-button inline-flex min-h-10 items-center justify-center gap-1.5 rounded-full border px-3.5 py-2 text-center text-xs font-semibold shadow-xl outline-none transition duration-200 focus-visible:ring-2 focus-visible:ring-emerald-100 focus-visible:ring-offset-2 focus-visible:ring-offset-black active:scale-[.97] sm:px-4 ${nearPageEnd ? "border-emerald-200/40 bg-emerald-300 text-black shadow-emerald-950/40 hover:bg-emerald-200" : "border-white/15 bg-zinc-700/95 text-zinc-50 shadow-black/30 hover:bg-zinc-600"}`}
+      style={{ color: "#00060D" }}
+      className="getting-started-return-button inline-flex min-h-10 min-w-10 items-center justify-center rounded-full border border-white/70 bg-white px-3 py-2 text-center text-black shadow-xl shadow-black/25 outline-none transition duration-200 hover:bg-zinc-100 focus-visible:ring-2 focus-visible:ring-emerald-100 focus-visible:ring-offset-2 focus-visible:ring-offset-black active:scale-[.97]"
     >
-      Dar o próximo passo
-      <ArrowRight className="size-3.5" />
+      <Undo2 className="size-4" aria-hidden="true" />
     </a>,
     document.body,
   );

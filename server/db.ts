@@ -778,6 +778,17 @@ export async function uploadMemberProfilePhoto(userId: number, input: { dataUrl:
   return getMemberProfile(userId);
 }
 
+export async function markMemberGettingStartedMetricsViewed(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const clickTotals = await db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eq(campaignClickEvents.userId, userId));
+  if (Number(clickTotals[0]?.value ?? 0) <= 0) throw new Error("As métricas só podem ser marcadas após o primeiro acesso registrado.");
+  const profileRows = await db.select({ id: memberProfiles.id }).from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1);
+  if (!profileRows[0]) throw new Error("Configure sua Página Lucrativa antes de acompanhar métricas.");
+  await db.update(memberProfiles).set({ metricsViewedAt: new Date() }).where(eq(memberProfiles.userId, userId));
+  return getMemberProfile(userId);
+}
+
 export type MemberReceivingUpdateInput = {
   holderName?: string | null;
   method: "pix" | "bank_transfer" | "other";

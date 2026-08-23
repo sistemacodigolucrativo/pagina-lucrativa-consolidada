@@ -4,6 +4,7 @@ import { PhoneInput } from "@/components/PhoneInput";
 import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { normalizeEmail } from "@shared/contactValidation";
+import { validateHttpUrl } from "@shared/structuredValidation";
 import { ArrowLeft, BarChart3, ClipboardList, Copy, Eye, History, Link2, MousePointerClick, Plus, UsersRound } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -28,6 +29,7 @@ const tabs = [
 ] as const;
 
 const fieldClass = "mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white";
+const errorClass = "mt-1 block text-xs text-red-300";
 
 function campaignUrl(profileSlug: string | undefined, slug: string) {
   const path = profileSlug ? `/r/${encodeURIComponent(profileSlug)}/${encodeURIComponent(slug)}` : `/${encodeURIComponent(slug)}`;
@@ -50,9 +52,12 @@ export default function MemberOperationCenter() {
   const selectedCampaignId = detailMatch ? Number(detailMatch[1]) : null;
   const activeTab = selectedCampaignId ? "detail" : (tabs.find(tab => tab.path === pathname)?.key ?? "overview");
   const onboardingStep = getGettingStartedStepFromLocation(location);
+  const isDisclosureGuide = activeTab === "campaigns" && onboardingStep === "disclosure";
   const [period, setPeriod] = useState<Period>("30d");
   const [campaignForm, setCampaignForm] = useState({ name: "", slug: "", destinationUrl: "", source: "", medium: "social", content: "" });
+  const [campaignErrors, setCampaignErrors] = useState<Partial<Record<keyof typeof campaignForm, string>>>({});
   const [copiedId, setCopiedId] = useState<number | null>(null);
+  const [copiedReferral, setCopiedReferral] = useState(false);
   const [contact, setContact] = useState({ name: "", email: "", whatsapp: "", source: "", campaignId: "", consentNote: "", consent: false });
   const [invitation, setInvitation] = useState({ contactId: "", channel: "link" as "link" | "email" | "whatsapp", message: "" });
   const utils = trpc.useUtils();
@@ -62,12 +67,24 @@ export default function MemberOperationCenter() {
   const conversions = trpc.member.conversions.useQuery({ period });
   const contacts = trpc.member.contacts.useQuery();
   const invitations = trpc.member.invitations.useQuery();
+  const markMetricsViewed = trpc.member.markGettingStartedMetricsViewed.useMutation({
+    onSuccess: async () => {
+      await utils.member.profile.invalidate();
+    },
+  });
 
   const profileSlug = profile.data?.slug;
   const referralUrl = typeof window !== "undefined" && profileSlug ? `${window.location.origin}${withAppBase(`/?afiliado=${encodeURIComponent(profileSlug)}`)}` : "";
   useEffect(() => {
     if (referralUrl) setCampaignForm(current => ({ ...current, destinationUrl: referralUrl }));
   }, [referralUrl]);
+
+  useEffect(() => {
+    if (activeTab !== "overview" || onboardingStep !== "metrics") return;
+    if (profile.data?.metricsViewedAt || markMetricsViewed.isPending || markMetricsViewed.isSuccess) return;
+    if ((analytics.data?.totals.clicks ?? 0) <= 0) return;
+    markMetricsViewed.mutate();
+  }, [activeTab, analytics.data?.totals.clicks, markMetricsViewed, onboardingStep, profile.data?.metricsViewedAt]);
 
   const createCampaign = trpc.member.createCampaign.useMutation({
     onSuccess: async () => {
@@ -113,20 +130,43 @@ export default function MemberOperationCenter() {
   const selectedConversions = selectedCampaignId ? (conversions.data ?? []).filter(item => item.campaignId === selectedCampaignId) : [];
   const selectedEvents = selectedCampaignId ? (analytics.data?.recentEvents ?? []).filter(item => item.campaignId === selectedCampaignId) : [];
 
-  const copyLink = async (id: number, slug: string) => {
+  const copyText = async (text: string, onCopied: () => void) => {
     try {
-      await navigator.clipboard.writeText(campaignUrl(profileSlug, slug));
-      setCopiedId(id);
-      window.setTimeout(() => setCopiedId(current => current === id ? null : current), 1800);
+      await navigator.clipboard.writeText(text);
+      onCopied();
       toast.success("Link copiado.");
     } catch {
       toast.error("Não foi possível copiar o link.");
     }
   };
+  const copyReferralLink = () => {
+    if (!referralUrl) return;
+    void copyText(referralUrl, () => {
+      setCopiedReferral(true);
+      window.setTimeout(() => setCopiedReferral(false), 1800);
+    });
+  };
+  const copyLink = async (id: number, slug: string) => {
+    await copyText(campaignUrl(profileSlug, slug), () => {
+      setCopiedId(id);
+      window.setTimeout(() => setCopiedId(current => current === id ? null : current), 1800);
+    });
+  };
 
   const submitCampaign = (event: FormEvent) => {
     event.preventDefault();
-    if (!campaignForm.destinationUrl) return toast.error("Configure sua Página Lucrativa primeiro.");
+    const nextErrors: Partial<Record<keyof typeof campaignForm, string>> = {};
+    if (!campaignForm.name.trim()) nextErrors.name = "Este campo é obrigatório.";
+    if (!campaignForm.slug.trim()) nextErrors.slug = "Este campo é obrigatório.";
+    if (campaignForm.slug.trim() && !/^[a-z0-9-]{3,128}$/.test(campaignForm.slug.trim())) nextErrors.slug = "Use letras, números e hífens, com pelo menos 3 caracteres.";
+    if (!campaignForm.destinationUrl.trim()) nextErrors.destinationUrl = "Configure sua Página Lucrativa primeiro.";
+    if (campaignForm.destinationUrl.trim() && !validateHttpUrl(campaignForm.destinationUrl)) nextErrors.destinationUrl = "O destino precisa ser uma URL válida.";
+    if (Object.keys(nextErrors).length) {
+      setCampaignErrors(nextErrors);
+      toast.error("Corrija os campos indicados antes de criar a campanha.");
+      return;
+    }
+    setCampaignErrors({});
     createCampaign.mutate({
       ...campaignForm,
       source: campaignForm.source || null,
@@ -153,8 +193,10 @@ export default function MemberOperationCenter() {
     createInvitation.mutate({ contactId: invitation.contactId ? Number(invitation.contactId) : null, channel: invitation.channel, message: invitation.message || null });
   };
 
-  const title = activeTab === "detail" ? (selectedCampaign?.name ?? "Campanha") : activeTab === "campaigns" ? "Campanhas" : activeTab === "traffic" ? "Tráfego" : activeTab === "conversions" ? "Conversões" : activeTab === "contacts" ? "Contatos" : activeTab === "history" ? "Histórico" : "Visão geral";
-  const description = activeTab === "overview"
+  const title = isDisclosureGuide ? "Faça sua primeira divulgação" : activeTab === "detail" ? (selectedCampaign?.name ?? "Campanha") : activeTab === "campaigns" ? "Campanhas" : activeTab === "traffic" ? "Tráfego" : activeTab === "conversions" ? "Conversões" : activeTab === "contacts" ? "Contatos" : activeTab === "history" ? "Histórico" : "Visão geral";
+  const description = isDisclosureGuide
+    ? "Compartilhe seu link e comece a receber visitantes."
+    : activeTab === "overview"
     ? "Acompanhe em um só lugar o desempenho das suas campanhas de divulgação."
     : activeTab === "campaigns"
       ? "Crie e gerencie campanhas de divulgação com links rastreáveis."
@@ -178,7 +220,7 @@ export default function MemberOperationCenter() {
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">{description}</p>
         </header>
 
-        {activeTab !== "detail" ? <nav className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4" aria-label="Menu da Central de Divulgação">
+        {activeTab !== "detail" && !isDisclosureGuide ? <nav className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4" aria-label="Menu da Central de Divulgação">
           <label className="block text-sm font-medium text-zinc-200">
             Seção da central
             <select
@@ -191,12 +233,12 @@ export default function MemberOperationCenter() {
           </label>
         </nav> : null}
 
-        <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
+        {!isDisclosureGuide ? <section className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
           <div className="flex items-center gap-2 text-sm text-zinc-300"><BarChart3 className="size-4 text-emerald-300" />Período das métricas</div>
           <select value={period} onChange={event => setPeriod(event.target.value as Period)} className="rounded-lg border border-white/15 bg-black px-3 py-2 text-sm text-white" aria-label="Período das métricas">
             <option value="7d">Últimos 7 dias</option><option value="30d">Últimos 30 dias</option><option value="90d">Últimos 90 dias</option><option value="all">Todo o período</option>
           </select>
-        </section>
+        </section> : null}
 
         {activeTab === "overview" && <section className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -211,21 +253,37 @@ export default function MemberOperationCenter() {
           </Panel>
         </section>}
 
-        {activeTab === "campaigns" && <section className="space-y-6">
+        {activeTab === "campaigns" && (isDisclosureGuide ? <section className="space-y-6">
+          <Panel title="Link de indicação" icon={<Link2 className="size-5 text-emerald-300" />}>
+            <div className="space-y-4">
+              <p className="text-sm leading-6 text-zinc-400">Use este link principal para divulgar sua Página Lucrativa.</p>
+              <div className="rounded-xl border border-white/10 bg-black/30 p-4">
+                <span className="text-xs uppercase tracking-wider text-zinc-500">URL individual do membro</span>
+                <p className="mt-2 break-all font-mono text-sm text-emerald-100">{referralUrl || "Configure sua Página Lucrativa para liberar seu link principal."}</p>
+              </div>
+              <button type="button" onClick={copyReferralLink} disabled={!referralUrl} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
+                <Copy className="size-4" />{copiedReferral ? "Link copiado!" : "Copiar link"}
+              </button>
+            </div>
+          </Panel>
+          <Panel title="Minhas campanhas" icon={<MousePointerClick className="size-5 text-emerald-300" />}>
+            {campaigns.data?.length ? <div className="space-y-3">{campaigns.data.map(item => <DisclosureCampaignRow key={item.id} campaign={item} profileSlug={profileSlug} copiedId={copiedId} onCopy={copyLink} />)}</div> : <Empty text="Você ainda não possui campanhas de divulgação." />}
+          </Panel>
+        </section> : <section className="space-y-6">
           <form onSubmit={submitCampaign} className="grid gap-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5 lg:grid-cols-2">
             <div className="lg:col-span-2"><h2 className="font-medium text-white">Criar nova campanha</h2><p className="mt-1 text-sm text-zinc-400">O slug identifica a origem no seu link. Exemplo: facebook, instagram-bio ou whatsapp-grupo.</p></div>
-            <label className="text-sm text-zinc-200">Nome da campanha<input required value={campaignForm.name} onChange={event => setCampaignForm({ ...campaignForm, name: event.target.value })} className={fieldClass} placeholder="Facebook - Perfil" /></label>
-            <label className="text-sm text-zinc-200">Slug<input required value={campaignForm.slug} onChange={event => setCampaignForm({ ...campaignForm, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") })} className={fieldClass} placeholder="facebook" /></label>
-            <label className="text-sm text-zinc-200">Origem<select value={campaignForm.source} onChange={event => setCampaignForm({ ...campaignForm, source: event.target.value })} className={fieldClass}><option value="">Outra / não definida</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="youtube">YouTube</option><option value="google">Google</option><option value="tiktok">TikTok</option></select></label>
-            <label className="text-sm text-zinc-200">Meio<select value={campaignForm.medium} onChange={event => setCampaignForm({ ...campaignForm, medium: event.target.value })} className={fieldClass}><option value="social">Social</option><option value="messaging">Mensagem</option><option value="paid">Anúncio pago</option><option value="organic">Orgânico</option><option value="referral">Indicação</option><option value="other">Outro</option></select></label>
-            <label className="text-sm text-zinc-200">Identificação do conteúdo<input value={campaignForm.content} onChange={event => setCampaignForm({ ...campaignForm, content: event.target.value })} className={fieldClass} placeholder="reels-01, bio, grupo-a..." /></label>
-            <label className="text-sm text-zinc-200">Destino automático<input readOnly value={campaignForm.destinationUrl} className={`${fieldClass} cursor-not-allowed text-zinc-400`} placeholder="Configure sua Página Lucrativa" /></label>
+            <label className="text-sm text-zinc-200">Nome da campanha *<input required value={campaignForm.name} onChange={event => { setCampaignErrors(current => ({ ...current, name: undefined })); setCampaignForm({ ...campaignForm, name: event.target.value }); }} aria-invalid={Boolean(campaignErrors.name) || undefined} className={fieldClass} placeholder="Facebook - Perfil" />{campaignErrors.name ? <small className={errorClass} role="alert">{campaignErrors.name}</small> : null}</label>
+            <label className="text-sm text-zinc-200">Slug *<input required value={campaignForm.slug} onChange={event => { setCampaignErrors(current => ({ ...current, slug: undefined })); setCampaignForm({ ...campaignForm, slug: event.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-") }); }} aria-invalid={Boolean(campaignErrors.slug) || undefined} className={fieldClass} placeholder="facebook" />{campaignErrors.slug ? <small className={errorClass} role="alert">{campaignErrors.slug}</small> : null}</label>
+            <label className="text-sm text-zinc-200">Origem <span className="text-zinc-500">(opcional)</span><select value={campaignForm.source} onChange={event => setCampaignForm({ ...campaignForm, source: event.target.value })} className={fieldClass}><option value="">Outra / não definida</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="youtube">YouTube</option><option value="google">Google</option><option value="tiktok">TikTok</option></select></label>
+            <label className="text-sm text-zinc-200">Meio <span className="text-zinc-500">(opcional)</span><select value={campaignForm.medium} onChange={event => setCampaignForm({ ...campaignForm, medium: event.target.value })} className={fieldClass}><option value="social">Social</option><option value="messaging">Mensagem</option><option value="paid">Anúncio pago</option><option value="organic">Orgânico</option><option value="referral">Indicação</option><option value="other">Outro</option></select></label>
+            <label className="text-sm text-zinc-200">Identificação do conteúdo <span className="text-zinc-500">(opcional)</span><input value={campaignForm.content} onChange={event => setCampaignForm({ ...campaignForm, content: event.target.value })} className={fieldClass} placeholder="reels-01, bio, grupo-a..." /></label>
+            <label className="text-sm text-zinc-200">Destino automático *<input readOnly value={campaignForm.destinationUrl} aria-invalid={Boolean(campaignErrors.destinationUrl) || undefined} className={`${fieldClass} cursor-not-allowed text-zinc-400`} placeholder="Configure sua Página Lucrativa" />{campaignErrors.destinationUrl ? <small className={errorClass} role="alert">{campaignErrors.destinationUrl}</small> : null}</label>
             <div className="lg:col-span-2"><button disabled={createCampaign.isPending || !profileSlug} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"><Plus className="size-4" />Criar campanha</button>{!profileSlug ? <a href={withAppBase("/membros/configuracoes")} className="ml-3 text-sm text-amber-200 underline">Configure sua página primeiro</a> : null}</div>
           </form>
           <Panel title="Minhas campanhas" icon={<Link2 className="size-5 text-emerald-300" />}>
             {campaigns.data?.length ? <div className="space-y-3">{campaigns.data.map(item => <CampaignRow key={item.id} campaign={item} analytics={orderedCampaigns.find(row => row.id === item.id)} profileSlug={profileSlug} copiedId={copiedId} onCopy={copyLink} onDelete={id => deleteCampaign.mutate({ id })} />)}</div> : <Empty text="Nenhuma campanha criada ainda." />}
           </Panel>
-        </section>}
+        </section>)}
 
         {activeTab === "detail" && (selectedCampaign ? <section className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
@@ -330,6 +388,29 @@ function OperationSummary({ item }: { item: AnalyticsCampaign }) {
 
 function MiniMetric({ label, value }: { label: string; value: string | number }) {
   return <span><strong className="block text-white">{value}</strong><small className="text-zinc-500">{label}</small></span>;
+}
+
+function campaignChannel(campaign: { source?: string | null; medium?: string | null }) {
+  return campaign.source || campaign.medium || "Canal não definido";
+}
+
+function DisclosureCampaignRow({ campaign, profileSlug, copiedId, onCopy }: { campaign: { id: number; name: string; slug: string; source?: string | null; medium?: string | null }; profileSlug?: string; copiedId: number | null; onCopy: (id: number, slug: string) => void }) {
+  const link = campaignUrl(profileSlug, campaign.slug);
+  return <article className="rounded-xl border border-white/10 bg-black/30 p-4">
+    <div className="space-y-4">
+      <div className="min-w-0">
+        <h3 className="font-medium text-white">{campaign.name}</h3>
+        <p className="mt-1 text-sm text-zinc-400">{campaignChannel(campaign)}</p>
+      </div>
+      <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+        <span className="text-xs uppercase tracking-wider text-zinc-500">Link da campanha</span>
+        <a href={link} target="_blank" rel="noreferrer" className="mt-2 block break-all font-mono text-sm text-emerald-100 underline underline-offset-4">{link}</a>
+      </div>
+      <button type="button" onClick={() => onCopy(campaign.id, campaign.slug)} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300/45 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/10 active:scale-[.98] sm:w-auto">
+        <Copy className="size-4" />{copiedId === campaign.id ? "Link copiado!" : "Copiar link"}
+      </button>
+    </div>
+  </article>;
 }
 
 function CampaignRow({ campaign, analytics, profileSlug, copiedId, onCopy, onDelete }: { campaign: { id: number; name: string; slug: string; source?: string | null }; analytics?: AnalyticsCampaign; profileSlug?: string; copiedId: number | null; onCopy: (id: number, slug: string) => void; onDelete: (id: number) => void }) {
