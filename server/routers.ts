@@ -95,6 +95,7 @@ import {
   createMemberTestimonial,
   getAdminTestimonials,
   updateAdminTestimonial,
+  getPublicSalesSocialProof,
   removeAdminPublicSalesSectionImage,
   upsertAdminPublicSalesSectionImage,
   updateAdminPlatformSettings,
@@ -266,7 +267,7 @@ const ebookInput = z.object({
 });
 export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: normalizedEmailZodSchema, whatsapp: optionalPhoneZodSchema, source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
 export const invitationInput = z.object({ contactId: z.number().int().positive().optional().nullable(), channel: z.enum(["link", "email", "whatsapp"]), message: z.string().trim().max(4000).optional().nullable() });
-export const testimonialInput = z.object({ content: z.string().trim().min(30).max(8000), authorConfirmed: z.literal(true) });
+export const testimonialInput = z.object({ content: z.string().trim().min(30).max(8000), rating: z.number().int().min(1).max(5), authorConfirmed: z.literal(true) });
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -349,6 +350,7 @@ export const appRouter = router({
     applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
     platformSettings: publicProcedure.query(() => getPublicPlatformSettings()),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
+    salesSocialProof: publicProcedure.query(() => getPublicSalesSocialProof()),
     completePersonalization: publicProcedure.input(applicationPersonalizationSchema).mutation(({ input }) => completeApplicationPersonalization(input)),
   }),
   admin: router({

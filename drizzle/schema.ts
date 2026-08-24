@@ -186,6 +186,7 @@ export const memberTestimonials = mysqlTable("memberTestimonials", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
   content: text("content").notNull(),
+  rating: int("rating"),
   authorConfirmed: int("authorConfirmed").default(0).notNull(),
   status: mysqlEnum("status", ["pending", "approved", "rejected", "archived"]).default("pending").notNull(),
   adminNote: text("adminNote"),

@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUpRight, Menu, MessageCircle, X } from "lucide-react";
+import { ArrowDown, ArrowUpRight, Menu, MessageCircle, Star, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
@@ -25,6 +25,48 @@ const faqItems = [
   ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar respostas administrativas. O suporte não representa garantia de aprovação, venda ou resultado financeiro."],
 ];
 
+const packageItems = [
+  ["Página Lucrativa personalizada", "Uma página pública para apresentar sua estrutura e receber solicitações."],
+  ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
+  ["Link principal de indicação", "Um endereço próprio para divulgar sua Página Lucrativa."],
+  ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
+  ["Meus pedidos", "Área para acompanhar solicitações atribuídas e confirmações de pagamento."],
+  ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
+  ["Biblioteca de Recursos", "Ferramentas e materiais publicados pela administração para apoiar sua divulgação."],
+  ["Academia", "Conteúdos de aprendizado para orientar a execução."],
+];
+
+const fitItems = [
+  "Pessoas dispostas a aprender a operar uma estrutura digital.",
+  "Quem quer divulgar com consistência e acompanhar os próprios resultados.",
+  "Quem entende que pedidos, vendas e ganhos dependem de execução real.",
+  "Quem precisa de uma base organizada para começar sem construir tudo do zero.",
+];
+
+const notFitItems = [
+  "Quem procura dinheiro fácil, automático ou garantido.",
+  "Quem não pretende divulgar, aprender ou operar a própria estrutura.",
+  "Quem espera que a plataforma venda sozinha sem ação comercial.",
+  "Quem busca uma promessa de resultado fixo em vez de uma ferramenta de trabalho.",
+];
+
+const objectionItems = [
+  ["Não sei programação.", "Você não precisa programar. A estrutura já existe e você personaliza os dados principais."],
+  ["Nunca trabalhei com internet.", "A jornada foi organizada para começar pelo básico: configurar, divulgar e acompanhar."],
+  ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
+  ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
+  ["Consigo utilizar pelo celular?", "Sim. As principais áreas foram pensadas para funcionar em navegador mobile."],
+  ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
+];
+
+const footerLinks = [
+  ["Termos de Uso", "/termos-de-uso"],
+  ["Política de Privacidade", "/politica-de-privacidade"],
+  ["Regras comerciais", "/regras-comerciais"],
+  ["Contato / suporte", "/contato"],
+  ["Institucional", "/institucional"],
+];
+
 function Brand({ compact = false }: { compact?: boolean }) {
   return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">PL</span><span>Página Lucrativa</span></span>;
 }
@@ -48,6 +90,7 @@ export default function Home() {
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
   const sectionImages = trpc.public.salesSectionImages.useQuery();
+  const socialProof = trpc.public.salesSocialProof.useQuery();
   const imageBySection = useMemo(() => new Map((sectionImages.data ?? []).map(image => [image.sectionId, image])), [sectionImages.data]);
   const resolveSectionImage = (sectionId: string, fallback: string | null) => {
     const saved = imageBySection.get(sectionId);
@@ -105,6 +148,7 @@ export default function Home() {
           <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
           <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
           <a href={withAppBase("/preview")} onClick={closeMenu}>Preview</a>
+          <a href={withAppBase("/institucional")} onClick={closeMenu}>Institucional</a>
           <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
           <a href={withAppBase("/pedido/acompanhar")} onClick={closeMenu}>Acompanhar pedido</a>
           <a href={withAppBase("/acesso")} className="nav-login" onClick={closeMenu}>Entrar</a>
@@ -171,6 +215,35 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="sales-section sales-social-proof" id="depoimentos">
+        <div className="shell">
+          <div className="sales-section-heading">
+            <div><Eyebrow>Prova social</Eyebrow><h2>Membros reais, dados reais da plataforma.</h2></div>
+            <p>Os indicadores abaixo são carregados dos registros existentes. Depoimentos aparecem somente depois de enviados pelo membro e aprovados pela administração.</p>
+          </div>
+          <div className="social-proof-stats">
+            <article><span>Total de membros</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.memberCount ?? 0}</strong></article>
+            <article><span>Total de avaliações</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.reviewCount ?? 0}</strong></article>
+          </div>
+          {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : socialProof.data?.testimonials.length ? <div className="testimonial-grid">{socialProof.data.testimonials.map(item => <article key={item.id} className="testimonial-card">
+            {item.photoUrl ? <img src={item.photoUrl} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}
+            <div className="testimonial-rating" aria-label={`Avaliação ${item.rating} de 5`}>{Array.from({ length: 5 }).map((_, index) => <Star key={index} size={14} fill={index < item.rating ? "currentColor" : "none"} />)}</div>
+            <p>{item.content}</p>
+            <footer><strong>{item.memberName}</strong><span>{item.location}</span></footer>
+          </article>)}</div> : <p className="social-proof-empty">Depoimentos aprovados com avaliação aparecerão aqui assim que estiverem disponíveis.</p>}
+        </div>
+      </section>
+
+      <section className="sales-section sales-package" id="o-que-recebe">
+        <div className="shell">
+          <div className="sales-section-heading">
+            <div><Eyebrow>Tudo o que você recebe</Eyebrow><h2>Uma base completa para começar com organização.</h2></div>
+            <p>A oferta reúne os elementos necessários para configurar sua presença, divulgar e acompanhar sua própria operação.</p>
+          </div>
+          <div className="package-grid">{packageItems.map(([title, description]) => <article key={title}><strong>{title}</strong><p>{description}</p></article>)}</div>
+        </div>
+      </section>
+
       {contentBlocks.map((block, index) => {
         const sectionImage = resolveSectionImage(block.id, block.defaultImage);
         return <section id={block.id === "problem_start" ? "como-funciona" : block.id === "product_real" ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.id}>
@@ -187,8 +260,25 @@ export default function Home() {
         <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
       </section>
 
+      <section className="sales-section sprint-fit" id="perfil-ideal">
+        <div className="shell sprint-fit-grid">
+          <div><Eyebrow>Para quem é</Eyebrow><h2>Para quem quer construir com execução.</h2><ul>{fitItems.map(item => <li key={item}>{item}</li>)}</ul></div>
+          <div className="sprint-not-fit"><Eyebrow>Para quem não é</Eyebrow><h2>Não é promessa de <span>resultado automático.</span></h2><ul>{notFitItems.map(item => <li key={item}>{item}</li>)}</ul></div>
+        </div>
+      </section>
+
       <section className="sales-section sales-faq" id="faq">
         <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div className="reference-copy-content"><Eyebrow>Antes de começar</Eyebrow><h2>Clareza para decidir com segurança.</h2><div className="copy-stack"><p>Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.</p>{faqItems.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></div>
+      </section>
+
+      <section className="sales-section sales-objections" id="duvidas-decisao">
+        <div className="shell">
+          <div className="sales-section-heading">
+            <div><Eyebrow>Antes da oferta</Eyebrow><h2>O que costuma travar a decisão.</h2></div>
+            <p>Respostas curtas para dúvidas comuns antes de solicitar a ativação.</p>
+          </div>
+          <div className="objection-grid">{objectionItems.map(([question, answer]) => <article key={question}><strong>{question}</strong><p>{answer}</p></article>)}</div>
+        </div>
       </section>
 
       <section className="sales-section sales-offer" id="f">
@@ -207,7 +297,7 @@ export default function Home() {
 
     </main>
 
-    <footer className="footer"><div className="shell footer-row"><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span>{affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}</div></footer>
+    <footer className="footer"><div className="shell footer-row footer-expanded"><div><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span></div><nav className="footer-links" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}</a>)}</nav>{affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}</div></footer>
     <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={23} strokeWidth={2.2} /><span className="member-chat-fab-label" aria-hidden="true"><strong>Chat de membros</strong><small>Em breve</small></span></button></div>
   </div>;
 }

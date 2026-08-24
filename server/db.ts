@@ -1039,6 +1039,40 @@ export async function getPublicSalesSectionImages() {
   return db.select({ sectionId: publicSalesSectionImages.sectionId, imageUrl: publicSalesSectionImages.imageUrl, contentType: publicSalesSectionImages.contentType, status: publicSalesSectionImages.status, originalName: publicSalesSectionImages.originalName, updatedAt: publicSalesSectionImages.updatedAt }).from(publicSalesSectionImages).orderBy(desc(publicSalesSectionImages.updatedAt));
 }
 
+export async function getPublicSalesSocialProof() {
+  const db = await getDb();
+  if (!db) return { memberCount: 0, reviewCount: 0, testimonials: [] };
+  const [members, reviews, testimonials] = await Promise.all([
+    db.select({ value: sql<number>`COUNT(*)` }).from(users).where(eq(users.role, "user")),
+    db.select({ value: sql<number>`COUNT(*)` }).from(memberTestimonials).where(and(eq(memberTestimonials.status, "approved"), sql`${memberTestimonials.rating} IS NOT NULL`)),
+    db.select({
+      id: memberTestimonials.id,
+      content: memberTestimonials.content,
+      rating: memberTestimonials.rating,
+      updatedAt: memberTestimonials.updatedAt,
+      memberName: users.name,
+      photoUrl: memberProfiles.photoUrl,
+      city: memberProfiles.city,
+      state: memberProfiles.state,
+    }).from(memberTestimonials)
+      .innerJoin(users, eq(memberTestimonials.userId, users.id))
+      .leftJoin(memberProfiles, eq(memberTestimonials.userId, memberProfiles.userId))
+      .where(and(eq(memberTestimonials.status, "approved"), sql`${memberTestimonials.rating} IS NOT NULL`))
+      .orderBy(desc(memberTestimonials.updatedAt))
+      .limit(6),
+  ]);
+  return {
+    memberCount: Number(members[0]?.value ?? 0),
+    reviewCount: Number(reviews[0]?.value ?? 0),
+    testimonials: testimonials.map(item => ({
+      ...item,
+      rating: Math.min(5, Math.max(1, Number(item.rating ?? 0))),
+      memberName: item.memberName || "Membro da Página Lucrativa",
+      location: [item.city, item.state].filter(Boolean).join(" - ") || "Local não informado",
+    })),
+  };
+}
+
 export async function getAdminPublicSalesSectionImages() {
   const db = await getDb();
   if (!db) return [];
@@ -1624,10 +1658,10 @@ export async function getMemberTestimonials(userId: number) {
   return db.select().from(memberTestimonials).where(eq(memberTestimonials.userId, userId)).orderBy(desc(memberTestimonials.updatedAt));
 }
 
-export async function createMemberTestimonial(userId: number, input: { content: string }) {
+export async function createMemberTestimonial(userId: number, input: { content: string; rating: number }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const result = await db.insert(memberTestimonials).values({ userId, content: input.content, authorConfirmed: 1, status: "pending" });
+  const result = await db.insert(memberTestimonials).values({ userId, content: input.content, rating: input.rating, authorConfirmed: 1, status: "pending" });
   return { id: Number(result[0].insertId) };
 }
 
@@ -1638,6 +1672,7 @@ export async function getAdminTestimonials() {
     id: memberTestimonials.id,
     userId: memberTestimonials.userId,
     content: memberTestimonials.content,
+    rating: memberTestimonials.rating,
     authorConfirmed: memberTestimonials.authorConfirmed,
     status: memberTestimonials.status,
     adminNote: memberTestimonials.adminNote,
