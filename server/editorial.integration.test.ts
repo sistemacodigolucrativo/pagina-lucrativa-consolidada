@@ -21,19 +21,19 @@ describe("central editorial", () => {
     expect(() => procedure._def.inputs[0].parse({ id: 7, kind: "article", title: "x", status: "published" })).toThrow();
   });
 
-  it("valida ferramentas da Biblioteca de Recursos com link Google Drive", () => {
+  it("valida recursos da Biblioteca de Recursos com link Google Drive", () => {
     const procedure = procedures["admin.createContent"] as { _def: { inputs: Array<{ parse: (input: unknown) => unknown }> } };
     expect(procedure._def.inputs[0].parse({
       kind: "material",
       title: "Automação de divulgação",
-      summary: "Ferramenta externa",
+      summary: "Recurso externo",
       body: "Tutorial completo",
       resourceCategory: "Automação",
       resourceType: "Ferramenta",
       resourceUrl: "https://drive.google.com/file/d/abc/view",
       status: "published",
     })).toMatchObject({ kind: "material", resourceCategory: "Automação", resourceType: "Ferramenta" });
-    expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "https://example.com/file.zip" })).toThrow();
+    expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "https://example.com/file.zip" })).toThrow("Use uma URL HTTPS válida do Google Drive.");
     expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "javascript:alert(1)" })).toThrow();
     expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "draft" })).toMatchObject({ kind: "material", status: "draft" });
   });
@@ -48,12 +48,14 @@ describe("central editorial", () => {
     expect(schema).toContain('resourceCategory: varchar("resourceCategory"');
     expect(schema).toContain('resourceType: varchar("resourceType"');
     expect(migration).toContain("ADD COLUMN `resourceUrl`");
-    expect(admin).toContain("Nova ferramenta");
+    expect(admin).toContain("Novo recurso");
+    expect(admin).toContain("Use uma URL HTTPS válida do Google Drive.");
     expect(admin).toContain("Link do Google Drive");
     expect(admin).toContain("O arquivo precisa estar compartilhado no Google Drive");
-    expect(member).toContain("Ferramentas e recursos disponibilizados para apoiar sua divulgação e sua rotina.");
+    expect(member).toContain("Recursos disponibilizados para apoiar sua divulgação e sua rotina.");
+    expect(member).toContain("Recursos disponíveis");
     expect(member).toContain("Ver detalhes");
-    expect(member).toContain("Acessar ferramenta");
+    expect(member).toContain("Acessar recurso");
     expect(member).toContain('target="_blank"');
     expect(member).toContain('item.kind === "faq"');
   });

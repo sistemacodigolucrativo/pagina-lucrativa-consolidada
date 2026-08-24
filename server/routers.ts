@@ -246,7 +246,7 @@ const validateMaterialResource = (input: z.infer<typeof contentInputBase>, ctx: 
   const resourceUrl = input.resourceUrl?.trim() ?? "";
   if (!isMaterial) return;
   if (input.status === "published" && !resourceUrl) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Informe o link do Google Drive antes de publicar a ferramenta." });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Informe o link do Google Drive antes de publicar o recurso." });
     return;
   }
   if (resourceUrl && !isAllowedGoogleDriveUrl(resourceUrl)) {
