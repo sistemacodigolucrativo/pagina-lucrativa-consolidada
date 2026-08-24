@@ -57,4 +57,21 @@ describe("central editorial", () => {
     expect(member).toContain('target="_blank"');
     expect(member).toContain('item.kind === "faq"');
   });
+
+  it("apresenta article como Material de divulgação sem renomear o contrato técnico", async () => {
+    const member = await readFile(path.join(root, "client/src/pages/MemberPublications.tsx"), "utf8");
+    const admin = await readFile(path.join(root, "client/src/pages/AdminPublications.tsx"), "utf8");
+    const operations = await readFile(path.join(root, "client/src/pages/AdminOperations.tsx"), "utf8");
+    const navigation = await readFile(path.join(root, "shared/memberOfficeContent.ts"), "utf8");
+    const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
+    const legacyRedirect = await readFile(path.join(root, "client/src/pages/MemberLegacyRedirect.tsx"), "utf8");
+
+    expect(navigation).toContain('label: "Material de divulgação", path: "/membros/artigos"');
+    expect(member).toContain('title: "Material de divulgação"');
+    expect(member).toContain("Materiais prontos para divulgação");
+    expect(admin).toContain('<option value="article">Material de divulgação</option>');
+    expect(operations).toContain('<option value="article">Material de divulgação</option>');
+    expect(app).toContain('path="/membros/artigos" component={MemberPublications}');
+    expect(legacyRedirect).toContain('"/membros/blog": "/membros/artigos"');
+  });
 });

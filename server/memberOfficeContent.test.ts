@@ -26,6 +26,11 @@ describe("memberOfficeNavigation", () => {
       label: "Central de Divulgação",
       path: "/membros/operacao",
     });
+    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
+      icon: "articles",
+      label: "Material de divulgação",
+      path: "/membros/artigos",
+    });
     expect(itemsFor("Rede")).toEqual(["/membros/rede"]);
     expect(itemsFor("Desempenho")).toEqual(["/membros/pontos"]);
   });
@@ -43,6 +48,8 @@ describe("memberOfficeNavigation", () => {
   });
 
   it("não semeia dados privados ou depoimentos na navegação", () => {
+    const serializedLabels = JSON.stringify(memberOfficeNavigation.flatMap(group => [group.label, ...group.items.map(item => item.label)])).toLowerCase();
+    expect(serializedLabels).not.toContain("artigos");
     const serializedNavigation = JSON.stringify(memberOfficeNavigation).toLowerCase();
     expect(serializedNavigation).not.toContain("@live.com");
     expect(serializedNavigation).not.toContain("depoimento de cliente");

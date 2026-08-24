@@ -47,7 +47,7 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
   {
     label: "Conteúdo",
     items: [
-      { icon: "articles", label: "Artigos", path: "/membros/artigos" },
+      { icon: "articles", label: "Material de divulgação", path: "/membros/artigos" },
       { icon: "materials", label: "Materiais e downloads", path: "/membros/materiais" },
     ],
   },
