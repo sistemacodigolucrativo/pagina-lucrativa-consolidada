@@ -17,6 +17,11 @@ describe("gestão de solicitações públicas", () => {
     expect(router).toContain("updateApplication: adminProcedure.input");
     expect(router).toContain('z.enum(["pending", "contacted", "approved", "archived"])');
   });
+  it("mantém solicitações atribuídas apenas para pedidos que ainda exigem decisão", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    expect(db).toContain('application.paymentStatus !== "confirmed"');
+    expect(db).toContain("shouldHideRejectedApplication");
+  });
   it("registra o acompanhamento público e a gestão administrativa nas rotas", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");

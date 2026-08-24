@@ -24,6 +24,8 @@ describe("recuperação de senha por pergunta secreta", () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
     const accountPage = await readFile(path.join(root, "client/src/pages/MemberAccount.tsx"), "utf8");
     const loginPage = await readFile(path.join(root, "client/src/pages/DemoLogin.tsx"), "utf8");
+    const personalizationPage = await readFile(path.join(root, "client/src/pages/ApplicationPersonalization.tsx"), "utf8");
+    const applications = await readFile(path.join(root, "shared/applications.ts"), "utf8");
 
     expect(router).toContain("updateSecurityRecovery: protectedProcedure");
     expect(router).toContain("startPasswordRecovery: publicProcedure");
@@ -36,5 +38,10 @@ describe("recuperação de senha por pergunta secreta", () => {
     expect(loginPage).not.toContain("disabled title=\"A recuperação de acesso");
     expect(loginPage).toContain("Pergunta secreta");
     expect(loginPage).toContain("Definir nova senha");
+    expect(personalizationPage).toContain("Recuperação de acesso");
+    expect(personalizationPage).toContain("securityQuestion");
+    expect(personalizationPage).toContain("securityAnswer");
+    expect(applications).toContain("securityQuestion");
+    expect(applications).toContain("securityAnswer");
   });
 });

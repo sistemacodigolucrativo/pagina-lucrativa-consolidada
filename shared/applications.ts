@@ -62,6 +62,8 @@ export const applicationPersonalizationSchema = z.object({
   facebookUrl: httpUrlZodSchema.max(512).optional().nullable(),
   instagramUrl: httpUrlZodSchema.max(512).optional().nullable(),
   password: z.string().min(6, "A senha deve ter pelo menos 6 caracteres.").max(128).regex(/[A-Za-z]/, "A senha deve conter pelo menos uma letra.").regex(/\d/, "A senha deve conter pelo menos um número."),
+  securityQuestion: z.string().trim().min(6, "Escolha uma pergunta secreta.").max(240),
+  securityAnswer: z.string().trim().min(3, "Informe uma resposta secreta com pelo menos 3 caracteres.").max(180),
 });
 
 export type MemberPaymentLinkInput = z.infer<typeof memberPaymentLinkInputSchema>;

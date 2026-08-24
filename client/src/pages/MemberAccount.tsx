@@ -11,6 +11,13 @@ const menu: DashboardMenuItem[] = [
   { icon: Settings, label: "Editar perfil", path: "/membros/configuracoes", group: "Escritório" },
 ];
 const inputClass = "mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none transition focus:border-emerald-300/60 focus:ring-2 focus:ring-emerald-300/30";
+const securityQuestions = [
+  "Qual era o nome do seu primeiro animal de estimação?",
+  "Qual era o apelido que você tinha na infância?",
+  "Qual foi o nome da sua primeira escola?",
+  "Qual é o nome de uma pessoa importante da sua infância?",
+  "Qual palavra pessoal você escolheu para recuperação?",
+] as const;
 
 type AccountForm = { name: string; email: string; newPassword: string; confirmPassword: string };
 type SecurityForm = { securityQuestion: string; securityAnswer: string; confirmSecurityAnswer: string };
@@ -90,7 +97,10 @@ export default function MemberAccount() {
       <div className="flex items-center gap-2 text-white"><LockKeyhole className="size-5 text-emerald-300" /><h2 className="font-medium">Recuperação de acesso</h2></div>
       <p className="text-sm leading-6 text-zinc-300">Cadastre uma pergunta e uma resposta secreta para recuperar sua senha pelo botão “Recuperar acesso” na tela de login.</p>
       {account.data?.securityRecoveryConfigured ? <p className="rounded-xl border border-emerald-300/25 bg-emerald-300/10 px-3 py-2 text-sm text-emerald-50">Recuperação configurada. Para trocar a resposta, informe uma nova resposta secreta abaixo.</p> : null}
-      <label className="block text-sm text-zinc-200">Pergunta secreta<input required minLength={6} maxLength={240} value={securityForm.securityQuestion} onChange={event => setSecurityField("securityQuestion", event.target.value)} className={inputClass} placeholder="Ex.: Qual foi o nome do meu primeiro projeto?" /></label>
+      <label className="block text-sm text-zinc-200">Pergunta secreta<select required value={securityForm.securityQuestion} onChange={event => setSecurityField("securityQuestion", event.target.value)} className={inputClass}>
+        <option value="">Escolha uma pergunta</option>
+        {securityQuestions.map(question => <option key={question} value={question}>{question}</option>)}
+      </select></label>
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm text-zinc-200">Resposta secreta<input required minLength={3} maxLength={180} type="password" autoComplete="new-password" value={securityForm.securityAnswer} onChange={event => setSecurityField("securityAnswer", event.target.value)} className={inputClass} placeholder="Digite uma resposta segura" /></label>
         <label className="block text-sm text-zinc-200">Confirmar resposta<input required minLength={3} maxLength={180} type="password" autoComplete="new-password" value={securityForm.confirmSecurityAnswer} onChange={event => setSecurityField("confirmSecurityAnswer", event.target.value)} className={inputClass} placeholder="Repita a resposta" /></label>

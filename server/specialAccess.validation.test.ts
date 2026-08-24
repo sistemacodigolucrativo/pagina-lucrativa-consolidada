@@ -9,6 +9,8 @@ describe("applicationPersonalizationSchema", () => {
     facebookUrl: "https://facebook.com/maria",
     instagramUrl: "https://instagram.com/maria",
     password: "pagina123",
+    securityQuestion: "Qual foi o nome da sua primeira escola?",
+    securityAnswer: "escola central",
   };
 
   it("aceita dados públicos iniciais e senha no fluxo por pedido", () => {

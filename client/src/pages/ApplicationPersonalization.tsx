@@ -9,6 +9,13 @@ import { toast } from "sonner";
 
 const field = "mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-3 text-white outline-none ring-emerald-300/50 focus:ring-2";
 const errorClass = "mt-1 block text-xs text-red-300";
+const securityQuestions = [
+  "Qual era o nome do seu primeiro animal de estimação?",
+  "Qual era o apelido que você tinha na infância?",
+  "Qual foi o nome da sua primeira escola?",
+  "Qual é o nome de uma pessoa importante da sua infância?",
+  "Qual palavra pessoal você escolheu para recuperação?",
+] as const;
 
 export default function ApplicationPersonalization() {
   const publicCode = useMemo(() => typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo")?.trim().toLowerCase() ?? "", []);
@@ -17,7 +24,10 @@ export default function ApplicationPersonalization() {
   const [form, setForm] = useState({ name: "", whatsapp: "", facebookUrl: "", instagramUrl: "" });
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [errors, setErrors] = useState<Partial<Record<keyof typeof form | "password" | "confirmPassword", string>>>({});
+  const [securityQuestion, setSecurityQuestion] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
+  const [confirmSecurityAnswer, setConfirmSecurityAnswer] = useState("");
+  const [errors, setErrors] = useState<Partial<Record<keyof typeof form | "password" | "confirmPassword" | "securityQuestion" | "securityAnswer" | "confirmSecurityAnswer", string>>>({});
   const [showPassword, setShowPassword] = useState(false);
   const complete = trpc.public.completePersonalization.useMutation({
     onSuccess: data => {
@@ -43,7 +53,7 @@ export default function ApplicationPersonalization() {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const whatsapp = normalizePhone(form.whatsapp);
-    const nextErrors: Partial<Record<keyof typeof form | "password" | "confirmPassword", string>> = {};
+    const nextErrors: Partial<Record<keyof typeof form | "password" | "confirmPassword" | "securityQuestion" | "securityAnswer" | "confirmSecurityAnswer", string>> = {};
     if (!publicCode) return toast.error("Link de personalização inválido.");
     if (form.name.trim().length < 2) nextErrors.name = "Informe seu nome com pelo menos 2 caracteres.";
     if (!validatePhoneBR(whatsapp)) nextErrors.whatsapp = "Informe um WhatsApp com DDD e 10 ou 11 dígitos.";
@@ -53,6 +63,9 @@ export default function ApplicationPersonalization() {
     else if (!/[A-Za-z]/.test(password)) nextErrors.password = "A senha deve conter pelo menos uma letra.";
     else if (!/\d/.test(password)) nextErrors.password = "A senha deve conter pelo menos um número.";
     if (password !== confirmPassword) nextErrors.confirmPassword = "A confirmação da senha não confere.";
+    if (!securityQuestion.trim()) nextErrors.securityQuestion = "Escolha uma pergunta secreta.";
+    if (securityAnswer.trim().length < 3) nextErrors.securityAnswer = "Informe uma resposta secreta com pelo menos 3 caracteres.";
+    if (securityAnswer.trim() !== confirmSecurityAnswer.trim()) nextErrors.confirmSecurityAnswer = "A confirmação da resposta não confere.";
     if (Object.keys(nextErrors).length) {
       setErrors(nextErrors);
       toast.error("Corrija os campos indicados antes de continuar.");
@@ -66,6 +79,8 @@ export default function ApplicationPersonalization() {
       facebookUrl: form.facebookUrl ? normalizeHttpUrl(form.facebookUrl) : null,
       instagramUrl: form.instagramUrl ? normalizeHttpUrl(form.instagramUrl) : null,
       password,
+      securityQuestion: securityQuestion.trim(),
+      securityAnswer: securityAnswer.trim(),
     });
   }
 
@@ -104,6 +119,22 @@ export default function ApplicationPersonalization() {
       <p className="text-zinc-300">Exemplo de senha válida: <strong>pagina123</strong></p>
       <ul className="mt-1 space-y-1">{passwordRules.map(rule => <li key={rule.label} className={rule.ok ? "text-emerald-200" : "text-zinc-500"}>{rule.ok ? "✓" : "•"} {rule.label}</li>)}</ul>
     </div>
+    <section className="space-y-4 border-t border-white/10 pt-5">
+      <div className="flex items-center gap-2 text-white"><ShieldCheck className="size-4 text-emerald-300" /><h2 className="font-medium">Recuperação de acesso</h2></div>
+      <p className="text-sm leading-6 text-zinc-400">Cadastre uma pergunta e uma resposta secreta para recuperar sua senha se perder o acesso.</p>
+      <label className="block text-sm text-zinc-200">Pergunta secreta *
+        <select required value={securityQuestion} onChange={event => { setErrors(current => ({ ...current, securityQuestion: undefined })); setSecurityQuestion(event.target.value); }} aria-invalid={Boolean(errors.securityQuestion) || undefined} className={field}>
+          <option value="">Escolha uma pergunta</option>
+          {securityQuestions.map(question => <option key={question} value={question}>{question}</option>)}
+        </select>
+        {errors.securityQuestion ? <small className={errorClass} role="alert">{errors.securityQuestion}</small> : null}
+      </label>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm text-zinc-200">Resposta secreta *<input required type="password" minLength={3} maxLength={180} autoComplete="new-password" value={securityAnswer} onChange={event => { setErrors(current => ({ ...current, securityAnswer: undefined })); setSecurityAnswer(event.target.value); }} aria-invalid={Boolean(errors.securityAnswer) || undefined} className={field} />{errors.securityAnswer ? <small className={errorClass} role="alert">{errors.securityAnswer}</small> : null}</label>
+        <label className="block text-sm text-zinc-200">Confirmar resposta *<input required type="password" minLength={3} maxLength={180} autoComplete="new-password" value={confirmSecurityAnswer} onChange={event => { setErrors(current => ({ ...current, confirmSecurityAnswer: undefined })); setConfirmSecurityAnswer(event.target.value); }} aria-invalid={Boolean(errors.confirmSecurityAnswer) || undefined} className={field} />{errors.confirmSecurityAnswer ? <small className={errorClass} role="alert">{errors.confirmSecurityAnswer}</small> : null}</label>
+      </div>
+      <p className="text-xs leading-5 text-zinc-500">A resposta não será exibida depois de salva e será armazenada em formato protegido.</p>
+    </section>
     <button disabled={complete.isPending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-3 text-sm font-semibold text-black disabled:opacity-60">{complete.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}Configurar e cadastrar senha</button>
   </form></main>;
 }

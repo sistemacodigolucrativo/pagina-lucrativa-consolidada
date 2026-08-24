@@ -1200,7 +1200,7 @@ export async function getMemberAffiliateApplications(userId: number) {
       latestReceiptReviewedAt: latestReceipt?.reviewedAt ?? null,
       accessStatus: tokens.filter(token => token.applicationId === application.id).sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0]?.status ?? null,
     };
-  }).filter(application => !shouldHideRejectedApplication(application.paymentStatus, application.latestReceiptStatus, application.latestReceiptReviewedAt));
+  }).filter(application => application.paymentStatus !== "confirmed" && !shouldHideRejectedApplication(application.paymentStatus, application.latestReceiptStatus, application.latestReceiptReviewedAt));
 }
 
 function shouldHideRejectedApplication(paymentStatus: string, latestReceiptStatus: string | null, reviewedAt: Date | null) {
@@ -1766,6 +1766,15 @@ export async function completeApplicationPersonalization(input: ApplicationPerso
     whatsapp: input.whatsapp,
     facebookUrl: cleanOptional(input.facebookUrl),
     instagramUrl: cleanOptional(input.instagramUrl),
+  } });
+  await db.insert(userSecurityRecovery).values({
+    userId,
+    securityQuestion: input.securityQuestion.trim(),
+    securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+  }).onDuplicateKeyUpdate({ set: {
+    securityQuestion: input.securityQuestion.trim(),
+    securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+    updatedAt: new Date(),
   } });
   await db.insert(referralLinks).values({ sponsorId: application.ownerUserId, referredUserId: userId, status: "active" }).onDuplicateKeyUpdate({ set: { sponsorId: application.ownerUserId, status: "active" } });
   await db.update(applicationAccessTokens).set({ status: "used", usedAt: new Date() }).where(eq(applicationAccessTokens.id, token.id));
