@@ -15,4 +15,13 @@ describe("Tipo da chave PIX", () => {
     expect(source).toContain("Valor salvo:");
     expect(source).not.toContain("Tipo da chave PIX<input");
   });
+
+  it("apresenta a regra mínima de recebimento sem a explicação antiga", () => {
+    const source = readFileSync(path.join(process.cwd(), "client/src/pages/MemberReceiving.tsx"), "utf8");
+
+    expect(source).toContain("Configure pelo menos um método de recebimento.");
+    expect(source).toContain("obrigatório para que você possa receber os valores gerados pelas suas divulgações");
+    expect(source).not.toContain("Concentre aqui os meios e dados utilizados para receber valores");
+    expect(source).not.toContain("Separação de dados:");
+  });
 });

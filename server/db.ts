@@ -158,6 +158,7 @@ export async function getMemberFinance(userId: number) {
     trackingCode: applications.trackingCode,
     fullName: applications.fullName,
     email: applications.email,
+    whatsapp: applications.whatsapp,
     offerAmountCents: applications.offerAmountCents,
     paymentStatus: applications.paymentStatus,
     createdAt: applications.createdAt,
@@ -1449,14 +1450,25 @@ export async function getAdminContent() {
   return db.select().from(managedContent).orderBy(desc(managedContent.updatedAt));
 }
 
-export async function createAdminContent(input: { kind: "material" | "article" | "faq" | "notice"; title: string; summary?: string | null; body?: string | null; status: "draft" | "published" | "archived"; createdBy: number }) {
+type AdminContentInput = {
+  kind: "material" | "article" | "faq" | "notice";
+  title: string;
+  summary?: string | null;
+  body?: string | null;
+  resourceUrl?: string | null;
+  resourceCategory?: string | null;
+  resourceType?: string | null;
+  status: "draft" | "published" | "archived";
+};
+
+export async function createAdminContent(input: AdminContentInput & { createdBy: number }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const result = await db.insert(managedContent).values(input);
   return { id: Number(result[0].insertId) };
 }
 
-export async function updateAdminContent(contentId: number, input: { kind: "material" | "article" | "faq" | "notice"; title: string; summary?: string | null; body?: string | null; status: "draft" | "published" | "archived" }) {
+export async function updateAdminContent(contentId: number, input: AdminContentInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   await db.update(managedContent).set(input).where(eq(managedContent.id, contentId));

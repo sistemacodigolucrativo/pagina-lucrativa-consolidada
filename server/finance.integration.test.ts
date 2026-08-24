@@ -23,6 +23,10 @@ describe("relatório de adesões do membro", () => {
     expect(router).not.toContain("createFinanceEntry");
     expect(page).toContain("Ganhos e extrato de adesões");
     expect(page).toContain("pagamento ocorre diretamente entre comprador e patrocinador");
+    expect(page).toContain("confirmedEntries");
+    expect(page).toContain("entry.whatsapp");
+    expect(page).not.toContain("Ver pedidos");
+    expect(page).not.toContain("applicationPaymentStatusLabel");
     expect(page).not.toContain("Registrar venda");
     expect(page).not.toContain("Solicitar saque");
     expect(page).not.toContain("Saldo confirmado");

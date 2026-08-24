@@ -1,14 +1,13 @@
-import { CircleDollarSign, ClipboardList, ReceiptText } from "lucide-react";
+import { CircleDollarSign, ReceiptText } from "lucide-react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
-import { withAppBase } from "@/lib/devPath";
 import { memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
 import { formatCurrency } from "@shared/dashboard";
-import { applicationPaymentStatusLabel } from "@shared/applications";
 
 export default function MemberEarnings() {
   const finance = trpc.member.finance.useQuery();
   const data = finance.data;
+  const confirmedEntries = data?.entries.filter(entry => entry.paymentStatus === "confirmed") ?? [];
 
   return <DashboardLayout menuItems={memberDashboardMenuItems} title="Ganhos e extrato" subtitle="Relatório das adesões atribuídas à sua Página Lucrativa.">
     <div className="office-page">
@@ -30,21 +29,16 @@ export default function MemberEarnings() {
         <section className="office-section">
           <div className="office-section-head">
             <div><span className="office-eyebrow">Histórico de adesões</span><h2>Pedidos atribuídos à sua página</h2></div>
-            <a className="office-action" href={withAppBase("/membros/meus-pedidos")}>Ver pedidos<ClipboardList size={16} /></a>
           </div>
-          {data?.entries.length ? <div className="office-stack">{data.entries.map(entry => <article className="office-card" key={entry.id}>
+          {confirmedEntries.length ? <div className="office-stack">{confirmedEntries.map(entry => <article className="office-card" key={entry.id}>
             <div className="office-card-head">
               <div>
-                <span className="office-list-code">{entry.trackingCode ?? `Pedido #${entry.id}`}</span>
-                <h3>{entry.trackingCode ?? `Pedido #${entry.id}`} · {entry.fullName}</h3>
-                <p>{applicationPaymentStatusLabel[entry.paymentStatus]} · {new Date(entry.createdAt).toLocaleDateString("pt-BR")}</p>
+                <h3>{entry.fullName}</h3>
+                <p>{entry.whatsapp}</p>
               </div>
-              <div className={entry.paymentStatus === "confirmed" ? "finance-positive" : "text-zinc-300"}>
-                {formatCurrency(entry.offerAmountCents)}
-                <time>{new Date(entry.createdAt).toLocaleDateString("pt-BR")}</time>
-              </div>
+              <time className="text-sm text-zinc-400">{new Date(entry.updatedAt).toLocaleDateString("pt-BR")}</time>
             </div>
-          </article>)}</div> : <div className="office-empty"><ReceiptText size={26} /><h2>Nenhuma adesão atribuída ainda.</h2><p>Quando um pedido for atribuído à sua Página Lucrativa, ele aparecerá automaticamente neste relatório. Você não precisa registrar vendas manualmente.</p></div>}
+          </article>)}</div> : <div className="office-empty"><ReceiptText size={26} /><h2>Nenhuma adesão confirmada ainda.</h2><p>Quando um pagamento for confirmado, ele aparecerá automaticamente neste relatório.</p></div>}
         </section>
       </>}
     </div>

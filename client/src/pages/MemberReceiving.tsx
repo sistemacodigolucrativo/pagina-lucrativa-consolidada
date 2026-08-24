@@ -216,8 +216,8 @@ export default function MemberReceiving() {
         <button type="button" onClick={closeResponsibleUseModal} className="mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.97] sm:w-auto">Entendi</button>
       </section>
     </div> : null}
-    <header className="space-y-2"><span className="text-xs uppercase tracking-[.16em] text-emerald-300">Minha operação</span><h1 className="text-3xl font-semibold text-white">Preferências de recebimento</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Concentre aqui os meios e dados utilizados para receber valores. Esta tela registra preferências, não movimenta dinheiro, não processa pagamentos e não solicita senha, cartão ou token bancário.</p></header>
-    <aside className="rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-3 text-sm leading-6 text-emerald-50"><strong>Separação de dados:</strong> nome, e-mail e senha ficam em <strong>Meus dados</strong>. PayPal, PagSeguro, contas bancárias e PIX pertencem a esta área.</aside>
+    <header className="space-y-2"><span className="text-xs uppercase tracking-[.16em] text-emerald-300">Minha operação</span><h1 className="text-3xl font-semibold text-white">Preferências de recebimento</h1></header>
+    <aside className="rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-3 text-sm leading-6 text-emerald-50">Configure pelo menos um método de recebimento. Esse preenchimento é obrigatório para que você possa receber os valores gerados pelas suas divulgações.</aside>
     <form onSubmit={submit} className="space-y-6">
       <section className="order-1 min-w-0 space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6">
         <div className="flex items-center gap-2 text-white"><Landmark className="size-5 text-emerald-300" /><h2 className="font-medium">Organizar preferência</h2></div>

@@ -221,13 +221,39 @@ const publicSalesSectionImageInput = z.object({
   contentType: z.enum(["image/jpeg", "image/png", "image/gif"]),
   originalName: z.string().trim().max(255).optional().nullable(),
 });
-const contentInput = z.object({
+const googleDriveHosts = new Set(["drive.google.com", "docs.google.com", "drive.usercontent.google.com"]);
+const isAllowedGoogleDriveUrl = (value: string) => {
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" && googleDriveHosts.has(url.hostname.toLowerCase());
+  } catch {
+    return false;
+  }
+};
+const contentInputBase = z.object({
   kind: z.enum(["material", "article", "faq", "notice"]),
   title: z.string().trim().min(3).max(240),
   summary: z.string().trim().max(8000).optional().nullable(),
   body: z.string().trim().max(60000).optional().nullable(),
+  resourceUrl: z.string().trim().max(2048).optional().nullable(),
+  resourceCategory: z.string().trim().max(96).optional().nullable(),
+  resourceType: z.string().trim().max(96).optional().nullable(),
   status: z.enum(["draft", "published", "archived"]),
 });
+const validateMaterialResource = (input: z.infer<typeof contentInputBase>, ctx: z.RefinementCtx) => {
+  const isMaterial = input.kind === "material";
+  const resourceUrl = input.resourceUrl?.trim() ?? "";
+  if (!isMaterial) return;
+  if (input.status === "published" && !resourceUrl) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Informe o link do Google Drive antes de publicar a ferramenta." });
+    return;
+  }
+  if (resourceUrl && !isAllowedGoogleDriveUrl(resourceUrl)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Use uma URL HTTPS válida do Google Drive." });
+  }
+};
+const contentInput = contentInputBase.superRefine(validateMaterialResource);
+const updateContentInput = contentInputBase.extend({ id: z.number().int().positive() }).superRefine(validateMaterialResource);
 
 const ebookInput = z.object({
   sourceId: z.string().trim().min(4).max(64),
@@ -341,7 +367,7 @@ export const appRouter = router({
     updateCoursePublication: adminProcedure.input(z.object({ id: z.number().int().positive(), isPublished: z.boolean() })).mutation(({ input }) => updateAdminCoursePublication(input.id, input.isPublished)),
     content: adminProcedure.query(() => getAdminContent()),
     createContent: adminProcedure.input(contentInput).mutation(({ ctx, input }) => createAdminContent({ ...input, createdBy: ctx.user.id })),
-    updateContent: adminProcedure.input(contentInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...content } = input; return updateAdminContent(id, content); }),
+    updateContent: adminProcedure.input(updateContentInput).mutation(({ input }) => { const { id, ...content } = input; return updateAdminContent(id, content); }),
     updateContentStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "archived"]) })).mutation(({ input }) => updateAdminContentStatus(input.id, input.status)),
     ebooks: adminProcedure.query(() => getAdminEbooks()),
     ebook: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminEbook(input.id)),
