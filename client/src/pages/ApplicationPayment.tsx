@@ -103,12 +103,25 @@ export default function ApplicationPayment() {
 
   const { application, paymentLinks, receiving, receipts } = payment.data;
   const hasReceiptAwaitingReview = application.paymentStatus === "receipt_received" || receipts.some(receipt => receipt.status === "pending");
-  const trackingHref = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(application.trackingCode ?? trackingCode)}`);
+  const hasSubmittedReceipt = hasReceiptAwaitingReview || receipts.length > 0;
+  const orderTrackingCode = application.trackingCode ?? trackingCode;
+  const trackingHref = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(orderTrackingCode)}`);
   const showReceiptUpload = selectedMethod === "pix" && Boolean(pixKey);
   const receiptStatusLabel = application.paymentStatus === "confirmed" ? "Pagamento confirmado"
     : application.paymentStatus === "rejected" ? "Comprovante rejeitado"
       : hasReceiptAwaitingReview ? "Comprovante recebido — aguardando análise"
         : "Aguardando comprovante";
+  const handleTrackOrder = async () => {
+    try {
+      await navigator.clipboard.writeText(orderTrackingCode);
+      toast.success("Código copiado.");
+    } catch {
+      toast.info("Abrindo acompanhamento do pedido.");
+    }
+    window.setTimeout(() => {
+      window.location.href = trackingHref;
+    }, 450);
+  };
   const buyerDetailsContent = <>
     <div className="flex items-center gap-2 text-white"><UserRound className="size-5 text-emerald-300" /><h2 className="font-semibold">Detalhes do comprador</h2></div>
     <div><span className="text-xs uppercase tracking-wider text-zinc-500">Nome</span><strong className="mt-1 block text-white">{application.fullName}</strong></div>
@@ -190,23 +203,27 @@ export default function ApplicationPayment() {
             {buyerDetailsContent}
           </article>
 
-          {showReceiptUpload ? <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
-            <div className="flex items-center gap-2 text-white"><UploadCloud className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">Já pagou? Envie seu comprovante</h2></div>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">Envie o comprovante para que o responsável confira seu pagamento.</p>
-            {hasReceiptAwaitingReview ? <div className="mt-4 rounded-xl border border-emerald-300/30 bg-emerald-300/10 p-4 text-sm leading-6 text-emerald-50"><CheckCircle2 className="mb-2 size-5" /><strong>Comprovante enviado</strong><br />Comprovante recebido — aguardando análise.<br /><span className="mt-1 block">Código: <strong>{application.trackingCode}</strong></span><a href={trackingHref} className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-emerald-300/40 px-3 py-2 font-semibold text-emerald-50 hover:bg-emerald-300/10">Acompanhar pedido <ArrowRight className="size-4" /></a></div> : null}
-            <label className="mt-4 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] sm:w-auto">
-              <UploadCloud className="size-4" />{uploadReceipt.isPending ? "Enviando..." : hasReceiptAwaitingReview ? "Enviar outro comprovante" : "Enviar comprovante"}
-              <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" disabled={uploadReceipt.isPending} onChange={handleReceipt} />
-            </label>
-            <p className="mt-3 text-xs leading-5 text-zinc-500">Formatos aceitos: JPG, PNG, WEBP ou PDF. Limite: 5 MB.</p>
-            {receipts.length ? <div className="mt-5 space-y-2 text-sm text-zinc-300">{receipts.map(receipt => <div key={receipt.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-white/10 bg-black/25 px-3 py-2"><span>{receipt.originalName || "Comprovante enviado"}</span><strong className="text-emerald-200">{receipt.status === "pending" ? "Em análise" : receipt.status === "approved" ? "Aprovado" : "Rejeitado"}</strong></div>)}</div> : null}
+          {showReceiptUpload && !hasSubmittedReceipt ? <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
+              <div className="flex items-center gap-2 text-white"><UploadCloud className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">Já pagou? Envie seu comprovante</h2></div>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">Envie o comprovante para que o responsável confira seu pagamento.</p>
+              <label className="mt-4 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] sm:w-auto">
+                <UploadCloud className="size-4" />{uploadReceipt.isPending ? "Enviando..." : "Enviar comprovante"}
+                <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" disabled={uploadReceipt.isPending} onChange={handleReceipt} />
+              </label>
+              <p className="mt-3 text-xs leading-5 text-zinc-500">Formatos aceitos: JPG, PNG, WEBP ou PDF. Limite: 5 MB.</p>
           </article> : null}
 
-          <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
+          {showReceiptUpload && hasSubmittedReceipt ? <article className="rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5 text-center text-sm leading-6 text-emerald-50 shadow-xl shadow-emerald-950/20 sm:p-6">
+            <CheckCircle2 className="mx-auto mb-3 size-7" />
+            <h2 className="text-lg font-semibold">Comprovante recebido — {receiptStatusLabel.replace("Comprovante recebido — ", "")}</h2>
+            <span className="mt-4 block text-emerald-100/80">Código do pedido:</span>
+            <strong className="mt-1 block break-all text-base text-white">{application.trackingCode}</strong>
+            <button type="button" onClick={handleTrackOrder} className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 font-semibold hover:bg-emerald-300/10">Acompanhar pedido <ArrowRight className="size-4" /></button>
+          </article> : <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-white">{showReceiptUpload ? "4" : "3"}. Acompanhe seu pedido</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-400">Após o pagamento, acompanhe o status do seu pedido.</p>
-            <a href={trackingHref} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 sm:w-auto">Acompanhar pedido <ArrowRight className="size-4" /></a>
-          </article>
+            <button type="button" onClick={handleTrackOrder} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 sm:w-auto">Acompanhar pedido <ArrowRight className="size-4" /></button>
+          </article>}
         </div>
 
         <aside className="hidden space-y-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6 lg:sticky lg:top-6 lg:block lg:self-start">

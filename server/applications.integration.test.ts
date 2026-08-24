@@ -41,6 +41,8 @@ describe("gestão de solicitações públicas", () => {
     expect(paymentPage).toContain("2. Pague com PIX");
     expect(paymentPage).toContain("2. Pague pelo checkout");
     expect(paymentPage).toContain("Já pagou? Envie seu comprovante");
+    expect(paymentPage).toContain("hasSubmittedReceipt");
+    expect(paymentPage).not.toContain("Enviar outro comprovante");
     expect(paymentPage).toContain("Acompanhe seu pedido");
     expect(paymentPage).toContain("Detalhes do comprador");
     expect(paymentPage).toContain("selectedMethod === \"pix\"");
