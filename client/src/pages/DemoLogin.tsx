@@ -13,6 +13,12 @@ export default function DemoLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [securityAnswer, setSecurityAnswer] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [recoverySuccess, setRecoverySuccess] = useState(false);
 
   const login = trpc.auth.demoLogin.useMutation({
     onSuccess: async account => {
@@ -21,11 +27,49 @@ export default function DemoLogin() {
     },
     onError: error => setFormError(error.message),
   });
+  const startRecovery = trpc.auth.startPasswordRecovery.useMutation({
+    onError: error => setFormError(error.message),
+  });
+  const resetPassword = trpc.auth.resetPasswordWithSecurityAnswer.useMutation({
+    onSuccess: () => {
+      setUsername(recoveryEmail);
+      setPassword("");
+      setSecurityAnswer("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setRecovering(false);
+      setFormError("");
+      setRecoverySuccess(true);
+      startRecovery.reset();
+    },
+    onError: error => setFormError(error.message),
+  });
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setFormError("");
+    setRecoverySuccess(false);
     login.mutate({ username, password });
+  }
+
+  function submitRecoveryAccount(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError("");
+    setRecoverySuccess(false);
+    setSecurityAnswer("");
+    setNewPassword("");
+    setConfirmPassword("");
+    startRecovery.mutate({ identifier: recoveryEmail });
+  }
+
+  function submitNewPassword(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setFormError("");
+    if (newPassword !== confirmPassword) {
+      setFormError("As senhas não conferem.");
+      return;
+    }
+    resetPassword.mutate({ identifier: recoveryEmail, securityAnswer, newPassword, confirmPassword });
   }
 
   return (
@@ -62,7 +106,7 @@ export default function DemoLogin() {
                 </span>
               </div>
 
-              <form className="space-y-6" onSubmit={onSubmit}>
+              {!recovering ? <form className="space-y-6" onSubmit={onSubmit}>
                 <div className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="demo-username" className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#f5f0e7]/55">Usuário</Label>
@@ -88,9 +132,51 @@ export default function DemoLogin() {
 
                 <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-5">
                   <span className="inline-flex items-center gap-1.5 text-[11px] text-[#f5f0e7]/48"><ShieldCheck className="h-3.5 w-3.5 text-[#03d660]" aria-hidden="true" /> Dados protegidos</span>
-                  <button type="button" disabled title="A recuperação de acesso será configurada em uma próxima etapa." className="text-[11px] text-[#f5f0e7]/48 underline decoration-[#03d660]/45 underline-offset-4 disabled:cursor-not-allowed">Recuperar acesso</button>
+                  <button type="button" onClick={() => { setRecovering(true); setFormError(""); setRecoverySuccess(false); setRecoveryEmail(username); startRecovery.reset(); }} className="text-[11px] text-[#f5f0e7]/70 underline decoration-[#03d660]/45 underline-offset-4 transition hover:text-[#03d660]">Recuperar acesso</button>
                 </div>
-              </form>
+                {recoverySuccess ? <p role="status" className="rounded-lg border border-[#03d660]/25 bg-[#03d660]/10 px-3 py-2 text-sm text-[#ABF6D0]">Senha redefinida. Entre com sua nova senha.</p> : null}
+              </form> : startRecovery.data ? <form className="space-y-6" onSubmit={submitNewPassword}>
+                <div className="space-y-4">
+                  <button type="button" onClick={() => { setRecovering(false); setFormError(""); }} className="inline-flex items-center gap-2 text-sm text-[#f5f0e7]/65 transition-colors hover:text-[#03d660]"><ArrowLeft className="h-4 w-4" /> Voltar ao login</button>
+                  <div className="rounded-xl border border-[#03d660]/25 bg-[#03d660]/10 p-4">
+                    <p className="font-mono text-[10px] uppercase tracking-[0.16em] text-[#03d660]">Pergunta secreta</p>
+                    <p className="mt-2 text-sm leading-6 text-[#f5f0e7]">{startRecovery.data.securityQuestion}</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="security-answer" className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#f5f0e7]/55">Resposta secreta</Label>
+                    <Input id="security-answer" value={securityAnswer} onChange={event => setSecurityAnswer(event.target.value)} autoComplete="off" className="h-12 rounded-md border-white/15 bg-black/35 text-[#f5f0e7] shadow-inner shadow-black/30 placeholder:text-[#f5f0e7]/25 focus-visible:border-[#03d660] focus-visible:ring-[#03d660]/25" required />
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="recovery-new-password" className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#f5f0e7]/55">Nova senha</Label>
+                      <Input id="recovery-new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} minLength={6} maxLength={128} autoComplete="new-password" className="h-12 rounded-md border-white/15 bg-black/35 text-[#f5f0e7] shadow-inner shadow-black/30 placeholder:text-[#f5f0e7]/25 focus-visible:border-[#03d660] focus-visible:ring-[#03d660]/25" required />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="recovery-confirm-password" className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#f5f0e7]/55">Confirmar senha</Label>
+                      <Input id="recovery-confirm-password" type="password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} minLength={6} maxLength={128} autoComplete="new-password" className="h-12 rounded-md border-white/15 bg-black/35 text-[#f5f0e7] shadow-inner shadow-black/30 placeholder:text-[#f5f0e7]/25 focus-visible:border-[#03d660] focus-visible:ring-[#03d660]/25" required />
+                    </div>
+                  </div>
+                </div>
+                {(formError || resetPassword.isError) && <p role="alert" className="border-l-2 border-red-400 pl-3 text-sm text-red-200">{formError || "Não foi possível redefinir a senha."}</p>}
+                <Button type="submit" disabled={resetPassword.isPending} className="h-12 w-full rounded-md bg-[#03d660] font-semibold text-[#00060D] shadow-[0_10px_30px_rgba(3,214,96,0.2)] transition hover:bg-[#ABF6D0]">
+                  <span>{resetPassword.isPending ? "Salvando nova senha..." : "Definir nova senha"}</span>
+                  {!resetPassword.isPending && <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />}
+                </Button>
+              </form> : <form className="space-y-6" onSubmit={submitRecoveryAccount}>
+                <div className="space-y-4">
+                  <button type="button" onClick={() => { setRecovering(false); setFormError(""); }} className="inline-flex items-center gap-2 text-sm text-[#f5f0e7]/65 transition-colors hover:text-[#03d660]"><ArrowLeft className="h-4 w-4" /> Voltar ao login</button>
+                  <p className="text-sm leading-6 text-[#f5f0e7]/70">Informe o e-mail da sua conta para responder a pergunta secreta cadastrada.</p>
+                  <div className="space-y-2">
+                    <Label htmlFor="recovery-email" className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#f5f0e7]/55">E-mail da conta</Label>
+                    <Input id="recovery-email" value={recoveryEmail} onChange={event => setRecoveryEmail(event.target.value.trim().toLowerCase())} type="email" autoComplete="email" className="h-12 rounded-md border-white/15 bg-black/35 text-[#f5f0e7] shadow-inner shadow-black/30 placeholder:text-[#f5f0e7]/25 focus-visible:border-[#03d660] focus-visible:ring-[#03d660]/25" required />
+                  </div>
+                </div>
+                {(formError || startRecovery.isError) && <p role="alert" className="border-l-2 border-red-400 pl-3 text-sm text-red-200">{formError || "Não foi possível iniciar a recuperação."}</p>}
+                <Button type="submit" disabled={startRecovery.isPending} className="h-12 w-full rounded-md bg-[#03d660] font-semibold text-[#00060D] shadow-[0_10px_30px_rgba(3,214,96,0.2)] transition hover:bg-[#ABF6D0]">
+                  <span>{startRecovery.isPending ? "Localizando conta..." : "Continuar"}</span>
+                  {!startRecovery.isPending && <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />}
+                </Button>
+              </form>}
             </div>
           </div>
         </section>

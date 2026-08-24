@@ -36,6 +36,7 @@ import {
   getMemberProfile,
   markMemberGettingStartedMetricsViewed,
   getMemberAccount,
+  resetPasswordWithSecurityAnswer,
   getMemberReceivingPreference,
   markMemberReceivingResponsibleUseModalSeen,
   getMemberPaymentLinks,
@@ -70,6 +71,7 @@ import {
   updateMemberProfile,
   uploadMemberProfilePhoto,
   updateMemberAccount,
+  updateMemberSecurityRecovery,
   updateMemberReceivingPreference,
   updateMemberPaymentLinks,
   uploadApplicationPaymentReceipt,
@@ -96,6 +98,7 @@ import {
   removeAdminPublicSalesSectionImage,
   upsertAdminPublicSalesSectionImage,
   updateAdminPlatformSettings,
+  startSecurityPasswordRecovery,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema } from "@shared/applications";
@@ -142,6 +145,21 @@ export const accountInput = z.object({
   if (value.newPassword && value.newPassword !== value.confirmPassword) {
     context.addIssue({ code: z.ZodIssueCode.custom, path: ["confirmPassword"], message: "As senhas não conferem." });
   }
+});
+export const securityRecoveryInput = z.object({
+  securityQuestion: z.string().trim().min(6, "Informe uma pergunta secreta.").max(240),
+  securityAnswer: z.string().trim().min(3, "Informe uma resposta secreta com pelo menos 3 caracteres.").max(180),
+});
+const passwordRecoveryStartInput = z.object({
+  identifier: normalizedEmailZodSchema,
+});
+const passwordRecoveryResetInput = z.object({
+  identifier: normalizedEmailZodSchema,
+  securityAnswer: z.string().trim().min(1, "Informe a resposta secreta.").max(180),
+  newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres.").max(128),
+  confirmPassword: z.string().max(128),
+}).superRefine((value, context) => {
+  if (value.newPassword !== value.confirmPassword) context.addIssue({ code: z.ZodIssueCode.custom, path: ["confirmPassword"], message: "As senhas não conferem." });
 });
 export const receivingPreferenceInput = z.object({
   holderName: z.string().trim().max(180).optional().nullable(),
@@ -240,6 +258,11 @@ export const appRouter = router({
       ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, { ...cookieOptions, sameSite: cookieOptions.secure ? "none" : "lax", maxAge: 1000 * 60 * 60 * 12 });
       return { role: account.role } as const;
     }),
+    startPasswordRecovery: publicProcedure.input(passwordRecoveryStartInput).mutation(({ input }) => startSecurityPasswordRecovery(input.identifier)),
+    resetPasswordWithSecurityAnswer: publicProcedure.input(passwordRecoveryResetInput).mutation(({ input }) => {
+      const { confirmPassword: _confirmPassword, ...resetInput } = input;
+      return resetPasswordWithSecurityAnswer(resetInput);
+    }),
   }),
   member: router({
     overview: protectedProcedure.query(({ ctx }) => getMemberOverview(ctx.user.id)),
@@ -262,6 +285,7 @@ export const appRouter = router({
       const { confirmPassword: _confirmPassword, ...accountInputValue } = input;
       return updateMemberAccount(ctx.user.id, accountInputValue);
     }),
+    updateSecurityRecovery: protectedProcedure.input(securityRecoveryInput).mutation(({ ctx, input }) => updateMemberSecurityRecovery(ctx.user.id, input)),
     receiving: protectedProcedure.query(({ ctx }) => getMemberReceivingPreference(ctx.user.id)),
     markReceivingResponsibleUseSeen: protectedProcedure.mutation(({ ctx }) => markMemberReceivingResponsibleUseModalSeen(ctx.user.id)),
     updateReceiving: protectedProcedure.input(receivingPreferenceInput).mutation(({ ctx, input }) => updateMemberReceivingPreference(ctx.user.id, input)),

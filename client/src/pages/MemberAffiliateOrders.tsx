@@ -43,6 +43,16 @@ export default function MemberAffiliateOrders() {
     setImageZoom(1);
   }
 
+  function openReceiptViewer() {
+    if (!selectedReceipt) return;
+    if (selectedReceipt.contentType.startsWith("image/")) {
+      setViewerOpen(true);
+      setImageZoom(1);
+      return;
+    }
+    window.open(selectedReceipt.fileUrl, "_blank", "noopener,noreferrer");
+  }
+
   return <DashboardLayout menuItems={memberDashboardMenuItems} title="Escritório Virtual"><main className="mx-auto w-full max-w-5xl space-y-7 p-5 sm:p-8">
     <header className="space-y-2"><span className="text-xs uppercase tracking-[.16em] text-emerald-300">Pedidos da operação</span><h1 className="text-3xl font-semibold text-white">Solicitações atribuídas</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Clique em um pedido para conferir o comprovante e aceitar ou recusar o pagamento.</p></header>
 
@@ -56,8 +66,8 @@ export default function MemberAffiliateOrders() {
       </button>)}</div> : <div className="rounded-xl border border-white/10 bg-zinc-950/60 p-5 text-sm leading-6 text-zinc-300"><p className="font-medium text-white">Ainda não há solicitações atribuídas ao seu link.</p><p className="mt-1 text-zinc-400">Quando uma pessoa enviar um pedido pelo endereço acima, ele aparecerá aqui.</p></div>}
     </section>
 
-    {modalOpen ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-3 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-labelledby="receipt-review-modal-title">
-      <section className="flex max-h-[min(82dvh,32rem)] w-[min(22rem,calc(100vw-1.5rem))] flex-col overflow-hidden rounded-2xl border border-emerald-300/25 bg-zinc-950 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:w-full sm:max-w-lg">
+    {modalOpen ? <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/75 p-2 backdrop-blur-sm sm:p-4" role="dialog" aria-modal="true" aria-labelledby="receipt-review-modal-title">
+      <section className="flex max-h-[calc(100dvh-1rem)] w-[min(31rem,calc(100vw-1rem))] flex-col overflow-hidden rounded-2xl border border-emerald-300/25 bg-zinc-950 shadow-2xl sm:max-h-[calc(100dvh-2rem)] sm:w-full sm:max-w-2xl">
         <div className="flex shrink-0 items-start justify-between gap-3 border-b border-white/10 p-2.5 sm:p-4">
           <div className="min-w-0"><span className="text-[9px] uppercase tracking-[.14em] text-emerald-300 sm:text-[10px] sm:tracking-[.16em]">Análise do pedido</span><h2 id="receipt-review-modal-title" className="mt-0.5 truncate text-sm font-semibold text-white sm:mt-1 sm:text-xl">{application?.trackingCode ?? "Pedido"}</h2></div>
           <button type="button" onClick={closeModal} aria-label="Fechar análise" className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-white/10 text-zinc-300 hover:bg-white/5 hover:text-white sm:size-9">×</button>
@@ -65,24 +75,18 @@ export default function MemberAffiliateOrders() {
         {detail.isLoading ? <div className="flex min-h-40 items-center gap-2 p-4 text-sm text-zinc-400"><Loader2 className="size-4 animate-spin" />Carregando pedido...</div> : !application ? <p className="p-4 text-sm text-zinc-400">Pedido não encontrado.</p> : <>
         <div className="min-h-0 flex-1 space-y-2 overflow-y-auto p-2.5 sm:space-y-3 sm:p-4">
           <section className="rounded-xl border border-white/10 bg-black/25 p-2 sm:rounded-2xl sm:p-3">
-            <h3 className="text-center text-sm font-medium text-white sm:text-base">Comprovante</h3>
-            {selectedReceipt ? <div className="mt-2 space-y-2">
-              {selectedReceipt.contentType.startsWith("image/") ? <div className="grid justify-items-center gap-2">
-                <button type="button" onClick={() => { setViewerOpen(true); setImageZoom(1); }} className="inline-flex min-h-9 items-center justify-center rounded-full bg-orange-400 px-4 py-1.5 text-xs font-black uppercase tracking-wide text-black shadow-lg shadow-orange-400/20 transition hover:bg-orange-300">Visualizar</button>
-                <button type="button" onClick={() => { setViewerOpen(true); setImageZoom(1); }} className="group flex size-[4.5rem] items-center justify-center overflow-hidden rounded-lg border border-white/10 bg-black/35 p-1 transition hover:border-orange-300/60 sm:size-32 sm:rounded-xl sm:p-1.5" aria-label="Ampliar comprovante">
-                  <img src={selectedReceipt.fileUrl} alt="Miniatura do comprovante" className="max-h-full max-w-full rounded-lg object-contain shadow-lg transition group-hover:scale-[1.04]" />
-                </button>
-              </div> : <div className="grid justify-items-center gap-2">
-                <a href={selectedReceipt.fileUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-9 items-center justify-center rounded-full bg-orange-400 px-4 py-1.5 text-xs font-black uppercase tracking-wide text-black shadow-lg shadow-orange-400/20 transition hover:bg-orange-300">Visualizar</a>
-                <div className="rounded-xl border border-white/10 bg-black/30 p-4 text-sm text-zinc-300">Arquivo enviado em PDF.</div>
-              </div>}
+            {selectedReceipt ? <div className="space-y-2">
+              {selectedReceipt.contentType.startsWith("image/") ? <button type="button" onClick={openReceiptViewer} className="group flex h-[min(58dvh,28rem)] w-full items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-black/35 p-2 transition hover:border-orange-300/60 sm:h-[min(62dvh,34rem)] sm:rounded-2xl sm:p-3" aria-label="Ampliar comprovante">
+                <img src={selectedReceipt.fileUrl} alt="Miniatura do comprovante" className="max-h-full max-w-full rounded-lg object-contain shadow-lg transition group-hover:scale-[1.02]" />
+              </button> : <div className="grid min-h-[18rem] place-items-center rounded-xl border border-white/10 bg-black/30 p-4 text-center text-sm text-zinc-300 sm:min-h-[24rem]">Arquivo enviado em PDF.</div>}
             </div> : <p className="mt-2 text-sm text-zinc-400">Nenhum comprovante enviado ainda.</p>}
           </section>
 
           {selectedReceipt?.status === "rejected" ? <p className="rounded-xl border border-red-300/30 bg-red-500/10 p-3 text-sm text-red-50">Pedido recusado. Ele ficará visível por até 48 horas após a recusa e depois sairá automaticamente desta lista.</p> : null}
         </div>
-        <div className="grid shrink-0 grid-cols-2 gap-1.5 border-t border-white/10 bg-zinc-950 p-2 sm:gap-2 sm:p-3">
+        <div className="grid shrink-0 grid-cols-3 gap-1.5 border-t border-white/10 bg-zinc-950 p-2 sm:gap-2 sm:p-3">
           <button type="button" disabled={review.isPending || !selectedReceipt || selectedReceipt.status !== "pending"} onClick={() => selectedReceipt && review.mutate({ applicationId: application.id, receiptId: selectedReceipt.id, status: "approved" })} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg bg-emerald-300 px-1.5 py-1.5 text-[11px] font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-10 sm:gap-1.5 sm:px-2 sm:py-2 sm:text-sm"><CheckCircle2 className="size-3.5 sm:size-4" />Aceitar</button>
+          <button type="button" disabled={!selectedReceipt} onClick={openReceiptViewer} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-orange-300/40 px-1.5 py-1.5 text-[11px] font-semibold text-orange-100 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-10 sm:gap-1.5 sm:px-2 sm:py-2 sm:text-sm"><ZoomIn className="size-3.5 sm:size-4" />Visualizar</button>
           <button type="button" disabled={review.isPending || !selectedReceipt || selectedReceipt.status !== "pending"} onClick={() => selectedReceipt && review.mutate({ applicationId: application.id, receiptId: selectedReceipt.id, status: "rejected" })} className="inline-flex min-h-9 items-center justify-center gap-1 rounded-lg border border-red-300/40 px-1.5 py-1.5 text-[11px] font-semibold text-red-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-10 sm:gap-1.5 sm:px-2 sm:py-2 sm:text-sm"><XCircle className="size-3.5 sm:size-4" />Recusar</button>
         </div>
         </>}

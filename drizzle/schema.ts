@@ -26,6 +26,17 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+export const userSecurityRecovery = mysqlTable("userSecurityRecovery", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  securityQuestion: varchar("securityQuestion", { length: 240 }).notNull(),
+  securityAnswerHash: varchar("securityAnswerHash", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => ({
+  userUnique: uniqueIndex("user_security_recovery_user_unique").on(table.userId),
+}));
+
 export const publicSalesSectionImages = mysqlTable("publicSalesSectionImages", {
   id: int("id").autoincrement().primaryKey(),
   sectionId: varchar("sectionId", { length: 64 }).notNull(),

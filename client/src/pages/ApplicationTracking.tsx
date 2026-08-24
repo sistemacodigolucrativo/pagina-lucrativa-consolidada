@@ -40,6 +40,21 @@ export default function ApplicationTracking() {
     setLocation(`/pedido/acompanhar?codigo=${encodeURIComponent(nextCode)}`);
   }
 
+  if (result && state === "approved") return <main className="access-page"><div className="access-card">
+    <Link href="/" className="access-back">← Voltar para a Página Lucrativa</Link>
+    <div className="access-seal"><CheckCircle2 size={25} /></div>
+    <span className="office-eyebrow">Pedido aprovado</span>
+    <section className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-5 text-center">
+      <CheckCircle2 className="mx-auto size-9 text-emerald-200" />
+      <h1 className="mt-4 text-2xl font-semibold text-white">Pagamento aprovado</h1>
+      <p className="mt-3 text-sm leading-6 text-emerald-50">Sua página foi liberada para personalização.</p>
+      {result.access ? <a className="btn btn-primary mt-5 w-full justify-center sm:w-auto" href={withAppBase(result.access.personalizationUrl)}>Personalizar minha Página Lucrativa <ArrowRight size={16} /></a> : null}
+    </section>
+    <div className="access-actions">
+      <Link href="/" className="btn btn-ghost">Voltar à estrutura</Link>
+    </div>
+  </div></main>;
+
   if (result && state) return <main className="access-page"><div className="access-card">
     <Link href="/" className="access-back">← Voltar para a Página Lucrativa</Link>
     <div className="access-seal">{state === "approved" ? <CheckCircle2 size={25} /> : state === "rejected" ? <XCircle size={25} /> : <ClipboardCheck size={25} />}</div>

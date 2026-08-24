@@ -31,6 +31,7 @@ import {
   publicSalesSectionImages,
   supportTickets,
   transactions,
+  userSecurityRecovery,
   users,
 } from "../drizzle/schema";
 import { OFFER_AMOUNT_CENTS, type ApplicationInput, type ApplicationPersonalizationInput, type ApplicationReceiptUpload, type MemberPaymentLinkInput } from "@shared/applications";
@@ -700,6 +701,8 @@ export type MemberAccount = {
   name: string | null;
   email: string | null;
   role: "admin" | "user";
+  securityRecoveryConfigured: boolean;
+  securityQuestion: string | null;
   updatedAt: Date;
 };
 
@@ -713,7 +716,10 @@ export async function getMemberAccount(userId: number): Promise<MemberAccount | 
   const db = await getDb();
   if (!db) return null;
   const rows = await db.select({ name: users.name, email: users.email, role: users.role, updatedAt: users.updatedAt }).from(users).where(eq(users.id, userId)).limit(1);
-  return rows[0] ?? null;
+  const account = rows[0];
+  if (!account) return null;
+  const recoveryRows = await db.select({ securityQuestion: userSecurityRecovery.securityQuestion }).from(userSecurityRecovery).where(eq(userSecurityRecovery.userId, userId)).limit(1);
+  return { ...account, securityRecoveryConfigured: Boolean(recoveryRows[0]), securityQuestion: recoveryRows[0]?.securityQuestion ?? null };
 }
 
 export async function getStoredPasswordHash(userId: number) {
@@ -741,6 +747,66 @@ export async function updateMemberAccount(userId: number, input: MemberAccountUp
   if (input.newPassword?.trim()) userUpdate.passwordHash = hashPassword(input.newPassword.trim());
   await db.update(users).set(userUpdate).where(eq(users.id, userId));
   return getMemberAccount(userId);
+}
+
+function normalizeSecurityAnswer(answer: string) {
+  return answer.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function hashSecurityAnswer(answer: string) {
+  return hashPassword(`security-answer:${normalizeSecurityAnswer(answer)}`);
+}
+
+export async function updateMemberSecurityRecovery(userId: number, input: { securityQuestion: string; securityAnswer: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const values = {
+    userId,
+    securityQuestion: input.securityQuestion.trim(),
+    securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+  };
+  await db.insert(userSecurityRecovery).values(values).onDuplicateKeyUpdate({
+    set: {
+      securityQuestion: values.securityQuestion,
+      securityAnswerHash: values.securityAnswerHash,
+      updatedAt: new Date(),
+    },
+  });
+  return getMemberAccount(userId);
+}
+
+export async function startSecurityPasswordRecovery(identifier: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const normalized = identifier.trim().toLowerCase();
+  const rows = await db
+    .select({ userId: users.id, email: users.email, securityQuestion: userSecurityRecovery.securityQuestion })
+    .from(users)
+    .innerJoin(userSecurityRecovery, eq(userSecurityRecovery.userId, users.id))
+    .where(and(eq(users.email, normalized), eq(users.role, "user")))
+    .limit(1);
+  const row = rows[0];
+  if (!row) throw new Error("Não encontramos recuperação configurada para essa conta.");
+  return { email: row.email, securityQuestion: row.securityQuestion };
+}
+
+export async function resetPasswordWithSecurityAnswer(input: { identifier: string; securityAnswer: string; newPassword: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const normalized = input.identifier.trim().toLowerCase();
+  const rows = await db
+    .select({ userId: users.id, securityAnswerHash: userSecurityRecovery.securityAnswerHash })
+    .from(users)
+    .innerJoin(userSecurityRecovery, eq(userSecurityRecovery.userId, users.id))
+    .where(and(eq(users.email, normalized), eq(users.role, "user")))
+    .limit(1);
+  const row = rows[0];
+  if (!row) throw new Error("Não encontramos recuperação configurada para essa conta.");
+  const stored = Buffer.from(row.securityAnswerHash, "hex");
+  const candidate = Buffer.from(hashSecurityAnswer(input.securityAnswer), "hex");
+  if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) throw new Error("Resposta secreta incorreta.");
+  await db.update(users).set({ passwordHash: hashPassword(input.newPassword.trim()), loginMethod: "password" }).where(eq(users.id, row.userId));
+  return { success: true } as const;
 }
 
 type MemberProfileUpdateInput = {
