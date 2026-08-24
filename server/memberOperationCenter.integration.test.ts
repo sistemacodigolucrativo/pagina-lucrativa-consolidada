@@ -96,15 +96,22 @@ describe("Central de Divulgação", () => {
 
   it("contabiliza a divulgação pelo link principal do afiliado", async () => {
     const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");
-    const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+    const serverIndex = await readFile(path.join(root, "server/_core/index.ts"), "utf8");
+    const affiliateTracking = await readFile(path.join(root, "server/_core/affiliateLinkTracking.ts"), "utf8");
+    const trackingCookies = await readFile(path.join(root, "server/_core/trackingCookies.ts"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
 
-    expect(home).toContain("recordAffiliateLinkClick");
-    expect(home).toContain("trackedAffiliateSlug");
-    expect(home).toContain('params.get("utm_source")');
-    expect(router).toContain("recordAffiliateLinkClick");
-    expect(router).toContain("recordPublicAffiliateLinkClick");
+    expect(home).not.toContain("recordAffiliateLinkClick");
+    expect(home).not.toContain("trackedAffiliateSlug");
+    expect(serverIndex).toContain("registerAffiliateLinkTracking(app)");
+    expect(affiliateTracking).toContain("affiliateLandingPaths");
+    expect(affiliateTracking).toContain('appPrefix ? `${appPrefix}/` : null');
+    expect(affiliateTracking).toContain("req.query.afiliado");
+    expect(affiliateTracking).toContain("recordPublicAffiliateLinkClick");
+    expect(affiliateTracking).toContain("req.originalUrl.slice(0, 512)");
+    expect(trackingCookies).toContain('Path=${cookiePath}');
+    expect(trackingCookies).toContain('const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\\/+$/, "")');
     expect(db).toContain("recordPublicAffiliateLinkClick");
     expect(db).toContain("affiliateClickTotals");
     expect(db).toContain("clicks: Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0)");

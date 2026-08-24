@@ -6,6 +6,7 @@ import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
+import { registerAffiliateLinkTracking } from "./affiliateLinkTracking";
 import { registerCampaignRedirectRoutes } from "./campaignRedirect";
 import { serveStatic, setupVite } from "./vite";
 
@@ -37,6 +38,7 @@ async function startServer() {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
+  registerAffiliateLinkTracking(app);
   // tRPC API
   for (const trpcPath of trpcPaths) {
     app.use(

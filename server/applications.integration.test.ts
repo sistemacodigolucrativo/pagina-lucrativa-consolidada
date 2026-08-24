@@ -26,4 +26,30 @@ describe("gestão de solicitações públicas", () => {
     expect(home).toContain("data.trackingCode");
     expect(confirmation).toContain("Acompanhar solicitação");
   });
+
+  it("organiza a página de pagamento em jornada linear sem alterar comprovante PIX", async () => {
+    const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
+    const confirmation = await readFile(path.join(root, "client/src/pages/ApplicationConfirmation.tsx"), "utf8");
+    const paymentPage = await readFile(path.join(root, "client/src/pages/ApplicationPayment.tsx"), "utf8");
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+
+    expect(app).toContain('path="/pedido/:trackingCode/pagamento" component={ApplicationPayment}');
+    expect(confirmation).toContain("if (code) return <ApplicationPayment />");
+    expect(paymentPage).toContain("Finalize seu pagamento");
+    expect(paymentPage).toContain("Resumo do pedido");
+    expect(paymentPage).toContain("1. Escolha como pagar");
+    expect(paymentPage).toContain("2. Pague com PIX");
+    expect(paymentPage).toContain("2. Pague pelo checkout");
+    expect(paymentPage).toContain("Já pagou? Envie seu comprovante");
+    expect(paymentPage).toContain("Acompanhe seu pedido");
+    expect(paymentPage).toContain("Detalhes do comprador");
+    expect(paymentPage).toContain("selectedMethod === \"pix\"");
+    expect(paymentPage).toContain("selectedMethod === \"checkout\"");
+    expect(paymentPage).toContain("const showReceiptUpload = selectedMethod === \"pix\" && Boolean(pixKey)");
+    expect(paymentPage).toContain("Copiar chave PIX");
+    expect(paymentPage).toContain("Pagamento via link de checkout");
+    expect(paymentPage).not.toContain("Finalize sua ativação.");
+    expect(paymentPage).not.toContain("Aprovação imediata");
+    expect(db).toContain('selectedPaymentMethod: "PIX"');
+  });
 });

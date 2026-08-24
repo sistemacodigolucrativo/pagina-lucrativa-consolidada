@@ -27,7 +27,6 @@ import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationPayment from "./pages/ApplicationPayment";
-import ApplicationPaymentMethods from "./pages/ApplicationPaymentMethods";
 import ApplicationTracking from "./pages/ApplicationTracking";
 import AdminApplications from "./pages/AdminApplications";
 import AdminCommunications from "./pages/AdminCommunications";
@@ -50,7 +49,7 @@ function AppRoutes() {
     <Route path="/" component={Home} />
     <Route path="/pedido/confirmacao" component={ApplicationConfirmation} />
     <Route path="/pedido/:trackingCode/pagamento/instrucoes" component={ApplicationPayment} />
-    <Route path="/pedido/:trackingCode/pagamento" component={ApplicationPaymentMethods} />
+    <Route path="/pedido/:trackingCode/pagamento" component={ApplicationPayment} />
     <Route path="/pedido/acompanhar" component={ApplicationTracking} />
     <Route path="/personalizar" component={ApplicationPersonalization} />
     <Route path="/acesso" component={DemoLogin} />
