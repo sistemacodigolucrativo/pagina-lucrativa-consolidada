@@ -48,10 +48,12 @@ describe("central editorial", () => {
     expect(schema).toContain('resourceCategory: varchar("resourceCategory"');
     expect(schema).toContain('resourceType: varchar("resourceType"');
     expect(migration).toContain("ADD COLUMN `resourceUrl`");
-    expect(admin).toContain("Novo recurso");
+    expect(admin).toContain("Novo item da Biblioteca de Recursos");
     expect(admin).toContain("Use uma URL HTTPS válida do Google Drive.");
     expect(admin).toContain("Link do Google Drive");
     expect(admin).toContain("O arquivo precisa estar compartilhado no Google Drive");
+    expect(admin).toContain('<option value="material">Biblioteca de Recursos</option>');
+    expect(admin).not.toContain("Recurso / Biblioteca de Recursos");
     expect(member).toContain("Recursos disponibilizados para apoiar sua divulgação e sua rotina.");
     expect(member).toContain("Recursos disponíveis");
     expect(member).toContain("Ver detalhes");
@@ -69,11 +71,17 @@ describe("central editorial", () => {
     const legacyRedirect = await readFile(path.join(root, "client/src/pages/MemberLegacyRedirect.tsx"), "utf8");
 
     expect(navigation).toContain('label: "Material de divulgação", path: "/membros/artigos"');
+    expect(navigation).toContain('label: "Biblioteca de Recursos", path: "/membros/materiais"');
+    expect(navigation).not.toContain("Materiais e downloads");
     expect(member).toContain('title: "Material de divulgação"');
+    expect(member).toContain('title: "Biblioteca de Recursos"');
     expect(member).toContain("Materiais prontos para divulgação");
     expect(admin).toContain('<option value="article">Material de divulgação</option>');
+    expect(admin).toContain('<option value="material">Biblioteca de Recursos</option>');
     expect(operations).toContain('<option value="article">Material de divulgação</option>');
+    expect(operations).toContain('item.kind === "material" ? "Biblioteca de Recursos"');
     expect(app).toContain('path="/membros/artigos" component={MemberPublications}');
     expect(legacyRedirect).toContain('"/membros/blog": "/membros/artigos"');
+    expect(legacyRedirect).toContain('"/membros/bonus": "/membros/materiais"');
   });
 });

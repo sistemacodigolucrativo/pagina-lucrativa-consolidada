@@ -10,6 +10,16 @@ describe("catálogo do Escritório Virtual", () => {
       label: "Central de Divulgação",
       path: "/membros/operacao",
     });
+    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
+      icon: "articles",
+      label: "Material de divulgação",
+      path: "/membros/artigos",
+    });
+    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
+      icon: "materials",
+      label: "Biblioteca de Recursos",
+      path: "/membros/materiais",
+    });
     expect(paths).toContain("/membros/como-divulgar");
     expect(paths).toContain("/membros/operacao");
     expect(paths).toContain("/membros/recebimentos");
@@ -20,5 +30,7 @@ describe("catálogo do Escritório Virtual", () => {
     expect(paths).not.toContain("/membros/automacoes");
     expect(paths).not.toContain("/membros/ranking");
     expect(paths).not.toContain("/membros/patrocinador");
+    const labels = memberOfficeNavigation.flatMap(group => group.items.map(item => item.label));
+    expect(labels).not.toContain("Materiais e downloads");
   });
 });
