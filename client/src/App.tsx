@@ -5,6 +5,7 @@ import NotFound from "@/pages/NotFound";
 import { useEffect } from "react";
 import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
+import GlobalNotes from "./components/GlobalNotes";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MemberOffice from "./pages/MemberOffice";
@@ -25,6 +26,10 @@ import AdminSalesImages from "@/pages/AdminSalesImages";
 import Preview from "@/pages/Preview";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
+import AdminOutreach from "./pages/AdminOutreach";
+import AdminAudit from "./pages/AdminAudit";
+import AdminSettings from "./pages/AdminSettings";
+import AdminSupport from "./pages/AdminSupport";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationPayment from "./pages/ApplicationPayment";
 import ApplicationTracking from "./pages/ApplicationTracking";
@@ -140,6 +145,10 @@ function AppRoutes() {
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/imagens" component={AdminSalesImages} />
     <Route path="/preview" component={Preview} />
+    <Route path="/admin/divulgacao" component={AdminOutreach} />
+    <Route path="/admin/suporte" component={AdminSupport} />
+    <Route path="/admin/auditoria" component={AdminAudit} />
+    <Route path="/admin/configuracoes" component={AdminSettings} />
     <Route path="/admin/pedidos" component={AdminApplications} />
     <Route path="/admin/comunicacoes" component={AdminCommunications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />
@@ -178,6 +187,6 @@ function App() {
     const interval = window.setInterval(hidePreviewNotice, 1000);
     return () => { observer.disconnect(); window.clearInterval(interval); };
   }, [platformSettings.data?.hideExternalPreviewNotice]);
-  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
+  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><GlobalNotes /><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;

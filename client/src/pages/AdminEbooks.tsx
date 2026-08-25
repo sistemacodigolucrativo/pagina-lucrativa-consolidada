@@ -5,9 +5,9 @@ import { FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const menu: DashboardMenuItem[] = [
-  { icon: LayoutDashboard, label: "Visão geral", path: "/admin", group: "Gestão" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/admin", group: "Visão geral" },
   { icon: BookOpenText, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
-  { icon: FilePenLine, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
+  { icon: FilePenLine, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
 ];
 type EbookStatus = "draft" | "published" | "archived";
 type EbookForm = { sourceId: string; sourceFile: string; sourcePath: string; title: string; summary: string; htmlContent: string; status: EbookStatus };

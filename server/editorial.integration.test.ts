@@ -78,8 +78,9 @@ describe("central editorial", () => {
     expect(member).toContain("Materiais prontos para divulgação");
     expect(admin).toContain('<option value="article">Material de divulgação</option>');
     expect(admin).toContain('<option value="material">Biblioteca de Recursos</option>');
-    expect(operations).toContain('<option value="article">Material de divulgação</option>');
-    expect(operations).toContain('item.kind === "material" ? "Biblioteca de Recursos"');
+    expect(operations).toContain('setLocation("/admin")');
+    expect(operations).not.toContain("createContent");
+    expect(operations).not.toContain("updateContentStatus");
     expect(app).toContain('path="/membros/artigos" component={MemberPublications}');
     expect(legacyRedirect).toContain('"/membros/blog": "/membros/artigos"');
     expect(legacyRedirect).toContain('"/membros/bonus": "/membros/materiais"');

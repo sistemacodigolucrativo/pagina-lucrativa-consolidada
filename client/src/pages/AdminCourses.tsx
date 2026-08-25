@@ -7,7 +7,7 @@ import { FormEvent, useState } from "react";
 import { toast } from "sonner";
 
 const menu: DashboardMenuItem[] = [
-  { icon: LayoutDashboard, label: "Operação", path: "/admin", group: "Gestão" },
+  { icon: LayoutDashboard, label: "Dashboard", path: "/admin", group: "Visão geral" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
 ];
 type CourseForm = { title: string; summary: string; category: string; durationMinutes: string; level: "fundamentos" | "pratica" | "avancado"; ebookId: string; isPublished: boolean };

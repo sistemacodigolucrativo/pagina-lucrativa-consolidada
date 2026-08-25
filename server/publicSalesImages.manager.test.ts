@@ -60,7 +60,7 @@ describe("public sales section image manager", () => {
     expect(appSource).toContain('import AdminSalesImages from "@/pages/AdminSalesImages";');
     expect(appSource).toContain('<Route path="/admin/imagens" component={AdminSalesImages} />');
     expect(appSource).toContain('<Route path="/preview" component={Preview} />');
-    expect(navigationSource).toContain('label: "Imagens da página"');
+    expect(navigationSource).toContain('label: "Página de vendas"');
     expect(navigationSource).toContain('path: "/admin/imagens"');
   });
 

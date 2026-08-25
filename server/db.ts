@@ -218,7 +218,17 @@ export async function getAdminPerformance() {
   const db = await getDb();
   if (!db) return { entries: [], members: [] };
   const [entries, members] = await Promise.all([
-    db.select().from(pointEntries).orderBy(desc(pointEntries.createdAt)),
+    db.select({
+      id: pointEntries.id,
+      userId: pointEntries.userId,
+      amount: pointEntries.amount,
+      reason: pointEntries.reason,
+      status: pointEntries.status,
+      createdBy: pointEntries.createdBy,
+      createdAt: pointEntries.createdAt,
+      memberName: users.name,
+      memberEmail: users.email,
+    }).from(pointEntries).leftJoin(users, eq(pointEntries.userId, users.id)).orderBy(desc(pointEntries.createdAt)),
     getPerformanceMembers(),
   ]);
   return { entries, members };

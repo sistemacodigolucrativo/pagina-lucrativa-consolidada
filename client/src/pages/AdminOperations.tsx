@@ -1,30 +1,24 @@
-import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
-import { trpc } from "@/lib/trpc";
-import AdminCapturePanel from "@/components/AdminCapturePanel";
-import { BookOpenText, LayoutDashboard, MessageSquareMore, PlusCircle, Send } from "lucide-react";
-import { FormEvent, useState } from "react";
-import { toast } from "sonner";
+import DashboardLayout from "@/components/DashboardLayout";
+import { adminMenu } from "@/lib/adminNavigation";
+import { useEffect } from "react";
+import { useLocation } from "wouter";
 
-const menu: DashboardMenuItem[] = [
-  { icon: LayoutDashboard, label: "Visão geral", path: "/admin", group: "Gestão" },
-  { icon: BookOpenText, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
-  { icon: BookOpenText, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
-];
-
-type ContentStatus = "draft" | "published" | "archived";
 export default function AdminOperations() {
-  const utils = trpc.useUtils();
-  const content = trpc.admin.content.useQuery();
-  const tickets = trpc.admin.tickets.useQuery();
-  const [entry, setEntry] = useState<{ kind: "article" | "faq" | "notice"; title: string; summary: string; body: string; status: ContentStatus }>({ kind: "notice", title: "", summary: "", body: "", status: "draft" });
-  const [responses, setResponses] = useState<Record<number, string>>({});
-  const createContent = trpc.admin.createContent.useMutation({ onSuccess: async () => { setEntry({ kind: "notice", title: "", summary: "", body: "", status: "draft" }); await utils.admin.content.invalidate(); toast.success("Conteúdo registrado."); }, onError: error => toast.error(error.message) });
-  const updateContent = trpc.admin.updateContentStatus.useMutation({ onSuccess: async () => { await utils.admin.content.invalidate(); await utils.member.content.invalidate(); toast.success("Status do conteúdo atualizado."); }, onError: error => toast.error(error.message) });
-  const updateTicket = trpc.admin.updateTicket.useMutation({ onSuccess: async () => { await utils.admin.tickets.invalidate(); await utils.member.tickets.invalidate(); toast.success("Solicitação atualizada."); }, onError: error => toast.error(error.message) });
-  function submitContent(event: FormEvent) { event.preventDefault(); createContent.mutate({ ...entry, summary: entry.summary || null, body: entry.body || null }); }
-  return <DashboardLayout menuItems={menu} title="Administração"><main className="mx-auto w-full max-w-6xl space-y-10 p-5 sm:p-8"><header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Gestão operacional</span><h1 className="text-3xl font-semibold text-white">Central de manutenção</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Publique conteúdos para os membros e responda às solicitações recebidas. As mudanças ficam vinculadas à área administrativa.</p></header>
-    <section className="grid gap-6 lg:grid-cols-2"><form onSubmit={submitContent} className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><PlusCircle size={18} className="text-emerald-300" /><h2 className="font-medium">Novo conteúdo</h2></div><div className="grid gap-3 sm:grid-cols-2"><label className="text-sm text-zinc-200">Tipo<select value={entry.kind} onChange={e => setEntry({ ...entry, kind: e.target.value as typeof entry.kind })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white"><option value="notice">Aviso</option><option value="article">Material de divulgação</option><option value="faq">Pergunta frequente</option></select></label><label className="text-sm text-zinc-200">Status<select value={entry.status} onChange={e => setEntry({ ...entry, status: e.target.value as ContentStatus })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white"><option value="draft">Rascunho</option><option value="published">Publicado</option><option value="archived">Arquivado</option></select></label></div><label className="block text-sm text-zinc-200">Título<input required value={entry.title} onChange={e => setEntry({ ...entry, title: e.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="Título interno e visível ao membro" /></label><label className="block text-sm text-zinc-200">Resumo<textarea value={entry.summary} onChange={e => setEntry({ ...entry, summary: e.target.value })} className="mt-1 min-h-20 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" /></label><label className="block text-sm text-zinc-200">Conteúdo<textarea value={entry.body} onChange={e => setEntry({ ...entry, body: e.target.value })} className="mt-1 min-h-32 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" /></label><p className="text-xs leading-5 text-zinc-500">Itens da Biblioteca de Recursos devem ser cadastrados em Publicações, com link do Google Drive.</p><button disabled={createContent.isPending} className="inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"><Send size={16} />{createContent.isPending ? "Registrando..." : "Registrar conteúdo"}</button></form>
-      <div className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><BookOpenText size={18} className="text-emerald-300" /><h2 className="font-medium">Conteúdo sob gestão</h2></div>{content.isLoading ? <p className="mt-4 text-sm text-zinc-400">Carregando conteúdo...</p> : content.data?.length ? <div className="mt-4 space-y-3">{content.data.map(item => <article key={item.id} className="rounded-xl border border-white/10 bg-black/30 p-3"><div className="flex flex-wrap items-start justify-between gap-3"><div><span className="text-xs uppercase tracking-wider text-emerald-200">{item.kind === "article" ? "Material de divulgação" : item.kind === "material" ? "Biblioteca de Recursos" : item.kind === "faq" ? "Pergunta frequente" : "Aviso"} · {item.status}</span><h3 className="font-medium text-white">{item.title}</h3><p className="mt-1 text-sm text-zinc-400">{item.summary || item.body || "Sem descrição."}</p></div><select value={item.status} onChange={e => updateContent.mutate({ id: item.id, status: e.target.value as ContentStatus })} className="rounded-lg border border-white/15 bg-black px-2 py-1 text-sm text-white"><option value="draft">Rascunho</option><option value="published">Publicado</option><option value="archived">Arquivado</option></select></div></article>)}</div> : <p className="mt-4 text-sm text-zinc-400">Nenhum conteúdo foi criado ainda.</p>}</div></section>
-    <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><MessageSquareMore size={18} className="text-emerald-300" /><h2 className="font-medium">Solicitações dos membros</h2></div>{tickets.isLoading ? <p className="mt-4 text-sm text-zinc-400">Carregando solicitações...</p> : tickets.data?.length ? <div className="mt-4 space-y-4">{tickets.data.map(item => <article key={item.id} className="rounded-xl border border-white/10 bg-black/30 p-4"><div className="flex flex-wrap justify-between gap-2"><h3 className="font-medium text-white">{item.subject}</h3><span className="text-xs uppercase tracking-wider text-emerald-200">{item.status}</span></div><p className="mt-2 text-sm text-zinc-300">{item.message}</p><div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto]"><textarea value={responses[item.id] ?? item.adminResponse ?? ""} onChange={e => setResponses({ ...responses, [item.id]: e.target.value })} className="min-h-20 rounded-lg border border-white/15 bg-black px-3 py-2 text-sm text-white" placeholder="Resposta administrativa" /><div className="flex gap-2"><select defaultValue={item.status} id={`ticket-status-${item.id}`} className="rounded-lg border border-white/15 bg-black px-2 py-1 text-sm text-white"><option value="open">Aberto</option><option value="answered">Respondido</option><option value="closed">Encerrado</option></select><button onClick={() => { const select = document.getElementById(`ticket-status-${item.id}`) as HTMLSelectElement | null; updateTicket.mutate({ id: item.id, status: (select?.value ?? item.status) as "open" | "answered" | "closed", adminResponse: responses[item.id] ?? item.adminResponse ?? null }); }} disabled={updateTicket.isPending} className="rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black">Salvar</button></div></div></article>)}</div> : <p className="mt-4 text-sm text-zinc-400">Nenhuma solicitação de membro aguardando gestão.</p>}</section>
-  <AdminCapturePanel /></main></DashboardLayout>;
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    setLocation("/admin");
+  }, [setLocation]);
+
+  return (
+    <DashboardLayout menuItems={adminMenu} title="Administração">
+      <main className="mx-auto w-full max-w-4xl p-5 sm:p-8">
+        <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-6">
+          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Rota legada</span>
+          <h1 className="mt-2 text-2xl font-semibold text-white">Redirecionando para o Dashboard</h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-300">A antiga Central de manutenção foi distribuída entre Publicações, Suporte, Divulgação e Auditoria.</p>
+        </section>
+      </main>
+    </DashboardLayout>
+  );
 }

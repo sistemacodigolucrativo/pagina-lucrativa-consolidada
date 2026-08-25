@@ -1,20 +1,22 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, BriefcaseBusiness, ChartNoAxesCombined, CircleDollarSign, FileText, ImagePlus, Layers3, Mail, UsersRound } from "lucide-react";
+import { BookOpenCheck, ChartNoAxesCombined, CircleDollarSign, ClipboardList, FileText, ImagePlus, LifeBuoy, Mail, Megaphone, Settings, Trophy, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
-  { icon: BriefcaseBusiness, label: "Meu Escritório", path: "/membros", group: "Atuação pessoal" },
-  { icon: ChartNoAxesCombined, label: "Operação", path: "/admin", group: "Gestão" },
-  { icon: Layers3, label: "Central de manutenção", path: "/admin/operacao", group: "Gestão" },
-  { icon: UsersRound, label: "Membros", path: "/admin/membros", group: "Gestão" },
-  { icon: ChartNoAxesCombined, label: "Pontuação", path: "/admin/pontos", group: "Gestão" },
-  { icon: FileText, label: "Relatos", path: "/admin/relatos", group: "Gestão" },
-  { icon: FileText, label: "Pedidos", path: "/admin/pedidos", group: "Gestão" },
-  { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Gestão" },
-  { icon: Mail, label: "Comunicações", path: "/admin/comunicacoes", group: "Gestão" },
+  { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
+  { icon: UsersRound, label: "Membros e rede", path: "/admin/membros", group: "Gestão de membros" },
+  { icon: Trophy, label: "Desempenho", path: "/admin/pontos", group: "Gestão de membros" },
+  { icon: ClipboardList, label: "Pedidos", path: "/admin/pedidos", group: "Comercial" },
+  { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Comercial" },
+  { icon: Megaphone, label: "Divulgação", path: "/admin/divulgacao", group: "Comercial" },
+  { icon: FileText, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },
-  { icon: BookOpenCheck, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
-  { icon: ImagePlus, label: "Imagens da página", path: "/admin/imagens", group: "Conteúdo" },
+  { icon: ImagePlus, label: "Página de vendas", path: "/admin/imagens", group: "Conteúdo" },
+  { icon: LifeBuoy, label: "Suporte", path: "/admin/suporte", group: "Relacionamento" },
+  { icon: FileText, label: "Depoimentos", path: "/admin/relatos", group: "Relacionamento" },
+  { icon: Mail, label: "Comunicações", path: "/admin/comunicacoes", group: "Relacionamento" },
+  { icon: Settings, label: "Configurações", path: "/admin/configuracoes", group: "Sistema" },
+  { icon: ClipboardList, label: "Auditoria", path: "/admin/auditoria", group: "Sistema" },
 ];
 
 export function isAdminNavigation(items: Array<{ path: string }>) {
