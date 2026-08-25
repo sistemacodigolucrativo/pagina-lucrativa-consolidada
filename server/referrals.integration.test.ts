@@ -11,6 +11,8 @@ describe("fluxo de indicações", () => {
     const db = readFileSync(resolve(root, "server/db.ts"), "utf8");
     const adminReferrals = readFileSync(resolve(root, "client/src/pages/AdminReferrals.tsx"), "utf8");
     const adminOffice = readFileSync(resolve(root, "client/src/pages/AdminOffice.tsx"), "utf8");
+    const memberReferrals = readFileSync(resolve(root, "client/src/pages/MemberReferrals.tsx"), "utf8");
+    const guards = readFileSync(resolve(root, "server/integrityGuards.ts"), "utf8");
     expect(schema).toContain('mysqlTable("referralLinks"');
     expect(schema).toContain("referredUserId");
     expect(router).toContain("referrals: protectedProcedure");
@@ -20,12 +22,19 @@ describe("fluxo de indicações", () => {
     expect(db).toContain("activeCount");
     expect(db).toContain("sponsorCount");
     expect(db).toContain("referredCount");
+    expect(db).toContain("assertSponsorImmutable");
+    expect(db).toContain("db.transaction(async tx =>");
+    expect(db).not.toContain("set: { sponsorId: application.ownerUserId, status: \"active\" }");
     expect(adminReferrals).toContain("Esta tela é somente consultiva.");
     expect(adminReferrals).toContain("O administrador não cria vínculos manualmente");
     expect(adminReferrals).toContain("data?.activeCount");
     expect(adminReferrals).not.toContain("createReferral");
     expect(adminReferrals).not.toContain("Vincular indicação");
     expect(adminOffice).toContain("Consulte vínculos de indicação criados pelo fluxo de adesão.");
+    expect(memberReferrals).toContain("network.error");
+    expect(memberReferrals).toContain("Tentar novamente");
+    expect(guards).toContain("assertReceiptUploadAllowed");
+    expect(guards).toContain("assertReceiptReviewAllowed");
     expect(app).toContain('path="/membros/rede"');
     expect(app).toContain('path="/admin/membros"');
   });

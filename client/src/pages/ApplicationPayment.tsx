@@ -103,7 +103,8 @@ export default function ApplicationPayment() {
 
   const { application, paymentLinks, receiving, receipts } = payment.data;
   const hasReceiptAwaitingReview = application.paymentStatus === "receipt_received" || receipts.some(receipt => receipt.status === "pending");
-  const hasSubmittedReceipt = hasReceiptAwaitingReview || receipts.length > 0;
+  const canRetryRejectedReceipt = application.paymentStatus === "rejected" && !receipts.some(receipt => receipt.status === "pending");
+  const hasSubmittedReceipt = !canRetryRejectedReceipt && (hasReceiptAwaitingReview || receipts.length > 0);
   const orderTrackingCode = application.trackingCode ?? trackingCode;
   const trackingHref = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(orderTrackingCode)}`);
   const showReceiptUpload = selectedMethod === "pix" && Boolean(pixKey);

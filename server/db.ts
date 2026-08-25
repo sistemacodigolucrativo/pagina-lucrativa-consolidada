@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, lte, or, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -38,6 +38,7 @@ import { OFFER_AMOUNT_CENTS, type ApplicationInput, type ApplicationPersonalizat
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
 import { hashPassword } from "./credentialHash";
+import { assertReceiptReviewAllowed, assertReceiptUploadAllowed, assertSponsorImmutable } from "./integrityGuards";
 import { getPublicSalesSection } from "../shared/publicSalesSections";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
@@ -1346,30 +1347,45 @@ export async function uploadApplicationPaymentReceipt(input: ApplicationReceiptU
   if (!db) throw new Error("Banco de dados indisponível.");
   const rows = await db.select().from(applications).where(eq(applications.trackingCode, input.trackingCode.trim().toUpperCase())).limit(1);
   const application = rows[0];
-  if (!application?.ownerUserId) throw new Error("Pedido não encontrado ou sem responsável definido.");
+  const ownerUserId = application?.ownerUserId;
+  if (!application || !ownerUserId) throw new Error("Pedido não encontrado ou sem responsável definido.");
+  assertReceiptUploadAllowed(application.paymentStatus, application.activationStatus);
   const buffer = parseReceiptDataUrl(input);
   const extension = receiptExtension(input.contentType);
-  const stored = await storagePut(`payment-receipts/${application.ownerUserId}/${application.id}/${randomUUID()}.${extension}`, buffer, input.contentType);
-  const receiptResult = await db.insert(applicationPaymentReceipts).values({
-    applicationId: application.id,
-    ownerUserId: application.ownerUserId,
-    storageKey: stored.key,
-    fileUrl: stored.url,
-    contentType: input.contentType,
-    originalName: sanitizeOriginalName(input.originalName),
-    fileSize: buffer.length,
-    status: "pending",
+
+  const receipt = await db.transaction(async tx => {
+    const transition = await tx.update(applications).set({ paymentStatus: "receipt_received", selectedPaymentMethod: "PIX" }).where(and(
+      eq(applications.id, application.id),
+      or(eq(applications.paymentStatus, "awaiting_payment"), eq(applications.paymentStatus, "rejected")),
+      eq(applications.activationStatus, "not_started"),
+    ));
+    if (Number(transition[0]?.affectedRows ?? 0) !== 1) {
+      throw new Error("O estado do pedido mudou; atualize a página antes de enviar outro comprovante.");
+    }
+
+    const stored = await storagePut(`payment-receipts/${ownerUserId}/${application.id}/${randomUUID()}.${extension}`, buffer, input.contentType);
+    const receiptResult = await tx.insert(applicationPaymentReceipts).values({
+      applicationId: application.id,
+      ownerUserId,
+      storageKey: stored.key,
+      fileUrl: stored.url,
+      contentType: input.contentType,
+      originalName: sanitizeOriginalName(input.originalName),
+      fileSize: buffer.length,
+      status: "pending",
+    });
+    await tx.insert(memberNotifications).values({
+      userId: ownerUserId,
+      type: "payment_receipt_received",
+      title: "Novo comprovante recebido",
+      message: `Nome: ${application.fullName}\nE-mail: ${application.email}\nWhatsApp: ${application.whatsapp}`,
+      entityType: "application",
+      entityId: application.id,
+    });
+    return { id: Number(receiptResult[0].insertId), status: "pending" as const };
   });
-  await db.update(applications).set({ paymentStatus: "receipt_received", selectedPaymentMethod: "PIX" }).where(eq(applications.id, application.id));
-  await db.insert(memberNotifications).values({
-    userId: application.ownerUserId,
-    type: "payment_receipt_received",
-    title: "Novo comprovante recebido",
-    message: `Nome: ${application.fullName}\nE-mail: ${application.email}\nWhatsApp: ${application.whatsapp}`,
-    entityType: "application",
-    entityId: application.id,
-  });
-  return { id: Number(receiptResult[0].insertId), status: "pending" as const };
+
+  return receipt;
 }
 
 export async function getMemberNotifications(userId: number) {
@@ -1391,20 +1407,65 @@ export async function markMemberNotificationRead(userId: number, notificationId:
 export async function reviewPaymentReceipt(userId: number, input: { applicationId: number; receiptId: number; status: "approved" | "rejected" }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const rows = await db.select().from(applications).where(and(eq(applications.id, input.applicationId), eq(applications.ownerUserId, userId))).limit(1);
-  if (!rows[0]) throw new Error("Pedido não encontrado.");
-  const receiptRows = await db.select().from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.id, input.receiptId), eq(applicationPaymentReceipts.applicationId, input.applicationId), eq(applicationPaymentReceipts.ownerUserId, userId))).limit(1);
-  if (!receiptRows[0]) throw new Error("Comprovante não encontrado.");
-  await db.update(applicationPaymentReceipts).set({ status: input.status, reviewedAt: new Date(), reviewedBy: userId }).where(eq(applicationPaymentReceipts.id, input.receiptId));
-  if (input.status === "approved") {
-    await ensureApplicationAccessToken(rows[0], userId);
-  }
-  await db.update(applications).set({
-    paymentStatus: input.status === "approved" ? "confirmed" : "rejected",
-    activationStatus: input.status === "approved" ? "access_issued" : "not_started",
-    status: input.status === "approved" ? "approved" : "contacted",
-  }).where(eq(applications.id, input.applicationId));
-  return { success: true } as const;
+
+  return db.transaction(async tx => {
+    const rows = await tx.select().from(applications).where(and(eq(applications.id, input.applicationId), eq(applications.ownerUserId, userId))).limit(1);
+    const application = rows[0];
+    if (!application) throw new Error("Pedido não encontrado.");
+
+    const receiptRows = await tx.select().from(applicationPaymentReceipts).where(and(
+      eq(applicationPaymentReceipts.id, input.receiptId),
+      eq(applicationPaymentReceipts.applicationId, input.applicationId),
+      eq(applicationPaymentReceipts.ownerUserId, userId),
+      eq(applicationPaymentReceipts.status, "pending"),
+    )).limit(1);
+    const receipt = receiptRows[0];
+    if (!receipt) throw new Error("Comprovante não encontrado ou já analisado.");
+    assertReceiptReviewAllowed(receipt.status, application.paymentStatus);
+
+    const receiptUpdate = await tx.update(applicationPaymentReceipts).set({ status: input.status, reviewedAt: new Date(), reviewedBy: userId }).where(and(
+      eq(applicationPaymentReceipts.id, input.receiptId),
+      eq(applicationPaymentReceipts.status, "pending"),
+    ));
+    if (Number(receiptUpdate[0]?.affectedRows ?? 0) !== 1) {
+      throw new Error("Este comprovante já foi analisado por outra operação.");
+    }
+
+    if (input.status === "approved") {
+      if (!application.ownerUserId) throw new Error("Pedido sem responsável.");
+      const existingTokens = await tx.select().from(applicationAccessTokens).where(and(
+        eq(applicationAccessTokens.applicationId, application.id),
+        eq(applicationAccessTokens.status, "active"),
+      )).orderBy(desc(applicationAccessTokens.createdAt)).limit(1);
+      if (!existingTokens[0]) {
+        const plainToken = generateReadableAccessToken();
+        const publicCode = randomUUID().replace(/-/g, "").slice(0, 16);
+        await tx.insert(applicationAccessTokens).values({
+          applicationId: application.id,
+          ownerUserId: application.ownerUserId,
+          publicCode,
+          tokenHash: hashAccessToken(plainToken),
+          encryptedToken: encryptAccessToken(plainToken),
+          status: "active",
+          createdBy: userId,
+        });
+      }
+    }
+
+    const applicationUpdate = await tx.update(applications).set({
+      paymentStatus: input.status === "approved" ? "confirmed" : "rejected",
+      activationStatus: input.status === "approved" ? "access_issued" : "not_started",
+      status: input.status === "approved" ? "approved" : "contacted",
+    }).where(and(
+      eq(applications.id, input.applicationId),
+      eq(applications.paymentStatus, "receipt_received"),
+    ));
+    if (Number(applicationUpdate[0]?.affectedRows ?? 0) !== 1) {
+      throw new Error("O estado do pedido mudou; atualize a página antes de concluir a análise.");
+    }
+
+    return { success: true } as const;
+  });
 }
 export async function updateAdminApplication(applicationId: number, input: { status: "pending" | "contacted" | "approved" | "archived"; adminNote?: string | null }) {
   const db = await getDb();
@@ -1694,44 +1755,8 @@ function encryptAccessToken(token: string) {
   return `${iv.toString("base64url")}.${tag.toString("base64url")}.${encrypted.toString("base64url")}`;
 }
 
-function decryptAccessToken(payload: string | null) {
-  if (!payload) return null;
-  const [ivRaw, tagRaw, encryptedRaw] = payload.split(".");
-  if (!ivRaw || !tagRaw || !encryptedRaw) return null;
-  try {
-    const decipher = createDecipheriv("aes-256-gcm", accessTokenEncryptionKey(), Buffer.from(ivRaw, "base64url"));
-    decipher.setAuthTag(Buffer.from(tagRaw, "base64url"));
-    return Buffer.concat([decipher.update(Buffer.from(encryptedRaw, "base64url")), decipher.final()]).toString("utf8");
-  } catch {
-    return null;
-  }
-}
-
 function generateReadableAccessToken() {
   return randomBytes(6).toString("base64url").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 8);
-}
-
-async function ensureApplicationAccessToken(application: typeof applications.$inferSelect, createdBy: number) {
-  if (!application.ownerUserId) throw new Error("Pedido sem responsável.");
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const existing = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.applicationId, application.id), eq(applicationAccessTokens.status, "active"))).orderBy(desc(applicationAccessTokens.createdAt)).limit(1);
-  if (existing[0]) {
-    return { tokenRow: existing[0], plainToken: decryptAccessToken(existing[0].encryptedToken) };
-  }
-  const plainToken = generateReadableAccessToken();
-  const publicCode = randomUUID().replace(/-/g, "").slice(0, 16);
-  await db.insert(applicationAccessTokens).values({
-    applicationId: application.id,
-    ownerUserId: application.ownerUserId,
-    publicCode,
-    tokenHash: hashAccessToken(plainToken),
-    encryptedToken: encryptAccessToken(plainToken),
-    status: "active",
-    createdBy,
-  });
-  const created = await db.select().from(applicationAccessTokens).where(eq(applicationAccessTokens.publicCode, publicCode)).limit(1);
-  return { tokenRow: created[0], plainToken };
 }
 
 function slugFromName(name: string, userId: number) {
@@ -1765,49 +1790,87 @@ export async function getApplicationPersonalizationAccess(publicCode: string) {
 export async function completeApplicationPersonalization(input: ApplicationPersonalizationInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const tokenRows = await db.select().from(applicationAccessTokens).where(and(eq(applicationAccessTokens.publicCode, input.publicCode), eq(applicationAccessTokens.status, "active"))).limit(1);
-  const token = tokenRows[0];
-  if (!token) throw new Error("Acesso inválido ou expirado.");
-  const applicationRows = await db.select().from(applications).where(and(eq(applications.id, token.applicationId), eq(applications.paymentStatus, "confirmed"))).limit(1);
-  const application = applicationRows[0];
-  if (!application?.ownerUserId) throw new Error("Pedido não encontrado ou ainda não aprovado.");
-  const normalizedEmail = application.email.trim().toLowerCase();
-  const openId = `application:${token.publicCode}`;
-  const existingUsers = await db.select({ id: users.id, openId: users.openId, email: users.email }).from(users).where(eq(users.email, normalizedEmail)).limit(1);
-  const existingUser = existingUsers[0] ?? null;
-  if (existingUser && existingUser.openId !== openId) throw new Error("Já existe uma conta com este e-mail. Use outro e-mail ou solicite suporte.");
-  let userId = existingUser?.id ?? 0;
-  const normalizedName = input.name.trim();
-  if (userId) {
-    await db.update(users).set({ name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", lastSignedIn: new Date() }).where(eq(users.id, userId));
-  } else {
-    const result = await db.insert(users).values({ openId, name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
-    userId = Number(result[0].insertId);
-  }
-  const slug = slugFromName(normalizedName, userId);
-  await db.insert(memberProfiles).values({
-    userId,
-    slug,
-    whatsapp: input.whatsapp,
-    facebookUrl: cleanOptional(input.facebookUrl),
-    instagramUrl: cleanOptional(input.instagramUrl),
-  }).onDuplicateKeyUpdate({ set: {
-    slug,
-    whatsapp: input.whatsapp,
-    facebookUrl: cleanOptional(input.facebookUrl),
-    instagramUrl: cleanOptional(input.instagramUrl),
-  } });
-  await db.insert(userSecurityRecovery).values({
-    userId,
-    securityQuestion: input.securityQuestion.trim(),
-    securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
-  }).onDuplicateKeyUpdate({ set: {
-    securityQuestion: input.securityQuestion.trim(),
-    securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
-    updatedAt: new Date(),
-  } });
-  await db.insert(referralLinks).values({ sponsorId: application.ownerUserId, referredUserId: userId, status: "active" }).onDuplicateKeyUpdate({ set: { sponsorId: application.ownerUserId, status: "active" } });
-  await db.update(applicationAccessTokens).set({ status: "used", usedAt: new Date() }).where(eq(applicationAccessTokens.id, token.id));
-  await db.update(applications).set({ activationStatus: "member_activated", status: "approved" }).where(eq(applications.id, application.id));
-  return { success: true, email: normalizedEmail, slug } as const;
+
+  return db.transaction(async tx => {
+    const tokenRows = await tx.select().from(applicationAccessTokens).where(and(
+      eq(applicationAccessTokens.publicCode, input.publicCode),
+      eq(applicationAccessTokens.status, "active"),
+    )).limit(1);
+    const token = tokenRows[0];
+    if (!token) throw new Error("Acesso inválido ou expirado.");
+
+    const applicationRows = await tx.select().from(applications).where(and(
+      eq(applications.id, token.applicationId),
+      eq(applications.paymentStatus, "confirmed"),
+      or(eq(applications.activationStatus, "access_issued"), eq(applications.activationStatus, "personalization_started")),
+    )).limit(1);
+    const application = applicationRows[0];
+    if (!application?.ownerUserId) throw new Error("Pedido não encontrado ou ainda não aprovado.");
+
+    const normalizedEmail = application.email.trim().toLowerCase();
+    const openId = `application:${token.publicCode}`;
+    const existingUsers = await tx.select({ id: users.id, openId: users.openId, email: users.email }).from(users).where(eq(users.email, normalizedEmail)).limit(1);
+    const existingUser = existingUsers[0] ?? null;
+    if (existingUser && existingUser.openId !== openId) throw new Error("Já existe uma conta com este e-mail. Use outro e-mail ou solicite suporte.");
+    let userId = existingUser?.id ?? 0;
+    const normalizedName = input.name.trim();
+    if (userId) {
+      await tx.update(users).set({ name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", lastSignedIn: new Date() }).where(eq(users.id, userId));
+    } else {
+      const result = await tx.insert(users).values({ openId, name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
+      userId = Number(result[0].insertId);
+    }
+
+    const existingReferralRows = await tx.select().from(referralLinks).where(eq(referralLinks.referredUserId, userId)).limit(1);
+    const existingReferral = existingReferralRows[0] ?? null;
+    assertSponsorImmutable(existingReferral?.sponsorId, application.ownerUserId);
+
+    const slug = slugFromName(normalizedName, userId);
+    await tx.insert(memberProfiles).values({
+      userId,
+      slug,
+      whatsapp: input.whatsapp,
+      facebookUrl: cleanOptional(input.facebookUrl),
+      instagramUrl: cleanOptional(input.instagramUrl),
+    }).onDuplicateKeyUpdate({ set: {
+      slug,
+      whatsapp: input.whatsapp,
+      facebookUrl: cleanOptional(input.facebookUrl),
+      instagramUrl: cleanOptional(input.instagramUrl),
+    } });
+    await tx.insert(userSecurityRecovery).values({
+      userId,
+      securityQuestion: input.securityQuestion.trim(),
+      securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+    }).onDuplicateKeyUpdate({ set: {
+      securityQuestion: input.securityQuestion.trim(),
+      securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+      updatedAt: new Date(),
+    } });
+
+    if (existingReferral) {
+      await tx.update(referralLinks).set({ status: "active" }).where(eq(referralLinks.id, existingReferral.id));
+    } else {
+      await tx.insert(referralLinks).values({ sponsorId: application.ownerUserId, referredUserId: userId, status: "active" });
+    }
+
+    const tokenUpdate = await tx.update(applicationAccessTokens).set({ status: "used", usedAt: new Date() }).where(and(
+      eq(applicationAccessTokens.id, token.id),
+      eq(applicationAccessTokens.status, "active"),
+    ));
+    if (Number(tokenUpdate[0]?.affectedRows ?? 0) !== 1) {
+      throw new Error("Este acesso já foi utilizado; solicite um novo acesso se necessário.");
+    }
+
+    const applicationUpdate = await tx.update(applications).set({ activationStatus: "member_activated", status: "approved" }).where(and(
+      eq(applications.id, application.id),
+      eq(applications.paymentStatus, "confirmed"),
+      or(eq(applications.activationStatus, "access_issued"), eq(applications.activationStatus, "personalization_started")),
+    ));
+    if (Number(applicationUpdate[0]?.affectedRows ?? 0) !== 1) {
+      throw new Error("O estado do pedido mudou; atualize a página antes de concluir a ativação.");
+    }
+
+    return { success: true, email: normalizedEmail, slug } as const;
+  });
 }
