@@ -3,6 +3,9 @@ import path from "node:path";
 import mysql from "mysql2/promise";
 
 const importRoot = process.env.EBOOK_IMPORT_ROOT || "/opt/pagina-lucrativa/ebook-import";
+const mysqlSocket = process.env.MYSQL_SOCKET || "/run/mysqld/mysqld.sock";
+const mysqlUser = process.env.MYSQL_USER || "ubuntu";
+const mysqlDatabase = process.env.MYSQL_DATABASE || "pagina_lucrativa";
 const manifestPath = path.join(importRoot, "ebook-manifest.tsv");
 const outputRoot = path.join(importRoot, "html-output");
 const manifest = await readFile(manifestPath, "utf8");
@@ -18,7 +21,7 @@ function displayTitle(title, sourceFile) {
     .replace(/\s+/g, " ")
     .trim();
 }
-const connection = await mysql.createConnection({ socketPath: "/run/mysqld/mysqld.sock", user: "ubuntu", database: "pagina_lucrativa" });
+const connection = await mysql.createConnection({ socketPath: mysqlSocket, user: mysqlUser, database: mysqlDatabase });
 try {
   for (const row of rows) {
     const htmlContent = await readFile(path.join(outputRoot, row.htmlFile), "utf8");
