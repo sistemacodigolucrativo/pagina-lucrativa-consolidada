@@ -3,7 +3,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { applicationInputSchema, applicationPersonalizationSchema } from "@shared/applications";
 import { normalizedEmailZodSchema, optionalPhoneZodSchema } from "@shared/contactValidation";
-import { httpUrlZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, positiveCentsZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
+import { httpUrlZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
 import {
   createAdminContent,
   createAdminEbook,
@@ -28,10 +28,6 @@ import {
   getMemberOperationConversions,
   getMemberOverview,
   getMemberFinance,
-  getAdminTransactions,
-  getFinanceMembers,
-  createAdminTransaction,
-  updateAdminTransaction,
   getMemberProfile,
   markMemberGettingStartedMetricsViewed,
   getMemberAccount,
@@ -349,10 +345,6 @@ export const appRouter = router({
     overview: adminProcedure.query(() => getAdminOverview()),
     platformSettings: adminProcedure.query(() => getAdminPlatformSettings()),
     updatePlatformSettings: adminProcedure.input(z.object({ hideExternalPreviewNotice: z.boolean() })).mutation(({ ctx, input }) => updateAdminPlatformSettings(ctx.user.id, input)),
-    transactions: adminProcedure.query(() => getAdminTransactions()),
-    financeMembers: adminProcedure.query(() => getFinanceMembers()),
-    createTransaction: adminProcedure.input(z.object({ userId: z.number().int().positive(), campaignId: z.number().int().positive().nullable().optional(), type: z.enum(["sale", "adjustment"]), description: z.string().trim().min(3).max(320), amountCents: positiveCentsZodSchema, status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminTransaction(ctx.user.id, input)),
-    updateTransaction: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]), adminNote: z.string().trim().max(2000).optional() })).mutation(({ input }) => updateAdminTransaction(input.id, input)),
     courses: adminProcedure.query(() => getAdminCourses()),
     createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
     updateCourse: adminProcedure.input(courseInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...course } = input; return updateAdminCourse(id, course); }),

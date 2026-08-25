@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.env.PROJECT_ROOT || process.cwd();
@@ -32,23 +32,52 @@ describe("relatório de adesões do membro", () => {
     expect(page).not.toContain("Saldo confirmado");
   });
 
-  it("mantém histórico administrativo sem permitir novas comissões ou saques", async () => {
+  it("remove o módulo administrativo de lançamentos sem apagar o histórico", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
-    const adminPage = await readFile(path.join(root, "client/src/pages/AdminTransactions.tsx"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
-    expect(router).toContain('type: z.enum(["sale", "adjustment"])');
-    expect(router).not.toContain('z.enum(["sale", "commission", "adjustment"])');
-    expect(adminPage).not.toContain('"Comissão"');
-    expect(adminPage).not.toContain('"Saque"');
-    expect(adminPage).toContain("creatableTypeLabel");
-    expect(adminPage).not.toContain("aprove solicitações de saque");
-    expect(db).toContain("syncTransactionCampaignConversion");
-    expect(db).toContain('transaction.status === "void" ? "reversed" : "active"');
+    const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
+    const adminOffice = await readFile(path.join(root, "client/src/pages/AdminOffice.tsx"), "utf8");
+    expect(router).not.toContain("transactions: adminProcedure");
+    expect(router).not.toContain("financeMembers: adminProcedure");
+    expect(router).not.toContain("createTransaction: adminProcedure");
+    expect(router).not.toContain("updateTransaction: adminProcedure");
+    expect(db).not.toContain("export async function getAdminTransactions");
+    expect(db).not.toContain("export async function getFinanceMembers");
+    expect(db).not.toContain("export async function createAdminTransaction");
+    expect(db).not.toContain("export async function updateAdminTransaction");
+    expect(db).not.toContain("syncTransactionCampaignConversion");
+    expect(schema).toContain('export const transactions = mysqlTable("transactions"');
+    expect(schema).toContain('type: mysqlEnum("type", ["sale", "commission", "adjustment", "withdrawal"])');
+    expect(adminOffice).not.toContain("grossVolumeCents");
+    expect(adminOffice).not.toContain("trpc.admin.transactions");
+    expect(adminOffice).not.toContain("Volume confirmado");
   });
 
-  it("registra as rotas financeiras de membro e administração", async () => {
+  it("preserva campanhas e conversões sem manter escritor financeiro manual", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const memberOperation = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
+    expect(db).toContain("export async function recordCampaignConversion");
+    expect(db).toContain('conversionType: "application"');
+    expect(db).toContain("from(campaignConversions)");
+    expect(memberOperation).toContain("trpc.member.conversions.useQuery");
+    expect(memberOperation).toContain("conversionType");
+  });
+
+  it("preserva as rotas do membro e mantém a rota financeira antiga como redirecionamento", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
+    const legacy = await readFile(path.join(root, "client/src/pages/AdminOperations.tsx"), "utf8");
     expect(app).toContain('path="/membros/ganhos" component={MemberEarnings}');
-    expect(app).toContain('path="/admin/financeiro" component={AdminTransactions}');
+    expect(app).toContain('path="/admin/financeiro" component={AdminOperations}');
+    expect(app).not.toContain("AdminTransactions");
+    expect(legacy).toContain("Módulo administrativo removido");
+    await expect(access(path.join(root, "client/src/pages/AdminTransactions.tsx"))).rejects.toThrow();
+  });
+
+  it("não recria transações financeiras fictícias no seed da demo", async () => {
+    const seed = await readFile(path.join(root, "scripts/seed-demo.ts"), "utf8");
+    expect(seed).not.toContain("INSERT INTO transactions");
+    expect(seed).not.toContain("UPDATE transactions SET");
+    expect(seed).toContain("INSERT INTO applications");
+    expect(seed).toContain("INSERT INTO campaignConversions");
   });
 });

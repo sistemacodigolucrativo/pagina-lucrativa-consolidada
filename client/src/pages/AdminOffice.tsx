@@ -1,7 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
-import { formatCurrency } from "@shared/dashboard";
 import { BookOpenCheck, ClipboardList, FileText, LifeBuoy, Megaphone, UsersRound } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -63,16 +62,15 @@ export default function AdminOffice() {
           <>
             <section className="office-stat-grid office-overview-stats">
               <article><span>Total de membros</span><strong>{data?.memberCount ?? 0}</strong><small>Contas de membros cadastradas</small></article>
-              <article><span>Volume confirmado</span><strong>{formatCurrency(data?.grossVolumeCents ?? 0)}</strong><small>Base financeira registrada</small></article>
+              <article><span>Conteúdos publicados</span><strong>{publishedContent}</strong><small>Publicações ativas para membros</small></article>
+              <article><span>Cursos publicados</span><strong>{data?.publishedCourseCount ?? 0}</strong><small>Trilhas ativas para membros</small></article>
               <article><span>Contatos captados</span><strong>{capturedContacts}</strong><small>Registros da divulgação</small></article>
-              <article><span>Tickets abertos</span><strong>{openTickets}</strong><small>Solicitações de suporte</small></article>
             </section>
 
             <section className="office-stat-grid office-overview-stats">
+              <article><span>Tickets abertos</span><strong>{openTickets}</strong><small>Solicitações de suporte</small></article>
               <article><span>Depoimentos pendentes</span><strong>{pendingTestimonials}</strong><small>Aguardando revisão</small></article>
-              <article><span>Conteúdos publicados</span><strong>{publishedContent}</strong><small>Publicações ativas para membros</small></article>
               <article><span>Rascunhos</span><strong>{draftContent}</strong><small>Conteúdos que exigem revisão</small></article>
-              <article><span>Cursos publicados</span><strong>{data?.publishedCourseCount ?? 0}</strong><small>Trilhas ativas para membros</small></article>
             </section>
 
             <section className="office-next">

@@ -12,11 +12,11 @@ describe("formulários operacionais responsivos", () => {
     expect(css).toContain(".office-form-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }");
   });
 
-  it("protege campos longos para não comprimirem data, status, retorno e lançamentos", async () => {
+  it("protege campos longos nos módulos administrativos ativos", async () => {
     const css = await readFile(path.join(root, "client/src/index.css"), "utf8");
-    const finance = await readFile(path.join(root, "client/src/pages/AdminTransactions.tsx"), "utf8");
+    const communications = await readFile(path.join(root, "client/src/pages/AdminCommunications.tsx"), "utf8");
     expect(css).toContain(".office-form-grid input, .office-form-grid select, .office-form-grid textarea { box-sizing: border-box; width: 100%; min-width: 0;");
     expect(css).toContain(".office-form-grid .office-form-full, .office-form-grid > .application-error { grid-column: 1 / -1; }");
-    expect(finance).toContain('className="office-form-grid"');
+    expect(communications).toContain("Fila de comunicações");
   });
 });

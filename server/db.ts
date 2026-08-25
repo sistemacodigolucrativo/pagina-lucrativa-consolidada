@@ -30,7 +30,6 @@ import {
   platformSettings,
   publicSalesSectionImages,
   supportTickets,
-  transactions,
   userSecurityRecovery,
   users,
 } from "../drizzle/schema";
@@ -173,35 +172,6 @@ export async function getMemberFinance(userId: number) {
     awaitingReviewCount: entries.filter(entry => entry.paymentStatus === "receipt_received").length,
   };
 }
-export async function getAdminTransactions() {
-  const db = await getDb();
-  if (!db) return [];
-  const [rows, memberRows] = await Promise.all([db.select().from(transactions).orderBy(desc(transactions.occurredAt)), db.select({ id: users.id, name: users.name, email: users.email }).from(users)]);
-  const members = new Map(memberRows.map(member => [member.id, member]));
-  return rows.map(row => ({ ...row, memberName: members.get(row.userId)?.name ?? null, memberEmail: members.get(row.userId)?.email ?? null }));
-}
-export async function getFinanceMembers() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select({ id: users.id, name: users.name, email: users.email }).from(users).orderBy(users.id);
-}
-export async function createAdminTransaction(adminId: number, input: { userId: number; campaignId?: number | null; type: "sale" | "adjustment"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const amountCents = Math.abs(input.amountCents);
-  const result = await db.insert(transactions).values({ ...input, campaignId: input.campaignId ?? null, description: input.description.trim(), amountCents, createdBy: adminId });
-  const id = Number(result[0].insertId);
-  if (input.campaignId && input.status !== "pending") await syncTransactionCampaignConversion(id);
-  return { id };
-}
-export async function updateAdminTransaction(transactionId: number, input: { status: "pending" | "posted" | "void"; adminNote?: string | null }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(transactions).set({ status: input.status, adminNote: input.adminNote?.trim() || null }).where(eq(transactions.id, transactionId));
-  await syncTransactionCampaignConversion(transactionId);
-  return { success: true } as const;
-}
-
 export async function getMemberPerformance(userId: number) {
   const db = await getDb();
   if (!db) return { entries: [], postedPoints: 0 };
@@ -482,26 +452,6 @@ export async function recordCampaignConversion(input: CampaignConversionInput) {
     occurredAt: input.occurredAt ?? new Date(),
   });
   return { id: Number(result[0].insertId), created: true } as const;
-}
-
-async function syncTransactionCampaignConversion(transactionId: number) {
-  const db = await getDb();
-  if (!db) return;
-  const rows = await db.select({ id: transactions.id, userId: transactions.userId, campaignId: transactions.campaignId, type: transactions.type, amountCents: transactions.amountCents, status: transactions.status, occurredAt: transactions.occurredAt }).from(transactions).where(eq(transactions.id, transactionId)).limit(1);
-  const transaction = rows[0];
-  if (!transaction?.campaignId || !["sale", "commission"].includes(transaction.type)) return;
-  const conversionType = transaction.type === "sale" ? "sale" : "commission";
-  await recordCampaignConversion({
-    campaignId: transaction.campaignId,
-    userId: transaction.userId,
-    conversionType,
-    entityType: "transaction",
-    entityId: transaction.id,
-    valueCents: Math.abs(transaction.amountCents),
-    status: transaction.status === "void" ? "reversed" : "active",
-    captureMode: "manual",
-    occurredAt: transaction.occurredAt,
-  });
 }
 
 export async function deleteMemberCampaign(userId: number, campaignId: number) {
@@ -1470,13 +1420,12 @@ export async function reviewPaymentReceipt(userId: number, input: { applicationI
 export async function getAdminOverview() {
   const db = await getDb();
   if (!db) return null;
-  const [memberRows, courseRows, transactionRows] = await Promise.all([
-    db.select().from(users), db.select().from(courses), db.select().from(transactions),
+  const [memberRows, courseRows] = await Promise.all([
+    db.select().from(users), db.select().from(courses),
   ]);
   return {
     memberCount: memberRows.filter(user => user.role === "user").length,
     publishedCourseCount: courseRows.filter(course => course.isPublished === 1).length,
-    grossVolumeCents: transactionRows.reduce((total, transaction) => total + transaction.amountCents, 0),
   };
 }
 

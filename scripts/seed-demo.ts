@@ -348,20 +348,6 @@ async function main() {
 
   for (let i = 1; i <= 12; i += 1) {
     const userId = memberIds[i % memberIds.length];
-    const transactionDescription = `${DEMO_TAG} - Lancamento ${i}`;
-    const transactionRows = await query<Array<{ id: number } & mysql.RowDataPacket>>("SELECT id FROM transactions WHERE userId = ? AND description = ? LIMIT 1", [userId, transactionDescription]);
-    if (transactionRows[0]) {
-      await execute(
-        "UPDATE transactions SET createdBy = ?, campaignId = ?, type = ?, amountCents = ?, status = ?, adminNote = ?, occurredAt = ? WHERE id = ?",
-        [adminId, campaignIds[i % campaignIds.length] ?? null, i % 2 === 0 ? "sale" : "adjustment", i % 4 === 0 ? -500 : 5000, ["posted", "pending", "void"][i % 3], `${DEMO_TAG}: transacao ficticia.`, daysAgo(i), transactionRows[0].id],
-      );
-    } else {
-      await execute(
-        `INSERT INTO transactions (userId, createdBy, campaignId, type, description, amountCents, status, adminNote, occurredAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, adminId, campaignIds[i % campaignIds.length] ?? null, i % 2 === 0 ? "sale" : "adjustment", transactionDescription, i % 4 === 0 ? -500 : 5000, ["posted", "pending", "void"][i % 3], `${DEMO_TAG}: transacao ficticia.`, daysAgo(i)],
-      );
-    }
     const pointReason = `${DEMO_TAG} - Pontos ${i}`;
     const pointRows = await query<Array<{ id: number } & mysql.RowDataPacket>>("SELECT id FROM pointEntries WHERE userId = ? AND reason = ? LIMIT 1", [userId, pointReason]);
     if (pointRows[0]) {
