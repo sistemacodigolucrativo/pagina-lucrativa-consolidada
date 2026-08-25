@@ -175,25 +175,25 @@ export default function Home() {
       </section>
     </div> : null}
 
+    {showAffiliateProfile ? (
+      <section className="affiliate-sponsor-strip" aria-label="Identificação do apresentador">
+        <div className="shell affiliate-sponsor-inner">
+          {affiliate.data?.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-sponsor-avatar" /> : <div className="affiliate-sponsor-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+          <div className="affiliate-sponsor-main">
+            <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por</span>
+            <strong className="affiliate-sponsor-name">{publicProfileName}</strong>
+            {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">{affiliate.isLoading ? "Carregando perfil público..." : affiliateNotFound ? "Apresentador não encontrado para este link." : "Perfil público identificável"}</span>}
+          </div>
+          {affiliate.data ? <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button> : <span className="affiliate-profile-more affiliate-profile-more-disabled">{affiliate.isLoading ? "Carregando" : "Indisponível"}</span>}
+        </div>
+      </section>
+    ) : null}
+
     <main>
       <section className="sales-hero" id="inicio">
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            {showAffiliateProfile ? (
-              <section className="affiliate-profile-hero" aria-label="Perfil público do apresentador">
-                <div className="affiliate-profile-summary">
-                  {affiliate.data?.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
-                  <div className="affiliate-profile-summary-main">
-                    <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por:</span>
-                    <strong className="affiliate-profile-presenter">Apresentador(a) da Página Lucrativa</strong>
-                    <strong className="affiliate-profile-name">{publicProfileName}</strong>
-                    {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">{affiliate.isLoading ? "Carregando perfil público..." : affiliateNotFound ? "Apresentador não encontrado para este link." : "Perfil público identificável"}</span>}
-                  </div>
-                  {affiliate.data ? <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button> : <span className="affiliate-profile-more affiliate-profile-more-disabled">{affiliate.isLoading ? "Carregando" : "Indisponível"}</span>}
-                </div>
-              </section>
-            ) : null}
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
             <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
             <TopPromoBanner />
