@@ -1146,7 +1146,7 @@ export async function createApplication(input: ApplicationInput, request?: Campa
   let owner = affiliateSlug
     ? await db.select({ userId: memberProfiles.userId, slug: memberProfiles.slug }).from(memberProfiles).where(eq(memberProfiles.slug, affiliateSlug)).limit(1)
     : [];
-  if (!owner[0]) {
+  if (!owner[0] && !affiliateSlug) {
     const defaultMembers = await db.select({ userId: memberProfiles.userId, slug: memberProfiles.slug }).from(memberProfiles).innerJoin(users, eq(users.id, memberProfiles.userId)).where(eq(users.role, "user")).limit(2);
     if (defaultMembers.length === 1) owner = defaultMembers;
   }

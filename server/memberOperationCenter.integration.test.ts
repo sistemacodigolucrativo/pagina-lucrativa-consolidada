@@ -106,6 +106,7 @@ describe("Central de Divulgação", () => {
     expect(home).not.toContain("trackedAffiliateSlug");
     expect(serverIndex).toContain("registerAffiliateLinkTracking(app)");
     expect(affiliateTracking).toContain("affiliateLandingPaths");
+    expect(affiliateTracking).toContain('"/dev/"');
     expect(affiliateTracking).toContain('appPrefix ? `${appPrefix}/` : null');
     expect(affiliateTracking).toContain("req.query.afiliado");
     expect(affiliateTracking).toContain("recordPublicAffiliateLinkClick");

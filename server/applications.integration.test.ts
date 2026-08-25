@@ -32,6 +32,25 @@ describe("gestão de solicitações públicas", () => {
     expect(confirmation).toContain("Acompanhar solicitação");
   });
 
+  it("não usa patrocinador fallback quando o pedido informa afiliado explícito inválido", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    expect(db).toContain("if (!owner[0] && !affiliateSlug)");
+    expect(db).toContain("affiliateSlug: owner[0]?.slug ?? null");
+    expect(db).toContain("ownerUserId: owner[0]?.userId ?? null");
+  });
+
+  it("mantém o perfil público do afiliado como fonte da identidade visual permitida", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");
+    const publicProfile = db.slice(db.indexOf("export async function getPublicAffiliateProfile"), db.indexOf("export async function getMemberTickets"));
+    expect(publicProfile).toContain("photoUrl: memberProfiles.photoUrl");
+    expect(publicProfile).toContain("whatsapp: memberProfiles.whatsapp");
+    expect(publicProfile).not.toContain("email: users.email");
+    expect(home).toContain("affiliate-profile-hero");
+    expect(home).toContain("affiliate-profile-avatar-fallback");
+    expect(home).toContain("Ver perfil");
+  });
+
   it("organiza a página de pagamento em jornada linear sem alterar comprovante PIX", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const confirmation = await readFile(path.join(root, "client/src/pages/ApplicationConfirmation.tsx"), "utf8");

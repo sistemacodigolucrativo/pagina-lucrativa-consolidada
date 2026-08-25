@@ -11,7 +11,7 @@ import {
 
 const affiliateSlugPattern = /^[a-z0-9-]{3,96}$/;
 const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
-const affiliateLandingPaths = new Set(["/", appPrefix || null, appPrefix ? `${appPrefix}/` : null].filter((path): path is string => Boolean(path)));
+const affiliateLandingPaths = new Set(["/", "/dev", "/dev/", appPrefix || null, appPrefix ? `${appPrefix}/` : null].filter((path): path is string => Boolean(path)));
 
 export function registerAffiliateLinkTracking(app: Express) {
   app.use(async (req: Request, res: Response, next: NextFunction) => {
