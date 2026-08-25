@@ -1,5 +1,5 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, ChartNoAxesCombined, ClipboardList, FileText, ImagePlus, LifeBuoy, Mail, Settings, UsersRound } from "lucide-react";
+import { BookOpenCheck, ChartNoAxesCombined, ClipboardList, FileText, ImagePlus, LifeBuoy, Mail, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
@@ -11,7 +11,6 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: LifeBuoy, label: "Suporte", path: "/admin/suporte", group: "Relacionamento" },
   { icon: FileText, label: "Depoimentos", path: "/admin/relatos", group: "Relacionamento" },
   { icon: Mail, label: "Comunicações", path: "/admin/comunicacoes", group: "Relacionamento" },
-  { icon: Settings, label: "Configurações", path: "/admin/configuracoes", group: "Sistema" },
   { icon: ClipboardList, label: "Auditoria", path: "/admin/auditoria", group: "Sistema" },
 ];
 

@@ -2,7 +2,6 @@ import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { trpc } from "@/lib/trpc";
 import NotFound from "@/pages/NotFound";
-import { useEffect } from "react";
 import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import GlobalNotes from "./components/GlobalNotes";
@@ -25,7 +24,6 @@ import Preview from "@/pages/Preview";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import AdminAudit from "./pages/AdminAudit";
-import AdminSettings from "./pages/AdminSettings";
 import AdminSupport from "./pages/AdminSupport";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationPayment from "./pages/ApplicationPayment";
@@ -144,7 +142,6 @@ function AppRoutes() {
     <Route path="/admin/divulgacao" component={AdminOperations} />
     <Route path="/admin/suporte" component={AdminSupport} />
     <Route path="/admin/auditoria" component={AdminAudit} />
-    <Route path="/admin/configuracoes" component={AdminSettings} />
     <Route path="/admin/pedidos" component={AdminOperations} />
     <Route path="/admin/comunicacoes" component={AdminCommunications} />
     <Route path="/admin/financeiro" component={AdminOperations} />
@@ -158,30 +155,6 @@ function AppRoutes() {
 }
 function App() {
   const base = DEV_PREFIX;
-  const platformSettings = trpc.public.platformSettings.useQuery(undefined, { staleTime: 30_000 });
-  useEffect(() => {
-    if (!platformSettings.data?.hideExternalPreviewNotice) return;
-    const message = "This page is not live and cannot be shared directly. Please publish to get a public link.";
-    const canHideElement = (element: HTMLElement) => {
-      if (element === document.body || element === document.documentElement || element.id === "root") return false;
-      if (element.querySelector("#root, main, [role='main'], .office-page, .access-page, .sales-page")) return false;
-      const text = element.textContent?.replace(/\s+/g, " ").trim() ?? "";
-      if (!text.includes(message) || text.length > message.length + 80) return false;
-      const style = window.getComputedStyle(element);
-      const rect = element.getBoundingClientRect();
-      return (style.position === "fixed" || style.position === "sticky" || rect.height <= 140) && rect.width > 120 && rect.height > 0;
-    };
-    const hidePreviewNotice = () => {
-      for (const element of Array.from(document.body.querySelectorAll<HTMLElement>("body *"))) {
-        if (canHideElement(element)) element.style.setProperty("display", "none", "important");
-      }
-    };
-    hidePreviewNotice();
-    const observer = new MutationObserver(hidePreviewNotice);
-    observer.observe(document.body, { childList: true, subtree: true });
-    const interval = window.setInterval(hidePreviewNotice, 1000);
-    return () => { observer.disconnect(); window.clearInterval(interval); };
-  }, [platformSettings.data?.hideExternalPreviewNotice]);
   return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><GlobalNotes /><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;

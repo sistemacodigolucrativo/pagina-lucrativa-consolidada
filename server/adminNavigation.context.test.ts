@@ -14,7 +14,7 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
     expect(navigation).toContain('label: "Suporte", path: "/admin/suporte"');
     expect(navigation).toContain('label: "Auditoria", path: "/admin/auditoria"');
-    expect(navigation).toContain('label: "Configurações", path: "/admin/configuracoes"');
+    expect(navigation).not.toContain('label: "Configurações"');
     expect(navigation).not.toContain('label: "Pedidos"');
     expect(navigation).not.toContain('path: "/admin/pedidos"');
     expect(navigation).not.toContain('label: "Financeiro"');
@@ -44,7 +44,8 @@ describe("navegação administrativa contextual", () => {
     expect(app).not.toContain('component={AdminOutreach}');
     expect(app).toContain('path="/admin/suporte" component={AdminSupport}');
     expect(app).toContain('path="/admin/auditoria" component={AdminAudit}');
-    expect(app).toContain('path="/admin/configuracoes" component={AdminSettings}');
+    expect(app).not.toContain("AdminSettings");
+    expect(app).not.toContain('/admin/configuracoes');
     expect(app).toContain('path="/admin/pedidos" component={AdminOperations}');
     expect(app).toContain('path="/admin/financeiro" component={AdminOperations}');
     expect(app).not.toContain('component={AdminTransactions}');

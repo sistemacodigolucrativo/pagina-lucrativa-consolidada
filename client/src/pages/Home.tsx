@@ -7,6 +7,7 @@ import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PhoneInput } from "@/components/PhoneInput";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
+import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
@@ -123,7 +124,10 @@ export default function Home() {
     ["Youtube", affiliate.data.youtubeUrl],
   ].filter((entry): entry is [string, string] => Boolean(entry[1])) : [];
   const application = trpc.applications.submit.useMutation({
-    onSuccess: data => setLocation(`/pedido/${encodeURIComponent(data.trackingCode)}/pagamento`),
+    onSuccess: data => {
+      savePaymentAccessToken(data.trackingCode, data.paymentAccessToken);
+      setLocation(`/pedido/${encodeURIComponent(data.trackingCode)}/pagamento`);
+    },
   });
 
   function submitApplication(event: FormEvent<HTMLFormElement>) {

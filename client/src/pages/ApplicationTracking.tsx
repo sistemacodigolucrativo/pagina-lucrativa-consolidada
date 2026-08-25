@@ -1,10 +1,11 @@
 import { ArrowRight, CheckCircle2, ClipboardCheck, Search, XCircle } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { normalizeEmail } from "@shared/contactValidation";
 import { applicationActivationStatusLabel, applicationPaymentStatusLabel } from "@shared/applications";
+import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 
 function formatCurrency(cents: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
@@ -24,6 +25,11 @@ export default function ApplicationTracking() {
   const lookup = trpc.applications.lookup.useQuery(query!, { enabled: !!query, retry: false });
 
   const result = lookup.data;
+
+  useEffect(() => {
+    if (result?.paymentAccessToken && result.trackingCode) savePaymentAccessToken(result.trackingCode, result.paymentAccessToken);
+  }, [result?.paymentAccessToken, result?.trackingCode]);
+
   const state = useMemo(() => {
     if (!result) return null;
     if (result.paymentStatus === "confirmed") return "approved";

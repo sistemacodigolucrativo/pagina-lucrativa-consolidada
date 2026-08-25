@@ -1,7 +1,8 @@
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
+import { readPaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clipboard, CreditCard, Loader2, QrCode, UploadCloud, X } from "lucide-react";
-import { ChangeEvent, useMemo, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 import { useLocation, useRoute } from "wouter";
 import { toast } from "sonner";
 
@@ -25,7 +26,12 @@ export default function ApplicationPaymentMethods() {
   const [, params] = useRoute("/pedido/:trackingCode/pagamento");
   const queryCode = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo") ?? "";
   const trackingCode = (params?.trackingCode ?? queryCode).trim().toUpperCase();
-  const payment = trpc.applications.paymentPage.useQuery({ trackingCode }, { enabled: Boolean(trackingCode), retry: false });
+  const paymentAccessToken = readPaymentAccessToken(trackingCode);
+  const payment = trpc.applications.paymentPage.useMutation();
+
+  useEffect(() => {
+    if (trackingCode && paymentAccessToken) payment.mutate({ trackingCode, paymentAccessToken });
+  }, [trackingCode, paymentAccessToken]);
   const [pixModalOpen, setPixModalOpen] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [receiptDataUrl, setReceiptDataUrl] = useState<string | null>(null);
@@ -37,10 +43,7 @@ export default function ApplicationPaymentMethods() {
     onError: error => toast.error(error.message),
   });
 
-  const pixKey = useMemo(() => {
-    const receiving = payment.data?.receiving;
-    return receiving?.pixKey || (receiving?.method === "pix" ? receiving.receivingKey : null);
-  }, [payment.data?.receiving]);
+  const pixKey = payment.data?.pix?.key ?? null;
 
   async function copyCode() {
     if (!trackingCode) return;
@@ -78,17 +81,19 @@ export default function ApplicationPaymentMethods() {
       toast.error("Selecione o arquivo do comprovante.");
       return;
     }
-    uploadReceipt.mutate({ trackingCode, dataUrl: receiptDataUrl, contentType: receiptFile.type as typeof allowedReceiptTypes[number], originalName: receiptFile.name });
+    uploadReceipt.mutate({ trackingCode, paymentAccessToken, dataUrl: receiptDataUrl, contentType: receiptFile.type as typeof allowedReceiptTypes[number], originalName: receiptFile.name });
   }
 
   if (!trackingCode) return <main className="access-page"><section className="access-card"><a href={withAppBase("/")} className="access-back"><ArrowLeft size={15} /> Voltar</a><h1>Pedido não informado.</h1><p>Não foi possível identificar o pedido.</p></section></main>;
-  if (payment.isLoading) return <main className="grid min-h-screen place-items-center bg-[#050505] p-6 text-zinc-300"><Loader2 className="size-7 animate-spin text-emerald-300" /></main>;
+  if (!paymentAccessToken) return <main className="access-page"><section className="access-card"><a href={withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(trackingCode)}`)} className="access-back"><ArrowLeft size={15} /> Voltar</a><h1>Acesso de pagamento não disponível.</h1><p>Confirme o código e o e-mail do pedido no acompanhamento para abrir os meios de pagamento.</p><a className="btn btn-primary mt-5" href={withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(trackingCode)}`)}>Confirmar meus dados</a></section></main>;
+  if (payment.isPending) return <main className="grid min-h-screen place-items-center bg-[#050505] p-6 text-zinc-300"><Loader2 className="size-7 animate-spin text-emerald-300" /></main>;
   if (!payment.data) return <main className="access-page"><section className="access-card"><a href={withAppBase("/")} className="access-back"><ArrowLeft size={15} /> Voltar</a><h1>Pedido não encontrado.</h1><p>Confira o código recebido e tente novamente.</p></section></main>;
 
-  const { application, paymentLinks } = payment.data;
-  const sponsorName = payment.data.sponsor?.name || payment.data.sponsor?.profile?.slug || "responsável pela Página Lucrativa";
-  const instructionsUrl = withAppBase(`/pedido/${encodeURIComponent(application.trackingCode ?? trackingCode)}/pagamento/instrucoes`);
-  const trackingUrl = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(application.trackingCode ?? trackingCode)}`);
+  const application = payment.data;
+  const { paymentLinks } = payment.data;
+  const sponsorName = payment.data.sponsor?.name || "responsável pela Página Lucrativa";
+  const instructionsUrl = withAppBase(`/pedido/${encodeURIComponent(application.trackingCode || trackingCode)}/pagamento/instrucoes`);
+  const trackingUrl = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(application.trackingCode || trackingCode)}`);
 
   return <main className="min-h-screen bg-[#050505] px-4 py-6 text-zinc-100 sm:px-6 lg:px-8">
     <section className="mx-auto w-full max-w-4xl space-y-6">
@@ -106,7 +111,7 @@ export default function ApplicationPaymentMethods() {
             <button type="button" onClick={() => setPixModalOpen(true)} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black sm:w-auto">Ver dados PIX <ArrowRight className="size-4" /></button>
           </article> : null}
 
-          {paymentLinks.map(link => <article key={link.id} className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5">
+          {paymentLinks.map((link, index) => <article key={`${link.label}-${index}`} className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5">
             <div className="flex items-start gap-3"><CreditCard className="mt-1 size-5 shrink-0 text-emerald-300" /><div><h2 className="font-medium text-white">{link.label}</h2><p className="mt-1 text-sm leading-6 text-zinc-400">Checkout externo configurado pelo responsável.</p></div></div>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               <a href={link.paymentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-11 items-center justify-center rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black">Pagar com {link.label}</a>

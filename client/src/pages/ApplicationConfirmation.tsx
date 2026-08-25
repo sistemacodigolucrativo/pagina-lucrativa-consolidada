@@ -1,6 +1,8 @@
 import { ArrowRight, BadgeCheck, CheckCircle2, ChevronLeft, Clipboard, Loader2 } from "lucide-react";
+import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { withAppBase } from "@/lib/devPath";
+import { readPaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import ApplicationPayment from "./ApplicationPayment";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -14,7 +16,12 @@ export default function ApplicationConfirmation() {
   const params = new URLSearchParams(location.split("?")[1] ?? "");
   const code = params.get("codigo");
   const receiptSent = params.get("comprovante") === "1";
-  const payment = trpc.applications.paymentPage.useQuery({ trackingCode: code ?? "" }, { enabled: Boolean(code && receiptSent), retry: false });
+  const paymentAccessToken = readPaymentAccessToken(code ?? "");
+  const payment = trpc.applications.paymentPage.useMutation();
+
+  useEffect(() => {
+    if (code && receiptSent && paymentAccessToken) payment.mutate({ trackingCode: code, paymentAccessToken });
+  }, [code, receiptSent, paymentAccessToken]);
 
   async function copyCode() {
     if (!code) return;
@@ -23,18 +30,18 @@ export default function ApplicationConfirmation() {
   }
 
   if (code && receiptSent) {
-    const sponsorName = payment.data?.sponsor?.name || payment.data?.sponsor?.profile?.slug || "responsável pela Página Lucrativa";
+    const sponsorName = payment.data?.sponsor?.name || "responsável pela Página Lucrativa";
     return <main className="access-page"><div className="access-card">
       <a href={withAppBase("/")} className="access-back"><ChevronLeft size={15} /> Voltar para a Página Lucrativa</a>
       <div className="access-seal"><CheckCircle2 size={25} /></div>
       <span className="office-eyebrow">Comprovante recebido</span>
       <h1>Seu comprovante foi enviado.</h1>
       <p>Recebemos seu comprovante. O pagamento via PIX ficou registrado como confirmação manual pendente e será analisado pelo responsável.</p>
-      {payment.isLoading ? <p className="access-loading"><Loader2 className="inline size-4 animate-spin" /> Carregando dados do pedido...</p> : <section className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-4 text-left">
+      {payment.isPending ? <p className="access-loading"><Loader2 className="inline size-4 animate-spin" /> Carregando dados do pedido...</p> : <section className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-4 text-left">
         <span className="text-xs uppercase tracking-[0.16em] text-emerald-200">Código de acompanhamento</span>
         <strong className="mt-2 block break-all text-xl text-white">{code}</strong>
         <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-          <div className="rounded-xl border border-white/10 bg-black/25 p-3"><dt className="text-zinc-500">Valor</dt><dd className="mt-1 font-semibold text-white">{formatCurrency(payment.data?.application.offerAmountCents ?? 5000)}</dd></div>
+          <div className="rounded-xl border border-white/10 bg-black/25 p-3"><dt className="text-zinc-500">Valor</dt><dd className="mt-1 font-semibold text-white">{formatCurrency(payment.data?.offerAmountCents ?? 5000)}</dd></div>
           <div className="rounded-xl border border-white/10 bg-black/25 p-3"><dt className="text-zinc-500">Pago para</dt><dd className="mt-1 font-semibold text-white">{sponsorName}</dd></div>
         </dl>
         <div className="mt-4 flex flex-col gap-3 sm:flex-row">

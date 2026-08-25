@@ -1,6 +1,6 @@
-import { and, desc, eq, gte, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, desc, eq, gte, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { createCipheriv, createDecipheriv, createHash, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
 import {
   applications,
@@ -27,13 +27,12 @@ import {
   memberActivities,
   memberTestimonials,
   pointEntries,
-  platformSettings,
   publicSalesSectionImages,
   supportTickets,
   userSecurityRecovery,
   users,
 } from "../drizzle/schema";
-import { OFFER_AMOUNT_CENTS, type ApplicationInput, type ApplicationPersonalizationInput, type ApplicationReceiptUpload, type MemberPaymentLinkInput } from "@shared/applications";
+import { OFFER_AMOUNT_CENTS, type ApplicationInput, type ApplicationPersonalizationInput, type ApplicationReceiptUpload, type MemberPaymentLinkInput, type PublicPaymentPage } from "@shared/applications";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
 import { hashPassword } from "./credentialHash";
@@ -41,8 +40,54 @@ import { assertReceiptReviewAllowed, assertReceiptUploadAllowed, assertSponsorIm
 import { getPublicSalesSection } from "../shared/publicSalesSections";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
-const HIDE_EXTERNAL_PREVIEW_NOTICE_KEY = "hideExternalPreviewNotice";
+const PAYMENT_ACCESS_TOKEN_TTL_MS = 30 * 60 * 1000;
 let _db: ReturnType<typeof drizzle> | null = null;
+type DbExecutor = Pick<ReturnType<typeof drizzle>, "select" | "insert" | "update">;
+
+type PaymentAccessClaims = {
+  purpose: "application-payment";
+  applicationId: number;
+  trackingCode: string;
+  exp: number;
+};
+
+function paymentAccessSecret() {
+  if (ENV.isProduction && !ENV.cookieSecret) throw new Error("JWT_SECRET é obrigatório para tokens de pagamento em produção.");
+  return ENV.cookieSecret || "pagina-lucrativa-local-payment-access-token";
+}
+
+export function createPaymentAccessToken(applicationId: number, trackingCode: string) {
+  const claims: PaymentAccessClaims = {
+    purpose: "application-payment",
+    applicationId,
+    trackingCode: trackingCode.trim().toUpperCase(),
+    exp: Math.floor((Date.now() + PAYMENT_ACCESS_TOKEN_TTL_MS) / 1000),
+  };
+  const payload = Buffer.from(JSON.stringify(claims), "utf8").toString("base64url");
+  const signature = createHmac("sha256", paymentAccessSecret()).update(`v1.${payload}`).digest("base64url");
+  return `v1.${payload}.${signature}`;
+}
+
+export function verifyPaymentAccessToken(token: string, trackingCode: string) {
+  try {
+    const [version, encodedPayload, encodedSignature] = token.trim().split(".");
+    if (version !== "v1" || !encodedPayload || !encodedSignature) return null;
+    const expectedSignature = createHmac("sha256", paymentAccessSecret()).update(`${version}.${encodedPayload}`).digest("base64url");
+    const expectedBuffer = Buffer.from(expectedSignature);
+    const receivedBuffer = Buffer.from(encodedSignature);
+    if (expectedBuffer.length !== receivedBuffer.length || !timingSafeEqual(expectedBuffer, receivedBuffer)) return null;
+    const claims = JSON.parse(Buffer.from(encodedPayload, "base64url").toString("utf8")) as Partial<PaymentAccessClaims>;
+    const applicationId = claims.applicationId;
+    const claimTrackingCode = claims.trackingCode;
+    const exp = claims.exp;
+    if (claims.purpose !== "application-payment" || typeof applicationId !== "number" || !Number.isInteger(applicationId) || typeof claimTrackingCode !== "string" || typeof exp !== "number") return null;
+    if (applicationId <= 0) return null;
+    if (claimTrackingCode !== trackingCode.trim().toUpperCase() || exp <= Math.floor(Date.now() / 1000)) return null;
+    return { purpose: "application-payment", applicationId, trackingCode: claimTrackingCode, exp };
+  } catch {
+    return null;
+  }
+}
 
 export async function getDb() {
   if (_db) return _db;
@@ -425,18 +470,10 @@ export async function getValidCampaignAttribution(userId: number, visitorId: str
   return attribution && attribution.expiresAt.getTime() >= Date.now() ? attribution : null;
 }
 
-export async function recordCampaignConversion(input: CampaignConversionInput) {
-  const db = await getDb();
+export async function recordCampaignConversion(input: CampaignConversionInput, executor?: DbExecutor) {
+  const db = executor ?? await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const existing = input.entityId == null ? null : await db.select({ id: campaignConversions.id }).from(campaignConversions).where(and(
-    eq(campaignConversions.entityType, input.entityType),
-    eq(campaignConversions.entityId, input.entityId),
-    eq(campaignConversions.conversionType, input.conversionType),
-  )).limit(1);
-  if (existing?.[0]) {
-    await db.update(campaignConversions).set({ status: input.status ?? "active", valueCents: Math.max(0, input.valueCents ?? 0) }).where(eq(campaignConversions.id, existing[0].id));
-    return { id: existing[0].id, created: false } as const;
-  }
+  const valueCents = Math.max(0, input.valueCents ?? 0);
   const result = await db.insert(campaignConversions).values({
     campaignId: input.campaignId,
     userId: input.userId,
@@ -447,11 +484,20 @@ export async function recordCampaignConversion(input: CampaignConversionInput) {
     status: input.status ?? "active",
     entityType: input.entityType,
     entityId: input.entityId ?? null,
-    valueCents: Math.max(0, input.valueCents ?? 0),
+    valueCents,
     captureMode: input.captureMode ?? "automatic",
     occurredAt: input.occurredAt ?? new Date(),
-  });
-  return { id: Number(result[0].insertId), created: true } as const;
+  }).onDuplicateKeyUpdate({ set: { status: input.status ?? "active", valueCents } });
+  const insertedId = Number(result[0].insertId ?? 0);
+  if (insertedId > 0) return { id: insertedId, created: true } as const;
+  if (input.entityId == null) throw new Error("Conversão não pôde ser identificada após reprocessamento.");
+  const existing = await db.select({ id: campaignConversions.id }).from(campaignConversions).where(and(
+    eq(campaignConversions.entityType, input.entityType),
+    eq(campaignConversions.entityId, input.entityId),
+    eq(campaignConversions.conversionType, input.conversionType),
+  )).limit(1);
+  if (!existing[0]) throw new Error("Conversão não pôde ser confirmada após reprocessamento.");
+  return { id: existing[0].id, created: false } as const;
 }
 
 export async function deleteMemberCampaign(userId: number, campaignId: number) {
@@ -1121,23 +1167,25 @@ export async function createApplication(input: ApplicationInput, request?: Campa
     const defaultMembers = await db.select({ userId: memberProfiles.userId, slug: memberProfiles.slug }).from(memberProfiles).innerJoin(users, eq(users.id, memberProfiles.userId)).where(eq(users.role, "user")).limit(2);
     if (defaultMembers.length === 1) owner = defaultMembers;
   }
-  const result = await db.insert(applications).values({
-    fullName: input.fullName,
-    email: input.email,
-    whatsapp: input.whatsapp,
-    trackingCode,
-    affiliateSlug: owner[0]?.slug ?? null,
-    ownerUserId: owner[0]?.userId ?? null,
-    paymentStatus: "awaiting_payment",
-    activationStatus: "not_started",
-    offerAmountCents: OFFER_AMOUNT_CENTS,
-  });
-  const id = Number(result[0].insertId);
   const visitorId = readCampaignCookie(request, "pl_visitor");
   const sessionId = readCampaignCookie(request, "pl_session");
-  if (owner[0] && visitorId && sessionId) {
-    const attribution = await getValidCampaignAttribution(owner[0].userId, visitorId, sessionId);
-    if (attribution) {
+  const attribution = owner[0] && visitorId && sessionId
+    ? await getValidCampaignAttribution(owner[0].userId, visitorId, sessionId)
+    : null;
+  const result = await db.transaction(async tx => {
+    const applicationResult = await tx.insert(applications).values({
+      fullName: input.fullName,
+      email: input.email,
+      whatsapp: input.whatsapp,
+      trackingCode,
+      affiliateSlug: owner[0]?.slug ?? null,
+      ownerUserId: owner[0]?.userId ?? null,
+      paymentStatus: "awaiting_payment",
+      activationStatus: "not_started",
+      offerAmountCents: OFFER_AMOUNT_CENTS,
+    });
+    const id = Number(applicationResult[0].insertId);
+    if (owner[0] && attribution) {
       await recordCampaignConversion({
         campaignId: attribution.campaignId,
         userId: owner[0].userId,
@@ -1147,10 +1195,11 @@ export async function createApplication(input: ApplicationInput, request?: Campa
         conversionType: "application",
         entityType: "application",
         entityId: id,
-      });
+      }, tx);
     }
-  }
-  return { id, trackingCode };
+    return { id };
+  });
+  return { ...result, trackingCode, paymentAccessToken: createPaymentAccessToken(result.id, trackingCode) };
 }
 
 export async function getMemberAffiliateApplications(userId: number) {
@@ -1216,6 +1265,7 @@ export async function getApplicationTracking(inputTrackingCode: string, email: s
   const sponsor = sponsorRows[0] ?? null;
   return {
     trackingCode: application.trackingCode,
+    paymentAccessToken: createPaymentAccessToken(application.id, application.trackingCode ?? trackingCode),
     createdAt: application.createdAt,
     updatedAt: application.updatedAt,
     offerAmountCents: application.offerAmountCents,
@@ -1249,26 +1299,42 @@ function hasBusinessHoursElapsed(start: Date, end: Date, requiredHours: number) 
   return elapsedMs >= requiredHours * 60 * 60 * 1000;
 }
 
-export async function getApplicationPaymentPage(trackingCode: string) {
+export async function getApplicationPaymentPage(trackingCode: string, paymentAccessToken: string): Promise<PublicPaymentPage | null> {
+  const normalizedTrackingCode = trackingCode.trim().toUpperCase();
+  const claims = verifyPaymentAccessToken(paymentAccessToken, normalizedTrackingCode);
+  if (!claims) return null;
   const db = await getDb();
   if (!db) return null;
-  const rows = await db.select().from(applications).where(eq(applications.trackingCode, trackingCode.trim().toUpperCase())).limit(1);
+  const rows = await db.select({
+    id: applications.id,
+    trackingCode: applications.trackingCode,
+    fullName: applications.fullName,
+    offerAmountCents: applications.offerAmountCents,
+    paymentStatus: applications.paymentStatus,
+    activationStatus: applications.activationStatus,
+    ownerUserId: applications.ownerUserId,
+  }).from(applications).where(and(eq(applications.id, claims.applicationId), eq(applications.trackingCode, normalizedTrackingCode))).limit(1);
   const application = rows[0];
   if (!application) return null;
   const ownerId = application.ownerUserId;
-  const [sponsorRows, profileRows, receivingRows, checkoutLinks, receiptRows] = ownerId ? await Promise.all([
-    db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.id, ownerId)).limit(1),
-    db.select().from(memberProfiles).where(eq(memberProfiles.userId, ownerId)).limit(1),
-    db.select().from(receivingPreferences).where(eq(receivingPreferences.userId, ownerId)).limit(1),
-    db.select().from(memberPaymentLinks).where(and(eq(memberPaymentLinks.userId, ownerId), eq(memberPaymentLinks.isEnabled, 1))).orderBy(memberPaymentLinks.sortOrder, memberPaymentLinks.id),
-    db.select().from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.applicationId, application.id)).orderBy(desc(applicationPaymentReceipts.createdAt)),
-  ]) : [[], [], [], [], []];
+  const [sponsorRows, receivingRows, checkoutLinks, receiptRows] = ownerId ? await Promise.all([
+    db.select({ name: users.name }).from(users).where(eq(users.id, ownerId)).limit(1),
+    db.select({ holderName: receivingPreferences.holderName, method: receivingPreferences.method, receivingKey: receivingPreferences.receivingKey, instructions: receivingPreferences.instructions, pixType: receivingPreferences.pixType, pixKey: receivingPreferences.pixKey }).from(receivingPreferences).where(eq(receivingPreferences.userId, ownerId)).limit(1),
+    db.select({ label: memberPaymentLinks.label, paymentUrl: memberPaymentLinks.paymentUrl }).from(memberPaymentLinks).where(and(eq(memberPaymentLinks.userId, ownerId), eq(memberPaymentLinks.isEnabled, 1))).orderBy(memberPaymentLinks.sortOrder, memberPaymentLinks.id),
+    db.select({ status: applicationPaymentReceipts.status }).from(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.applicationId, application.id)).orderBy(desc(applicationPaymentReceipts.createdAt)).limit(1),
+  ]) : [[], [], [], []];
+  const receiving = receivingRows[0];
+  const pixKey = receiving?.pixKey || (receiving?.method === "pix" ? receiving.receivingKey : null);
   return {
-    application,
-    sponsor: sponsorRows[0] ? { ...sponsorRows[0], profile: profileRows[0] ?? null } : null,
-    receiving: receivingRows[0] ?? null,
+    trackingCode: application.trackingCode ?? normalizedTrackingCode,
+    buyerName: application.fullName,
+    offerAmountCents: application.offerAmountCents,
+    paymentStatus: application.paymentStatus,
+    activationStatus: application.activationStatus,
+    latestReceiptStatus: receiptRows[0]?.status ?? null,
+    sponsor: sponsorRows[0]?.name ? { name: sponsorRows[0].name } : null,
+    pix: pixKey ? { holderName: receiving?.holderName ?? null, type: receiving?.pixType ?? (receiving?.method === "pix" ? "PIX" : null), key: pixKey, instructions: receiving?.instructions ?? null } : null,
     paymentLinks: checkoutLinks,
-    receipts: receiptRows,
   };
 }
 
@@ -1293,9 +1359,12 @@ function sanitizeOriginalName(name: string | null | undefined) {
 }
 
 export async function uploadApplicationPaymentReceipt(input: ApplicationReceiptUpload) {
+  const normalizedTrackingCode = input.trackingCode.trim().toUpperCase();
+  const claims = verifyPaymentAccessToken(input.paymentAccessToken, normalizedTrackingCode);
+  if (!claims) throw new Error("Acesso inválido ou expirado. Abra novamente o acompanhamento do pedido.");
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const rows = await db.select().from(applications).where(eq(applications.trackingCode, input.trackingCode.trim().toUpperCase())).limit(1);
+  const rows = await db.select().from(applications).where(and(eq(applications.id, claims.applicationId), eq(applications.trackingCode, normalizedTrackingCode))).limit(1);
   const application = rows[0];
   const ownerUserId = application?.ownerUserId;
   if (!application || !ownerUserId) throw new Error("Pedido não encontrado ou sem responsável definido.");
@@ -1304,6 +1373,17 @@ export async function uploadApplicationPaymentReceipt(input: ApplicationReceiptU
   const extension = receiptExtension(input.contentType);
 
   const receipt = await db.transaction(async tx => {
+    const recentHour = new Date(Date.now() - 60 * 60 * 1000);
+    const recentDay = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [hourRows, dayRows, pendingRows] = await Promise.all([
+      tx.select({ count: sql<number>`COUNT(*)` }).from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.applicationId, application.id), gte(applicationPaymentReceipts.createdAt, recentHour))),
+      tx.select({ count: sql<number>`COUNT(*)` }).from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.applicationId, application.id), gte(applicationPaymentReceipts.createdAt, recentDay))),
+      tx.select({ id: applicationPaymentReceipts.id }).from(applicationPaymentReceipts).where(and(eq(applicationPaymentReceipts.applicationId, application.id), eq(applicationPaymentReceipts.status, "pending"))).limit(1),
+    ]);
+    if (Number(hourRows[0]?.count ?? 0) >= 3) throw new Error("Limite de comprovantes atingido. Tente novamente mais tarde.");
+    if (Number(dayRows[0]?.count ?? 0) >= 10) throw new Error("Limite diário de comprovantes atingido. Tente novamente amanhã.");
+    if (pendingRows[0]) throw new Error("Já existe um comprovante aguardando análise.");
+
     const transition = await tx.update(applications).set({ paymentStatus: "receipt_received", selectedPaymentMethod: "PIX" }).where(and(
       eq(applications.id, application.id),
       or(eq(applications.paymentStatus, "awaiting_payment"), eq(applications.paymentStatus, "rejected")),
@@ -1429,34 +1509,6 @@ export async function getAdminOverview() {
   };
 }
 
-function parseBooleanSetting(value: string | null | undefined, fallback = false) {
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return fallback;
-}
-
-export async function getPublicPlatformSettings() {
-  const db = await getDb();
-  if (!db) return { hideExternalPreviewNotice: false };
-  const rows = await db.select().from(platformSettings).where(eq(platformSettings.key, HIDE_EXTERNAL_PREVIEW_NOTICE_KEY)).limit(1);
-  return { hideExternalPreviewNotice: parseBooleanSetting(rows[0]?.value, false) };
-}
-
-export async function getAdminPlatformSettings() {
-  return getPublicPlatformSettings();
-}
-
-export async function updateAdminPlatformSettings(adminId: number, input: { hideExternalPreviewNotice: boolean }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await db.insert(platformSettings).values({
-    key: HIDE_EXTERNAL_PREVIEW_NOTICE_KEY,
-    value: String(input.hideExternalPreviewNotice),
-    updatedBy: adminId,
-  }).onDuplicateKeyUpdate({ set: { value: String(input.hideExternalPreviewNotice), updatedBy: adminId } });
-  return getAdminPlatformSettings();
-}
-
 export async function getAdminContent() {
   const db = await getDb();
   if (!db) return [];
@@ -1511,8 +1563,8 @@ export async function updateAdminTicket(ticketId: number, input: { status: "open
 const contactStatuses = ["new", "contacted", "qualified", "archived"] as const;
 type ContactStatus = typeof contactStatuses[number];
 
-async function recordMemberActivity(userId: number, type: "contact_created" | "contact_updated" | "invitation_prepared" | "invitation_cancelled", entityType: string, entityId: number | null, description: string) {
-  const db = await getDb();
+async function recordMemberActivity(userId: number, type: "contact_created" | "contact_updated" | "invitation_prepared" | "invitation_cancelled", entityType: string, entityId: number | null, description: string, executor?: DbExecutor) {
+  const db = executor ?? await getDb();
   if (!db) return;
   await db.insert(memberActivities).values({ userId, type, entityType, entityId, description });
 }
@@ -1526,20 +1578,28 @@ export async function getMemberContacts(userId: number) {
 export async function createMemberContact(userId: number, input: { campaignId?: number | null; name: string; email: string; whatsapp?: string | null; source: string; consentNote?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  if (input.campaignId) {
-    const campaign = await db.select({ id: campaignLinks.id }).from(campaignLinks).where(and(eq(campaignLinks.id, input.campaignId), eq(campaignLinks.userId, userId))).limit(1);
-    if (!campaign[0]) throw new Error("Campanha não encontrada para esta conta.");
-  }
-  const result = await db.insert(memberContacts).values({ userId, campaignId: input.campaignId ?? null, name: input.name, email: input.email, whatsapp: input.whatsapp ?? null, source: input.source, consentNote: input.consentNote ?? null, captureType: input.campaignId ? "campaign" : "manual" });
-  if (input.campaignId) {
-    await db.update(campaignLinks).set({ leads: sql`${campaignLinks.leads} + 1` }).where(eq(campaignLinks.id, input.campaignId));
-  }
-  const id = Number(result[0].insertId);
-  if (input.campaignId) {
-    await recordCampaignConversion({ campaignId: input.campaignId, userId, conversionType: "lead", entityType: "memberContact", entityId: id, captureMode: "manual" });
-  }
-  await recordMemberActivity(userId, "contact_created", "contact", id, `Contato consentido registrado: ${input.name}.`);
-  return { id };
+  const campaignId = input.campaignId ?? null;
+  const normalizedEmail = input.email.trim().toLowerCase();
+  return db.transaction(async tx => {
+    if (campaignId !== null) {
+      const campaign = await tx.select({ id: campaignLinks.id }).from(campaignLinks).where(and(eq(campaignLinks.id, campaignId), eq(campaignLinks.userId, userId))).limit(1);
+      if (!campaign[0]) throw new Error("Campanha não encontrada para esta conta.");
+    }
+    const duplicateWhere = campaignId === null
+      ? and(eq(memberContacts.userId, userId), isNull(memberContacts.campaignId), eq(memberContacts.email, normalizedEmail))
+      : and(eq(memberContacts.userId, userId), eq(memberContacts.campaignId, campaignId), eq(memberContacts.email, normalizedEmail));
+    const existing = await tx.select({ id: memberContacts.id }).from(memberContacts).where(duplicateWhere).limit(1);
+    if (existing[0]) return { id: existing[0].id, created: false } as const;
+
+    const result = await tx.insert(memberContacts).values({ userId, campaignId, name: input.name, email: normalizedEmail, whatsapp: input.whatsapp ?? null, source: input.source, consentNote: input.consentNote ?? null, captureType: campaignId !== null ? "campaign" : "manual" });
+    const id = Number(result[0].insertId);
+    if (campaignId !== null) {
+      await tx.update(campaignLinks).set({ leads: sql`${campaignLinks.leads} + 1` }).where(eq(campaignLinks.id, campaignId));
+      await recordCampaignConversion({ campaignId, userId, conversionType: "lead", entityType: "memberContact", entityId: id, captureMode: "manual" }, tx);
+    }
+    await recordMemberActivity(userId, "contact_created", "contact", id, `Contato consentido registrado: ${input.name}.`, tx);
+    return { id, created: true } as const;
+  });
 }
 
 export async function updateMemberContact(userId: number, contactId: number, input: { status: ContactStatus; source?: string }) {

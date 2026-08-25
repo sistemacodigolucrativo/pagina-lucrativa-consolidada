@@ -19,7 +19,6 @@ import {
   getAdminEbook,
   getAdminEbooks,
   getAdminOverview,
-  getAdminPlatformSettings,
   getAdminTickets,
   getAdminActivities,
   getMemberCampaigns,
@@ -45,7 +44,6 @@ import {
   getPublicSalesSectionImages,
   getAdminPublicSalesSectionImages,
   getPublicAffiliateProfile,
-  getPublicPlatformSettings,
   getPublishedEbook,
   getPublishedEbooks,
   getPublishedCourses,
@@ -84,11 +82,10 @@ import {
   getPublicSalesSocialProof,
   removeAdminPublicSalesSectionImage,
   upsertAdminPublicSalesSectionImage,
-  updateAdminPlatformSettings,
   startSecurityPasswordRecovery,
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
-import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema } from "@shared/applications";
+import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema, paymentAccessInputSchema } from "@shared/applications";
 import { z } from "zod";
 
 const campaignInput = z.object({
@@ -328,21 +325,18 @@ export const appRouter = router({
   applications: router({
     submit: publicProcedure.input(applicationInputSchema).mutation(({ ctx, input }) => createApplication(input, ctx.req)),
     lookup: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24), email: normalizedEmailZodSchema })).query(({ input }) => getApplicationTracking(input.trackingCode, input.email)),
-    paymentPage: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24) })).query(({ input }) => getApplicationPaymentPage(input.trackingCode)),
+    paymentPage: publicProcedure.input(paymentAccessInputSchema).mutation(({ input }) => getApplicationPaymentPage(input.trackingCode, input.paymentAccessToken)),
     uploadReceipt: publicProcedure.input(applicationReceiptUploadSchema).mutation(({ input }) => uploadApplicationPaymentReceipt(input)),
   }),
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
     applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
-    platformSettings: publicProcedure.query(() => getPublicPlatformSettings()),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
     salesSocialProof: publicProcedure.query(() => getPublicSalesSocialProof()),
     completePersonalization: publicProcedure.input(applicationPersonalizationSchema).mutation(({ input }) => completeApplicationPersonalization(input)),
   }),
   admin: router({
     overview: adminProcedure.query(() => getAdminOverview()),
-    platformSettings: adminProcedure.query(() => getAdminPlatformSettings()),
-    updatePlatformSettings: adminProcedure.input(z.object({ hideExternalPreviewNotice: z.boolean() })).mutation(({ ctx, input }) => updateAdminPlatformSettings(ctx.user.id, input)),
     courses: adminProcedure.query(() => getAdminCourses()),
     createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
     updateCourse: adminProcedure.input(courseInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...course } = input; return updateAdminCourse(id, course); }),

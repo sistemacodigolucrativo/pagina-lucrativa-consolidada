@@ -11,6 +11,28 @@ export const applicationInputSchema = z.object({
 
 export type ApplicationInput = z.infer<typeof applicationInputSchema>;
 
+export type PublicPaymentPage = {
+  trackingCode: string;
+  buyerName: string;
+  offerAmountCents: number;
+  paymentStatus: "not_started" | "awaiting_payment" | "receipt_received" | "confirmed" | "rejected";
+  activationStatus: "not_started" | "access_issued" | "personalization_started" | "member_activated" | "cancelled";
+  latestReceiptStatus: "pending" | "approved" | "rejected" | null;
+  sponsor: { name: string } | null;
+  pix: {
+    holderName: string | null;
+    type: string | null;
+    key: string;
+    instructions: string | null;
+  } | null;
+  paymentLinks: Array<{ label: string; paymentUrl: string }>;
+};
+
+export const paymentAccessInputSchema = z.object({
+  trackingCode: z.string().trim().toUpperCase().min(6).max(24),
+  paymentAccessToken: z.string().trim().min(32).max(2048),
+});
+
 export const applicationStatusLabel = {
   pending: "Novo pedido",
   contacted: "Contato iniciado",
@@ -50,6 +72,7 @@ export const memberPaymentLinksInputSchema = z.object({
 
 export const applicationReceiptUploadSchema = z.object({
   trackingCode: z.string().trim().toUpperCase().min(6).max(24),
+  paymentAccessToken: z.string().trim().min(32).max(2048),
   dataUrl: z.string().max(7_200_000, "O arquivo deve ter no máximo 5 MB."),
   contentType: z.enum(["image/jpeg", "image/png", "image/webp", "application/pdf"]),
   originalName: z.string().trim().max(255).optional().nullable(),

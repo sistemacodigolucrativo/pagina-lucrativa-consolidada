@@ -1,5 +1,6 @@
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
+import { readPaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import { applicationActivationStatusLabel, applicationPaymentStatusLabel } from "@shared/applications";
 import { ArrowLeft, ArrowRight, CheckCircle2, Clipboard, CreditCard, Loader2, QrCode, UploadCloud, UserRound } from "lucide-react";
 import { ChangeEvent, useEffect, useMemo, useState } from "react";
@@ -27,22 +28,23 @@ export default function ApplicationPayment() {
   const [, legacyParams] = useRoute("/pedido/:trackingCode/pagamento");
   const queryCode = typeof window === "undefined" ? "" : new URLSearchParams(window.location.search).get("codigo") ?? "";
   const trackingCode = (instructionParams?.trackingCode ?? legacyParams?.trackingCode ?? queryCode).trim().toUpperCase();
-  const payment = trpc.applications.paymentPage.useQuery({ trackingCode }, { enabled: Boolean(trackingCode), retry: false });
+  const paymentAccessToken = readPaymentAccessToken(trackingCode);
+  const payment = trpc.applications.paymentPage.useMutation();
+
+  useEffect(() => {
+    if (trackingCode && paymentAccessToken) payment.mutate({ trackingCode, paymentAccessToken });
+  }, [trackingCode, paymentAccessToken]);
   const uploadReceipt = trpc.applications.uploadReceipt.useMutation({
     onSuccess: async () => {
-      await payment.refetch();
+      payment.mutate({ trackingCode, paymentAccessToken });
       toast.success("Comprovante enviado. O responsável recebeu sua solicitação.");
     },
     onError: error => toast.error(error.message),
   });
 
-  const pixKey = useMemo(() => {
-    const receiving = payment.data?.receiving;
-    return receiving?.pixKey || (receiving?.method === "pix" ? receiving.receivingKey : null);
-  }, [payment.data?.receiving]);
-
-  const pixType = payment.data?.receiving?.pixType || (payment.data?.receiving?.method === "pix" ? "PIX" : null);
-  const sponsorName = payment.data?.sponsor?.name || payment.data?.sponsor?.profile?.slug || "responsável pela Página Lucrativa";
+  const pixKey = payment.data?.pix?.key ?? null;
+  const pixType = payment.data?.pix?.type || (pixKey ? "PIX" : null);
+  const sponsorName = payment.data?.sponsor?.name || "responsável pela Página Lucrativa";
   const availableMethods = useMemo<PaymentMethod[]>(() => {
     const methods: PaymentMethod[] = [];
     if (pixKey) methods.push("pix");
@@ -86,14 +88,18 @@ export default function ApplicationPayment() {
       return;
     }
     const dataUrl = await readFileAsDataUrl(file);
-    uploadReceipt.mutate({ trackingCode, dataUrl, contentType: file.type as typeof allowedReceiptTypes[number], originalName: file.name });
+    uploadReceipt.mutate({ trackingCode, paymentAccessToken, dataUrl, contentType: file.type as typeof allowedReceiptTypes[number], originalName: file.name });
   }
 
   if (!trackingCode) {
     return <main className="access-page"><section className="access-card"><a href={withAppBase("/")} className="access-back"><ArrowLeft size={15} /> Voltar</a><h1>Pedido não informado.</h1><p>Não foi possível identificar o código do pedido para carregar o pagamento.</p></section></main>;
   }
 
-  if (payment.isLoading) {
+  if (!paymentAccessToken) {
+    return <main className="access-page"><section className="access-card"><a href={withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(trackingCode)}`)} className="access-back"><ArrowLeft size={15} /> Voltar</a><h1>Acesso de pagamento não disponível.</h1><p>Por segurança, esta página precisa ser aberta a partir do pedido recém-registrado ou após confirmar o código e o e-mail no acompanhamento.</p><a className="btn btn-primary mt-5" href={withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(trackingCode)}`)}>Confirmar meus dados</a></section></main>;
+  }
+
+  if (payment.isPending || (paymentAccessToken && !payment.data)) {
     return <main className="grid min-h-screen place-items-center bg-[#050505] p-6 text-zinc-300"><Loader2 className="size-7 animate-spin text-emerald-300" /></main>;
   }
 
@@ -101,13 +107,15 @@ export default function ApplicationPayment() {
     return <main className="access-page"><section className="access-card"><a href={withAppBase("/")} className="access-back"><ArrowLeft size={15} /> Voltar</a><h1>Pedido não encontrado.</h1><p>Confira o código recebido e tente novamente.</p></section></main>;
   }
 
-  const { application, paymentLinks, receiving, receipts } = payment.data;
-  const hasReceiptAwaitingReview = application.paymentStatus === "receipt_received" || receipts.some(receipt => receipt.status === "pending");
-  const canRetryRejectedReceipt = application.paymentStatus === "rejected" && !receipts.some(receipt => receipt.status === "pending");
-  const hasSubmittedReceipt = !canRetryRejectedReceipt && (hasReceiptAwaitingReview || receipts.length > 0);
-  const orderTrackingCode = application.trackingCode ?? trackingCode;
+  const application = payment.data;
+  const { paymentLinks } = payment.data;
+  const latestReceiptStatus = payment.data.latestReceiptStatus;
+  const hasReceiptAwaitingReview = application.paymentStatus === "receipt_received" || latestReceiptStatus === "pending";
+  const canRetryRejectedReceipt = application.paymentStatus === "rejected" && latestReceiptStatus !== "pending";
+  const hasSubmittedReceipt = application.paymentStatus === "confirmed" || Boolean(latestReceiptStatus);
+  const orderTrackingCode = application.trackingCode || trackingCode;
   const trackingHref = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(orderTrackingCode)}`);
-  const showReceiptUpload = selectedMethod === "pix" && Boolean(pixKey);
+  const showReceiptUpload = selectedMethod === "pix" && Boolean(pixKey) && application.paymentStatus !== "confirmed";
   const receiptStatusLabel = application.paymentStatus === "confirmed" ? "Pagamento confirmado"
     : application.paymentStatus === "rejected" ? "Comprovante rejeitado"
       : hasReceiptAwaitingReview ? "Comprovante recebido — aguardando análise"
@@ -125,9 +133,7 @@ export default function ApplicationPayment() {
   };
   const buyerDetailsContent = <>
     <div className="flex items-center gap-2 text-white"><UserRound className="size-5 text-emerald-300" /><h2 className="font-semibold">Detalhes do comprador</h2></div>
-    <div><span className="text-xs uppercase tracking-wider text-zinc-500">Nome</span><strong className="mt-1 block text-white">{application.fullName}</strong></div>
-    <div><span className="text-xs uppercase tracking-wider text-zinc-500">E-mail</span><p className="mt-1 break-all text-sm text-zinc-400">{application.email}</p></div>
-    <div><span className="text-xs uppercase tracking-wider text-zinc-500">WhatsApp</span><p className="mt-1 text-sm text-zinc-400">{application.whatsapp}</p></div>
+    <div><span className="text-xs uppercase tracking-wider text-zinc-500">Nome</span><strong className="mt-1 block text-white">{application.buyerName}</strong></div>
     <div className="border-t border-white/10 pt-4 text-sm leading-6 text-zinc-300"><h3 className="mb-2 font-semibold text-white">Status do pedido</h3><p><strong className="text-white">Pagamento:</strong> {applicationPaymentStatusLabel[application.paymentStatus]}</p><p><strong className="text-white">Comprovante:</strong> {receiptStatusLabel}</p><p><strong className="text-white">Acesso:</strong> {applicationActivationStatusLabel[application.activationStatus]}</p></div>
   </>;
 
@@ -182,13 +188,13 @@ export default function ApplicationPayment() {
             <div className="flex items-center gap-2 text-white"><QrCode className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">2. Pague com PIX</h2></div>
             <div className="mt-4 space-y-4">
               <dl className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Titular</dt><dd className="mt-1 text-white">{receiving?.holderName || sponsorName}</dd></div>
+                <div className="rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Titular</dt><dd className="mt-1 text-white">{payment.data.pix?.holderName || sponsorName}</dd></div>
                 <div className="rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Tipo da chave</dt><dd className="mt-1 text-white">{pixType || "PIX"}</dd></div>
               </dl>
               <div className="rounded-xl border border-white/10 bg-black/35 p-4">
                 <span className="text-xs uppercase tracking-wider text-zinc-500">Chave PIX</span>
                 <code className="mt-2 block break-all text-sm text-emerald-100">{pixKey}</code>
-                {receiving?.instructions ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">{receiving.instructions}</p> : null}
+                {payment.data.pix?.instructions ? <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-zinc-300">{payment.data.pix.instructions}</p> : null}
               </div>
               <button type="button" onClick={copyPix} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-200 active:scale-[.98] sm:w-auto"><Clipboard className="size-4" />Copiar chave PIX</button>
             </div>
@@ -197,7 +203,7 @@ export default function ApplicationPayment() {
           {selectedMethod === "checkout" && paymentLinks.length ? <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
             <div className="flex items-center gap-2 text-white"><CreditCard className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">2. Pague pelo checkout</h2></div>
             <p className="mt-2 text-sm leading-6 text-zinc-400">Você será encaminhado para o checkout configurado pelo responsável. A Página Lucrativa não processa cartão diretamente.</p>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">{paymentLinks.map(link => <a key={link.id} href={link.paymentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-emerald-300 px-4 py-3 text-center text-sm font-semibold text-black transition hover:bg-emerald-200">Pagar com {link.label}</a>)}</div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">{paymentLinks.map((link, index) => <a key={`${link.label}-${index}`} href={link.paymentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-emerald-300 px-4 py-3 text-center text-sm font-semibold text-black transition hover:bg-emerald-200">Pagar com {link.label}</a>)}</div>
           </article> : null}
 
           <article className="space-y-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6 lg:hidden">

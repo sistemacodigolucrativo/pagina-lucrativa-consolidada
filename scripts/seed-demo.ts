@@ -201,25 +201,51 @@ async function insertTracking(userId: number, campaignId: number, index: number)
 
 async function upsertApplication(ownerUserId: number, affiliateSlug: string, index: number, status: "awaiting_payment" | "receipt_received" | "confirmed" | "rejected") {
   const trackingCode = `PL-DEMO${String(index).padStart(6, "0")}`.slice(0, 24);
-  await execute(
-    `INSERT INTO applications (fullName, email, whatsapp, trackingCode, ownerUserId, affiliateSlug, status, paymentStatus, activationStatus, offerAmountCents, selectedPaymentMethod, createdAt)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 5000, 'PIX', ?)
-     ON DUPLICATE KEY UPDATE fullName = VALUES(fullName), email = VALUES(email), whatsapp = VALUES(whatsapp), ownerUserId = VALUES(ownerUserId), affiliateSlug = VALUES(affiliateSlug), status = VALUES(status), paymentStatus = VALUES(paymentStatus), activationStatus = VALUES(activationStatus), selectedPaymentMethod = 'PIX'`,
-    [
-      `${DEMO_TAG} Comprador ${index}`,
-      `demo.comprador.${index}@example.test`,
-      `1197${String(7000000 + index).slice(0, 7)}`,
-      trackingCode,
-      ownerUserId,
-      affiliateSlug,
-      status === "confirmed" ? "approved" : status === "rejected" ? "contacted" : "pending",
-      status,
-      status === "confirmed" ? "access_issued" : "not_started",
-      daysAgo(index),
-    ],
+  const expectedStatus = status === "confirmed" ? "approved" : status === "rejected" ? "contacted" : "pending";
+  const expectedActivationStatus = status === "confirmed" ? "access_issued" : "not_started";
+  const existing = await query<Array<{ id: number; ownerUserId: number | null; affiliateSlug: string | null; paymentStatus: string; activationStatus: string } & mysql.RowDataPacket>>(
+    "SELECT id, ownerUserId, affiliateSlug, paymentStatus, activationStatus FROM applications WHERE trackingCode = ? LIMIT 1",
+    [trackingCode],
   );
-  const rows = await query<Array<{ id: number } & mysql.RowDataPacket>>("SELECT id FROM applications WHERE trackingCode = ? LIMIT 1", [trackingCode]);
-  const applicationId = rows[0].id;
+  let applicationId: number;
+  if (!existing[0]) {
+    const result = await execute(
+      `INSERT INTO applications (fullName, email, whatsapp, trackingCode, ownerUserId, affiliateSlug, status, paymentStatus, activationStatus, offerAmountCents, selectedPaymentMethod, createdAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 5000, 'PIX', ?)`,
+      [
+        `${DEMO_TAG} Comprador ${index}`,
+        `demo.comprador.${index}@example.test`,
+        `1197${String(7000000 + index).slice(0, 7)}`,
+        trackingCode,
+        ownerUserId,
+        affiliateSlug,
+        expectedStatus,
+        status,
+        expectedActivationStatus,
+        daysAgo(index),
+      ],
+    );
+    applicationId = result.insertId;
+  } else {
+    const current = existing[0];
+    if (current.ownerUserId !== ownerUserId || current.affiliateSlug !== affiliateSlug) {
+      throw new Error(`Seed recusado: ownership existente diverge da configuração esperada para ${trackingCode}.`);
+    }
+    const preserveConfirmed = current.paymentStatus === "confirmed";
+    await execute(
+      `UPDATE applications SET fullName = ?, email = ?, whatsapp = ?, status = ?, paymentStatus = ?, activationStatus = ?, selectedPaymentMethod = 'PIX' WHERE id = ?`,
+      [
+        `${DEMO_TAG} Comprador ${index}`,
+        `demo.comprador.${index}@example.test`,
+        `1197${String(7000000 + index).slice(0, 7)}`,
+        preserveConfirmed ? "approved" : expectedStatus,
+        preserveConfirmed ? "confirmed" : status,
+        preserveConfirmed ? current.activationStatus : expectedActivationStatus,
+        current.id,
+      ],
+    );
+    applicationId = current.id;
+  }
   if (status === "receipt_received" || status === "confirmed" || status === "rejected") {
     const receiptStatus = status === "confirmed" ? "approved" : status === "rejected" ? "rejected" : "pending";
     const existing = await query<Array<{ id: number } & mysql.RowDataPacket>>("SELECT id FROM applicationPaymentReceipts WHERE applicationId = ? AND originalName = ? LIMIT 1", [applicationId, `${DEMO_TAG.toLowerCase()}-receipt-${index}.png`]);
@@ -272,12 +298,18 @@ async function main() {
 
   for (let i = 1; i < memberIds.length; i += 1) {
     const sponsorId = i < 8 ? memberIds[0] : memberIds[1];
-    await execute(
-      `INSERT INTO referralLinks (sponsorId, referredUserId, status)
-       VALUES (?, ?, ?)
-       ON DUPLICATE KEY UPDATE sponsorId = VALUES(sponsorId), status = VALUES(status)`,
-      [sponsorId, memberIds[i], i % 6 === 0 ? "archived" : "active"],
-    );
+    const referralRows = await query<Array<{ id: number; sponsorId: number } & mysql.RowDataPacket>>("SELECT id, sponsorId FROM referralLinks WHERE referredUserId = ? LIMIT 1", [memberIds[i]]);
+    if (!referralRows[0]) {
+      await execute(
+        "INSERT INTO referralLinks (sponsorId, referredUserId, status) VALUES (?, ?, ?)",
+        [sponsorId, memberIds[i], i % 6 === 0 ? "archived" : "active"],
+      );
+    } else {
+      if (referralRows[0].sponsorId !== sponsorId) {
+        throw new Error(`Seed recusado: patrocinador existente diverge da configuração esperada para o membro ${memberIds[i]}.`);
+      }
+      await execute("UPDATE referralLinks SET status = ? WHERE id = ?", [i % 6 === 0 ? "archived" : "active", referralRows[0].id]);
+    }
   }
 
   const articleBodies = ["Copy curta para WhatsApp", "Legenda para Instagram", "Texto para Facebook", "Descricao de status", "Chamada promocional", "Roteiro de abordagem", "Mensagem de follow-up", "Checklist de divulgacao"];

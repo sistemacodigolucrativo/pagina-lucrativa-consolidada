@@ -27,7 +27,11 @@ describe("atribuição e conversões de campanhas", () => {
     const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     expect(schema).toContain('captureType: mysqlEnum("captureType", ["manual", "campaign", "organic"])');
-    expect(db).toContain('captureType: input.campaignId ? "campaign" : "manual"');
+    expect(db).toContain('captureType: campaignId !== null ? "campaign" : "manual"');
     expect(db).toContain("campaignLinks.leads");
+    expect(db).toContain("return db.transaction(async tx => {");
+    expect(db).toContain("duplicateWhere");
+    expect(db).toContain("entityType: \"memberContact\"");
+    expect(db).toContain("recordMemberActivity(userId, \"contact_created\", \"contact\", id");
   });
 });

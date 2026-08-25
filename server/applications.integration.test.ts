@@ -52,6 +52,13 @@ describe("gestão de solicitações públicas", () => {
     expect(router).toContain("completePersonalization: publicProcedure");
   });
 
+  it("persiste pedido e conversão em uma mesma transação", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    expect(db).toContain("const result = await db.transaction(async tx => {");
+    expect(db).toContain("}, tx);");
+    expect(db).toContain("onDuplicateKeyUpdate");
+  });
+
   it("não usa patrocinador fallback quando o pedido informa afiliado explícito inválido", async () => {
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     expect(db).toContain("if (!owner[0] && !affiliateSlug)");
@@ -97,11 +104,33 @@ describe("gestão de solicitações públicas", () => {
     expect(paymentPage).toContain("Detalhes do comprador");
     expect(paymentPage).toContain("selectedMethod === \"pix\"");
     expect(paymentPage).toContain("selectedMethod === \"checkout\"");
-    expect(paymentPage).toContain("const showReceiptUpload = selectedMethod === \"pix\" && Boolean(pixKey)");
+    expect(paymentPage).toContain("const showReceiptUpload");
     expect(paymentPage).toContain("Copiar chave PIX");
     expect(paymentPage).toContain("Pagamento via link de checkout");
     expect(paymentPage).not.toContain("Finalize sua ativação.");
     expect(paymentPage).not.toContain("Aprovação imediata");
     expect(db).toContain('selectedPaymentMethod: "PIX"');
+    expect(db).toContain("recentHour");
+    expect(db).toContain("recentDay");
+    expect(db).toContain("pendingRows");
+  });
+
+  it("protege a página de pagamento com token e DTO público mínimo", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+    const paymentPage = await readFile(path.join(root, "client/src/pages/ApplicationPayment.tsx"), "utf8");
+    const publicPayment = db.slice(db.indexOf("export async function getApplicationPaymentPage"), db.indexOf("function parseReceiptDataUrl"));
+    expect(router).toContain("paymentPage: publicProcedure.input(paymentAccessInputSchema).mutation");
+    expect(router).toContain("uploadReceipt: publicProcedure.input(applicationReceiptUploadSchema)");
+    expect(publicPayment).toContain("verifyPaymentAccessToken");
+    expect(publicPayment).toContain("Promise<PublicPaymentPage | null>");
+    expect(publicPayment).not.toContain("profileRows");
+    expect(publicPayment).not.toContain("receipts: receiptRows");
+    expect(publicPayment).not.toContain("storageKey");
+    expect(paymentPage).toContain("readPaymentAccessToken");
+    expect(paymentPage).toContain("paymentAccessToken");
+    expect(paymentPage).not.toContain("application.email");
+    expect(paymentPage).not.toContain("application.whatsapp");
+    expect(paymentPage).not.toContain("paymentPage.useQuery");
   });
 });
