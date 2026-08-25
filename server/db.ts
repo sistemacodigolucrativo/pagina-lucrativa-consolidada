@@ -969,7 +969,7 @@ export async function getPublicAffiliateProfile(slug: string) {
   const rows = await db.select({
     slug: memberProfiles.slug,
     bio: memberProfiles.bio,
-    name: users.name,
+    name: sql<string>`COALESCE(${users.name}, ${memberProfiles.slug})`,
     photoUrl: memberProfiles.photoUrl,
     whatsapp: memberProfiles.whatsapp,
     websiteUrl: memberProfiles.websiteUrl,
@@ -979,7 +979,7 @@ export async function getPublicAffiliateProfile(slug: string) {
     linkedinUrl: memberProfiles.linkedinUrl,
     youtubeUrl: memberProfiles.youtubeUrl,
     skype: memberProfiles.skype,
-  }).from(memberProfiles).innerJoin(users, eq(users.id, memberProfiles.userId)).where(eq(memberProfiles.slug, slug)).limit(1);
+  }).from(memberProfiles).leftJoin(users, eq(users.id, memberProfiles.userId)).where(eq(memberProfiles.slug, slug)).limit(1);
   return rows[0] ?? null;
 }
 

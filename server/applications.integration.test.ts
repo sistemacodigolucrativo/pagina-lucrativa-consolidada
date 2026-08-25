@@ -45,6 +45,9 @@ describe("gestão de solicitações públicas", () => {
     const publicProfile = db.slice(db.indexOf("export async function getPublicAffiliateProfile"), db.indexOf("export async function getMemberTickets"));
     expect(publicProfile).toContain("photoUrl: memberProfiles.photoUrl");
     expect(publicProfile).toContain("whatsapp: memberProfiles.whatsapp");
+    expect(publicProfile).toContain("COALESCE");
+    expect(publicProfile).toContain("leftJoin(users");
+    expect(publicProfile).not.toContain("innerJoin(users");
     expect(publicProfile).not.toContain("email: users.email");
     expect(home).toContain("affiliate-profile-hero");
     expect(home).toContain("affiliate-profile-summary");
