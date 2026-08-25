@@ -827,7 +827,12 @@ export async function uploadMemberProfilePhoto(userId: number, input: { dataUrl:
   const stored = await storagePut(`member-profiles/${userId}/profile.${extension}`, buffer, input.contentType);
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(memberProfiles).set({ photoUrl: stored.url }).where(eq(memberProfiles.userId, userId));
+  const existingProfile = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1);
+  if (existingProfile[0]) {
+    await db.update(memberProfiles).set({ photoUrl: stored.url }).where(eq(memberProfiles.userId, userId));
+  } else {
+    await db.insert(memberProfiles).values({ userId, slug: `membro-${userId}`, photoUrl: stored.url });
+  }
   return getMemberProfile(userId);
 }
 

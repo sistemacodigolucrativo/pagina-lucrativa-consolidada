@@ -38,6 +38,12 @@ describe("local storage fallback", () => {
     await expect(storage.storageGetSignedUrl(stored.key)).resolves.toBe(stored.url);
   });
 
+  it("serves storage through the optional /dev prefix route", async () => {
+    const source = await import("node:fs/promises").then(fs => fs.readFile(new URL("./_core/storageProxy.ts", import.meta.url), "utf8"));
+    expect(source).toContain('process.env.VITE_DEV_PREFIX');
+    expect(source).toContain('`${appPrefix}/manus-storage/*`');
+  });
+
   it("rejects traversal attempts before writing outside the storage root", async () => {
     await expect(storage.storagePut("../outside.txt", "unsafe")).rejects.toThrow("Invalid storage key");
   });

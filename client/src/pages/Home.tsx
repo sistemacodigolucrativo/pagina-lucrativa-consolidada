@@ -160,7 +160,7 @@ export default function Home() {
       <section className="affiliate-profile-modal" role="dialog" aria-modal="true" aria-labelledby="affiliate-profile-modal-title">
         <button type="button" className="affiliate-profile-modal-close" aria-label="Fechar perfil público" onClick={() => setProfileDetailsOpen(false)}>×</button>
         <div className="affiliate-profile-modal-heading">
-          {affiliate.data.photoUrl ? <img src={affiliate.data.photoUrl} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-modal-avatar" /> : <div className="affiliate-profile-modal-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+          {affiliate.data.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-modal-avatar" /> : <div className="affiliate-profile-modal-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
           <div><span className="affiliate-profile-modal-eyebrow">Perfil público</span><h2 id="affiliate-profile-modal-title">{publicProfileName}</h2></div>
         </div>
         {affiliate.data.bio ? <p className="affiliate-profile-modal-bio">{affiliate.data.bio}</p> : null}
@@ -181,7 +181,7 @@ export default function Home() {
             {affiliate.data ? (
               <section className="affiliate-profile-hero" aria-label="Perfil público do apresentador">
                 <div className="affiliate-profile-summary">
-                  {affiliate.data.photoUrl ? <img src={affiliate.data.photoUrl} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+                  {affiliate.data.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
                   <div className="affiliate-profile-summary-main">
                     <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por:</span>
                     <strong className="affiliate-profile-presenter">Apresentador(a) da Página Lucrativa</strong>
@@ -226,7 +226,7 @@ export default function Home() {
             <article><span>Total de avaliações</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.reviewCount ?? 0}</strong></article>
           </div>
           {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : socialProof.data?.testimonials.length ? <div className="testimonial-grid">{socialProof.data.testimonials.map(item => <article key={item.id} className="testimonial-card">
-            {item.photoUrl ? <img src={item.photoUrl} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}
+            {item.photoUrl ? <img src={withAppBase(item.photoUrl)} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}
             <div className="testimonial-rating" aria-label={`Avaliação ${item.rating} de 5`}>{Array.from({ length: 5 }).map((_, index) => <Star key={index} size={14} fill={index < item.rating ? "currentColor" : "none"} />)}</div>
             <p>{item.content}</p>
             <footer><strong>{item.memberName}</strong><span>{item.location}</span></footer>

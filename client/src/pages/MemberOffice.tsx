@@ -91,11 +91,12 @@ export default function MemberOffice() {
   const currentPath = location.split("?")[0] || "/";
   const forceTour = location.includes("tour=1") || (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tour") === "1");
   const auth = useAuth();
-  const overview = trpc.member.overview.useQuery();
+  const needsOverview = ["/membros", "/membros/ganhos", "/membros/configuracoes"].includes(currentPath);
+  const overview = trpc.member.overview.useQuery(undefined, { enabled: needsOverview });
   const analytics = trpc.member.analytics.useQuery({ period: "all" }, { enabled: currentPath === "/membros" });
   const referrals = trpc.member.referrals.useQuery(undefined, { enabled: currentPath === "/membros" });
-  const campaigns = trpc.member.campaigns.useQuery();
-  const academy = trpc.member.academy.useQuery();
+  const campaigns = trpc.member.campaigns.useQuery(undefined, { enabled: currentPath === "/membros/campanhas" });
+  const academy = trpc.member.academy.useQuery(undefined, { enabled: currentPath === "/membros/academia" });
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const onboardingStorageKey = useMemo(() => auth.user?.id ? `${overviewOnboardingStorageBase}.${auth.user.id}` : overviewOnboardingStorageBase, [auth.user?.id]);
 
@@ -132,8 +133,8 @@ export default function MemberOffice() {
   };
 
   const renderBody = () => {
-    if (overview.isLoading) return <LoadingPanel />;
-    if (overview.isError) return <QueryState title="Não foi possível carregar a visão geral." message="Atualize a página para tentar novamente. Nenhum indicador foi apresentado como zero enquanto a consulta estava indisponível." />;
+    if (needsOverview && overview.isLoading) return <LoadingPanel />;
+    if (needsOverview && overview.isError) return <QueryState title="Não foi possível carregar a visão geral." message="Atualize a página para tentar novamente. Nenhum indicador foi apresentado como zero enquanto a consulta estava indisponível." />;
     const data = overview.data;
 
     if (currentPath === "/membros/campanhas" && campaigns.isLoading) return <LoadingPanel />;

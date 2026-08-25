@@ -1,6 +1,7 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import GettingStartedReturnButton from "@/components/GettingStartedReturnButton";
 import { PhoneInput } from "@/components/PhoneInput";
+import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { normalizePhone, validatePhoneBR } from "@shared/contactValidation";
 import { normalizeHttpUrl, validateHttpUrl } from "@shared/structuredValidation";
@@ -89,8 +90,9 @@ export default function MemberProfile() {
   });
 
   const uploadPhoto = trpc.member.uploadProfilePhoto.useMutation({
-    onSuccess: async () => {
-      await utils.member.profile.invalidate();
+    onSuccess: async updatedProfile => {
+      utils.member.profile.setData(undefined, updatedProfile);
+      await Promise.all([utils.member.profile.invalidate(), utils.member.overview.invalidate()]);
       toast.success("Foto de perfil atualizada.");
     },
     onError: error => toast.error(error.message),
@@ -165,6 +167,8 @@ export default function MemberProfile() {
     reader.readAsDataURL(file);
   };
 
+  const profilePhotoUrl = profile.data?.photoUrl ? withAppBase(profile.data.photoUrl) : "";
+
   return <DashboardLayout menuItems={menu} title="Escritório Virtual"><main className="mx-auto w-full max-w-5xl space-y-6 p-5 sm:p-8">
     <header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Página personalizada</span><h1 className="text-3xl font-semibold text-white">Editar perfil</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Configure os dados públicos exibidos na sua Página Lucrativa.</p></header>
     <aside className="rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-3 text-sm leading-6 text-emerald-50">Aqui você configura os dados de exibição que aparecerão na sua página pública, acessada através do seu link de indicação.</aside>
@@ -183,7 +187,7 @@ export default function MemberProfile() {
         <button type="submit" disabled={saveProfile.isPending || profile.isLoading} className="inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"><Save size={16} />{saveProfile.isPending ? "Salvando..." : "Salvar perfil"}</button>
       </form>
 
-      <aside className="order-1 space-y-4 lg:order-2"><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><ImagePlus size={18} className="text-emerald-300" /><h2 className="font-medium">Foto pessoal *</h2></div><p className="mt-3 text-sm leading-6 text-zinc-400">JPG, PNG ou GIF, com até 1 MB. Obrigatória para concluir a Etapa 1.</p>{profile.data?.photoUrl ? <img src={profile.data.photoUrl} alt="Foto do perfil" className="mt-4 aspect-square w-full rounded-xl border border-white/10 object-cover" /> : <div className="mt-4 flex aspect-square items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-zinc-500">Nenhuma foto enviada</div>}{errors.photoUrl ? <small className={errorClass} role="alert">{errors.photoUrl}</small> : null}<label className="mt-4 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black"><Upload size={16} />{photoBusy ? "Enviando..." : "Enviar foto"}<input type="file" accept="image/jpeg,image/png,image/gif" className="sr-only" disabled={photoBusy} onChange={handlePhoto} /></label></section><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 text-sm leading-6 text-zinc-400"><div className="flex items-center gap-2 text-white"><Link2 size={18} className="text-emerald-300" /><h2 className="font-medium">Perfil do Autor</h2></div><p className="mt-3">Descrição, WhatsApp, Website e redes sociais ficam associados ao seu perfil público e podem ser usados nas áreas editoriais autorizadas.</p></section></aside>
+      <aside className="order-1 space-y-4 lg:order-2"><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><ImagePlus size={18} className="text-emerald-300" /><h2 className="font-medium">Foto pessoal *</h2></div><p className="mt-3 text-sm leading-6 text-zinc-400">JPG, PNG ou GIF, com até 1 MB. Obrigatória para concluir a Etapa 1.</p>{profilePhotoUrl ? <img src={profilePhotoUrl} alt="Foto do perfil" className="mt-4 aspect-square w-full rounded-xl border border-white/10 object-cover" /> : <div className="mt-4 flex aspect-square items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-zinc-500">Nenhuma foto enviada</div>}{errors.photoUrl ? <small className={errorClass} role="alert">{errors.photoUrl}</small> : null}<label className="mt-4 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black"><Upload size={16} />{photoBusy ? "Enviando..." : "Enviar foto"}<input type="file" accept="image/jpeg,image/png,image/gif" className="sr-only" disabled={photoBusy} onChange={handlePhoto} /></label></section><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 text-sm leading-6 text-zinc-400"><div className="flex items-center gap-2 text-white"><Link2 size={18} className="text-emerald-300" /><h2 className="font-medium">Perfil do Autor</h2></div><p className="mt-3">Descrição, WhatsApp, Website e redes sociais ficam associados ao seu perfil público e podem ser usados nas áreas editoriais autorizadas.</p></section></aside>
     </section>
   </main><GettingStartedReturnButton /></DashboardLayout>;
 }

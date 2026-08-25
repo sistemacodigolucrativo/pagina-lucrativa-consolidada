@@ -1,10 +1,13 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import path from "node:path";
 import { LOCAL_STORAGE_DIR, normalizeKey } from "../storage";
 import { ENV } from "./env";
 
 export function registerStorageProxy(app: Express) {
-  app.get("/manus-storage/*", async (req, res) => {
+  const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
+  const storagePaths = Array.from(new Set(["/manus-storage/*", appPrefix ? `${appPrefix}/manus-storage/*` : null].filter((path): path is string => Boolean(path))));
+
+  const handleStorageRequest = async (req: Request, res: Response) => {
     const rawKey = (req.params as Record<string, string>)[0];
     if (!rawKey) {
       res.status(400).send("Missing storage key");
@@ -27,7 +30,7 @@ export function registerStorageProxy(app: Express) {
         return;
       }
       res.set("Cache-Control", "private, max-age=3600");
-      res.sendFile(key, { root }, error => {
+      res.sendFile(key, { root }, (error: Error | null) => {
         if (!error || res.headersSent) return;
         const typedError = error as NodeJS.ErrnoException & { statusCode?: number };
         res.status(typedError.statusCode === 404 || typedError.code === "ENOENT" ? 404 : 500).send("Stored file unavailable");
@@ -61,5 +64,9 @@ export function registerStorageProxy(app: Express) {
       console.error("[StorageProxy] failed:", err);
       res.status(502).send("Storage proxy error");
     }
-  });
+  };
+
+  for (const storagePath of storagePaths) {
+    app.get(storagePath, handleStorageRequest);
+  }
 }
