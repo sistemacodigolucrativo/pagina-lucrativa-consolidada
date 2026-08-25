@@ -24,7 +24,6 @@ import AdminSalesImages from "@/pages/AdminSalesImages";
 import Preview from "@/pages/Preview";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
-import AdminOutreach from "./pages/AdminOutreach";
 import AdminAudit from "./pages/AdminAudit";
 import AdminSettings from "./pages/AdminSettings";
 import AdminSupport from "./pages/AdminSupport";
@@ -142,7 +141,7 @@ function AppRoutes() {
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/imagens" component={AdminSalesImages} />
     <Route path="/preview" component={Preview} />
-    <Route path="/admin/divulgacao" component={AdminOutreach} />
+    <Route path="/admin/divulgacao" component={AdminOperations} />
     <Route path="/admin/suporte" component={AdminSupport} />
     <Route path="/admin/auditoria" component={AdminAudit} />
     <Route path="/admin/configuracoes" component={AdminSettings} />

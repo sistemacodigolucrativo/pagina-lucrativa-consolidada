@@ -1,10 +1,9 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, ChartNoAxesCombined, ClipboardList, FileText, ImagePlus, LifeBuoy, Mail, Megaphone, Settings, UsersRound } from "lucide-react";
+import { BookOpenCheck, ChartNoAxesCombined, ClipboardList, FileText, ImagePlus, LifeBuoy, Mail, Settings, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
   { icon: UsersRound, label: "Membros e rede", path: "/admin/membros", group: "Gestão de membros" },
-  { icon: Megaphone, label: "Divulgação", path: "/admin/divulgacao", group: "Comercial" },
   { icon: FileText, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Conteúdo" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Conteúdo" },

@@ -1511,7 +1511,7 @@ export async function updateAdminTicket(ticketId: number, input: { status: "open
 const contactStatuses = ["new", "contacted", "qualified", "archived"] as const;
 type ContactStatus = typeof contactStatuses[number];
 
-async function recordMemberActivity(userId: number, type: "contact_created" | "contact_updated" | "invitation_prepared" | "invitation_cancelled" | "admin_contact_update", entityType: string, entityId: number | null, description: string) {
+async function recordMemberActivity(userId: number, type: "contact_created" | "contact_updated" | "invitation_prepared" | "invitation_cancelled", entityType: string, entityId: number | null, description: string) {
   const db = await getDb();
   if (!db) return;
   await db.insert(memberActivities).values({ userId, type, entityType, entityId, description });
@@ -1575,22 +1575,6 @@ export async function getMemberActivities(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(memberActivities).where(eq(memberActivities.userId, userId)).orderBy(desc(memberActivities.createdAt)).limit(30);
-}
-
-export async function getAdminContacts() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(memberContacts).orderBy(desc(memberContacts.updatedAt));
-}
-
-export async function updateAdminContact(contactId: number, input: { status: ContactStatus }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const contact = await db.select().from(memberContacts).where(eq(memberContacts.id, contactId)).limit(1);
-  if (!contact[0]) throw new Error("Contato não encontrado.");
-  await db.update(memberContacts).set({ status: input.status }).where(eq(memberContacts.id, contactId));
-  await recordMemberActivity(contact[0].userId, "admin_contact_update", "contact", contactId, `Administração atualizou o status para ${input.status}.`);
-  return { success: true } as const;
 }
 
 export async function getAdminActivities() {

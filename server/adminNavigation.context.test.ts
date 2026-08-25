@@ -10,7 +10,8 @@ describe("navegação administrativa contextual", () => {
     const navigation = read("client/src/lib/adminNavigation.ts");
     expect(navigation).toContain('label: "Comunicações", path: "/admin/comunicacoes"');
     expect(navigation).toContain('label: "Dashboard", path: "/admin"');
-    expect(navigation).toContain('label: "Divulgação", path: "/admin/divulgacao"');
+    expect(navigation).not.toContain('label: "Divulgação"');
+    expect(navigation).not.toContain('path: "/admin/divulgacao"');
     expect(navigation).toContain('label: "Suporte", path: "/admin/suporte"');
     expect(navigation).toContain('label: "Auditoria", path: "/admin/auditoria"');
     expect(navigation).toContain('label: "Configurações", path: "/admin/configuracoes"');
@@ -37,8 +38,10 @@ describe("navegação administrativa contextual", () => {
   it("mantém Publicações como CMS oficial e separa suporte, divulgação e auditoria", () => {
     const app = read("client/src/App.tsx");
     const legacyOperations = read("client/src/pages/AdminOperations.tsx");
+    const adminOffice = read("client/src/pages/AdminOffice.tsx");
     expect(app).toContain('path="/admin/publicacoes" component={AdminPublications}');
-    expect(app).toContain('path="/admin/divulgacao" component={AdminOutreach}');
+    expect(app).toContain('path="/admin/divulgacao" component={AdminOperations}');
+    expect(app).not.toContain('component={AdminOutreach}');
     expect(app).toContain('path="/admin/suporte" component={AdminSupport}');
     expect(app).toContain('path="/admin/auditoria" component={AdminAudit}');
     expect(app).toContain('path="/admin/configuracoes" component={AdminSettings}');
@@ -50,5 +53,8 @@ describe("navegação administrativa contextual", () => {
     expect(legacyOperations).toContain('setLocation("/admin")');
     expect(legacyOperations).not.toContain("createContent");
     expect(legacyOperations).not.toContain("updateContentStatus");
+    expect(adminOffice).not.toContain("trpc.admin.contacts");
+    expect(adminOffice).not.toContain("capturedContacts");
+    expect(adminOffice).not.toContain("/admin/divulgacao");
   });
 });
