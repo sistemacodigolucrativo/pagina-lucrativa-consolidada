@@ -353,13 +353,13 @@ async function main() {
     if (transactionRows[0]) {
       await execute(
         "UPDATE transactions SET createdBy = ?, campaignId = ?, type = ?, amountCents = ?, status = ?, adminNote = ?, occurredAt = ? WHERE id = ?",
-        [adminId, campaignIds[i % campaignIds.length] ?? null, i % 2 === 0 ? "sale" : "commission", i % 4 === 0 ? -500 : 5000, ["posted", "pending", "void"][i % 3], `${DEMO_TAG}: transacao ficticia.`, daysAgo(i), transactionRows[0].id],
+        [adminId, campaignIds[i % campaignIds.length] ?? null, i % 2 === 0 ? "sale" : "adjustment", i % 4 === 0 ? -500 : 5000, ["posted", "pending", "void"][i % 3], `${DEMO_TAG}: transacao ficticia.`, daysAgo(i), transactionRows[0].id],
       );
     } else {
       await execute(
         `INSERT INTO transactions (userId, createdBy, campaignId, type, description, amountCents, status, adminNote, occurredAt)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [userId, adminId, campaignIds[i % campaignIds.length] ?? null, i % 2 === 0 ? "sale" : "commission", transactionDescription, i % 4 === 0 ? -500 : 5000, ["posted", "pending", "void"][i % 3], `${DEMO_TAG}: transacao ficticia.`, daysAgo(i)],
+        [userId, adminId, campaignIds[i % campaignIds.length] ?? null, i % 2 === 0 ? "sale" : "adjustment", transactionDescription, i % 4 === 0 ? -500 : 5000, ["posted", "pending", "void"][i % 3], `${DEMO_TAG}: transacao ficticia.`, daysAgo(i)],
       );
     }
     const pointReason = `${DEMO_TAG} - Pontos ${i}`;

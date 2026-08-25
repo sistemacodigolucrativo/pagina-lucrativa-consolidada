@@ -1,10 +1,9 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, ChartNoAxesCombined, CircleDollarSign, ClipboardList, FileText, ImagePlus, LifeBuoy, Mail, Megaphone, Settings, Trophy, UsersRound } from "lucide-react";
+import { BookOpenCheck, ChartNoAxesCombined, CircleDollarSign, ClipboardList, FileText, ImagePlus, LifeBuoy, Mail, Megaphone, Settings, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
   { icon: UsersRound, label: "Membros e rede", path: "/admin/membros", group: "Gestão de membros" },
-  { icon: Trophy, label: "Desempenho", path: "/admin/pontos", group: "Gestão de membros" },
   { icon: ClipboardList, label: "Pedidos", path: "/admin/pedidos", group: "Comercial" },
   { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Comercial" },
   { icon: Megaphone, label: "Divulgação", path: "/admin/divulgacao", group: "Comercial" },

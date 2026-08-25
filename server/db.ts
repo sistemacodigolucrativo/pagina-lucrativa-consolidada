@@ -184,7 +184,7 @@ export async function getFinanceMembers() {
   if (!db) return [];
   return db.select({ id: users.id, name: users.name, email: users.email }).from(users).orderBy(users.id);
 }
-export async function createAdminTransaction(adminId: number, input: { userId: number; campaignId?: number | null; type: "sale" | "commission" | "adjustment"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
+export async function createAdminTransaction(adminId: number, input: { userId: number; campaignId?: number | null; type: "sale" | "adjustment"; description: string; amountCents: number; status: "pending" | "posted" | "void" }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const amountCents = Math.abs(input.amountCents);
@@ -206,48 +206,6 @@ export async function getMemberPerformance(userId: number) {
   if (!db) return { entries: [], postedPoints: 0 };
   const entries = await db.select().from(pointEntries).where(eq(pointEntries.userId, userId)).orderBy(desc(pointEntries.createdAt));
   return { entries, postedPoints: entries.filter(entry => entry.status === "posted").reduce((total, entry) => total + entry.amount, 0) };
-}
-
-export async function getPerformanceMembers() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select({ id: users.id, name: users.name, email: users.email }).from(users).where(eq(users.role, "user")).orderBy(desc(users.id));
-}
-
-export async function getAdminPerformance() {
-  const db = await getDb();
-  if (!db) return { entries: [], members: [] };
-  const [entries, members] = await Promise.all([
-    db.select({
-      id: pointEntries.id,
-      userId: pointEntries.userId,
-      amount: pointEntries.amount,
-      reason: pointEntries.reason,
-      status: pointEntries.status,
-      createdBy: pointEntries.createdBy,
-      createdAt: pointEntries.createdAt,
-      memberName: users.name,
-      memberEmail: users.email,
-    }).from(pointEntries).leftJoin(users, eq(pointEntries.userId, users.id)).orderBy(desc(pointEntries.createdAt)),
-    getPerformanceMembers(),
-  ]);
-  return { entries, members };
-}
-
-export async function createAdminPointEntry(adminId: number, input: { userId: number; amount: number; reason: string; status: "pending" | "posted" | "void" }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const member = await db.select({ id: users.id }).from(users).where(and(eq(users.id, input.userId), eq(users.role, "user"))).limit(1);
-  if (!member[0]) throw new Error("Membro não encontrado.");
-  const result = await db.insert(pointEntries).values({ userId: input.userId, amount: input.amount, reason: input.reason.trim(), status: input.status, createdBy: adminId });
-  return { id: Number(result[0].insertId) };
-}
-
-export async function updateAdminPointEntry(id: number, input: { status: "pending" | "posted" | "void" }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(pointEntries).set({ status: input.status }).where(eq(pointEntries.id, id));
-  return { success: true };
 }
 
 export async function getMemberCampaigns(userId: number) {
@@ -689,16 +647,6 @@ export async function getAdminReferralLinks() {
   const [links, memberRows] = await Promise.all([db.select().from(referralLinks).orderBy(desc(referralLinks.updatedAt)), db.select({ id: users.id, name: users.name }).from(users)]);
   const members = new Map(memberRows.map(member => [member.id, member]));
   return links.map(link => ({ ...link, sponsorName: members.get(link.sponsorId)?.name ?? null, referredName: members.get(link.referredUserId)?.name ?? null }));
-}
-export async function setAdminReferralLink(input: { sponsorId: number; referredUserId: number; status: "active" | "archived" }) {
-  if (input.sponsorId === input.referredUserId) throw new Error("Um membro não pode patrocinar a si mesmo.");
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const people = await db.select({ id: users.id }).from(users).where(eq(users.id, input.sponsorId)).limit(1);
-  const referred = await db.select({ id: users.id }).from(users).where(eq(users.id, input.referredUserId)).limit(1);
-  if (!people[0] || !referred[0]) throw new Error("Patrocinador ou indicado não foi encontrado.");
-  await db.insert(referralLinks).values(input).onDuplicateKeyUpdate({ set: { sponsorId: input.sponsorId, status: input.status } });
-  return { success: true } as const;
 }
 
 export async function getMemberProfile(userId: number) {

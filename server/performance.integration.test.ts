@@ -13,16 +13,16 @@ describe("módulo de desempenho", () => {
     expect(schema).toContain('point_entries_user_idx');
     expect(schema).toContain('mysqlEnum("status", ["pending", "posted", "void"])');
   });
-  it("expõe somente leitura individual ao membro e curadoria ao administrador", () => {
+  it("expõe somente leitura individual ao membro sem curadoria administrativa manual", () => {
     expect(router).toContain('performance: protectedProcedure.query(({ ctx }) => getMemberPerformance(ctx.user.id))');
-    expect(router).toContain('performance: adminProcedure.query(() => getAdminPerformance())');
-    expect(router).toContain('createPointEntry: adminProcedure');
-    expect(router).toContain('updatePointEntry: adminProcedure');
+    expect(router).not.toContain('performance: adminProcedure.query(() => getAdminPerformance())');
+    expect(router).not.toContain('createPointEntry: adminProcedure');
+    expect(router).not.toContain('updatePointEntry: adminProcedure');
   });
   it("registra componentes e rotas sem referências ausentes", () => {
     expect(app).toContain('import MemberPerformance from "./pages/MemberPerformance"');
-    expect(app).toContain('import AdminPerformance from "./pages/AdminPerformance"');
     expect(app).toContain('path="/membros/pontos" component={MemberPerformance}');
-    expect(app).toContain('path="/admin/pontos" component={AdminPerformance}');
+    expect(app).not.toContain('AdminPerformance');
+    expect(app).not.toContain('path="/admin/pontos"');
   });
 });

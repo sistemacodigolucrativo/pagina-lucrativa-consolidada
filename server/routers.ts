@@ -3,7 +3,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { adminProcedure, protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { applicationInputSchema, applicationPersonalizationSchema } from "@shared/applications";
 import { normalizedEmailZodSchema, optionalPhoneZodSchema } from "@shared/contactValidation";
-import { httpUrlZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, positiveCentsZodSchema, signedPointsZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
+import { httpUrlZodSchema, normalizePixKey, normalizePixKeyByType, pixKeyZodSchema, positiveCentsZodSchema, validatePixKeyByType } from "@shared/structuredValidation";
 import {
   createAdminContent,
   createAdminEbook,
@@ -80,15 +80,9 @@ import {
   completeApplicationPersonalization,
   getApplicationPersonalizationAccess,
   updateMemberContact,
-  setAdminReferralLink,
   getAdminReferralLinks,
-  getReferralMembers,
   getMemberReferrals,
   getMemberPerformance,
-  getAdminPerformance,
-  getPerformanceMembers,
-  createAdminPointEntry,
-  updateAdminPointEntry,
   getAdminInvitations,
   updateAdminInvitation,
   getMemberTestimonials,
@@ -361,7 +355,7 @@ export const appRouter = router({
     updateApplication: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "contacted", "approved", "archived"]), adminNote: z.string().max(2000).optional() })).mutation(({ input }) => updateAdminApplication(input.id, input)),
     transactions: adminProcedure.query(() => getAdminTransactions()),
     financeMembers: adminProcedure.query(() => getFinanceMembers()),
-    createTransaction: adminProcedure.input(z.object({ userId: z.number().int().positive(), campaignId: z.number().int().positive().nullable().optional(), type: z.enum(["sale", "commission", "adjustment"]), description: z.string().trim().min(3).max(320), amountCents: positiveCentsZodSchema, status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminTransaction(ctx.user.id, input)),
+    createTransaction: adminProcedure.input(z.object({ userId: z.number().int().positive(), campaignId: z.number().int().positive().nullable().optional(), type: z.enum(["sale", "adjustment"]), description: z.string().trim().min(3).max(320), amountCents: positiveCentsZodSchema, status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminTransaction(ctx.user.id, input)),
     updateTransaction: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]), adminNote: z.string().trim().max(2000).optional() })).mutation(({ input }) => updateAdminTransaction(input.id, input)),
     courses: adminProcedure.query(() => getAdminCourses()),
     createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
@@ -385,18 +379,12 @@ export const appRouter = router({
     activities: adminProcedure.query(() => getAdminActivities()),
     invitations: adminProcedure.query(() => getAdminInvitations()),
     updateInvitation: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["prepared", "cancelled"]) })).mutation(({ input }) => updateAdminInvitation(input.id, input.status)),
-    performance: adminProcedure.query(() => getAdminPerformance()),
-    performanceMembers: adminProcedure.query(() => getPerformanceMembers()),
-    createPointEntry: adminProcedure.input(z.object({ userId: z.number().int().positive(), amount: signedPointsZodSchema, reason: z.string().trim().min(3).max(320), status: z.enum(["pending", "posted", "void"]) })).mutation(({ ctx, input }) => createAdminPointEntry(ctx.user.id, input)),
-    updatePointEntry: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "posted", "void"]) })).mutation(({ input }) => updateAdminPointEntry(input.id, input)),
     testimonials: adminProcedure.query(() => getAdminTestimonials()),
     updateTestimonial: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "approved", "rejected", "archived"]), adminNote: z.string().trim().max(4000).optional().nullable() })).mutation(({ input }) => updateAdminTestimonial(input.id, input)),
     publicSalesSectionImages: adminProcedure.query(() => getAdminPublicSalesSectionImages()),
     upsertPublicSalesSectionImage: adminProcedure.input(publicSalesSectionImageInput).mutation(({ ctx, input }) => upsertAdminPublicSalesSectionImage(ctx.user.id, input.sectionId, input)),
     removePublicSalesSectionImage: adminProcedure.input(z.object({ sectionId: z.string().trim().regex(/^[a-z0-9_]+$/).min(3).max(64) })).mutation(({ input }) => removeAdminPublicSalesSectionImage(input.sectionId)),
-    referralMembers: adminProcedure.query(() => getReferralMembers()),
     referralLinks: adminProcedure.query(() => getAdminReferralLinks()),
-    setReferralLink: adminProcedure.input(z.object({ sponsorId: z.number().int().positive(), referredUserId: z.number().int().positive(), status: z.enum(["active", "archived"]) })).mutation(({ input }) => setAdminReferralLink(input)),
   }),
 });
 export type AppRouter = typeof appRouter;

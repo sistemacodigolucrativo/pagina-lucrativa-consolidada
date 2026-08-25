@@ -32,13 +32,14 @@ describe("relatório de adesões do membro", () => {
     expect(page).not.toContain("Saldo confirmado");
   });
 
-  it("mantém histórico administrativo sem permitir novos saques", async () => {
+  it("mantém histórico administrativo sem permitir novas comissões ou saques", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
     const adminPage = await readFile(path.join(root, "client/src/pages/AdminTransactions.tsx"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
-    expect(router).toContain('type: z.enum(["sale", "commission", "adjustment"])');
-    expect(router).not.toContain('z.enum(["sale", "commission", "adjustment", "withdrawal"])');
-    expect(adminPage).toContain('withdrawal: "Saque"');
+    expect(router).toContain('type: z.enum(["sale", "adjustment"])');
+    expect(router).not.toContain('z.enum(["sale", "commission", "adjustment"])');
+    expect(adminPage).not.toContain('"Comissão"');
+    expect(adminPage).not.toContain('"Saque"');
     expect(adminPage).toContain("creatableTypeLabel");
     expect(adminPage).not.toContain("aprove solicitações de saque");
     expect(db).toContain("syncTransactionCampaignConversion");
