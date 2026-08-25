@@ -31,8 +31,8 @@ function request(params: Record<string, string>, path: string) {
 }
 
 describe("campaign redirect route", () => {
-  it("resolves a member campaign, records metadata and redirects to the configured destination", async () => {
-    mocks.resolvePublicMemberCampaignAndRecordClick.mockResolvedValueOnce({ destinationUrl: "https://ocodigolucrativo.site/dev/?afiliado=marcelorsouza", status: "active" });
+  it("resolves a member campaign, records metadata and keeps the sponsor visible on the landing page", async () => {
+    mocks.resolvePublicMemberCampaignAndRecordClick.mockResolvedValueOnce({ destinationUrl: "https://ocodigolucrativo.site/dev/", status: "active" });
     const route = getRoutes().find(item => item.path.endsWith("/r/:memberSlug/:campaignSlug"));
     expect(route).toBeDefined();
     const response = { redirect: vi.fn(), append: vi.fn() };
@@ -46,7 +46,19 @@ describe("campaign redirect route", () => {
       expect.objectContaining({ visitorId: expect.any(String), sessionId: expect.any(String), deviceType: "desktop", userAgentCategory: "human" }),
     );
     expect(response.append).toHaveBeenCalledTimes(2);
-    expect(response.redirect).toHaveBeenCalledWith(302, "https://ocodigolucrativo.site/dev/?afiliado=marcelorsouza");
+    expect(response.redirect).toHaveBeenCalledWith(302, "https://ocodigolucrativo.site/dev/?afiliado=marcelo&pl_ref=campaign");
+    expect(next).not.toHaveBeenCalled();
+  });
+
+  it("overrides stale affiliate query params on member campaign redirects", async () => {
+    mocks.resolvePublicMemberCampaignAndRecordClick.mockResolvedValueOnce({ destinationUrl: "https://ocodigolucrativo.site/dev/?afiliado=outro", status: "active" });
+    const route = getRoutes().find(item => item.path.endsWith("/r/:memberSlug/:campaignSlug"));
+    const response = { redirect: vi.fn(), append: vi.fn() };
+    const next = vi.fn();
+
+    await route!.handler(request({ memberSlug: "marcelo", campaignSlug: "facebook-acess" }, "/r/marcelo/facebook-acess"), response, next);
+
+    expect(response.redirect).toHaveBeenCalledWith(302, "https://ocodigolucrativo.site/dev/?afiliado=marcelo&pl_ref=campaign");
     expect(next).not.toHaveBeenCalled();
   });
 

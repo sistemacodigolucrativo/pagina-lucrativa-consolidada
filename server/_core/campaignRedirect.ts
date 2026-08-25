@@ -12,6 +12,7 @@ import {
 const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
 const memberCampaignRoutes = Array.from(new Set(["/r/:memberSlug/:campaignSlug", appPrefix ? `${appPrefix}/r/:memberSlug/:campaignSlug` : null].filter((route): route is string => Boolean(route))));
 const legacyCampaignRoutes = Array.from(new Set(["/:campaignSlug", appPrefix ? `${appPrefix}/:campaignSlug` : null].filter((route): route is string => Boolean(route))));
+const affiliateLandingPaths = new Set(["/", "/dev", "/dev/", appPrefix || null, appPrefix ? `${appPrefix}/` : null].filter((path): path is string => Boolean(path)));
 
 function destinationIsAllowed(destinationUrl: string, req: Request) {
   try {
@@ -22,6 +23,14 @@ function destinationIsAllowed(destinationUrl: string, req: Request) {
   } catch {
     return false;
   }
+}
+
+function withCampaignAffiliate(destinationUrl: string, memberSlug: string) {
+  const destination = new URL(destinationUrl);
+  if (!affiliateLandingPaths.has(destination.pathname)) return destinationUrl;
+  destination.searchParams.set("afiliado", memberSlug);
+  destination.searchParams.set("pl_ref", "campaign");
+  return destination.toString();
 }
 
 export function registerCampaignRedirectRoutes(app: Express) {
@@ -54,7 +63,7 @@ export function registerCampaignRedirectRoutes(app: Express) {
         next();
         return;
       }
-      res.redirect(302, campaign.destinationUrl);
+      res.redirect(302, withCampaignAffiliate(campaign.destinationUrl, memberSlug));
     } catch (error) {
       next(error);
     }

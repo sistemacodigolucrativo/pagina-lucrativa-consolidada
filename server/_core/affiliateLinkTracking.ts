@@ -27,6 +27,10 @@ export function registerAffiliateLinkTracking(app: Express) {
         next();
         return;
       }
+      if (req.query.pl_ref === "campaign") {
+        next();
+        return;
+      }
 
       const visitorId = getOrCreateTrackingCookie(req, res, trackingCookieNames.visitor, 365 * 24 * 60 * 60 * 1000);
       const sessionId = getOrCreateTrackingCookie(req, res, trackingCookieNames.session, 30 * 60 * 1000);
