@@ -160,11 +160,6 @@ img { display: block; max-width: 100%; }
 .site-header { position: sticky; top: 0; z-index: 50; background: rgba(5, 5, 5, .92); backdrop-filter: blur(14px); }
 .affiliate-banner { position: relative; z-index: 1; }
 .affiliate-banner-inner { min-width: 0; }
-.affiliate-sponsor-strip { position: relative; z-index: 2; border-bottom: 1px solid rgba(3, 214, 96, .18); background: linear-gradient(135deg, rgba(0, 23, 18, .96), rgba(0, 1, 5, .98)); }
-.affiliate-sponsor-inner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 15px; align-items: center; min-height: 84px; padding-block: 14px; }
-.affiliate-sponsor-avatar { width: 58px; height: 58px; border: 1px solid rgba(3, 214, 96, .48); border-radius: 15px; object-fit: cover; background: #00060D; box-shadow: 0 0 0 4px rgba(3, 214, 96, .07); }
-.affiliate-sponsor-main { min-width: 0; }
-.affiliate-sponsor-name { display: block; overflow: hidden; margin-top: 3px; color: var(--ivory); font: 700 clamp(17px, 2.2vw, 24px)/1.05 "Space Grotesk", sans-serif; text-overflow: ellipsis; white-space: nowrap; }
 .affiliate-profile-hero { max-width: 610px; margin: 0 0 28px; padding: 0 0 22px; border-bottom: 1px solid rgba(3, 214, 96, .18); }
 .affiliate-profile-hero .affiliate-profile-summary { margin-left: -3px; }
 .affiliate-profile-summary { display: flex; align-items: center; gap: 13px; min-width: 0; margin-left: -7px; }
@@ -180,8 +175,6 @@ img { display: block; max-width: 100%; }
 .affiliate-profile-no-socials { display: block; margin-top: 4px; color: var(--muted); font: 10px/1.3 "DM Mono", monospace; }
 .affiliate-profile-more { flex: 0 0 auto; min-height: 30px; padding: 6px 10px; border: 1px solid rgba(3, 214, 96, .44); border-radius: 8px; color: #00060D; background: var(--gold-bright); font-size: 10px; font-weight: 800; line-height: 1; transition: transform .18s var(--ease-out), background .18s var(--ease-out); }
 .affiliate-profile-more:hover { transform: translateY(-1px); background: #ABF6D0; }
-.affiliate-profile-more-disabled { display: inline-flex; align-items: center; opacity: .72; cursor: default; }
-.affiliate-profile-more-disabled:hover { transform: none; background: var(--gold-bright); }
 .affiliate-profile-modal-backdrop { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding: 20px; background: rgba(0, 0, 0, .78); backdrop-filter: blur(8px); }
 .affiliate-profile-modal { position: relative; width: min(680px, 100%); max-height: min(720px, calc(100vh - 32px)); overflow-y: auto; padding: 28px; border: 1px solid rgba(3, 214, 96, .34); border-radius: 18px; color: var(--ivory); background: linear-gradient(145deg, #01281B, #000001 72%); box-shadow: var(--shadow); }
 .affiliate-profile-modal-close { position: absolute; top: 11px; right: 13px; display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(255, 255, 255, .16); border-radius: 50%; color: var(--ivory); background: rgba(0, 0, 0, .25); font-size: 22px; line-height: 1; }
@@ -525,11 +518,6 @@ img { display: block; max-width: 100%; }
   .nav-links a { padding: 13px 12px; }
   .nav-actions .btn { min-height: 40px; padding: 11px 13px; }
   .sales-hero { min-height: auto; padding: 38px 0 70px; }
-  .affiliate-sponsor-inner { grid-template-columns: auto minmax(0, 1fr); gap: 11px; min-height: 0; padding-block: 12px; }
-  .affiliate-sponsor-avatar { width: 48px; height: 48px; border-radius: 12px; }
-  .affiliate-sponsor-main { align-self: center; }
-  .affiliate-sponsor-name { font-size: 17px; }
-  .affiliate-sponsor-inner .affiliate-profile-more { grid-column: 1 / -1; justify-self: stretch; display: inline-flex; justify-content: center; min-height: 36px; }
   .affiliate-profile-hero { margin-bottom: 24px; padding-bottom: 18px; }
   .affiliate-profile-hero .affiliate-profile-summary { gap: 9px; margin-left: -2px; }
   .affiliate-profile-avatar { width: 42px; height: 42px; border-radius: 9px; }

@@ -18,8 +18,9 @@ const internalLinkSources = [
 describe("public responsive header and hero layout", () => {
   it("renders one header before the hero profile presentation", () => {
     expect((homeSource.match(/className=\"site-header\"/g) ?? []).length).toBe(1);
-    expect(homeSource.indexOf('className="site-header"')).toBeLessThan(homeSource.indexOf("affiliate-sponsor-strip"));
-    expect(homeSource.indexOf("affiliate-sponsor-strip")).toBeLessThan(homeSource.indexOf('className="sales-hero"'));
+    expect(homeSource.indexOf('className="site-header"')).toBeLessThan(homeSource.indexOf('className="sales-hero"'));
+    expect(homeSource.indexOf("affiliate-profile-hero")).toBeGreaterThan(homeSource.indexOf('className="sales-hero-copy reveal-item"'));
+    expect(homeSource.indexOf("affiliate-profile-hero")).toBeLessThan(homeSource.indexOf('className="sales-kicker"'));
     expect(homeSource).not.toContain("affiliate-banner");
   });
 
@@ -34,8 +35,8 @@ describe("public responsive header and hero layout", () => {
 
   it("keeps the navbar sticky and the hero presentation responsive", () => {
     expect(cssSource).toContain('.site-header { position: sticky; top: 0; z-index: 50;');
-    expect(cssSource).toContain('.affiliate-sponsor-strip { position: relative;');
-    expect(cssSource).toContain('.affiliate-sponsor-inner { display: grid;');
+    expect(cssSource).toContain('.affiliate-profile-hero { max-width: 610px;');
+    expect(cssSource).toContain('.affiliate-profile-summary { display: flex;');
     expect(cssSource).toContain('.sales-hero { position: relative;');
   });
 
