@@ -90,7 +90,7 @@ export default function AdminOffice() {
             </section>
 
             <section className="office-workspace">
-              <article><UsersRound size={24} className="text-emerald-300" /><h2>Membros e rede</h2><p>Gerencie vínculos de indicação e consulte a base de membros.</p><Link href="/admin/membros">Abrir módulo</Link></article>
+              <article><UsersRound size={24} className="text-emerald-300" /><h2>Membros e rede</h2><p>Consulte vínculos de indicação criados pelo fluxo de adesão.</p><Link href="/admin/membros">Abrir módulo</Link></article>
               <article><ClipboardList size={24} className="text-emerald-300" /><h2>Pedidos</h2><p>Analise solicitações, comprovantes e retornos administrativos.</p><Link href="/admin/pedidos">Ver pedidos</Link></article>
               <article><LifeBuoy size={24} className="text-emerald-300" /><h2>Suporte</h2><p>Responda aos chamados enviados pelos membros.</p><Link href="/admin/suporte">Responder suporte</Link></article>
               <article><Megaphone size={24} className="text-emerald-300" /><h2>Divulgação</h2><p>Supervisione contatos captados pela Central de Divulgação.</p><Link href="/admin/divulgacao">Ver contatos</Link></article>

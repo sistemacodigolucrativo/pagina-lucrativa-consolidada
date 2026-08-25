@@ -643,10 +643,30 @@ export async function getReferralMembers() {
 }
 export async function getAdminReferralLinks() {
   const db = await getDb();
-  if (!db) return [];
-  const [links, memberRows] = await Promise.all([db.select().from(referralLinks).orderBy(desc(referralLinks.updatedAt)), db.select({ id: users.id, name: users.name }).from(users)]);
+  if (!db) return { links: [], activeCount: 0, archivedCount: 0, sponsorCount: 0, referredCount: 0 };
+  const [links, memberRows] = await Promise.all([
+    db.select().from(referralLinks).orderBy(desc(referralLinks.updatedAt)),
+    db.select({ id: users.id, name: users.name, email: users.email }).from(users),
+  ]);
   const members = new Map(memberRows.map(member => [member.id, member]));
-  return links.map(link => ({ ...link, sponsorName: members.get(link.sponsorId)?.name ?? null, referredName: members.get(link.referredUserId)?.name ?? null }));
+  const hydratedLinks = links.map(link => {
+    const sponsor = members.get(link.sponsorId);
+    const referred = members.get(link.referredUserId);
+    return {
+      ...link,
+      sponsorName: sponsor?.name ?? null,
+      sponsorEmail: sponsor?.email ?? null,
+      referredName: referred?.name ?? null,
+      referredEmail: referred?.email ?? null,
+    };
+  });
+  return {
+    links: hydratedLinks,
+    activeCount: hydratedLinks.filter(link => link.status === "active").length,
+    archivedCount: hydratedLinks.filter(link => link.status === "archived").length,
+    sponsorCount: new Set(hydratedLinks.map(link => link.sponsorId)).size,
+    referredCount: new Set(hydratedLinks.map(link => link.referredUserId)).size,
+  };
 }
 
 export async function getMemberProfile(userId: number) {
