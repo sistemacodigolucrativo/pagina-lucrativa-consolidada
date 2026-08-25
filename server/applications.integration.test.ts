@@ -46,8 +46,12 @@ describe("gestão de solicitações públicas", () => {
     expect(publicProfile).toContain("photoUrl: memberProfiles.photoUrl");
     expect(publicProfile).toContain("whatsapp: memberProfiles.whatsapp");
     expect(publicProfile).not.toContain("email: users.email");
+    expect(home).toContain("const showAffiliateProfile = Boolean(affiliateSlug)");
+    expect(home).toContain("{showAffiliateProfile ? (");
     expect(home).toContain("affiliate-profile-hero");
     expect(home).toContain("affiliate-profile-avatar-fallback");
+    expect(home).toContain("Carregando perfil público...");
+    expect(home).toContain("Apresentador não encontrado para este link.");
     expect(home).toContain("Ver perfil");
   });
 

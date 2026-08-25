@@ -113,7 +113,9 @@ export default function Home() {
   const [, setLocation] = useLocation();
   const affiliateSlug = normalizeAffiliateSlug(typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("afiliado"));
   const affiliate = trpc.public.affiliateProfile.useQuery({ slug: affiliateSlug ?? "pagina-lucrativa" }, { enabled: Boolean(affiliateSlug) });
-  const publicProfileName = affiliate.data?.name || affiliate.data?.slug || "Perfil público";
+  const showAffiliateProfile = Boolean(affiliateSlug);
+  const affiliateNotFound = Boolean(affiliateSlug && !affiliate.isLoading && !affiliate.data);
+  const publicProfileName = affiliate.data?.name || affiliate.data?.slug || affiliateSlug || "Perfil público";
   const publicSocialLinks = affiliate.data ? [
     ["Website", affiliate.data.websiteUrl],
     ["Facebook", affiliate.data.facebookUrl],
@@ -178,17 +180,17 @@ export default function Home() {
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            {affiliate.data ? (
+            {showAffiliateProfile ? (
               <section className="affiliate-profile-hero" aria-label="Perfil público do apresentador">
                 <div className="affiliate-profile-summary">
-                  {affiliate.data.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+                  {affiliate.data?.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
                   <div className="affiliate-profile-summary-main">
                     <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por:</span>
                     <strong className="affiliate-profile-presenter">Apresentador(a) da Página Lucrativa</strong>
                     <strong className="affiliate-profile-name">{publicProfileName}</strong>
-                    {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
+                    {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">{affiliate.isLoading ? "Carregando perfil público..." : affiliateNotFound ? "Apresentador não encontrado para este link." : "Perfil público identificável"}</span>}
                   </div>
-                  <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button>
+                  {affiliate.data ? <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button> : <span className="affiliate-profile-more affiliate-profile-more-disabled">{affiliate.isLoading ? "Carregando" : "Indisponível"}</span>}
                 </div>
               </section>
             ) : null}
