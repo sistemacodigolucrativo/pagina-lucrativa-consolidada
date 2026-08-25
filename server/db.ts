@@ -1467,30 +1467,16 @@ export async function reviewPaymentReceipt(userId: number, input: { applicationI
     return { success: true } as const;
   });
 }
-export async function updateAdminApplication(applicationId: number, input: { status: "pending" | "contacted" | "approved" | "archived"; adminNote?: string | null }) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(applications).set({ status: input.status, adminNote: input.adminNote?.trim() || null }).where(eq(applications.id, applicationId));
-  return { success: true } as const;
-}
-
-export async function getRecentApplications(limit = 20) {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(applications).orderBy(desc(applications.createdAt)).limit(limit);
-}
-
 export async function getAdminOverview() {
   const db = await getDb();
   if (!db) return null;
-  const [memberRows, courseRows, transactionRows, applicationRows] = await Promise.all([
-    db.select().from(users), db.select().from(courses), db.select().from(transactions), db.select().from(applications),
+  const [memberRows, courseRows, transactionRows] = await Promise.all([
+    db.select().from(users), db.select().from(courses), db.select().from(transactions),
   ]);
   return {
     memberCount: memberRows.filter(user => user.role === "user").length,
     publishedCourseCount: courseRows.filter(course => course.isPublished === 1).length,
     grossVolumeCents: transactionRows.reduce((total, transaction) => total + transaction.amountCents, 0),
-    pendingApplicationCount: applicationRows.filter(application => application.status === "pending").length,
   };
 }
 

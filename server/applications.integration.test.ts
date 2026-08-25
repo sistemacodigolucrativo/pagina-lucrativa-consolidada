@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.env.PROJECT_ROOT || process.cwd();
@@ -12,24 +12,44 @@ describe("gestão de solicitações públicas", () => {
     expect(db).toContain("eq(applications.trackingCode, trackingCode)");
     expect(router).toContain("lookup: publicProcedure.input");
   });
-  it("restringe a atualização de status e retorno à administração", async () => {
+  it("remove o contrato operacional global de pedidos da administração", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
-    expect(router).toContain("updateApplication: adminProcedure.input");
-    expect(router).toContain('z.enum(["pending", "contacted", "approved", "archived"])');
+    const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
+    const navigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
+    expect(router).not.toContain("applications: adminProcedure");
+    expect(router).not.toContain("updateApplication: adminProcedure");
+    expect(app).not.toContain("AdminApplications");
+    expect(navigation).not.toContain('label: "Pedidos"');
+    await expect(access(path.join(root, "client/src/pages/AdminApplications.tsx"))).rejects.toThrow();
   });
   it("mantém solicitações atribuídas apenas para pedidos que ainda exigem decisão", async () => {
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     expect(db).toContain('application.paymentStatus !== "confirmed"');
     expect(db).toContain("shouldHideRejectedApplication");
   });
-  it("registra o acompanhamento público e a gestão administrativa nas rotas", async () => {
+  it("registra o acompanhamento público e mantém a rota admin antiga como redirecionamento", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");
     const confirmation = await readFile(path.join(root, "client/src/pages/ApplicationConfirmation.tsx"), "utf8");
+    const legacy = await readFile(path.join(root, "client/src/pages/AdminOperations.tsx"), "utf8");
     expect(app).toContain('path="/pedido/acompanhar" component={ApplicationTracking}');
-    expect(app).toContain('path="/admin/pedidos" component={AdminApplications}');
+    expect(app).toContain('path="/admin/pedidos" component={AdminOperations}');
     expect(home).toContain("data.trackingCode");
     expect(confirmation).toContain("Acompanhar solicitação");
+    expect(legacy).toContain("Módulo administrativo removido");
+  });
+
+  it("preserva os contratos público e do membro para pedido, pagamento e ativação", async () => {
+    const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+    expect(router).toContain("affiliateApplications: protectedProcedure");
+    expect(router).toContain("affiliateApplication: protectedProcedure");
+    expect(router).toContain("reviewPaymentReceipt: protectedProcedure");
+    expect(router).toContain("applications: router({");
+    expect(router).toContain("submit: publicProcedure");
+    expect(router).toContain("lookup: publicProcedure");
+    expect(router).toContain("paymentPage: publicProcedure");
+    expect(router).toContain("uploadReceipt: publicProcedure");
+    expect(router).toContain("completePersonalization: publicProcedure");
   });
 
   it("não usa patrocinador fallback quando o pedido informa afiliado explícito inválido", async () => {

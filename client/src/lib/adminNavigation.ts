@@ -4,7 +4,6 @@ import { BookOpenCheck, ChartNoAxesCombined, CircleDollarSign, ClipboardList, Fi
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
   { icon: UsersRound, label: "Membros e rede", path: "/admin/membros", group: "Gestão de membros" },
-  { icon: ClipboardList, label: "Pedidos", path: "/admin/pedidos", group: "Comercial" },
   { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Comercial" },
   { icon: Megaphone, label: "Divulgação", path: "/admin/divulgacao", group: "Comercial" },
   { icon: FileText, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },

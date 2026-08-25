@@ -14,6 +14,8 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).toContain('label: "Suporte", path: "/admin/suporte"');
     expect(navigation).toContain('label: "Auditoria", path: "/admin/auditoria"');
     expect(navigation).toContain('label: "Configurações", path: "/admin/configuracoes"');
+    expect(navigation).not.toContain('label: "Pedidos"');
+    expect(navigation).not.toContain('path: "/admin/pedidos"');
     expect(navigation).not.toContain('label: "Operação"');
     expect(navigation).not.toContain('label: "Central de manutenção"');
     expect(navigation).not.toContain('label: "Relatos"');
@@ -22,8 +24,8 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('label: "Catálogo"');
   });
 
-  it("aplica a navegação administrativa aos módulos de pedidos, financeiro e comunicações", () => {
-    for (const page of ["AdminApplications.tsx", "AdminTransactions.tsx", "AdminCommunications.tsx"]) {
+  it("aplica a navegação administrativa aos módulos ativos", () => {
+    for (const page of ["AdminTransactions.tsx", "AdminCommunications.tsx"]) {
       const source = read(`client/src/pages/${page}`);
       expect(source).toContain('import { adminMenu } from "@/lib/adminNavigation"');
       expect(source).toContain("menuItems={adminMenu}");
@@ -38,6 +40,9 @@ describe("navegação administrativa contextual", () => {
     expect(app).toContain('path="/admin/suporte" component={AdminSupport}');
     expect(app).toContain('path="/admin/auditoria" component={AdminAudit}');
     expect(app).toContain('path="/admin/configuracoes" component={AdminSettings}');
+    expect(app).toContain('path="/admin/pedidos" component={AdminOperations}');
+    expect(app).not.toContain('component={AdminApplications}');
+    expect(legacyOperations).toContain("Módulo administrativo removido");
     expect(legacyOperations).toContain('setLocation("/admin")');
     expect(legacyOperations).not.toContain("createContent");
     expect(legacyOperations).not.toContain("updateContentStatus");

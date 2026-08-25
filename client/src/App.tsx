@@ -32,7 +32,6 @@ import AdminSupport from "./pages/AdminSupport";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationPayment from "./pages/ApplicationPayment";
 import ApplicationTracking from "./pages/ApplicationTracking";
-import AdminApplications from "./pages/AdminApplications";
 import AdminCommunications from "./pages/AdminCommunications";
 import MemberReferrals from "./pages/MemberReferrals";
 import AdminReferrals from "./pages/AdminReferrals";
@@ -148,7 +147,7 @@ function AppRoutes() {
     <Route path="/admin/suporte" component={AdminSupport} />
     <Route path="/admin/auditoria" component={AdminAudit} />
     <Route path="/admin/configuracoes" component={AdminSettings} />
-    <Route path="/admin/pedidos" component={AdminApplications} />
+    <Route path="/admin/pedidos" component={AdminOperations} />
     <Route path="/admin/comunicacoes" component={AdminCommunications} />
     <Route path="/admin/financeiro" component={AdminTransactions} />
     <Route path="/admin/relatos" component={AdminTestimonials} />
