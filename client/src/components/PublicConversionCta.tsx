@@ -20,7 +20,7 @@ export default function PublicConversionCta() {
 
   if (!isPublicConversionRoute(location) || conversionFormVisible) return null;
 
-  return <a className="public-conversion-cta" href={withAppBase("/#f")} aria-label="Quero começar agora">
+  return <a className="public-conversion-cta" style={{ borderRadius: "8px" }} href={withAppBase("/#f")} aria-label="Quero começar agora">
     <span>Quero começar</span>
     <ArrowUpRight size={15} aria-hidden="true" />
   </a>;
