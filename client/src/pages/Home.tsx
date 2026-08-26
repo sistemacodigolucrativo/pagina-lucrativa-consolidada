@@ -68,6 +68,28 @@ const footerLinks = [
   ["Institucional", "/institucional"],
 ];
 
+const publicNavigation = [
+  ["Início", "#inicio"],
+  ["Depoimentos", "#depoimentos"],
+  ["O que você recebe", "#o-que-recebe"],
+  ["Como funciona", "#como-funciona"],
+  ["Conheça a estrutura", "#estrutura"],
+  ["Vídeos", "#videos"],
+  ["Para quem é", "#perfil-ideal"],
+  ["Perguntas frequentes", "#faq"],
+  ["Quero começar", "#f"],
+] as const;
+
+const utilityNavigation = [
+  ["Institucional", "/institucional"],
+  ["Acompanhar pedido", "/pedido/acompanhar"],
+  ["Entrar", "/acesso"],
+] as const;
+
+function resolveNavigationHref(path: string) {
+  return path.startsWith("#") ? path : withAppBase(path);
+}
+
 function Brand({ compact = false }: { compact?: boolean }) {
   return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">PL</span><span>Página Lucrativa</span></span>;
 }
@@ -148,13 +170,13 @@ export default function Home() {
       <div className="shell nav">
         <a href="#inicio" aria-label="Página Lucrativa — início" onClick={closeMenu}><Brand /></a>
         <nav className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
-          <a href="#inicio" onClick={closeMenu}>Início</a>
-          <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
-          <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
-          <a href={withAppBase("/institucional")} onClick={closeMenu}>Institucional</a>
-          <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
-          <a href={withAppBase("/pedido/acompanhar")} onClick={closeMenu}>Acompanhar pedido</a>
-          <a href={withAppBase("/acesso")} className="nav-login" onClick={closeMenu}>Entrar</a>
+          <div className="nav-links-group nav-links-public" aria-label="Navegação da página">
+            {publicNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} onClick={closeMenu}>{label}</a>)}
+          </div>
+          <span className="nav-links-divider" aria-hidden="true" />
+          <div className="nav-links-group nav-links-utility" aria-label="Ações e rotas utilitárias">
+            {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} className={path === "/acesso" ? "nav-login" : undefined} onClick={closeMenu}>{label}</a>)}
+          </div>
         </nav>
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>

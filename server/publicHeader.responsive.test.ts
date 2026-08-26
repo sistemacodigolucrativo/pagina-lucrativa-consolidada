@@ -35,6 +35,7 @@ describe("public responsive header and hero layout", () => {
 
   it("keeps the navbar sticky and the hero presentation responsive", () => {
     expect(cssSource).toContain('.site-header { position: sticky; top: 0; z-index: 50;');
+    expect(cssSource).toContain('.sales-page { min-height: 100vh; overflow: clip;');
     expect(cssSource).toContain('.affiliate-profile-hero { max-width: 610px;');
     expect(cssSource).toContain('.affiliate-profile-summary { display: flex;');
     expect(cssSource).toContain('.sales-hero { position: relative;');
@@ -112,15 +113,62 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.member-chat-fab { width: 58px; height: 58px; min-height: 58px; }');
   });
 
-  it("removes Preview from the public navigation without removing its route", () => {
+  it("orders the landing navigation before the utility routes", () => {
+    const publicNavigationStart = homeSource.indexOf("const publicNavigation = [");
+    const utilityNavigationStart = homeSource.indexOf("const utilityNavigation = [");
+    expect(publicNavigationStart).toBeGreaterThan(-1);
+    expect(utilityNavigationStart).toBeGreaterThan(publicNavigationStart);
+    const publicItems = [
+      '["Início", "#inicio"]',
+      '["Depoimentos", "#depoimentos"]',
+      '["O que você recebe", "#o-que-recebe"]',
+      '["Como funciona", "#como-funciona"]',
+      '["Conheça a estrutura", "#estrutura"]',
+      '["Vídeos", "#videos"]',
+      '["Para quem é", "#perfil-ideal"]',
+      '["Perguntas frequentes", "#faq"]',
+      '["Quero começar", "#f"]',
+    ];
+    let previousIndex = publicNavigationStart;
+    for (const item of publicItems) {
+      const itemIndex = homeSource.indexOf(item, publicNavigationStart);
+      expect(itemIndex).toBeGreaterThan(previousIndex);
+      expect(itemIndex).toBeLessThan(utilityNavigationStart);
+      previousIndex = itemIndex;
+    }
+    const utilityItems = [
+      '["Institucional", "/institucional"]',
+      '["Acompanhar pedido", "/pedido/acompanhar"]',
+      '["Entrar", "/acesso"]',
+    ];
+    previousIndex = utilityNavigationStart;
+    for (const item of utilityItems) {
+      const itemIndex = homeSource.indexOf(item, utilityNavigationStart);
+      expect(itemIndex).toBeGreaterThan(previousIndex);
+      previousIndex = itemIndex;
+    }
+    expect(homeSource).toContain('publicNavigation.map');
+    expect(homeSource).toContain('utilityNavigation.map');
+    expect(homeSource).toContain('className="nav-links-divider"');
     expect(homeSource).not.toContain('href={withAppBase("/preview")}');
-    expect(homeSource).not.toContain('previewOpen');
-    expect(homeSource).not.toContain('preview-area');
+    expect(homeSource).not.toContain('Preview</a>');
+  });
+
+  it("keeps every requested landing target and mobile overflow protection", () => {
+    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "faq", "f"]) {
+      expect(homeSource).toContain(`id="${id}"`);
+    }
+    expect(homeSource).toContain('block.id === "problem_start" ? "como-funciona"');
+    expect(homeSource).toContain('block.id === "product_real" ? "estrutura"');
+    expect(homeSource).toContain('path.startsWith("#") ? path : withAppBase(path)');
+    expect(cssSource).toContain('max-height: calc(100vh - 105px);');
+    expect(cssSource).toContain('overflow-y: auto;');
+    expect(cssSource).toContain('.nav-links-divider {');
   });
 
   it("keeps native internal links inside the configured app base", () => {
     for (const source of internalLinkSources) expect(source).toContain("withAppBase");
-    expect(homeSource).toContain('href={withAppBase("/acesso")}');
+    expect(homeSource).toContain('path.startsWith("#") ? path : withAppBase(path)');
   });
 
   it("shows a complete environment-aware tracking URL for each campaign", () => {
