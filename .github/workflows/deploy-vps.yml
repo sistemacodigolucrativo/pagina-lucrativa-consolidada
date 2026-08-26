@@ -2,8 +2,7 @@ name: Validar e publicar na VPS
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
@@ -21,53 +20,64 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 2
+      - name: Bloquear alterações automáticas de banco
+        shell: bash
+        run: |
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            CHANGED="$(git diff --name-only HEAD^ HEAD -- drizzle drizzle.config.ts drizzle/schema.ts || true)"
+            if [ -n "$CHANGED" ]; then
+              printf '%s\n' "$CHANGED"
+              echo 'Alteração de banco/schema detectada. Exige backup e implantação manual revisada.' >&2
+              exit 1
+            fi
+          fi
       - name: Configurar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
-
       - name: Ativar pnpm
         run: |
           corepack enable
           corepack prepare pnpm@10.4.1 --activate
-
-      - name: Instalar dependencias
+      - name: Instalar dependências
         run: pnpm install --frozen-lockfile
-
       - name: Typecheck
         run: pnpm check
-
       - name: Testes
         run: pnpm test
-
       - name: Build
         run: pnpm build
 
   deploy:
-    name: Publicar na VPS
+    name: Publicar release na VPS
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
     steps:
-      - name: Verificar configuracao da VPS
+      - name: Verificar configuração da VPS
         id: config
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
-          VPS_PORT: ${{ secrets.VPS_PORT }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
           VPS_KNOWN_HOSTS: ${{ secrets.VPS_KNOWN_HOSTS }}
+          VPS_PORT: ${{ secrets.VPS_PORT }}
         run: |
           PORT="${VPS_PORT:-22}"
           if [ -z "$VPS_HOST" ] || [ -z "$VPS_USER" ] || [ -z "$VPS_SSH_KEY" ] || [ -z "$VPS_DEPLOY_PATH" ] || [ -z "$VPS_KNOWN_HOSTS" ]; then
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Auto deploy ainda não configurado: faltam Secrets da VPS. Validação concluída; produção não será alterada."
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'Secrets da VPS ainda não configurados. Produção não será alterada.'
             exit 0
           fi
-          echo "ready=true" >> "$GITHUB_OUTPUT"
+          echo 'ready=true' >> "$GITHUB_OUTPUT"
           echo "port=$PORT" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout do SHA validado
+        if: steps.config.outputs.ready == 'true'
+        uses: actions/checkout@v4
 
       - name: Preparar SSH
         if: steps.config.outputs.ready == 'true'
@@ -82,25 +92,43 @@ jobs:
           printf '%s\n' "$VPS_KNOWN_HOSTS" > ~/.ssh/known_hosts
           chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
 
-      - name: Executar deploy com rollback
+      - name: Empacotar release validado
+        if: steps.config.outputs.ready == 'true'
+        run: |
+          tar \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='dist' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            -czf "/tmp/pagina-lucrativa-${GITHUB_SHA}.tar.gz" .
+
+      - name: Enviar artefato e script
         if: steps.config.outputs.ready == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
-          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
           VPS_PORT: ${{ steps.config.outputs.port }}
+        run: |
+          REMOTE_DIR="/tmp/pagina-lucrativa-deploy-${GITHUB_SHA}"
+          ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$REMOTE_DIR'"
+          scp -i ~/.ssh/id_ed25519 -P "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            "/tmp/pagina-lucrativa-${GITHUB_SHA}.tar.gz" scripts/deploy-vps.sh \
+            "$VPS_USER@$VPS_HOST:$REMOTE_DIR/"
+
+      - name: Executar deploy atômico com rollback
+        if: steps.config.outputs.ready == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ steps.config.outputs.port }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
           TARGET_SHA: ${{ github.sha }}
         run: |
-          printf -v REMOTE_PATH '%q' "$VPS_DEPLOY_PATH"
-          printf -v REMOTE_SHA '%q' "$TARGET_SHA"
-          ssh \
-            -i ~/.ssh/id_ed25519 \
-            -p "$VPS_PORT" \
-            -o BatchMode=yes \
-            -o StrictHostKeyChecking=yes \
-            "$VPS_USER@$VPS_HOST" \
-            "cd -- $REMOTE_PATH && bash scripts/deploy-vps.sh $REMOTE_SHA"
+          REMOTE_DIR="/tmp/pagina-lucrativa-deploy-${TARGET_SHA}"
+          ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+            "chmod 700 '$REMOTE_DIR/deploy-vps.sh' && '$REMOTE_DIR/deploy-vps.sh' '$TARGET_SHA' '$VPS_DEPLOY_PATH' '$REMOTE_DIR/pagina-lucrativa-${TARGET_SHA}.tar.gz' 'http://127.0.0.1:3101/'"
 
       - name: Informar deploy não configurado
         if: steps.config.outputs.ready != 'true'
-        run: echo "Nenhuma alteração foi feita na VPS. Configure os Secrets documentados em docs/auto-deploy-vps.md para ativar o deploy automático."
+        run: echo 'Validação concluída. Nenhuma alteração foi feita na VPS.'
