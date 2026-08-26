@@ -67,4 +67,10 @@ Preview: <https://3001-ig9wz4zrmhdz0xelue3wj-d6a781b2.us4.manus.computer/>
 
 ## 7. Publicação
 
-A produção foi verificada antes desta alteração e estava ativa no release `20260826-unified-7862e83`, respondendo HTTP 200. O novo commit deverá ser enviado à `main` e publicado em release isolado na VPS somente após a confirmação final das validações. O ambiente `/dev` permanece removido e não será recriado.
+A produção foi verificada antes desta alteração e estava ativa no release `20260826-unified-7862e83`, respondendo HTTP 200. Após as validações, o commit `f01ef532b5bc289cf501711826e7ec7b6c0749c3` foi enviado à `main` e publicado no release isolado `20260826-unified-f01ef53`. O symlink `current` aponta para esse release, `pagina-lucrativa.service` está ativo e o endpoint local responde HTTP 200. A verificação pública de `https://ocodigolucrativo.site/` confirmou a navbar, o CTA flutuante, o formulário real e o conteúdo da Home. O ambiente `/dev` permanece removido e responde HTTP 410.
+
+O SHA completo está alinhado entre workspace, `origin/main`, marcador do release e produção:
+
+> `f01ef532b5bc289cf501711826e7ec7b6c0749c3`
+
+A produção mantém os 52 HTMLs de e-books empacotados. Nenhum arquivo sensível foi incluído no release, e o template original do Preview continua separado da cópia pública.
