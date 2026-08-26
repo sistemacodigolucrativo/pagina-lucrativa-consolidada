@@ -55,4 +55,6 @@ O preview utilizado para a conferência é:
 
 ## Estado de publicação
 
-A alteração está pronta para o commit autorizado pelo usuário. O fluxo de publicação deve preservar o mesmo SHA: commit local, push para a `main` do repositório `sistemacodigolucrativo/pagina-lucrativa-consolidada`, smoke test do commit e publicação desse mesmo commit na produção. O ambiente `/dev` não deve ser recriado.
+A alteração foi commitada e enviada para a `main` do repositório `sistemacodigolucrativo/pagina-lucrativa-consolidada` no SHA completo `75c4cf53016efd9de08b4a6dfd4b730a3d23c0a0`. A produção foi publicada no release `/home/ubuntu/servicos/pagina-lucrativa/releases/20260826-unified-75c4cf5`, com o symlink `current` trocado atomicamente após smoke test. O serviço `pagina-lucrativa.service` está ativo, a porta interna respondeu HTTP 200, a URL pública `https://ocodigolucrativo.site/` respondeu HTTP 200 e o marcador do release confirmou o mesmo SHA da `main` remota.
+
+A verificação pós-publicação também confirmou que `/dev/` continua retornando HTTP 410, que os 52 HTMLs de e-books permanecem presentes e que os serviços PWEB não relacionados continuaram ativos. O ambiente `/dev` não foi recriado.
