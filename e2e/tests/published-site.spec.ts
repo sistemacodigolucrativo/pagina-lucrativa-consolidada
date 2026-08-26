@@ -27,6 +27,97 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(page.locator('#f')).toContainText(/pedido|formulário/i);
   });
 
+  test('navbar simplificada preserva destinos, CTA, sticky e menu móvel', async ({ page }) => {
+    const expectedLinks = [
+      ['Como funciona', '#como-funciona'],
+      ['O que você recebe', '#o-que-recebe'],
+      ['Resultados', '#depoimentos'],
+      ['Dúvidas', '#faq'],
+      ['Acompanhar pedido', '/pedido/acompanhar'],
+      ['Entrar', '/acesso'],
+      ['Quero começar', '#f'],
+    ] as const;
+    const header = page.locator('.site-header');
+    const headerNav = header.locator('nav[aria-label="Navegação principal"]');
+
+    await page.goto(route('/'));
+    await expect(header).toBeVisible();
+    await expect(header).toHaveCSS('position', 'sticky');
+    await expect(headerNav).toBeVisible();
+    await expect(headerNav.locator('a').evaluateAll(links => links.map(link => link.textContent?.trim() ?? ""))).resolves.toEqual(expectedLinks.map(([label]) => label));
+    for (const [label, href] of expectedLinks) {
+      const link = headerNav.getByRole('link', { name: label, exact: true });
+      await expect(link).toHaveAttribute('href', href);
+    }
+    for (const removedLabel of ['Início', 'Conheça a estrutura', 'Vídeos', 'Para quem é', 'Institucional', 'Depoimentos', 'Perguntas frequentes']) {
+      await expect(headerNav.getByRole('link', { name: removedLabel, exact: true })).toHaveCount(0);
+    }
+    await expect(headerNav.locator('a.nav-cta')).toHaveText('Quero começar');
+
+    await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' as ScrollBehavior }));
+    await expect.poll(() => header.boundingBox().then(box => box?.y ?? Number.NaN)).toBeGreaterThanOrEqual(-1);
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.reload();
+    const menuButton = page.getByRole('button', { name: 'Abrir menu' });
+    await expect(menuButton).toBeVisible();
+    await menuButton.click();
+    await expect(page.getByRole('button', { name: 'Fechar menu' })).toBeVisible();
+    await expect(headerNav).toBeVisible();
+    await expect(headerNav.locator('a').evaluateAll(links => links.map(link => link.textContent?.trim() ?? ""))).resolves.toEqual(expectedLinks.map(([label]) => label));
+    await headerNav.getByRole('link', { name: 'Dúvidas', exact: true }).click();
+    await expect.poll(() => new URL(page.url()).hash).toBe('#faq');
+    await expect(headerNav).toBeHidden();
+  });
+
+  test('seção independente da estrutura digital preserva a composição em desktop, tablet e mobile', async ({ page }) => {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1280, height: 720 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(route('/'));
+
+      const hero = page.locator('#inicio');
+      const showcase = page.locator('section.structure-showcase');
+      await expect(showcase).toHaveCount(1);
+      await expect(showcase.getByRole('heading', { name: 'Pronta para operar.', exact: true })).toBeVisible();
+      await expect(showcase.locator('.hero-photo-wrap img')).toHaveCount(1);
+      await expect(showcase.locator('.sales-author-badge')).toContainText('Estrutura digital');
+      await expect(showcase.locator('.sales-author-badge')).toContainText('pronta para operar');
+      await expect(showcase.locator('.sprint-stamp')).toContainText('personalize e comece');
+      await expect(showcase.locator('.sprint-paper-card')).toContainText('escritório virtual');
+      await expect(showcase.locator('.sprint-paper-card')).toContainText('personalize');
+
+      const metrics = await showcase.evaluate(section => {
+        const sectionBox = section.getBoundingClientRect();
+        const heroBox = document.querySelector('#inicio')?.getBoundingClientRect();
+        const stage = section.querySelector('.structure-showcase-stage')?.getBoundingClientRect();
+        const elements = Array.from(section.querySelectorAll('.hero-photo-wrap, .sales-author-badge, .sprint-stamp, .sprint-paper-card')).map(element => {
+          const box = element.getBoundingClientRect();
+          return { left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+        });
+        return {
+          sectionTop: sectionBox.top,
+          heroBottom: heroBox?.bottom ?? 0,
+          stageWidth: stage?.width ?? 0,
+          elements,
+          viewportWidth: window.innerWidth,
+          documentWidth: document.documentElement.scrollWidth,
+        };
+      });
+
+      expect(metrics.sectionTop).toBeGreaterThanOrEqual(metrics.heroBottom - 1);
+      expect(metrics.stageWidth).toBeGreaterThan(0);
+      expect(metrics.documentWidth).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+      for (const element of metrics.elements) {
+        expect(element.left).toBeGreaterThanOrEqual(-1);
+        expect(element.right).toBeLessThanOrEqual(metrics.viewportWidth + 1);
+      }
+    }
+  });
+
   test('WhatsApp público sanitiza a digitação, aplica máscara e bloqueia número incompleto', async ({ page }) => {
     await page.goto(route('/'));
     const whatsapp = page.locator('input[name="whatsapp"]');

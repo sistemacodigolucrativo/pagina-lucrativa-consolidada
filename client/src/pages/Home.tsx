@@ -69,19 +69,13 @@ const footerLinks = [
 ];
 
 const publicNavigation = [
-  ["Início", "#inicio"],
-  ["Depoimentos", "#depoimentos"],
-  ["O que você recebe", "#o-que-recebe"],
   ["Como funciona", "#como-funciona"],
-  ["Conheça a estrutura", "#estrutura"],
-  ["Vídeos", "#videos"],
-  ["Para quem é", "#perfil-ideal"],
-  ["Perguntas frequentes", "#faq"],
-  ["Quero começar", "#f"],
+  ["O que você recebe", "#o-que-recebe"],
+  ["Resultados", "#depoimentos"],
+  ["Dúvidas", "#faq"],
 ] as const;
 
 const utilityNavigation = [
-  ["Institucional", "/institucional"],
   ["Acompanhar pedido", "/pedido/acompanhar"],
   ["Entrar", "/acesso"],
 ] as const;
@@ -105,6 +99,24 @@ function JoinButton({ className = "" }: { className?: string }) {
 function TopPromoBanner() {
   return <section className="top-promo-banner" aria-label="Apresentação do Código Lucrativo">
     <img src={promoBannerImage} alt="Seu negócio digital pronto para começar, com Página Lucrativa, Escritório Virtual, ferramentas e treinamentos." />
+  </section>;
+}
+
+function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; imageAlt: string }) {
+  return <section className="sales-section structure-showcase" id="estrutura-digital" aria-labelledby="structure-showcase-title">
+    <div className="shell">
+      <div className="structure-showcase-heading">
+        <Eyebrow>Estrutura digital</Eyebrow>
+        <h2 id="structure-showcase-title">Pronta para <span>operar.</span></h2>
+        <p>Uma composição visual da base que você personaliza, divulga e acompanha no Escritório Virtual.</p>
+      </div>
+      <div className="structure-showcase-stage">
+        {image ? <div className="hero-photo-wrap"><img src={image} alt={imageAlt} /><div className="photo-overlay" aria-hidden="true" /></div> : <div className="hero-photo-wrap hero-photo-empty" aria-hidden="true" />}
+        <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
+        <div className="sprint-stamp"><span>estrutura</span><strong>pronta<br />para operar</strong><small>personalize e comece</small></div>
+        <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>personalize<br />e acompanhe</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · campanhas · pedidos</span></div>
+      </div>
+    </div>
   </section>;
 }
 
@@ -177,6 +189,7 @@ export default function Home() {
           <div className="nav-links-group nav-links-utility" aria-label="Ações e rotas utilitárias">
             {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} className={path === "/acesso" ? "nav-login" : undefined} onClick={closeMenu}>{label}</a>)}
           </div>
+          <a href="#f" className="nav-cta" onClick={closeMenu}>Quero começar <ArrowUpRight size={15} /></a>
         </nav>
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
@@ -224,14 +237,10 @@ export default function Home() {
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">A estrutura já existe. Você personaliza<br className="sales-trust-break" />e coloca sua operação em movimento.</span></div>
           </div>
-          <div className="sales-hero-side reveal-item reveal-delay">
-            {heroImage ? <div className="hero-photo-wrap"><img src={heroImage} alt={heroSection.defaultAlt} /><div className="photo-overlay" aria-hidden="true" /></div> : <div className="hero-photo-wrap hero-photo-empty" aria-hidden="true" /> }
-            <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
-            <div className="sprint-stamp"><span>estrutura</span><strong>pronta<br />para operar</strong><small>personalize e comece</small></div>
-            <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>personalize<br />e acompanhe</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · campanhas · pedidos</span></div>
-          </div>
         </div>
       </section>
+
+      <StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} />
 
       <section className="sales-proof" aria-label="O que a estrutura reúne">
         <div className="shell sales-proof-grid">

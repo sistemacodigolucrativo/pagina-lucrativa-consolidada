@@ -41,6 +41,24 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.sales-hero { position: relative;');
   });
 
+  it("extracts the digital structure visual into one independent landing section", () => {
+    const heroStart = homeSource.indexOf('<section className="sales-hero" id="inicio">');
+    const showcaseStart = homeSource.indexOf('<StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} />');
+    expect(heroStart).toBeGreaterThan(-1);
+    expect(showcaseStart).toBeGreaterThan(heroStart);
+    expect((homeSource.match(/<StructureDigitalShowcase/g) ?? []).length).toBe(1);
+    expect(homeSource).toContain('className="sales-section structure-showcase"');
+    expect(homeSource).toContain('id="estrutura-digital"');
+    expect(homeSource).toContain('className="structure-showcase-stage"');
+    expect(homeSource).toContain('className="sales-author-badge"');
+    expect(homeSource).toContain('className="sprint-stamp"');
+    expect(homeSource).toContain('className="sprint-paper-card"');
+    expect(homeSource).not.toContain('className="sales-hero-side');
+    expect(cssSource).toContain('.structure-showcase { position: relative;');
+    expect(cssSource).toContain('.structure-showcase > .shell { position: relative;');
+    expect(cssSource).toContain('.structure-showcase-stage { position: relative;');
+  });
+
   it("removes only the navbar CTA and keeps other section CTAs", () => {
     expect(homeSource).not.toContain('<div className="nav-actions"><JoinButton /></div>');
     expect(homeSource).toContain('<div className="sales-actions"><JoinButton />');
@@ -113,21 +131,16 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.member-chat-fab { width: 58px; height: 58px; min-height: 58px; }');
   });
 
-  it("orders the landing navigation before the utility routes", () => {
+  it("keeps the simplified commercial navigation before utility routes and the CTA", () => {
     const publicNavigationStart = homeSource.indexOf("const publicNavigation = [");
     const utilityNavigationStart = homeSource.indexOf("const utilityNavigation = [");
     expect(publicNavigationStart).toBeGreaterThan(-1);
     expect(utilityNavigationStart).toBeGreaterThan(publicNavigationStart);
     const publicItems = [
-      '["Início", "#inicio"]',
-      '["Depoimentos", "#depoimentos"]',
-      '["O que você recebe", "#o-que-recebe"]',
       '["Como funciona", "#como-funciona"]',
-      '["Conheça a estrutura", "#estrutura"]',
-      '["Vídeos", "#videos"]',
-      '["Para quem é", "#perfil-ideal"]',
-      '["Perguntas frequentes", "#faq"]',
-      '["Quero começar", "#f"]',
+      '["O que você recebe", "#o-que-recebe"]',
+      '["Resultados", "#depoimentos"]',
+      '["Dúvidas", "#faq"]',
     ];
     let previousIndex = publicNavigationStart;
     for (const item of publicItems) {
@@ -137,7 +150,6 @@ describe("public responsive header and hero layout", () => {
       previousIndex = itemIndex;
     }
     const utilityItems = [
-      '["Institucional", "/institucional"]',
       '["Acompanhar pedido", "/pedido/acompanhar"]',
       '["Entrar", "/acesso"]',
     ];
@@ -147,22 +159,38 @@ describe("public responsive header and hero layout", () => {
       expect(itemIndex).toBeGreaterThan(previousIndex);
       previousIndex = itemIndex;
     }
+    const navigationDeclarations = homeSource.slice(publicNavigationStart, homeSource.indexOf("function resolveNavigationHref"));
+    for (const removedItem of [
+      '["Início", "#inicio"]',
+      '["Conheça a estrutura", "#estrutura"]',
+      '["Vídeos", "#videos"]',
+      '["Para quem é", "#perfil-ideal"]',
+      '["Institucional", "/institucional"]',
+      '["Perguntas frequentes", "#faq"]',
+      '["Depoimentos", "#depoimentos"]',
+    ]) expect(navigationDeclarations).not.toContain(removedItem);
     expect(homeSource).toContain('publicNavigation.map');
     expect(homeSource).toContain('utilityNavigation.map');
     expect(homeSource).toContain('className="nav-links-divider"');
+    expect(homeSource).toContain('href="#f" className="nav-cta"');
+    expect(cssSource).toContain('.nav-cta {');
     expect(homeSource).not.toContain('href={withAppBase("/preview")}');
     expect(homeSource).not.toContain('Preview</a>');
   });
 
-  it("keeps every requested landing target and mobile overflow protection", () => {
+  it("keeps every landing target and mobile overflow protection", () => {
     for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "faq", "f"]) {
       expect(homeSource).toContain(`id="${id}"`);
     }
     expect(homeSource).toContain('block.id === "problem_start" ? "como-funciona"');
     expect(homeSource).toContain('block.id === "product_real" ? "estrutura"');
     expect(homeSource).toContain('path.startsWith("#") ? path : withAppBase(path)');
+    expect(homeSource).toContain('["Institucional", "/institucional"]');
+    expect(homeSource).toContain('href={withAppBase(path)}');
     expect(cssSource).toContain('max-height: calc(100vh - 105px);');
+    expect(cssSource).toContain('max-height: calc(100dvh - 105px);');
     expect(cssSource).toContain('overflow-y: auto;');
+    expect(cssSource).toContain('scroll-padding-top: 84px;');
     expect(cssSource).toContain('.nav-links-divider {');
   });
 
