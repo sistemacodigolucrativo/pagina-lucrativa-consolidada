@@ -13,6 +13,7 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('label: "Divulgação"');
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
     expect(navigation).toContain('label: "Suporte", path: "/admin/suporte"');
+    expect(navigation).toContain('label: "Preview", path: "/preview", group: "Sistema"');
     expect(navigation).toContain('label: "Auditoria", path: "/admin/auditoria"');
     expect(navigation).not.toContain('label: "Configurações"');
     expect(navigation).not.toContain('label: "Pedidos"');
@@ -33,6 +34,16 @@ describe("navegação administrativa contextual", () => {
       expect(source).toContain('import { adminMenu } from "@/lib/adminNavigation"');
       expect(source).toContain("menuItems={adminMenu}");
     }
+  });
+
+  it("mantém Preview no mesmo contexto administrativo de Auditoria", () => {
+    const navigation = read("client/src/lib/adminNavigation.ts");
+    const preview = read("client/src/pages/Preview.tsx");
+    expect(navigation).toContain('label: "Preview", path: "/preview", group: "Sistema"');
+    expect(preview).toContain('import DashboardLayout from "@/components/DashboardLayout"');
+    expect(preview).toContain('import { adminMenu } from "@/lib/adminNavigation"');
+    expect(preview).toContain('<DashboardLayout menuItems={adminMenu} title="Administração" subtitle="Sistema">');
+    expect(preview).toContain('href={withAppBase("/")}');
   });
 
   it("mantém Publicações como CMS oficial e separa suporte, divulgação e auditoria", () => {

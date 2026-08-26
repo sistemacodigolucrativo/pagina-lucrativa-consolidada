@@ -97,16 +97,23 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).not.toContain('.top-promo-close');
   });
 
-  it("renders a structural member chat FAB without chat behavior", () => {
+  it("renders a circular member chat FAB without changing chat behavior", () => {
     expect(homeSource).toContain('className="member-chat-fab"');
     expect(homeSource).toContain('aria-label="Chat de membros"');
     expect(homeSource).toContain('aria-disabled="true"');
+    expect(homeSource).toContain('title="Chat de membros — em breve"');
     expect(homeSource).toContain('className="member-chat-fab-wrap"');
+    expect(homeSource).toContain('<MessageCircle size={30} strokeWidth={2.2} />');
+    expect(homeSource).not.toContain('member-chat-fab-label');
     expect(cssSource).toContain('.member-chat-fab-wrap { position: fixed;');
+    expect(cssSource).toContain('width: 64px; height: 64px; min-height: 64px;');
+    expect(cssSource).toContain('border-radius: 50%;');
+    expect(cssSource).not.toContain('.member-chat-fab::after');
+    expect(cssSource).toContain('.member-chat-fab { width: 58px; height: 58px; min-height: 58px; }');
   });
 
-  it("links Preview to a separate experimental page", () => {
-    expect(homeSource).toContain('href={withAppBase("/preview")}');
+  it("removes Preview from the public navigation without removing its route", () => {
+    expect(homeSource).not.toContain('href={withAppBase("/preview")}');
     expect(homeSource).not.toContain('previewOpen');
     expect(homeSource).not.toContain('preview-area');
   });

@@ -4,7 +4,6 @@ import { trpc } from "@/lib/trpc";
 import NotFound from "@/pages/NotFound";
 import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
-import GlobalNotes from "./components/GlobalNotes";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import MemberOffice from "./pages/MemberOffice";
@@ -155,6 +154,6 @@ function AppRoutes() {
 }
 function App() {
   const base = DEV_PREFIX;
-  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><GlobalNotes /><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
+  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;

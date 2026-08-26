@@ -151,7 +151,6 @@ export default function Home() {
           <a href="#inicio" onClick={closeMenu}>Início</a>
           <a href="#como-funciona" onClick={closeMenu}>Como funciona</a>
           <a href="#estrutura" onClick={closeMenu}>O que inclui</a>
-          <a href={withAppBase("/preview")} onClick={closeMenu}>Preview</a>
           <a href={withAppBase("/institucional")} onClick={closeMenu}>Institucional</a>
           <a href="#faq" onClick={closeMenu}>Perguntas frequentes</a>
           <a href={withAppBase("/pedido/acompanhar")} onClick={closeMenu}>Acompanhar pedido</a>
@@ -302,6 +301,6 @@ export default function Home() {
     </main>
 
     <footer className="footer"><div className="shell footer-row footer-expanded"><div><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span></div><nav className="footer-links" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}</a>)}</nav>{affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}</div></footer>
-    <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={23} strokeWidth={2.2} /><span className="member-chat-fab-label" aria-hidden="true"><strong>Chat de membros</strong><small>Em breve</small></span></button></div>
+    <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={30} strokeWidth={2.2} /></button></div>
   </div>;
 }
