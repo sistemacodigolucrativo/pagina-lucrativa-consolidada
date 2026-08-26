@@ -1,91 +1,108 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.vps.yml}"
-HEALTHCHECK_URL="${HEALTHCHECK_URL:-http://127.0.0.1:3000/}"
 TARGET_SHA="${1:-}"
-DEPLOY_TOUCHED_SERVICE=0
+DEPLOY_ROOT="${2:-}"
+ARTIFACT_PATH="${3:-}"
+HEALTHCHECK_URL="${4:-http://127.0.0.1:3101/}"
+SERVICE_NAME="${SERVICE_NAME:-pagina-lucrativa.service}"
+SMOKE_PORT="${SMOKE_PORT:-3199}"
+PUBLIC_HEALTHCHECK_URL="${PUBLIC_HEALTHCHECK_URL:-https://ocodigolucrativo.site/}"
 
-log() {
-  printf '[deploy] %s\n' "$*"
-}
+log() { printf '[deploy] %s\n' "$*"; }
+fail() { printf '[deploy] ERRO: %s\n' "$*" >&2; exit 1; }
 
-fail() {
-  printf '[deploy] ERRO: %s\n' "$*" >&2
-  exit 1
-}
+[[ -n "$TARGET_SHA" ]] || fail "Informe o SHA alvo."
+[[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "SHA alvo inválido."
+[[ -n "$DEPLOY_ROOT" && "$DEPLOY_ROOT" = /* ]] || fail "DEPLOY_ROOT deve ser absoluto."
+[[ -f "$ARTIFACT_PATH" ]] || fail "Artefato não encontrado: $ARTIFACT_PATH"
 
-command -v git >/dev/null 2>&1 || fail "git não está instalado."
-command -v docker >/dev/null 2>&1 || fail "docker não está instalado."
-docker compose version >/dev/null 2>&1 || fail "docker compose não está disponível."
+for cmd in tar node pnpm curl systemctl readlink ln date; do
+  command -v "$cmd" >/dev/null 2>&1 || fail "$cmd não está disponível."
+done
 
-[[ -n "$TARGET_SHA" ]] || fail "Informe o SHA alvo como primeiro argumento."
-git rev-parse --is-inside-work-tree >/dev/null 2>&1 || fail "O diretório atual não é um repositório Git."
-[[ -f "$COMPOSE_FILE" ]] || fail "Arquivo $COMPOSE_FILE não encontrado."
+RELEASES_DIR="$DEPLOY_ROOT/releases"
+CURRENT_LINK="$DEPLOY_ROOT/current"
+SHORT_SHA="${TARGET_SHA:0:8}"
+RELEASE_NAME="$(date -u +%Y%m%dT%H%M%SZ)-$SHORT_SHA"
+NEW_RELEASE="$RELEASES_DIR/$RELEASE_NAME"
+PREVIOUS_RELEASE=""
+SWITCHED=0
 
-if [[ -n "$(git status --porcelain)" ]]; then
-  fail "A cópia de produção possui alterações locais. O deploy foi interrompido para evitar perda de dados."
-fi
-
-OLD_SHA="$(git rev-parse HEAD)"
-log "Versão atual: $OLD_SHA"
-log "Atualizando referências do origin/main..."
-git fetch --prune origin main
-ORIGIN_MAIN_SHA="$(git rev-parse origin/main)"
-
-if [[ "$TARGET_SHA" != "$ORIGIN_MAIN_SHA" ]]; then
-  fail "O SHA solicitado ($TARGET_SHA) não corresponde ao origin/main atual ($ORIGIN_MAIN_SHA)."
-fi
-
-if [[ "$OLD_SHA" == "$TARGET_SHA" ]]; then
-  log "A VPS já está na versão solicitada. Nenhuma ação necessária."
-  exit 0
-fi
-
-# Alterações de schema/migração não são aplicadas automaticamente. Exigem backup de banco e revisão manual.
-DB_CHANGES="$(git diff --name-only "$OLD_SHA" "$TARGET_SHA" -- drizzle drizzle.config.ts drizzle/schema.ts || true)"
-if [[ -n "$DB_CHANGES" ]]; then
-  printf '%s\n' "$DB_CHANGES" >&2
-  fail "Foram detectadas alterações de banco/migração. Faça backup do banco e uma implantação manual revisada."
+mkdir -p "$RELEASES_DIR"
+if [[ -L "$CURRENT_LINK" ]]; then
+  PREVIOUS_RELEASE="$(readlink -f "$CURRENT_LINK")"
+  [[ -d "$PREVIOUS_RELEASE" ]] || fail "O symlink current aponta para um release inválido."
+else
+  fail "Symlink current não encontrado em $CURRENT_LINK."
 fi
 
 rollback() {
-  local exit_code=$?
-  trap - ERR
-  printf '[deploy] Falha detectada. Restaurando %s...\n' "$OLD_SHA" >&2
-  git reset --hard "$OLD_SHA" >/dev/null
-  if [[ "$DEPLOY_TOUCHED_SERVICE" -eq 1 ]]; then
-    docker compose -f "$COMPOSE_FILE" build app
-    docker compose -f "$COMPOSE_FILE" up -d app
+  local code=$?
+  trap - ERR INT TERM
+  if [[ "$SWITCHED" -eq 1 && -n "$PREVIOUS_RELEASE" ]]; then
+    printf '[deploy] Falha após ativação. Restaurando release anterior: %s\n' "$PREVIOUS_RELEASE" >&2
+    ln -sfn "$PREVIOUS_RELEASE" "$CURRENT_LINK.rollback"
+    mv -Tf "$CURRENT_LINK.rollback" "$CURRENT_LINK"
+    systemctl restart "$SERVICE_NAME" || true
+    for _ in $(seq 1 30); do
+      curl --fail --silent --show-error --max-time 5 "$HEALTHCHECK_URL" >/dev/null 2>&1 && break
+      sleep 2
+    done
   fi
-  printf '[deploy] Rollback concluído para %s.\n' "$OLD_SHA" >&2
-  exit "$exit_code"
+  exit "$code"
 }
-trap rollback ERR
+trap rollback ERR INT TERM
 
-log "Movendo working tree para $TARGET_SHA..."
-git reset --hard "$TARGET_SHA"
+log "Criando release $NEW_RELEASE"
+mkdir "$NEW_RELEASE"
+tar -xzf "$ARTIFACT_PATH" -C "$NEW_RELEASE"
+printf '%s\n' "$TARGET_SHA" > "$NEW_RELEASE/.deployed-sha"
 
-log "Construindo nova imagem da aplicação..."
-docker compose -f "$COMPOSE_FILE" build app
+cd "$NEW_RELEASE"
+[[ -f package.json && -f pnpm-lock.yaml ]] || fail "Artefato não contém package.json/pnpm-lock.yaml."
 
-log "Subindo nova versão da aplicação..."
-DEPLOY_TOUCHED_SERVICE=1
-docker compose -f "$COMPOSE_FILE" up -d app
+log "Instalando dependências do release"
+pnpm install --frozen-lockfile
+log "Gerando build de produção"
+pnpm build
+[[ -f dist/index.js ]] || fail "Build não gerou dist/index.js."
 
-log "Executando health check em $HEALTHCHECK_URL..."
-HEALTH_OK=0
-for attempt in $(seq 1 30); do
-  if curl --fail --silent --show-error --max-time 5 "$HEALTHCHECK_URL" >/dev/null 2>&1; then
-    HEALTH_OK=1
-    break
-  fi
+log "Smoke test isolado na porta $SMOKE_PORT"
+SMOKE_LOG="$NEW_RELEASE/.smoke.log"
+NODE_ENV=production PORT="$SMOKE_PORT" node dist/index.js >"$SMOKE_LOG" 2>&1 &
+SMOKE_PID=$!
+cleanup_smoke() { kill "$SMOKE_PID" >/dev/null 2>&1 || true; wait "$SMOKE_PID" >/dev/null 2>&1 || true; }
+SMOKE_OK=0
+for _ in $(seq 1 30); do
+  if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$SMOKE_PORT/" >/dev/null 2>&1; then SMOKE_OK=1; break; fi
+  if ! kill -0 "$SMOKE_PID" >/dev/null 2>&1; then break; fi
   sleep 2
 done
+cleanup_smoke
+[[ "$SMOKE_OK" -eq 1 ]] || fail "Smoke test do novo release falhou. Consulte $SMOKE_LOG."
 
-if [[ "$HEALTH_OK" -ne 1 ]]; then
-  fail "A nova versão não respondeu ao health check."
+log "Ativando release de forma atômica"
+ln -sfn "$NEW_RELEASE" "$CURRENT_LINK.next"
+mv -Tf "$CURRENT_LINK.next" "$CURRENT_LINK"
+SWITCHED=1
+systemctl restart "$SERVICE_NAME"
+
+log "Validando aplicação em $HEALTHCHECK_URL"
+HEALTH_OK=0
+for _ in $(seq 1 30); do
+  if curl --fail --silent --show-error --max-time 5 "$HEALTHCHECK_URL" >/dev/null 2>&1; then HEALTH_OK=1; break; fi
+  sleep 2
+done
+[[ "$HEALTH_OK" -eq 1 ]] || fail "Health check local falhou após ativação."
+
+if [[ -n "$PUBLIC_HEALTHCHECK_URL" ]]; then
+  log "Validando endpoint público"
+  curl --fail --silent --show-error --max-time 15 "$PUBLIC_HEALTHCHECK_URL" >/dev/null
 fi
 
-trap - ERR
-log "Deploy concluído com sucesso: $TARGET_SHA"
+trap - ERR INT TERM
+SWITCHED=0
+rm -f "$ARTIFACT_PATH"
+log "Deploy concluído: $TARGET_SHA"
+log "Release anterior preservado: $PREVIOUS_RELEASE"
