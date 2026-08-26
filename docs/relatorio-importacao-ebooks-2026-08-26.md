@@ -29,3 +29,7 @@ Nenhum arquivo recebido foi executado. As fontes foram preservadas em um diretó
 ## Validação inicial
 
 O check TypeScript passou após a integração. O teste específico da biblioteca verifica 52 materiais publicados, IDs únicos, HTML não vazio e leitura pelo ID estável. A suíte completa, o build, a verificação E2E e a publicação na `main` devem ser executados antes do envio final.
+
+## Resultado final
+
+A validação foi concluída com `pnpm check`, `pnpm test` e `pnpm build`, todos aprovados. A suíte final passou com 59 arquivos de teste e 186 testes. Os E2E da navegação pública e da navbar sticky também passaram no preview da aplicação. A integração foi publicada na `main` do GitHub no commit `af6cedfccdfe8b2a1e35e12b59bcd4293c9bfb84`, com a árvore de trabalho limpa e o SHA remoto confirmado.
