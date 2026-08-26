@@ -1,75 +1,61 @@
 # Auto deploy seguro — GitHub → VPS
 
-## Objetivo
+## Arquitetura real de produção
 
-A branch `main` é a fonte oficial do código de produção. Cada push em `main` deve passar por validação automática e, quando a integração da VPS estiver configurada, disparar a atualização do ambiente de produção.
+A `main` é a fonte oficial. A VPS não mantém checkout Git e não usa Docker para esta aplicação. Produção usa releases imutáveis, symlink `current`, `systemd` (`pagina-lucrativa.service`), Node em `current/dist/index.js`, porta interna `3101` e Nginx como proxy de `ocodigolucrativo.site`.
 
-## Ponto de restauração inicial
+Raiz esperada: `/home/ubuntu/servicos/pagina-lucrativa`.
 
-Antes da implantação deste mecanismo foi criada a branch remota:
-
-`backup/pre-auto-deploy-2026-08-26`
-
-Ela preserva o commit:
-
-`c68a10195a963e13f79f34d7c53270066f58ba23`
-
-Esse ponto representa o estado conhecido como funcional antes da introdução do auto deploy.
+O release funcional anterior ao auto deploy permanece preservado no SHA `c68a10195a963e13f79f34d7c53270066f58ba23`, também referenciado pela branch `backup/pre-auto-deploy-2026-08-26`.
 
 ## Fluxo
 
 1. Push em `main`.
-2. GitHub Actions executa `pnpm check`, `pnpm test` e `pnpm build`.
-3. Se qualquer validação falhar, a VPS não é alterada.
-4. Se as validações passarem e os Secrets da VPS estiverem configurados, o workflow conecta por SSH.
-5. A VPS executa `scripts/deploy-vps.sh <SHA>`.
-6. O script confirma que a cópia de produção está limpa e que o SHA solicitado é o `origin/main` atual.
-7. Mudanças em schema/migrações são bloqueadas para exigir backup e revisão manual do banco.
-8. O código é movido para o novo SHA e o container `app` é reconstruído com `docker-compose.vps.yml`.
-9. A aplicação é reiniciada e passa por health check HTTP.
-10. Se a nova versão falhar depois de tocar o serviço, o script restaura o SHA anterior, reconstrói o container anterior e sobe novamente a versão conhecida.
+2. GitHub Actions bloqueia mudanças automáticas de schema/migration e executa `pnpm check`, `pnpm test` e `pnpm build`.
+3. Somente após sucesso, o checkout exato de `github.sha` é empacotado sem `.git`, `node_modules`, `dist` ou `.env`.
+4. Artefato e `scripts/deploy-vps.sh` são enviados para área temporária da VPS via SSH/SCP.
+5. O script cria um novo diretório em `releases/`, instala dependências e gera o build na própria VPS.
+6. Antes de ativar, executa smoke test isolado em porta temporária.
+7. O symlink `current` é trocado atomicamente para o novo release.
+8. `pagina-lucrativa.service` é reiniciado.
+9. O script valida `http://127.0.0.1:3101/` e o endpoint público HTTPS.
+10. Se houver falha após a troca, `current` volta para o release anterior, o mesmo serviço é reiniciado e a versão anterior permanece disponível.
 
-## Secrets necessários no GitHub
+O deploy não altera Nginx, unit do systemd, bancos ou serviços PWEB paralelos.
 
-Cadastre no repositório, em Actions Secrets:
+## Secrets necessários
 
-- `VPS_HOST` — hostname ou IP da VPS.
-- `VPS_PORT` — porta SSH; se omitido, o workflow usa `22`.
-- `VPS_USER` — usuário SSH utilizado no deploy.
-- `VPS_SSH_KEY` — chave privada exclusiva para o deploy, sem expor a chave no repositório.
-- `VPS_DEPLOY_PATH` — caminho absoluto do clone de produção na VPS.
+- `VPS_HOST` — IP/hostname da VPS.
+- `VPS_PORT` — porta SSH; opcional, padrão 22.
+- `VPS_USER` — usuário de deploy.
+- `VPS_SSH_KEY` — chave privada exclusiva do Actions.
+- `VPS_DEPLOY_PATH` — raiz `/home/ubuntu/servicos/pagina-lucrativa`.
+- `VPS_KNOWN_HOSTS` — entrada verificada de host key da VPS para `StrictHostKeyChecking=yes`.
 
-Enquanto esses Secrets não estiverem completos, o workflow executará apenas a etapa de validação e registrará que o deploy foi ignorado com segurança.
+Enquanto esses dados não estiverem completos, o workflow valida o projeto e não altera a produção.
 
-## Pré-requisitos da VPS
+## Contrato da VPS
 
-O diretório indicado por `VPS_DEPLOY_PATH` deve:
+O usuário de deploy precisa conseguir:
 
-- ser um clone deste repositório;
-- possuir `origin` apontando para o repositório consolidado;
-- conseguir executar `git fetch origin main` sem interação manual;
-- possuir Docker e Docker Compose;
-- possuir `.env` local de produção, não versionado;
-- utilizar `docker-compose.vps.yml` para o serviço de produção;
-- não receber alterações manuais permanentes em arquivos versionados.
+- criar releases em `$VPS_DEPLOY_PATH/releases`;
+- criar arquivos temporários em `/tmp`;
+- executar `node`, `pnpm`, `curl` e `tar`;
+- trocar o symlink `$VPS_DEPLOY_PATH/current`;
+- reiniciar `pagina-lucrativa.service` via `systemctl` sem prompt interativo, limitado a esse serviço.
 
-A autenticação necessária para a VPS fazer `git fetch` de um repositório privado deve ser configurada no próprio servidor (por exemplo, deploy key somente leitura). Nunca coloque credenciais Git no código.
+Não criar `.env` artificialmente. As variáveis de produção permanecem sob o contrato já existente do systemd.
 
 ## Banco de dados
 
-O deploy automático deliberadamente NÃO executa `pnpm db:push`.
+Deploy automático não executa migrations. Mudanças em `drizzle/`, `drizzle.config.ts` ou `drizzle/schema.ts` bloqueiam a automação e exigem backup/revisão manual antes da implantação.
 
-Se um push modificar `drizzle/`, `drizzle/schema.ts` ou `drizzle.config.ts`, a implantação é interrompida antes de alterar a produção. Nesse cenário:
+## Rollback
 
-1. faça backup real do banco;
-2. revise as migrations;
-3. execute a implantação/migração manualmente;
-4. valide os dados e a aplicação.
+O script registra o destino anterior de `current`. Se a versão nova falhar depois de ativada, restaura atomicamente esse symlink, reinicia `pagina-lucrativa.service` e mantém o release anterior intacto.
 
-## Recuperação manual
+O release inicial conhecido como funcional (`20260826-unified-c68a101`) não deve ser removido. A VPS também possui backup pré-auto-deploy criado durante a auditoria do ambiente.
 
-Para retornar ao estado anterior à implantação do sistema de auto deploy, a referência inicial está preservada em:
+## Preparação final
 
-`backup/pre-auto-deploy-2026-08-26`
-
-Também é possível restaurar qualquer SHA conhecido diretamente na VPS e reconstruir o container `app`.
+A VPS deve receber uma identidade SSH exclusiva para Actions, com a chave pública em `authorized_keys`. A chave privada vai diretamente para `VPS_SSH_KEY`, nunca para arquivos versionados. Cadastre os seis Secrets acima e execute o primeiro deploy de forma controlada, acompanhando Actions, systemd, health check local e HTTPS público.
