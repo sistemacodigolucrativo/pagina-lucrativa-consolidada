@@ -5,9 +5,9 @@ import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
-import { PhoneInput } from "@/components/PhoneInput";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
+import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
@@ -318,14 +318,14 @@ export default function Home() {
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
           <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com uma <span>estrutura digital pronta.</span></h2><p>Você não está solicitando apenas uma página. Está solicitando acesso a uma base de operação para personalizar, aprender, divulgar e acompanhar seu projeto digital.</p><div className="sales-notes"><span>Acesso inicial: R$ 50,00</span><span>Condição informada no processo de ativação</span></div><p className="offer-closing">O resultado não é automático nem garantido. A estrutura organiza o ponto de partida; pedidos, vendas e ganhos dependem da sua execução e das regras reais da operação.</p></div>
-          <form className="sales-price-card application-form" onSubmit={submitApplication}>
-            <div className="application-seal" aria-hidden="true"><span>PL</span><small>estrutura</small><b>pedido</b></div><div className="sales-price">R$ 50,00 <small>valor de entrada informado nesta oferta</small></div><h3>Solicite a ativação da sua estrutura</h3><p>Preencha seus dados para registrar o pedido. Você receberá um código de acompanhamento e as orientações reais sobre pagamento, liberação e personalização.</p>
-            <label className="application-field"><span>Nome completo</span><input name="fullName" autoComplete="name" required minLength={3} placeholder="Seu nome completo" /></label>
-            <label className="application-field"><span>E-mail</span><input name="email" type="email" autoComplete="email" required maxLength={320} value={applicationContact.email} onChange={event => setApplicationContact(current => ({ ...current, email: normalizeEmail(event.target.value) }))} placeholder="voce@email.com" /></label>
-            <label className="application-field"><span>WhatsApp</span><PhoneInput name="whatsapp" required value={applicationContact.whatsapp} onChange={whatsapp => setApplicationContact(current => ({ ...current, whatsapp }))} placeholder="(00) 0 0000-0000" /></label>
-            {application.error && <p className="application-error" role="alert">{application.error.message}</p>}
-            <button className="btn btn-primary" type="submit" disabled={application.isPending}>{application.isPending ? "Registrando solicitação..." : "Solicitar ativação"}<ArrowUpRight size={16} /></button><small>Seus dados serão usados para registrar e acompanhar esta solicitação. O formulário não processa o pagamento automaticamente.</small>
-          </form>
+          <VioletaNeonActivationCard
+            contact={applicationContact}
+            isPending={application.isPending}
+            errorMessage={application.error?.message}
+            onSubmit={submitApplication}
+            onEmailChange={value => setApplicationContact(current => ({ ...current, email: normalizeEmail(value) }))}
+            onWhatsappChange={whatsapp => setApplicationContact(current => ({ ...current, whatsapp }))}
+          />
         </div>
       </section>
 

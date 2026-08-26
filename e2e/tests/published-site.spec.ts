@@ -118,6 +118,50 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     }
   });
 
+  test('cópia pública Violeta Neon preserva o formulário e o CTA flutuante sem alterar o Preview original', async ({ page }) => {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 768, height: 1024 },
+      { width: 1280, height: 720 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(route('/'));
+      const card = page.locator('form.violeta-neon-activation-card');
+      const cta = page.locator('.public-conversion-cta');
+      await expect(card).toHaveCount(1);
+      await expect(card).toContainText('Modelo público · Violeta Neon');
+      await expect(card).toContainText('R$ 50,00');
+      await expect(card.locator('input[name="fullName"]')).toBeVisible();
+      await expect(card.locator('input[name="email"]')).toBeVisible();
+      await expect(card.locator('input[name="whatsapp"]')).toBeVisible();
+      await expect(cta).toBeVisible();
+      await expect(cta).toHaveAttribute('href', '/#f');
+      await expect(page.locator('form.sales-price-card')).toHaveCount(0);
+
+      const ctaBox = await cta.boundingBox();
+      const chatBox = await page.locator('.member-chat-fab').boundingBox();
+      expect(ctaBox).not.toBeNull();
+      expect(chatBox).not.toBeNull();
+      const ctaTop = ctaBox!.y;
+      const ctaBottom = ctaBox!.y + ctaBox!.height;
+      const chatTop = chatBox!.y;
+      const chatBottom = chatBox!.y + chatBox!.height;
+      expect(ctaTop >= chatBottom - 1 || ctaBottom <= chatTop + 1).toBe(true);
+
+      await cta.click();
+      await expect(card).toBeInViewport();
+      await expect(cta).toHaveCount(0);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(viewport.width + 1);
+    }
+
+    await signIn(page, 'admin', '123', '/admin');
+    await page.goto(route('/preview'));
+    await expect(page.getByText('Violeta neon', { exact: true })).toBeVisible();
+    await expect(page.locator('.offer-preview-violet')).toHaveCount(1);
+    await expect(page.locator('.violeta-neon-activation-card')).toHaveCount(0);
+    await expect(page.locator('.public-conversion-cta')).toHaveCount(0);
+  });
+
   test('toast global usa atividade ilustrativa, alterna notificações e não aparece em áreas privadas', async ({ page }) => {
     await page.addInitScript(() => {
       const originalSetTimeout = window.setTimeout.bind(window);

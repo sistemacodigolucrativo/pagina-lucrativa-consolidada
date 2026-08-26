@@ -6,6 +6,9 @@ const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.ts
 const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 const socialProofSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicSocialProofToast.tsx"), "utf8");
+const conversionCtaSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicConversionCta.tsx"), "utf8");
+const violetaSource = readFileSync(resolve(process.cwd(), "client/src/components/VioletaNeonActivationCard.tsx"), "utf8");
+const previewSource = readFileSync(resolve(process.cwd(), "client/src/pages/Preview.tsx"), "utf8");
 const operationsSource = readFileSync(resolve(process.cwd(), "client/src/pages/MemberOperations.tsx"), "utf8");
 const internalLinkSources = [
   "client/src/pages/ApplicationConfirmation.tsx",
@@ -63,12 +66,31 @@ describe("public responsive header and hero layout", () => {
 
   it("mounts the social proof toast once at router scope and gates private routes", () => {
     expect((appSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
-    expect(appSource).toContain('<WouterRouter base={base}><PublicSocialProofToast /><AppRoutes /></WouterRouter>');
+    expect((appSource.match(/<PublicConversionCta \/>/g) ?? []).length).toBe(1);
+    expect(appSource).toContain('<WouterRouter base={base}><PublicSocialProofToast /><PublicConversionCta /><AppRoutes /></WouterRouter>');
     expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
     expect(socialProofSource).toContain('if (!isPublicSocialProofRoute(location) || publicSocialProofEntries.length === 0)');
     expect(socialProofSource).toContain('role="status"');
     expect(cssSource).toContain('.public-social-proof-toast { position: fixed;');
     expect(cssSource).toContain('pointer-events: none;');
+  });
+
+  it("keeps the original Violeta Neon Preview isolated from the public copy", () => {
+    expect(previewSource).toContain('<OfferPreviewCard model="Modelo 05" title="Violeta neon" tone="violet" legacyClass="preview-model-05" />');
+    expect(violetaSource).toContain('Independent public adaptation of the private Preview model 05');
+    expect(homeSource).toContain('<VioletaNeonActivationCard');
+    expect(homeSource).not.toContain('<form className="sales-price-card application-form"');
+    expect(violetaSource).toContain('className="violeta-neon-activation-card application-form"');
+    expect(violetaSource).toContain('onSubmit={onSubmit}');
+  });
+
+  it("mounts the public conversion CTA once with a safe fixed position", () => {
+    expect(conversionCtaSource).toContain('isPublicConversionRoute(location)');
+    expect(conversionCtaSource).toContain('href={withAppBase("/#f")}');
+    expect(cssSource).toContain('.public-conversion-cta { position: fixed;');
+    expect(cssSource).toContain('z-index: 54;');
+    expect(cssSource).toContain('  .public-conversion-cta { right: 16px;');
+    expect(cssSource).toContain('min-height: 52px; min-width: 52px;');
   });
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {
