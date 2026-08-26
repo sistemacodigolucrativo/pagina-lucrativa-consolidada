@@ -38,6 +38,7 @@ import { storagePut } from "./storage";
 import { hashPassword } from "./credentialHash";
 import { assertReceiptReviewAllowed, assertReceiptUploadAllowed, assertSponsorImmutable } from "./integrityGuards";
 import { getPublicSalesSection } from "../shared/publicSalesSections";
+import { getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
 const PAYMENT_ACCESS_TOKEN_TTL_MS = 30 * 60 * 1000;
@@ -1112,14 +1113,15 @@ type EbookInput = {
 };
 export async function getPublishedEbooks() {
   const db = await getDb();
-  if (!db) return [];
-  return db.select(ebookListFields).from(ebooks).where(eq(ebooks.status, "published")).orderBy(desc(ebooks.publishedAt), desc(ebooks.updatedAt));
+  if (!db) return getPackagedEbooks();
+  const result = await db.select(ebookListFields).from(ebooks).where(eq(ebooks.status, "published")).orderBy(desc(ebooks.publishedAt), desc(ebooks.updatedAt));
+  return result.length ? result : getPackagedEbooks();
 }
 export async function getPublishedEbook(ebookId: number) {
   const db = await getDb();
-  if (!db) return null;
+  if (!db) return getPackagedEbook(ebookId);
   const result = await db.select().from(ebooks).where(and(eq(ebooks.id, ebookId), eq(ebooks.status, "published"))).limit(1);
-  return result[0] ?? null;
+  return result[0] ?? getPackagedEbook(ebookId);
 }
 export async function getAdminEbooks() {
   const db = await getDb();

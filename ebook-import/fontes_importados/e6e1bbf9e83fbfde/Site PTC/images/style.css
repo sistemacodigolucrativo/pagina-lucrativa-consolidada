@@ -1,0 +1,431 @@
+/**********************************************************************************************************************************************
+	ScriptBux Version 2.50 beta
+	This Script has been created and coded by Gabrola and edited by hassan ahmady.
+	If you find any bugs in the script report at support@thealternatif.info or contact hassan ahmady.
+	Copywrite ScriptBux 2008;
+	Please make donations if you use this sript for commercial use
+	to My paypal account "bisnis-usd@plasa.com"
+************************************************************************************************************************************************/
+
+/* CSS Document */
+body {
+	background: #caced1 url('bg.gif');
+	font-family: "Trebuchet MS", Tahoma,  Arial, sans-serif;
+	font-size: 10px;
+	color: #666666;
+}
+
+th {
+ font-family:Georgia;
+ font-size:14px;
+ background: url(th-bg.jpg) repeat-x top #00CCFF;
+ font-weight:bold;
+ color:#00FFFF;
+} 
+/* headers */
+h1, h2, h3 { font-family: 'Trebuchet MS', Tahoma, Sans-serif;  }
+h1 {
+	font-size: 180%;	
+	font-weight: normal;	
+	color: #555;
+}
+h2 {
+	font-size: 160%;
+	color: #88ac0b;
+	font-weight: normal;
+}
+h3 {
+	font-size: 135%;	 
+	color: #666666;
+}
+a:link {
+	color: #6A7E0C;
+	text-decoration: underline;
+}
+a:visited {
+	color: #6A7E0C;
+	text-decoration:underline;
+}
+a:hover {
+	color: #000000;
+	text-decoration: none;
+}
+
+a.rollover_white:link {
+	color: #FFFFFF;
+	text-decoration: none;
+}
+a.rollover_white:visited {
+	color: #FFFFFF;
+	text-decoration: none;
+}
+a.rollover_white:hover {
+	color: #BEDA36;
+	text-decoration: none;
+}
+
+.txt_blue {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 11px;
+	color: #0089C7;
+}
+
+.txt_green {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 13px;
+	color: #829A0E;
+	font-weight:bold;
+}
+
+.txt_green_large {
+	font-family: Arial, Helvetica, sans-serif;
+	font-size: 12px;
+	color: #829A0E;
+}
+
+.txt_white {
+	font-family: tahoma;
+	font-size: 12px;
+	color: #FFFFFF;
+}
+
+.mainbg {
+	background:url(box-bg.jpg) repeat top;
+}	
+.main {
+	font-family: tahoma;
+	font-size: 12px;
+	color: #000000;
+}
+
+#newsbar {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	margin: 0px 23px 0 23px;
+	clear: both;
+}
+#newsbar a:link {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #6A7E0C;
+	text-decoration: underline;
+}
+#newsbar a:hover {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #000000;
+	text-decoration: underline;
+}
+#newsbar a:visited {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #6A7E0C;
+	text-decoration: underline;
+}
+
+.surfadsa:link, surfadsa:hover, surfadsa:visited {
+	text-decoration: none;
+}
+
+/* navigation */
+#menu {
+	clear: both;	
+	margin: 0 auto;
+	padding: 0;
+	background: url('bg-nav.jpg') repeat-x top left;	
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+}
+#menu_left ul {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	float: left;
+	list-style: none;
+	margin:0;
+	padding: 0 0 0 0;
+	width:75%;
+}
+#menu_left ul li {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	display: inline;
+}
+#menu_left ul li a {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	display: block;
+	float: left;
+	padding: 0 12px;
+	color: #fff;	
+	text-decoration: none;
+	background: url(sep.jpg) no-repeat 100% 100%;
+}
+#menu_left ul li a:hover {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	color: #3b5e0b;	
+}
+
+#menu_left ul li#current a {	
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	color: #3b5e0b;
+}
+
+#menu_right ul {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	float: right;
+	list-style: none;
+	margin:0;
+	padding: 0 0 0 0;
+	width:25%;
+}
+#menu_right ul li {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	display: inline;
+}
+#menu_right ul li a {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	display: block;
+	float: right;
+	padding: 0 12px;
+	color: #fff;	
+	text-decoration: none;
+	background: url(sep.jpg) no-repeat 100% 100%;
+	background-position:left;
+}
+#menu_right ul li a:hover {
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	color: #3b5e0b;	
+}
+#menu_right ul li#current a {	
+	font-family:"trebuchet MS", Arial, Tahoma, Sans-serif;
+	font-size:14px;
+	font-weight:bold;
+	color: #3b5e0b;
+}
+
+#navbar ul {
+	list-style: none;
+	margin: 0;
+	padding: 4px;
+	font-size:13px;
+	font-family:georgia;
+	text-align:right;
+	color:#fff;
+	font-weight:bold;
+}
+#navbar ul a {
+	color:#fff;
+}
+#navbar ul a:hover {
+	color:#3b5e0b;
+}
+#navbar ul li {
+	display: inline;
+}
+
+#btmnavbar {
+	font-size:11px;
+	padding-bottom:2px;
+	padding-top:2px;
+}
+#btmnavbar a:hover {
+	color:#FFFFFF;
+}		
+#btmnavbar ul li {
+	display: inline;
+	text-align:center;
+}
+
+#main, #btmmain {
+	padding: 10px;
+}
+
+.txt_white2 {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #FFFFFF;
+	background-color: black;
+	margin-left: 1px;
+	font-weight: bold;
+	text-align: center;
+}
+
+.cat_header {
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	font-size: 10px;
+	color: #000000;
+	width: 505px;
+	height: 19px;
+	background-color: #BEDB35;
+	margin-left: 3px;
+	font-weight: bold;
+}
+
+.btn {
+	background-color: #F7F7F7;
+	color: #829A0E;
+	font-weight: bold;
+	font-family: 'Verdana', Arial, Helvetica, sans-serif;
+	border: 1px dotted black;
+	width: 200px;
+}
+#footer {
+	clear: both;
+	overflow: hidden;
+	position: relative;
+	text-align: centert;
+	padding: 0px;
+	color: #888888;
+	font-size:10px;
+}
+
+#footer a {
+	color: #888888;
+	font-weight: 500;
+	text-decoration:none;
+}
+
+#footer a:hover,
+#footer a:active,
+#footer a:focus {
+	color: #F0F0F0;
+}
+
+#footnav ul {
+	margin: 0;
+}
+
+#footnav li {
+	display: inline;
+	background: none;
+	padding: 0 20px 0 0;
+}
+div.border_top {
+ background:url(rounded1_top.gif) no-repeat;
+ height:18px;
+ width:265px;
+ vertical-align:bottom;
+}
+div.border_bottom {
+ background:url(rounded1_bottom.gif) no-repeat;
+ height:18px;
+ width:265px;
+ vertical-align:top;
+}
+div.newsbar_bg {
+ background:url(rounded1_bg.gif) repeat-y;
+ width:265px;
+ height:auto;
+ vertical-align:top;
+ margin-bottom:-1px;
+ margin-bottom:-1px;
+} 
+.inputbox {
+	border: 1px solid #C0C0C0;
+	background: #F0F0F0;
+	margin-bottom: 2px;
+	padding-left:5px;
+	padding-right:5px;
+}
+
+.inputbox:hover, .inputbox:focus {
+	border: 1px solid #888888;
+	background: #FFFFFF;
+	padding-left:5px;
+	padding-right:5px;
+}
+.midtext {
+ font-family:Georgia;
+ font-size:13px;
+} 
+
+fieldset {
+  width: 95%;
+  background:#f7f7f7;
+  padding:2%;
+  border:1px solid #e3e3e3;
+  margin:auto;
+  display: block;
+}
+fieldset img {
+border:0;
+}
+
+fieldset legend {
+  font-weight:bold;
+  font-size: 120%; 
+  letter-spacing: -0.5px;
+  color:#666666;
+  padding-left:10px;
+  padding-right:10px;
+}
+
+#seph {
+	background:url(seph.jpg) repeat-x center;
+	width:98%;
+	height:8px;
+	text-align:center;
+}	
+#topbar {
+	overflow: visible;
+	font-family: "Lucida Grande", Helvetica, Arial, sans-serif;
+	font-size: 1.1em;
+	position:absolute;
+	width:100%;
+	z-index: 100;
+	vertical-align:middle;
+}
+
+#topbar a, #topbar a:link, #topbar a:visited, #topbar a:active {
+	display: block;
+	clear: both;
+	color: #000000;
+	background: #FFFFE1 url('infobar.gif') no-repeat fixed .3em .3em;
+	padding: .3em .3em .3em 2em;
+	border-bottom: .16em outset;
+	text-decoration: none;
+	vertical-align:middle;
+	cursor: pointer;
+}
+
+#topbar a:hover {
+	color: #FFFFFF;
+	background-color: #1679AA;
+}
+
+#topbar a img {
+	border: none;
+}
+form input, textarea, select, .inputbox {
+	border: 1px solid #ccc;
+	background: #f0f0f0;
+}
+
+form textarea:hover, select:hover, input:hover, .inputbox:hover {
+	border: 1px solid #000;
+	background: #00FFCC;
+}
+form .inputbox:focus, textarea:focus, select:focus, input:focus, {
+	border: 1px solid #000;
+	background: #00FFCC;
+}
+form input:active, textarea:active, select:active, .inputbox:active {
+	background:#00FFCC;
+}
+

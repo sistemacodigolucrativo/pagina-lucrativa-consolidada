@@ -2,7 +2,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import mysql from "mysql2/promise";
 
-const importRoot = process.env.EBOOK_IMPORT_ROOT || "/opt/pagina-lucrativa/ebook-import";
+const importRoot = process.env.EBOOK_IMPORT_ROOT || path.resolve(process.cwd(), "ebook-import");
 const mysqlSocket = process.env.MYSQL_SOCKET || "/run/mysqld/mysqld.sock";
 const mysqlUser = process.env.MYSQL_USER || "ubuntu";
 const mysqlDatabase = process.env.MYSQL_DATABASE || "pagina_lucrativa";

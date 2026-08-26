@@ -1,0 +1,9 @@
+CREATE TABLE useronline (
+timestamp int(15) DEFAULT '0' NOT NULL,
+ip varchar(40) NOT NULL,
+arquivo varchar(100) NOT NULL,
+PRIMARY KEY (timestamp),
+KEY ip (ip),
+KEY file (arquivo)
+);
+

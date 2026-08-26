@@ -1,0 +1,21 @@
+PACOTE DE E-BOOKS — PÁGINA LUCRATIVA
+
+Data da coleta: 26/08/2026
+
+Conteúdo do pacote
+
+1. biblioteca_painel_html/
+   Contém os 52 materiais publicados que aparecem no painel de membros em:
+   https://ocodigolucrativo.site/membros/ebooks
+   Esses arquivos são páginas HTML completas, próprias para leitura no navegador.
+
+2. fontes_importados/
+   Contém os arquivos-fonte localizados na VPS durante a importação: PDFs, documentos e recursos auxiliares preservados na estrutura original. Foram encontrados 47 PDFs e 441 arquivos no total nessa coleção.
+
+Observações
+
+A biblioteca do painel possui 52 registros publicados. Alguns títulos podem aparecer com acentuação incorreta porque os dados antigos foram importados com codificação inconsistente; os arquivos e o conteúdo foram preservados como estavam na VPS.
+
+Os materiais abrangem marketing de rede, SEO, e-mail marketing, newsletters, páginas de captura, geração de contatos, anúncios, conversão, divulgação, criação de vídeos, produtos digitais e outros temas de negócio.
+
+Nenhum arquivo foi executado ou modificado durante a coleta. O pacote é uma cópia para download dos materiais encontrados na VPS.

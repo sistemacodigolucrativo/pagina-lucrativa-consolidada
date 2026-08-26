@@ -1,0 +1,6 @@
+# Materiais históricos são preservados como recebidos; não converter finais de linha.
+ebook-import/html-output/*.html -text whitespace=-trailing-space
+ebook-import/fontes_importados/** -text whitespace=-trailing-space
+ebook-import/LEIA-ME-pacote-original.txt -text whitespace=-trailing-space
+# Manifesto técnico é texto UTF-8 normalizado.
+ebook-import/fontes-importados-manifest.tsv text eol=lf
