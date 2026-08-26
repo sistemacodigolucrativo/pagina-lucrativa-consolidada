@@ -42,6 +42,7 @@ import MemberSupport from "./pages/MemberSupport";
 import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
 import { CommercialRulesPage, ContactPage, InstitutionalPage, PrivacyPage, TermsPage } from "./pages/PublicInfoPage";
 import { DEV_PREFIX } from "./lib/devPath";
+import PublicSocialProofToast from "./components/PublicSocialProofToast";
 
 function AppRoutes() {
   return <Switch>
@@ -154,6 +155,6 @@ function AppRoutes() {
 }
 function App() {
   const base = DEV_PREFIX;
-  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
+  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><PublicSocialProofToast /><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;

@@ -118,6 +118,39 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     }
   });
 
+  test('toast global usa atividade ilustrativa, alterna notificações e não aparece em áreas privadas', async ({ page }) => {
+    await page.addInitScript(() => {
+      const originalSetTimeout = window.setTimeout.bind(window);
+      window.setTimeout = ((handler: TimerHandler, timeout?: number, ...arguments_: any[]) => {
+        const acceleratedTimeout = timeout !== undefined && timeout >= 9_000 ? 20 : timeout === 7_000 ? 30 : timeout;
+        return originalSetTimeout(handler, acceleratedTimeout, ...arguments_);
+      }) as typeof window.setTimeout;
+    });
+
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 1280, height: 720 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(route('/'));
+      const toast = page.locator('.public-social-proof-toast');
+      await expect(toast).toBeVisible({ timeout: 1_000 });
+      const firstText = await toast.innerText();
+      expect(firstText).toMatch(/atividade ilustrativa/i);
+      expect(firstText).toContain('não representa uma compra real');
+      expect(firstText).toMatch(/está conhecendo a Página Lucrativa/);
+
+      await expect.poll(async () => toast.isVisible().then(visible => visible ? toast.innerText() : ''), { timeout: 2_000 }).not.toBe(firstText);
+
+      await page.goto(route('/institucional'));
+      await expect(page.locator('.public-social-proof-toast')).toBeVisible({ timeout: 1_000 });
+      await page.goto(route('/admin'));
+      await expect(page.locator('.public-social-proof-toast')).toHaveCount(0);
+      await page.goto(route('/membros'));
+      await expect(page.locator('.public-social-proof-toast')).toHaveCount(0);
+    }
+  });
+
   test('WhatsApp público sanitiza a digitação, aplica máscara e bloqueia número incompleto', async ({ page }) => {
     await page.goto(route('/'));
     const whatsapp = page.locator('input[name="whatsapp"]');

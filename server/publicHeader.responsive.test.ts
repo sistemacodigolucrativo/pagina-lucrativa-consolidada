@@ -4,6 +4,8 @@ import { resolve } from "node:path";
 
 const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
 const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
+const socialProofSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicSocialProofToast.tsx"), "utf8");
 const operationsSource = readFileSync(resolve(process.cwd(), "client/src/pages/MemberOperations.tsx"), "utf8");
 const internalLinkSources = [
   "client/src/pages/ApplicationConfirmation.tsx",
@@ -57,6 +59,16 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.structure-showcase { position: relative;');
     expect(cssSource).toContain('.structure-showcase > .shell { position: relative;');
     expect(cssSource).toContain('.structure-showcase-stage { position: relative;');
+  });
+
+  it("mounts the social proof toast once at router scope and gates private routes", () => {
+    expect((appSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
+    expect(appSource).toContain('<WouterRouter base={base}><PublicSocialProofToast /><AppRoutes /></WouterRouter>');
+    expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
+    expect(socialProofSource).toContain('if (!isPublicSocialProofRoute(location) || publicSocialProofEntries.length === 0)');
+    expect(socialProofSource).toContain('role="status"');
+    expect(cssSource).toContain('.public-social-proof-toast { position: fixed;');
+    expect(cssSource).toContain('pointer-events: none;');
   });
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {
