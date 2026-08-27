@@ -331,7 +331,17 @@ export default function Home() {
 
     </main>
 
-    <footer className="footer"><div className="shell footer-row footer-expanded"><div><Brand compact /><span>Copyright © 2026 Página Lucrativa. Todos os direitos reservados.</span></div><nav className="footer-links" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}</a>)}</nav>{affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}</div></footer>
+    <footer className="footer">
+      <div className="shell flex flex-col items-center justify-center gap-4 py-2 text-center">
+        <div className="flex flex-col items-center gap-1.5">
+          <strong className="text-sm font-semibold tracking-[0.04em] text-[#f5f0e7]">Código Lucrativo® · Desde 2020</strong>
+          <span className="text-xs text-[#a9a79f]">Designed &amp; Developed by Marcelo R. Souza</span>
+          <span className="text-[11px] text-[#7d817d]">© 2026 · Todos os direitos reservados. · <span className="text-[#03d660]">⭐ v1.0</span></span>
+        </div>
+        <nav className="footer-links justify-center" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}</a>)}</nav>
+        {affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}
+      </div>
+    </footer>
     <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={30} strokeWidth={2.2} /></button></div>
   </div>;
 }
