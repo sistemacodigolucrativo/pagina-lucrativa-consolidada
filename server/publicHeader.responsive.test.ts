@@ -69,7 +69,9 @@ describe("public responsive header and hero layout", () => {
     expect((appSource.match(/<PublicConversionCta \/>/g) ?? []).length).toBe(1);
     expect(appSource).toContain('<WouterRouter base={base}><PublicSocialProofToast /><PublicConversionCta /><AppRoutes /></WouterRouter>');
     expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
-    expect(socialProofSource).toContain('if (!isPublicSocialProofRoute(location) || publicSocialProofEntries.length === 0)');
+    expect(socialProofSource).toContain('if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0)');
+    expect(socialProofSource).toContain('fetch(withAppBase("/api/public-toast-config")');
+    expect(socialProofSource).toContain('settings.showSimulationNotice');
     expect(socialProofSource).toContain('role="status"');
     expect(cssSource).toContain('.public-social-proof-toast { position: fixed;');
     expect(cssSource).toContain('pointer-events: none;');
@@ -133,6 +135,7 @@ describe("public responsive header and hero layout", () => {
     expect(mechanismSource).toContain("Receber dinheiro de forma automaticamente a partir de suas primeiras divulgações");
     expect(mechanismSource).toContain("E ter vendas garantidas.");
   });
+
   it("resolves public section images by stable IDs and keeps automatic placement", () => {
     expect(homeSource).toContain('const sectionImages = trpc.public.salesSectionImages.useQuery();');
     expect(homeSource).toContain('const resolveSectionImage = (sectionId: string, fallback: string | null) => {');
