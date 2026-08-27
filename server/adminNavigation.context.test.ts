@@ -6,10 +6,11 @@ const root = resolve(import.meta.dirname, "..");
 const read = (relativePath: string) => readFileSync(resolve(root, relativePath), "utf8");
 
 describe("navegação administrativa contextual", () => {
-  it("mantém uma entrada única para catálogo e inclui a supervisão de comunicações", () => {
+  it("mantém a navegação administrativa sem módulos removidos", () => {
     const navigation = read("client/src/lib/adminNavigation.ts");
-    expect(navigation).toContain('label: "Comunicações", path: "/admin/comunicacoes"');
     expect(navigation).toContain('label: "Dashboard", path: "/admin"');
+    expect(navigation).not.toContain('label: "Comunicações"');
+    expect(navigation).not.toContain('path: "/admin/comunicacoes"');
     expect(navigation).not.toContain('label: "Divulgação"');
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
     expect(navigation).toContain('label: "Suporte", path: "/admin/suporte"');
@@ -26,14 +27,6 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('label: "Pontuação"');
     expect(navigation).not.toContain('path: "/admin/produtos"');
     expect(navigation).not.toContain('label: "Catálogo"');
-  });
-
-  it("aplica a navegação administrativa aos módulos ativos", () => {
-    for (const page of ["AdminCommunications.tsx"]) {
-      const source = read(`client/src/pages/${page}`);
-      expect(source).toContain('import { adminMenu } from "@/lib/adminNavigation"');
-      expect(source).toContain("menuItems={adminMenu}");
-    }
   });
 
   it("mantém Preview no contexto administrativo do sistema", () => {
@@ -53,6 +46,8 @@ describe("navegação administrativa contextual", () => {
     expect(app).toContain('path="/admin/publicacoes" component={AdminPublications}');
     expect(app).toContain('path="/admin/divulgacao" component={AdminOperations}');
     expect(app).not.toContain('component={AdminOutreach}');
+    expect(app).not.toContain('AdminCommunications');
+    expect(app).not.toContain('/admin/comunicacoes');
     expect(app).toContain('path="/admin/suporte" component={AdminSupport}');
     expect(app).toContain('path="/admin/auditoria" component={AdminAudit}');
     expect(app).not.toContain("AdminSettings");
