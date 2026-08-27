@@ -5,22 +5,34 @@ import { resolve } from "node:path";
 const source = readFileSync(resolve(process.cwd(), "client/src/pages/AdminToast.tsx"), "utf8");
 
 describe("admin Toast responsive UX", () => {
-  it("keeps the library before the editor on mobile and restores desktop order", () => {
-    expect(source).toContain('className="order-2 scroll-mt-24');
-    expect(source).toContain('xl:order-1');
-    expect(source).toContain('className="order-1 rounded-2xl');
-    expect(source).toContain('xl:order-2');
+  it("keeps the editor hidden until edit or duplicate is selected", () => {
+    expect(source).toContain('const editorOpen = editingId !== null || duplicateSourceId !== null;');
+    expect(source).toContain('{editorOpen ? <form');
+    expect(source).not.toContain('onClick={startNewModel}');
+    expect(source).not.toContain('Novo modelo');
   });
 
-  it("scrolls only the editor into view instead of forcing the page to the top", () => {
-    expect(source).toContain('editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })');
+  it("uses slim expandable cards with contextual actions", () => {
+    expect(source).toContain('aria-expanded={expanded}');
+    expect(source).toContain('setExpandedId(current => current === item.id ? null : item.id)');
+    expect(source).toContain('Visualizar');
+    expect(source).toContain('Editar');
+    expect(source).toContain('Duplicar');
+    expect(source).toContain('Desativar');
+    expect(source).toContain('Excluir');
+  });
+
+  it("previews the selected model in the real Toast and keeps editing contextual", () => {
+    expect(source).toContain('onClick={() => previewItem(item)}');
+    expect(source).toContain('window.dispatchEvent(new CustomEvent(PUBLIC_TOAST_PREVIEW_EVENT');
+    expect(source).toContain('editorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })');
     expect(source).not.toContain('window.scrollTo({ top: 0');
   });
 
-  it("keeps compact mobile controls and an explicit new-model action", () => {
-    expect(source).toContain('grid grid-cols-3 gap-2');
-    expect(source).toContain('grid grid-cols-2 gap-3');
-    expect(source).toContain('onClick={startNewModel}');
-    expect(source).toContain('Preview');
+  it("duplicates from an existing model into an independent draft", () => {
+    expect(source).toContain('function duplicate(item:');
+    expect(source).toContain('title: `${item.title} — cópia`');
+    expect(source).toContain('status: "draft"');
+    expect(source).toContain('Criar cópia');
   });
 });
