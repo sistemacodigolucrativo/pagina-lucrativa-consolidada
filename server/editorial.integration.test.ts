@@ -23,37 +23,25 @@ describe("central editorial", () => {
 
   it("valida recursos da Biblioteca de Recursos com link Google Drive", () => {
     const procedure = procedures["admin.createContent"] as { _def: { inputs: Array<{ parse: (input: unknown) => unknown }> } };
-    expect(procedure._def.inputs[0].parse({
-      kind: "material",
-      title: "Automação de divulgação",
-      summary: "Recurso externo",
-      body: "Tutorial completo",
-      resourceCategory: "Automação",
-      resourceType: "Ferramenta",
-      resourceUrl: "https://drive.google.com/file/d/abc/view",
-      status: "published",
-    })).toMatchObject({ kind: "material", resourceCategory: "Automação", resourceType: "Ferramenta" });
+    expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação de divulgação", summary: "Recurso externo", body: "Tutorial completo", resourceCategory: "Automação", resourceType: "Ferramenta", resourceUrl: "https://drive.google.com/file/d/abc/view", status: "published" })).toMatchObject({ kind: "material", resourceCategory: "Automação", resourceType: "Ferramenta" });
     expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "https://example.com/file.zip" })).toThrow("Use uma URL HTTPS válida do Google Drive.");
     expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "javascript:alert(1)" })).toThrow();
     expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "draft" })).toMatchObject({ kind: "material", status: "draft" });
   });
 
-  it("renderiza Biblioteca de Recursos sem alterar demais publicações", async () => {
+  it("mantém Biblioteca de Recursos no mesmo contrato e em gestor dedicado", async () => {
     const member = await readFile(path.join(root, "client/src/pages/MemberPublications.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminPublications.tsx"), "utf8");
     const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
     const migration = await readFile(path.join(root, "drizzle/migrations/0026_add_managed_content_resource_fields.sql"), "utf8");
-
     expect(schema).toContain('resourceUrl: varchar("resourceUrl"');
     expect(schema).toContain('resourceCategory: varchar("resourceCategory"');
     expect(schema).toContain('resourceType: varchar("resourceType"');
     expect(migration).toContain("ADD COLUMN `resourceUrl`");
-    expect(admin).toContain("Novo item da Biblioteca de Recursos");
+    expect(admin).toContain('"/admin/biblioteca-recursos": { kind: "material", title: "Biblioteca de Recursos"');
     expect(admin).toContain("Use uma URL HTTPS válida do Google Drive.");
     expect(admin).toContain("Link do Google Drive");
     expect(admin).toContain("O arquivo precisa estar compartilhado no Google Drive");
-    expect(admin).toContain('<option value="material">Biblioteca de Recursos</option>');
-    expect(admin).not.toContain("Recurso / Biblioteca de Recursos");
     expect(member).toContain("Recursos disponibilizados para apoiar sua divulgação e sua rotina.");
     expect(member).toContain("Recursos disponíveis");
     expect(member).toContain("Ver detalhes");
@@ -62,26 +50,28 @@ describe("central editorial", () => {
     expect(member).toContain('item.kind === "faq"');
   });
 
-  it("apresenta article como Material de divulgação sem renomear o contrato técnico", async () => {
+  it("separa Material, Biblioteca e FAQ sem renomear contratos técnicos", async () => {
     const member = await readFile(path.join(root, "client/src/pages/MemberPublications.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminPublications.tsx"), "utf8");
     const operations = await readFile(path.join(root, "client/src/pages/AdminOperations.tsx"), "utf8");
     const navigation = await readFile(path.join(root, "shared/memberOfficeContent.ts"), "utf8");
+    const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const legacyRedirect = await readFile(path.join(root, "client/src/pages/MemberLegacyRedirect.tsx"), "utf8");
-
     expect(navigation).toContain('label: "Material de divulgação", path: "/membros/artigos"');
     expect(navigation).toContain('label: "Biblioteca de Recursos", path: "/membros/materiais"');
-    expect(navigation).not.toContain("Materiais e downloads");
     expect(member).toContain('title: "Material de divulgação"');
     expect(member).toContain('title: "Biblioteca de Recursos"');
-    expect(member).toContain("Materiais prontos para divulgação");
-    expect(admin).toContain('<option value="article">Material de divulgação</option>');
-    expect(admin).toContain('<option value="material">Biblioteca de Recursos</option>');
+    expect(admin).toContain('"/admin/material-divulgacao": { kind: "article"');
+    expect(admin).toContain('"/admin/perguntas-frequentes": { kind: "faq"');
+    expect(adminNavigation).toContain('label: "Material de Divulgação", path: "/admin/material-divulgacao"');
+    expect(adminNavigation).toContain('label: "Biblioteca de Recursos", path: "/admin/biblioteca-recursos"');
+    expect(adminNavigation).toContain('label: "Perguntas Frequentes", path: "/admin/perguntas-frequentes"');
     expect(operations).toContain('setLocation("/admin")');
     expect(operations).not.toContain("createContent");
-    expect(operations).not.toContain("updateContentStatus");
-    expect(app).toContain('path="/membros/artigos" component={MemberPublications}');
+    expect(app).toContain('path="/admin/material-divulgacao" component={AdminPublications}');
+    expect(app).toContain('path="/admin/biblioteca-recursos" component={AdminPublications}');
+    expect(app).toContain('path="/admin/perguntas-frequentes" component={AdminPublications}');
     expect(legacyRedirect).toContain('"/membros/blog": "/membros/artigos"');
     expect(legacyRedirect).toContain('"/membros/bonus": "/membros/materiais"');
   });
