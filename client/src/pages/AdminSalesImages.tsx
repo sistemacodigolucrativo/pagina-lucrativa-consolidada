@@ -7,7 +7,7 @@ import {
   PUBLIC_SALES_COPY_SECTIONS,
   defaultValuesForSection,
 } from "@shared/publicSalesCopyEditor";
-import { Check, Eye, ImagePlus, Monitor, MousePointer2, RotateCcw, Save, Smartphone, Tablet, X } from "lucide-react";
+import { Check, Eye, ImagePlus, Maximize2, Minimize2, Monitor, MousePointer2, RotateCcw, Save, Smartphone, Tablet, X } from "lucide-react";
 import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import "./AdminVisualSalesEditor.css";
@@ -54,6 +54,7 @@ export default function AdminSalesImages() {
   const updateContent = trpc.admin.updateContent.useMutation();
   const saveImage = trpc.admin.upsertPublicSalesSectionImage.useMutation();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const fullscreenAreaRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageTargetRef = useRef<{ imageSectionId: string; element: HTMLImageElement } | null>(null);
   const cleanupEditorRef = useRef<(() => void) | null>(null);
@@ -66,6 +67,7 @@ export default function AdminSalesImages() {
   const [layout, setLayout] = useState<FloatingLayout>(DEFAULT_LAYOUT);
   const [savingLayout, setSavingLayout] = useState(false);
   const [frameReady, setFrameReady] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const copyRecords = useMemo(() => (content.data ?? []).filter(item => item.kind === "notice" && item.resourceCategory === PUBLIC_SALES_COPY_CATEGORY && item.status !== "archived"), [content.data]);
   const copyRecordBySection = useMemo(() => new Map(copyRecords.map(item => [item.resourceType ?? "", item])), [copyRecords]);
@@ -84,6 +86,25 @@ export default function AdminSalesImages() {
       setLayout(DEFAULT_LAYOUT);
     }
   }, [layoutRecord?.body]);
+
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(document.fullscreenElement === fullscreenAreaRef.current);
+    document.addEventListener("fullscreenchange", onFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement === fullscreenAreaRef.current) {
+        await document.exitFullscreen();
+        return;
+      }
+      if (document.fullscreenElement) await document.exitFullscreen();
+      await fullscreenAreaRef.current?.requestFullscreen();
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível abrir o editor em tela cheia.");
+    }
+  }, []);
 
   const finishEditing = useCallback((state: EditingState | null) => {
     if (!state) return;
@@ -386,9 +407,10 @@ export default function AdminSalesImages() {
           <button className={breakpoint === "mobile" ? "is-active" : ""} onClick={() => setBreakpoint("mobile")} type="button"><Smartphone size={16} /><span>Mobile</span></button>
         </div>
         <button type="button" className={`visual-editor-preview-toggle ${interactionMode ? "is-active" : ""}`} onClick={() => { discardTextEdit(); setInteractionMode(value => !value); }}><Eye size={16} />{interactionMode ? "Voltar a editar" : "Testar interação"}</button>
+        <button type="button" className={`visual-editor-fullscreen-toggle ${isFullscreen ? "is-active" : ""}`} onClick={toggleFullscreen}><Maximize2 size={16} />Tela cheia</button>
       </header>
 
-      <section className="visual-editor-iframe-area">
+      <section ref={fullscreenAreaRef} className="visual-editor-iframe-area">
         <iframe
           ref={iframeRef}
           src={withAppBase("/?visual-editor=1")}
@@ -397,6 +419,7 @@ export default function AdminSalesImages() {
           style={{ width: width ? `${width}px` : "100%" }}
           onLoad={() => { setFrameReady(true); window.setTimeout(installEditor, 50); }}
         />
+        {isFullscreen ? <button type="button" className="visual-editor-fullscreen-exit" onClick={toggleFullscreen} aria-label="Sair da tela cheia"><Minimize2 size={17} /><span>Sair da tela cheia</span></button> : null}
       </section>
 
       <input ref={fileInputRef} type="file" className="sr-only" accept="image/jpeg,image/png,image/gif" onChange={handleFile} />
