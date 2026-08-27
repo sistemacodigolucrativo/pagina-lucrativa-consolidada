@@ -128,12 +128,13 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('@keyframes sales-trust-glow');
   });
 
-  it("keeps the requested development-only mechanism demonstration text", () => {
+  it("keeps the commercial mechanism copy transparent and non-guaranteed", () => {
     expect(homeSource).toContain("A estrutura já existe. Você personaliza");
     const mechanismSource = readFileSync(resolve(process.cwd(), "shared/publicSalesSections.ts"), "utf8");
-    expect(mechanismSource).toContain("centenas de pessoas já estão ganhando e faturando através desse sistema único e exclusivo");
-    expect(mechanismSource).toContain("Receber dinheiro de forma automaticamente a partir de suas primeiras divulgações");
-    expect(mechanismSource).toContain("E ter vendas garantidas.");
+    expect(mechanismSource).toContain("Replicável significa reutilizar uma base de operação já estruturada");
+    expect(mechanismSource).toContain("Não significa copiar resultados, receber dinheiro automaticamente, obter vendas garantidas");
+    expect(mechanismSource).not.toContain("centenas de pessoas já estão ganhando e faturando através desse sistema único e exclusivo");
+    expect(mechanismSource).not.toContain("Receber dinheiro de forma automaticamente a partir de suas primeiras divulgações");
   });
 
   it("resolves public section images by stable IDs and keeps automatic placement", () => {
