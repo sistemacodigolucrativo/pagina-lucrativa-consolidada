@@ -17,8 +17,12 @@ describe("remoção da supervisão global de Divulgação", () => {
 
     expect(navigation).not.toContain('label: "Divulgação"');
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
+    expect(navigation).not.toContain('label: "Comunicações"');
+    expect(navigation).not.toContain('path: "/admin/comunicacoes"');
     expect(app).toContain('path="/admin/divulgacao" component={AdminOperations}');
     expect(app).not.toContain("AdminOutreach");
+    expect(app).not.toContain("AdminCommunications");
+    expect(app).not.toContain('/admin/comunicacoes');
     expect(adminOffice).not.toContain("trpc.admin.contacts");
     expect(adminOffice).not.toContain("capturedContacts");
     expect(adminOffice).not.toContain("/admin/divulgacao");
@@ -29,14 +33,14 @@ describe("remoção da supervisão global de Divulgação", () => {
     expect(db).not.toContain("export async function getAdminContacts");
     expect(db).not.toContain("export async function updateAdminContact");
     await expect(access(path.join(root, "client/src/pages/AdminOutreach.tsx"))).rejects.toThrow();
+    await expect(access(path.join(root, "client/src/pages/AdminCommunications.tsx"))).rejects.toThrow();
   });
 
-  it("preserva a Central de Divulgação, consentimento, conversões e comunicações", async () => {
+  it("preserva a Central de Divulgação, consentimento e conversões do membro", async () => {
     const router = await read("server/routers.ts");
     const db = await read("server/db.ts");
     const memberCenter = await read("client/src/pages/MemberOperationCenter.tsx");
     const input = await read("server/routers.ts");
-    const communications = await read("client/src/pages/AdminCommunications.tsx");
 
     expect(router).toContain("campaigns: protectedProcedure.query");
     expect(router).toContain("analytics: protectedProcedure.input");
@@ -56,7 +60,5 @@ describe("remoção da supervisão global de Divulgação", () => {
     expect(memberCenter).toContain("trpc.member.conversions.useQuery");
     expect(memberCenter).toContain("trpc.member.contacts.useQuery");
     expect(memberCenter).toContain("trpc.member.invitations.useQuery");
-    expect(communications).toContain("Comunicações preparadas");
-    expect(communications).toContain("trpc.admin.invitations.useQuery");
   });
 });
