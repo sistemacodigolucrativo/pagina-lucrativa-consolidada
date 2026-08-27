@@ -8,6 +8,7 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { registerAffiliateLinkTracking } from "./affiliateLinkTracking";
 import { registerCampaignRedirectRoutes } from "./campaignRedirect";
+import { registerPublicToastConfig } from "./publicToastConfig";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -39,6 +40,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerAffiliateLinkTracking(app);
+  registerPublicToastConfig(app, appPrefix);
   // tRPC API
   for (const trpcPath of trpcPaths) {
     app.use(
