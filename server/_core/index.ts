@@ -13,6 +13,7 @@ import { registerPublicSalesCopyConfig } from "./publicSalesCopyConfig";
 import { registerDeployStatus } from "./deployStatus";
 import { registerAdminMemberManagement } from "./adminMemberManagement";
 import { registerAdminContentManagement } from "./adminContentManagement";
+import { registerAdminRelationshipMaintenance } from "./adminRelationshipMaintenance";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -39,7 +40,6 @@ async function startServer() {
   const server = createServer(app);
   const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
   const trpcPaths = Array.from(new Set(["/api/trpc", appPrefix ? `${appPrefix}/api/trpc` : null].filter((path): path is string => Boolean(path))));
-  // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
@@ -49,7 +49,7 @@ async function startServer() {
   registerDeployStatus(app, appPrefix);
   registerAdminMemberManagement(app, appPrefix);
   registerAdminContentManagement(app, appPrefix);
-  // tRPC API
+  registerAdminRelationshipMaintenance(app, appPrefix);
   for (const trpcPath of trpcPaths) {
     app.use(
       trpcPath,
@@ -60,7 +60,6 @@ async function startServer() {
     );
   }
   registerCampaignRedirectRoutes(app);
-  // development mode uses Vite, production mode uses static files
   if (process.env.NODE_ENV === "development") {
     await setupVite(app, server);
   } else {
