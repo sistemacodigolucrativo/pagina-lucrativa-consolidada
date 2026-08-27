@@ -8,6 +8,8 @@ export type PublicToastTemplate = {
 export type PublicToastSettings = {
   enabled: boolean;
   showSimulationNotice: boolean;
+  headerMessage: string;
+  footerMessage: string;
   initialDelaySeconds: number;
   intervalMinSeconds: number;
   intervalMaxSeconds: number;
@@ -21,6 +23,8 @@ export const PUBLIC_TOAST_SETTINGS_TYPE = "social-proof-settings";
 export const publicToastDefaultSettings: PublicToastSettings = {
   enabled: true,
   showSimulationNotice: true,
+  headerMessage: "Atividade ilustrativa",
+  footerMessage: "Demonstração ilustrativa — não representa uma atividade real.",
   initialDelaySeconds: 12,
   intervalMinSeconds: 22,
   intervalMaxSeconds: 60,
@@ -62,6 +66,8 @@ export function normalizePublicToastSettings(value: Partial<PublicToastSettings>
   return {
     enabled: Boolean(next.enabled),
     showSimulationNotice: Boolean(next.showSimulationNotice),
+    headerMessage: String(next.headerMessage ?? publicToastDefaultSettings.headerMessage).trim().slice(0, 120),
+    footerMessage: String(next.footerMessage ?? publicToastDefaultSettings.footerMessage).trim().slice(0, 500),
     initialDelaySeconds,
     intervalMinSeconds,
     intervalMaxSeconds,
