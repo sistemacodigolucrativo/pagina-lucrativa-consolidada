@@ -14,15 +14,25 @@ import {
 } from "@shared/publicToastSystem";
 import { withAppBase } from "@/lib/devPath";
 
+export const PUBLIC_TOAST_PREVIEW_EVENT = "pagina-lucrativa:toast-preview";
+
 type ActiveNotice = {
   message: string;
   disclaimer: string;
   key: number;
+  forceSimulationNotice?: boolean;
 };
 
 type PublicToastResponse = {
   templates: PublicToastTemplate[];
   settings: PublicToastSettings;
+};
+
+type PublicToastPreviewDetail = {
+  message: string;
+  disclaimer?: string;
+  showSimulationNotice?: boolean;
+  visibleSeconds?: number;
 };
 
 function randomItem<T>(items: readonly T[]): T {
@@ -43,6 +53,7 @@ export default function PublicSocialProofToast() {
   const [templates, setTemplates] = useState<PublicToastTemplate[]>([...publicToastDefaultTemplates]);
   const [settings, setSettings] = useState<PublicToastSettings>(publicToastDefaultSettings);
   const historyRef = useRef<number[]>([]);
+  const previewDismissRef = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     let active = true;
@@ -62,6 +73,27 @@ export default function PublicSocialProofToast() {
   }, []);
 
   useEffect(() => {
+    const handlePreview = (event: Event) => {
+      const detail = (event as CustomEvent<PublicToastPreviewDetail>).detail;
+      if (!detail?.message?.trim()) return;
+      if (previewDismissRef.current !== undefined) window.clearTimeout(previewDismissRef.current);
+      setNotice({
+        message: renderTemplate(detail.message.trim()),
+        disclaimer: detail.disclaimer?.trim() ?? "",
+        key: Date.now(),
+        forceSimulationNotice: detail.showSimulationNotice,
+      });
+      const visibleMs = Math.max(2, Math.min(30, detail.visibleSeconds ?? settings.visibleSeconds)) * 1000;
+      previewDismissRef.current = window.setTimeout(() => setNotice(null), visibleMs);
+    };
+    window.addEventListener(PUBLIC_TOAST_PREVIEW_EVENT, handlePreview);
+    return () => {
+      window.removeEventListener(PUBLIC_TOAST_PREVIEW_EVENT, handlePreview);
+      if (previewDismissRef.current !== undefined) window.clearTimeout(previewDismissRef.current);
+    };
+  }, [settings.visibleSeconds]);
+
+  useEffect(() => {
     let cancelled = false;
     let nextTimer: number | undefined;
     let dismissTimer: number | undefined;
@@ -72,7 +104,6 @@ export default function PublicSocialProofToast() {
     };
 
     if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0) {
-      setNotice(null);
       return clearTimers;
     }
 
@@ -99,7 +130,6 @@ export default function PublicSocialProofToast() {
       }, delay);
     };
 
-    setNotice(null);
     historyRef.current = [];
     scheduleNext(settings.initialDelaySeconds * 1000);
 
@@ -111,12 +141,14 @@ export default function PublicSocialProofToast() {
 
   if (!notice) return null;
 
+  const showSimulationNotice = notice.forceSimulationNotice ?? settings.showSimulationNotice;
+
   return <aside className="public-social-proof-toast" role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
     <span className="public-social-proof-toast-mark" aria-hidden="true">PL</span>
     <span className="public-social-proof-toast-copy">
-      {settings.showSimulationNotice ? <span className="public-social-proof-toast-kicker">Atividade ilustrativa</span> : null}
+      {showSimulationNotice ? <span className="public-social-proof-toast-kicker">Atividade ilustrativa</span> : null}
       <strong>{notice.message}</strong>
-      {settings.showSimulationNotice && notice.disclaimer ? <small>{notice.disclaimer}</small> : null}
+      {showSimulationNotice && notice.disclaimer ? <small>{notice.disclaimer}</small> : null}
     </span>
   </aside>;
 }
