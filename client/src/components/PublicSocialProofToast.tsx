@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import "./PublicSocialProofToast.css";
 import { isPublicSocialProofRoute, randomBetween } from "@shared/publicSocialProof";
@@ -18,37 +18,41 @@ export const PUBLIC_TOAST_PREVIEW_EVENT = "pagina-lucrativa:toast-preview";
 
 type ActiveNotice = {
   message: string;
+  displayName: string;
   disclaimer: string;
   key: number;
   forceSimulationNotice?: boolean;
   headerMessage?: string;
   footerMessage?: string;
+  colors?: Pick<PublicToastSettings, "headerColor" | "nameColor" | "messageColor" | "footerColor">;
 };
 
-type PublicToastResponse = {
-  templates: PublicToastTemplate[];
-  settings: PublicToastSettings;
-};
-
+type PublicToastResponse = { templates: PublicToastTemplate[]; settings: PublicToastSettings };
 type PublicToastPreviewDetail = {
   message: string;
   disclaimer?: string;
   showSimulationNotice?: boolean;
   headerMessage?: string;
   footerMessage?: string;
+  headerColor?: string;
+  nameColor?: string;
+  messageColor?: string;
+  footerColor?: string;
   visibleSeconds?: number;
 };
 
-function randomItem<T>(items: readonly T[]): T {
-  return items[Math.floor(Math.random() * items.length)]!;
-}
-
+function randomItem<T>(items: readonly T[]): T { return items[Math.floor(Math.random() * items.length)]!; }
 function renderTemplate(message: string) {
   const firstName = randomItem(publicToastNames);
   const surname = randomItem(publicToastSurnames);
   const city = randomItem(publicToastCities);
   const displayName = `${firstName} ${surname.charAt(0)}.`;
-  return message.replaceAll("{{nome}}", displayName).replaceAll("{{cidade}}", city);
+  return { message: message.replaceAll("{{nome}}", displayName).replaceAll("{{cidade}}", city), displayName };
+}
+function colorizedMessage(message: string, displayName: string, nameColor: string): ReactNode {
+  if (!displayName || !message.includes(displayName)) return message;
+  const [before, ...rest] = message.split(displayName);
+  return <>{before}<span className="public-social-proof-toast-name" style={{ color: nameColor }}>{displayName}</span>{rest.join(displayName)}</>;
 }
 
 export default function PublicSocialProofToast() {
@@ -68,11 +72,7 @@ export default function PublicSocialProofToast() {
         if (Array.isArray(data.templates) && data.templates.length) setTemplates(data.templates);
         setSettings(normalizePublicToastSettings(data.settings));
       })
-      .catch(() => {
-        if (!active) return;
-        setTemplates([...publicToastDefaultTemplates]);
-        setSettings(publicToastDefaultSettings);
-      });
+      .catch(() => { if (active) { setTemplates([...publicToastDefaultTemplates]); setSettings(publicToastDefaultSettings); } });
     return () => { active = false; };
   }, []);
 
@@ -81,13 +81,20 @@ export default function PublicSocialProofToast() {
       const detail = (event as CustomEvent<PublicToastPreviewDetail>).detail;
       if (!detail?.message?.trim()) return;
       if (previewDismissRef.current !== undefined) window.clearTimeout(previewDismissRef.current);
+      const rendered = renderTemplate(detail.message.trim());
       setNotice({
-        message: renderTemplate(detail.message.trim()),
+        ...rendered,
         disclaimer: detail.disclaimer?.trim() ?? "",
         key: Date.now(),
         forceSimulationNotice: detail.showSimulationNotice,
         headerMessage: detail.headerMessage,
         footerMessage: detail.footerMessage,
+        colors: {
+          headerColor: detail.headerColor ?? settings.headerColor,
+          nameColor: detail.nameColor ?? settings.nameColor,
+          messageColor: detail.messageColor ?? settings.messageColor,
+          footerColor: detail.footerColor ?? settings.footerColor,
+        },
       });
       const visibleMs = Math.max(2, Math.min(30, detail.visibleSeconds ?? settings.visibleSeconds)) * 1000;
       previewDismissRef.current = window.setTimeout(() => setNotice(null), visibleMs);
@@ -97,29 +104,20 @@ export default function PublicSocialProofToast() {
       window.removeEventListener(PUBLIC_TOAST_PREVIEW_EVENT, handlePreview);
       if (previewDismissRef.current !== undefined) window.clearTimeout(previewDismissRef.current);
     };
-  }, [settings.visibleSeconds]);
+  }, [settings]);
 
   useEffect(() => {
     let cancelled = false;
     let nextTimer: number | undefined;
     let dismissTimer: number | undefined;
-
-    const clearTimers = () => {
-      if (nextTimer !== undefined) window.clearTimeout(nextTimer);
-      if (dismissTimer !== undefined) window.clearTimeout(dismissTimer);
-    };
-
-    if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0) {
-      return clearTimers;
-    }
+    const clearTimers = () => { if (nextTimer !== undefined) window.clearTimeout(nextTimer); if (dismissTimer !== undefined) window.clearTimeout(dismissTimer); };
+    if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0) return clearTimers;
 
     const chooseIndex = () => {
       const recent = new Set(historyRef.current.slice(-Math.min(3, templates.length - 1)));
       const available = templates.map((_, index) => index).filter(index => !recent.has(index));
-      const candidates = available.length ? available : templates.map((_, index) => index);
-      return randomItem(candidates);
+      return randomItem(available.length ? available : templates.map((_, index) => index));
     };
-
     const scheduleNext = (delay: number) => {
       nextTimer = window.setTimeout(() => {
         if (cancelled) return;
@@ -127,7 +125,8 @@ export default function PublicSocialProofToast() {
         const template = templates[index];
         if (!template) return;
         historyRef.current = [...historyRef.current, index].slice(-3);
-        setNotice({ message: renderTemplate(template.message), disclaimer: template.disclaimer, key: Date.now() });
+        const rendered = renderTemplate(template.message);
+        setNotice({ ...rendered, disclaimer: template.disclaimer, key: Date.now() });
         dismissTimer = window.setTimeout(() => {
           if (cancelled) return;
           setNotice(null);
@@ -135,27 +134,27 @@ export default function PublicSocialProofToast() {
         }, settings.visibleSeconds * 1000);
       }, delay);
     };
-
     historyRef.current = [];
     scheduleNext(settings.initialDelaySeconds * 1000);
-
-    return () => {
-      cancelled = true;
-      clearTimers();
-    };
+    return () => { cancelled = true; clearTimers(); };
   }, [location, settings, templates]);
 
   if (!notice) return null;
-
   const showSimulationNotice = notice.forceSimulationNotice ?? settings.showSimulationNotice;
   const headerMessage = notice.headerMessage ?? settings.headerMessage;
   const footerMessage = notice.footerMessage ?? settings.footerMessage ?? notice.disclaimer;
+  const colors = notice.colors ?? settings;
+  const style = {
+    "--toast-header-color": colors.headerColor,
+    "--toast-message-color": colors.messageColor,
+    "--toast-footer-color": colors.footerColor,
+  } as CSSProperties;
 
-  return <aside className="public-social-proof-toast" role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
+  return <aside className="public-social-proof-toast" style={style} role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
     <span className="public-social-proof-toast-mark" aria-hidden="true">PL</span>
     <span className="public-social-proof-toast-copy">
       {showSimulationNotice && headerMessage ? <span className="public-social-proof-toast-kicker">{headerMessage}</span> : null}
-      <strong>{notice.message}</strong>
+      <strong>{colorizedMessage(notice.message, notice.displayName, colors.nameColor)}</strong>
       {showSimulationNotice && footerMessage ? <small>{footerMessage}</small> : null}
     </span>
   </aside>;
