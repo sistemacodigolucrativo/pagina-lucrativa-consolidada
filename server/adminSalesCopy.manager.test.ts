@@ -28,7 +28,7 @@ describe("gerenciador da página pública", () => {
     expect(admin).toContain("Descartar");
     expect(admin).toContain("Salvar imagem");
     expect(admin).toContain("PointerEvent");
-    expect(admin).toContain("data.visualDraggable");
+    expect(admin).toContain("dataset.visualDraggable");
     expect(admin).toContain("PUBLIC_SALES_COPY_SECTIONS");
     expect(css).toContain(".visual-editor-toolbar");
     expect(css).toContain("@media(max-width:560px)");
