@@ -1,6 +1,6 @@
 import type { Express, Request, Response } from "express";
 import { parse as parseCookieHeader } from "cookie";
-import { and, eq, notInArray } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { managedContent } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
@@ -29,7 +29,7 @@ export function registerAdminContentManagement(app: Express, appPrefix: string) 
       const row = await db.select({ id: managedContent.id, resourceCategory: managedContent.resourceCategory }).from(managedContent).where(eq(managedContent.id, id)).limit(1);
       if (!row[0]) return void res.status(404).json({ error: "Conteúdo não encontrado." });
       if (row[0].resourceCategory && SYSTEM_CATEGORIES.includes(row[0].resourceCategory)) return void res.status(409).json({ error: "Este registro pertence à configuração interna do sistema e não pode ser excluído por esta tela." });
-      await db.delete(managedContent).where(and(eq(managedContent.id, id), notInArray(managedContent.resourceCategory, SYSTEM_CATEGORIES)));
+      await db.delete(managedContent).where(eq(managedContent.id, id));
       res.json({ success: true });
     });
   }
