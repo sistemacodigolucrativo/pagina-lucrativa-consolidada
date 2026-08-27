@@ -14,9 +14,12 @@ describe("admin Toast responsive UX", () => {
     expect(source).not.toContain('editorOpen');
   });
 
-  it("uses slim expandable cards with contextual actions", () => {
+  it("uses slim expandable cards with independent per-card state", () => {
     expect(source).toContain('aria-expanded={expanded}');
-    expect(source).toContain('setExpandedId(current => current === item.id ? null : item.id)');
+    expect(source).toContain('const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set())');
+    expect(source).toContain('function toggleExpanded(id: number)');
+    expect(source).toContain('const expanded = expandedIds.has(item.id)');
+    expect(source).toContain('toggleExpanded(item.id)');
     expect(source).toContain('Visualizar');
     expect(source).toContain('Editar');
     expect(source).toContain('Duplicar');
