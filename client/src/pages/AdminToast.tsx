@@ -39,7 +39,7 @@ function ColorControl({ label, colorKey, settings, setSettings }: { label: strin
 export default function AdminToast() {
   const utils = trpc.useUtils();
   const content = trpc.admin.content.useQuery();
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const [editingId, setEditingId] = useState<number | null>(null);
   const [duplicateSourceId, setDuplicateSourceId] = useState<number | null>(null);
   const [showArchived, setShowArchived] = useState(false);
@@ -82,26 +82,32 @@ export default function AdminToast() {
     })();
   }, [content.data, settingsItem, toastItems.length]);
 
-  function closeInlineEditor() {
-    setEditingId(null);
-    setDuplicateSourceId(null);
+  function toggleExpanded(id: number) {
+    setExpandedIds(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }
+  function ensureExpanded(id: number) { setExpandedIds(current => new Set(current).add(id)); }
+  function closeInlineEditor() { setEditingId(null); setDuplicateSourceId(null); }
   function edit(item: NonNullable<typeof content.data>[number]) {
-    setExpandedId(item.id); setDuplicateSourceId(null); setEditingId(item.id);
+    ensureExpanded(item.id); setDuplicateSourceId(null); setEditingId(item.id);
     setForm({ title: item.title, message: item.summary ?? "", disclaimer: parseDisclaimer(item.body), status: item.status === "published" ? "published" : "draft" });
   }
   function duplicate(item: NonNullable<typeof content.data>[number]) {
-    setExpandedId(item.id); setEditingId(null); setDuplicateSourceId(item.id);
+    ensureExpanded(item.id); setEditingId(null); setDuplicateSourceId(item.id);
     setForm({ title: `${item.title} — cópia`, message: item.summary ?? "", disclaimer: parseDisclaimer(item.body), status: "draft" });
   }
   async function saveInline() {
     if (!form.title.trim() || !form.message.trim()) return toast.error("Informe o nome interno e a mensagem do Toast.");
+    const wasEditing = editingId !== null;
     const payload = { kind: "notice" as const, title: form.title.trim(), summary: form.message.trim(), body: JSON.stringify({ disclaimer: form.disclaimer.trim() }), resourceUrl: null, resourceCategory: PUBLIC_TOAST_CATEGORY, resourceType: PUBLIC_TOAST_TEMPLATE_TYPE, status: form.status };
     try {
       if (editingId !== null) await update.mutateAsync({ id: editingId, ...payload });
       else if (duplicateSourceId !== null) await create.mutateAsync(payload);
       await refresh(); closeInlineEditor();
-      toast.success(editingId !== null ? "Modelo atualizado." : "Cópia criada como novo Toast.");
+      toast.success(wasEditing ? "Modelo atualizado." : "Cópia criada como novo Toast.");
     } catch (error) { toast.error(error instanceof Error ? error.message : "Não foi possível salvar o modelo."); }
   }
   async function saveSettings() {
@@ -136,12 +142,12 @@ export default function AdminToast() {
     </section>
 
     <section className="rounded-2xl border border-white/10 bg-zinc-950/75 p-4 shadow-xl sm:rounded-3xl sm:p-6">
-      <div className="mb-4 flex items-center justify-between gap-3"><div><span className="text-[10px] uppercase text-emerald-300">Biblioteca</span><h2 className="text-lg font-semibold text-white">Modelos cadastrados</h2></div><button type="button" onClick={() => { setShowArchived(v => !v); setExpandedId(null); closeInlineEditor(); }} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-zinc-300">{showArchived ? "Ver ativos" : `Lixeira (${archivedCount})`}</button></div>
+      <div className="mb-4 flex items-center justify-between gap-3"><div><span className="text-[10px] uppercase text-emerald-300">Biblioteca</span><h2 className="text-lg font-semibold text-white">Modelos cadastrados</h2></div><button type="button" onClick={() => { setShowArchived(v => !v); setExpandedIds(new Set()); closeInlineEditor(); }} className="rounded-xl border border-white/10 px-3 py-2 text-xs text-zinc-300">{showArchived ? "Ver ativos" : `Lixeira (${archivedCount})`}</button></div>
       <div className="space-y-2">{visibleItems.map(item => {
-        const expanded = expandedId === item.id;
+        const expanded = expandedIds.has(item.id);
         const inlineEditing = editingId === item.id || duplicateSourceId === item.id;
         return <article key={item.id} className={`overflow-hidden rounded-xl border bg-black/30 transition ${inlineEditing ? "border-emerald-300/30 shadow-[0_0_0_1px_rgba(110,231,183,.06)]" : "border-white/10"}`}>
-          <button type="button" aria-expanded={expanded} onClick={() => { if (inlineEditing) return; setExpandedId(current => current === item.id ? null : item.id); }} className="flex w-full items-center gap-3 px-3 py-2.5 text-left sm:px-4 sm:py-3"><span className={`size-2.5 shrink-0 rounded-full ${item.status === "published" ? "bg-emerald-300" : item.status === "archived" ? "bg-zinc-600" : "bg-amber-300"}`} /><span className="min-w-0 flex-1"><strong className="block truncate text-sm text-white">{item.title}</strong><span className="block truncate text-[11px] text-zinc-500">{item.summary}</span></span>{expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</button>
+          <button type="button" aria-expanded={expanded} onClick={() => { if (!inlineEditing) toggleExpanded(item.id); }} className="flex w-full cursor-pointer items-center gap-3 px-3 py-2.5 text-left sm:px-4 sm:py-3"><span className={`size-2.5 shrink-0 rounded-full ${item.status === "published" ? "bg-emerald-300" : item.status === "archived" ? "bg-zinc-600" : "bg-amber-300"}`} /><span className="min-w-0 flex-1"><strong className="block truncate text-sm text-white">{item.title}</strong><span className="block truncate text-[11px] text-zinc-500">{item.summary}</span></span>{expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}</button>
           {expanded ? <div className="border-t border-white/10 p-3 sm:p-4">
             {inlineEditing ? <div className="space-y-3" data-inline-toast-editor="true"><div className="flex items-center justify-between gap-2"><div><span className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300">{editingId === item.id ? "Editando este modelo" : "Duplicando este modelo"}</span>{duplicateSourceId === item.id ? <p className="mt-1 text-[11px] text-zinc-500">A cópia será criada como um novo Toast independente.</p> : null}</div><button type="button" onClick={closeInlineEditor} className="rounded-lg border border-white/10 p-2 text-zinc-400" aria-label="Cancelar edição"><X className="size-4" /></button></div>
               <div className="grid gap-3 md:grid-cols-2"><label className="text-xs text-zinc-300">Nome interno<input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/60 px-3 py-2.5 text-white" /></label><label className="text-xs text-zinc-300">Status<select value={form.status} onChange={e => setForm({ ...form, status: e.target.value as ToastForm["status"] })} className="mt-1.5 w-full rounded-xl border border-white/10 bg-black/60 px-3 py-2.5 text-white"><option value="published">Ativo</option><option value="draft">Rascunho / desativado</option></select></label></div>
