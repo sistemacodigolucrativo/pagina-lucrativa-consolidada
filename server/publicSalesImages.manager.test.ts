@@ -63,13 +63,14 @@ describe("public sales section image manager", () => {
     expect(cssSource).toContain(".preview-model-05-stage");
   });
 
-  it("registers the admin route and navigation entry", () => {
+  it("registers the editor route under the Landing Page navigation group", () => {
     expect(appSource).toContain('import AdminSalesImages from "@/pages/AdminSalesImages";');
     expect(appSource).toContain('<Route path="/admin/imagens" component={AdminSalesImages} />');
     expect(appSource).toContain('<Route path="/preview" component={Preview} />');
-    expect(navigationSource).toContain('label: "Imagens do Sistema"');
+    expect(navigationSource).toContain('label: "Configurar Seções"');
     expect(navigationSource).toContain('path: "/admin/imagens"');
-    expect(navigationSource).toContain('group: "Sistema"');
+    expect(navigationSource).toContain('group: "Sistema · Landing Page"');
+    expect(navigationSource).toContain('label: "Perguntas Frequentes"');
   });
 
   it("uses admin-protected procedures and persistent storage helpers", () => {
