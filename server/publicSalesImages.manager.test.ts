@@ -34,19 +34,18 @@ describe("public sales section image manager", () => {
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "proof_matters")?.defaultImage).toBe("/proof-matters.png");
   });
 
-  it("preserves image operations while adding per-section copy saving", () => {
-    expect(adminPageSource).toContain("trpc.admin.publicSalesSectionImages.useQuery()");
+  it("preserves image upload and confirmation inside the WYSIWYG editor", () => {
     expect(adminPageSource).toContain("trpc.admin.upsertPublicSalesSectionImage.useMutation");
-    expect(adminPageSource).toContain("trpc.admin.removePublicSalesSectionImage.useMutation");
     expect(adminPageSource).toContain("trpc.admin.content.useQuery()");
     expect(adminPageSource).toContain("trpc.admin.createContent.useMutation()");
     expect(adminPageSource).toContain("trpc.admin.updateContent.useMutation()");
-    expect(adminPageSource).toContain("Selecionar imagem");
-    expect(adminPageSource).toContain("Enviar imagem");
-    expect(adminPageSource).toContain("Remover imagem");
-    expect(adminPageSource).toContain("Salvar alterações");
-    expect(adminPageSource).toContain("Imagem selecionada. Você pode enviar agora ou salvar todas as alterações da seção.");
-    expect(adminPageSource).toContain("accept=\"image/jpeg,image/png,image/gif\"");
+    expect(adminPageSource).toContain('accept="image/jpeg,image/png,image/gif"');
+    expect(adminPageSource).toContain("file.size > 4 * 1024 * 1024");
+    expect(adminPageSource).toContain("target.element.src = reader.result");
+    expect(adminPageSource).toContain("Salvar imagem");
+    expect(adminPageSource).toContain("Descartar");
+    expect(adminPageSource).toContain("utils.admin.publicSalesSectionImages.invalidate()");
+    expect(adminPageSource).toContain("utils.public.salesSectionImages.invalidate()");
     expect(adminPageSource).not.toContain("onCrop");
     expect(adminPageSource).not.toContain("onDrop");
   });
