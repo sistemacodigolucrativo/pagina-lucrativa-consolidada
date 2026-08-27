@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { PUBLIC_SALES_SECTIONS } from "../shared/publicSalesSections";
+import { PUBLIC_SALES_COPY_SECTIONS } from "../shared/publicSalesCopyEditor";
 
 const adminPageSource = readFileSync(resolve(process.cwd(), "client/src/pages/AdminSalesImages.tsx"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
@@ -21,6 +22,7 @@ describe("public sales section image manager", () => {
     expect(ids).toContain("comparison");
     expect(ids).toContain("opportunity_indication");
     expect(ids).toContain("not_just_course");
+    expect(PUBLIC_SALES_COPY_SECTIONS).toHaveLength(22);
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "problem_start")?.defaultImage).toBe("/problem-start.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "state_desired")?.defaultImage).toBe("/state-desired.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "mechanism")?.defaultImage).toBe("/mechanism.png");
@@ -32,14 +34,18 @@ describe("public sales section image manager", () => {
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "proof_matters")?.defaultImage).toBe("/proof-matters.png");
   });
 
-  it("provides only add/replace/remove operations in the admin UI", () => {
+  it("preserves image operations while adding per-section copy saving", () => {
     expect(adminPageSource).toContain("trpc.admin.publicSalesSectionImages.useQuery()");
     expect(adminPageSource).toContain("trpc.admin.upsertPublicSalesSectionImage.useMutation");
     expect(adminPageSource).toContain("trpc.admin.removePublicSalesSectionImage.useMutation");
+    expect(adminPageSource).toContain("trpc.admin.content.useQuery()");
+    expect(adminPageSource).toContain("trpc.admin.createContent.useMutation()");
+    expect(adminPageSource).toContain("trpc.admin.updateContent.useMutation()");
     expect(adminPageSource).toContain("Selecionar imagem");
     expect(adminPageSource).toContain("Enviar imagem");
     expect(adminPageSource).toContain("Remover imagem");
-    expect(adminPageSource).toContain("Imagem selecionada. Clique em Enviar imagem para confirmar.");
+    expect(adminPageSource).toContain("Salvar alterações");
+    expect(adminPageSource).toContain("Imagem selecionada. Você pode enviar agora ou salvar todas as alterações da seção.");
     expect(adminPageSource).toContain("accept=\"image/jpeg,image/png,image/gif\"");
     expect(adminPageSource).not.toContain("onCrop");
     expect(adminPageSource).not.toContain("onDrop");
