@@ -1,6 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
-import Home from "@/pages/Home";
 import { adminMenu } from "@/lib/adminNavigation";
+import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import {
   PUBLIC_SALES_COPY_CATEGORY,
@@ -8,7 +8,7 @@ import {
   defaultValuesForSection,
 } from "@shared/publicSalesCopyEditor";
 import { Check, Eye, ImagePlus, Monitor, MousePointer2, RotateCcw, Save, Smartphone, Tablet, X } from "lucide-react";
-import { ChangeEvent, PointerEvent as ReactPointerEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import "./AdminVisualSalesEditor.css";
 
@@ -29,11 +29,11 @@ const DEFAULT_LAYOUT: FloatingLayout = {
   mobile: { fab: { x: 88, y: 86 }, cta: { x: 72, y: 76 }, toast: { x: 50, y: 14 } },
 };
 
-function sectionRoot(container: HTMLElement, section: (typeof PUBLIC_SALES_COPY_SECTIONS)[number]) {
+function sectionRoot(doc: Document, section: (typeof PUBLIC_SALES_COPY_SECTIONS)[number]) {
   if (typeof section.referenceCopyIndex === "number") {
-    return container.querySelectorAll<HTMLElement>("section.reference-copy")[section.referenceCopyIndex] ?? null;
+    return doc.querySelectorAll<HTMLElement>("section.reference-copy")[section.referenceCopyIndex] ?? null;
   }
-  return section.sectionSelector ? container.querySelector<HTMLElement>(section.sectionSelector) : null;
+  return section.sectionSelector ? doc.querySelector<HTMLElement>(section.sectionSelector) : null;
 }
 
 function queryWithin(root: HTMLElement, selector: string) {
@@ -41,17 +41,22 @@ function queryWithin(root: HTMLElement, selector: string) {
   return root.querySelector<HTMLElement>(normalized);
 }
 
+function breakpointWidth(breakpoint: Breakpoint) {
+  if (breakpoint === "mobile") return 430;
+  if (breakpoint === "tablet") return 820;
+  return null;
+}
+
 export default function AdminSalesImages() {
   const utils = trpc.useUtils();
   const content = trpc.admin.content.useQuery();
-  const images = trpc.admin.publicSalesSectionImages.useQuery();
   const createContent = trpc.admin.createContent.useMutation();
   const updateContent = trpc.admin.updateContent.useMutation();
   const saveImage = trpc.admin.upsertPublicSalesSectionImage.useMutation();
-  const editorRootRef = useRef<HTMLDivElement>(null);
-  const editorViewportRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageTargetRef = useRef<{ imageSectionId: string; element: HTMLImageElement } | null>(null);
+  const cleanupEditorRef = useRef<(() => void) | null>(null);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>("desktop");
   const [interactionMode, setInteractionMode] = useState(false);
   const [editing, setEditing] = useState<EditingState | null>(null);
@@ -60,6 +65,7 @@ export default function AdminSalesImages() {
   const [savingImage, setSavingImage] = useState(false);
   const [layout, setLayout] = useState<FloatingLayout>(DEFAULT_LAYOUT);
   const [savingLayout, setSavingLayout] = useState(false);
+  const [frameReady, setFrameReady] = useState(false);
 
   const copyRecords = useMemo(() => (content.data ?? []).filter(item => item.kind === "notice" && item.resourceCategory === PUBLIC_SALES_COPY_CATEGORY && item.status !== "archived"), [content.data]);
   const copyRecordBySection = useMemo(() => new Map(copyRecords.map(item => [item.resourceType ?? "", item])), [copyRecords]);
@@ -79,18 +85,125 @@ export default function AdminSalesImages() {
     }
   }, [layoutRecord?.body]);
 
+  const finishEditing = useCallback((state: EditingState | null) => {
+    if (!state) return;
+    state.element.contentEditable = "false";
+    delete state.element.dataset.salesEditing;
+    state.element.removeAttribute("role");
+    state.element.removeAttribute("aria-label");
+  }, []);
+
+  const discardTextEdit = useCallback(() => {
+    setEditing(current => {
+      if (!current) return null;
+      current.element.textContent = current.originalValue;
+      finishEditing(current);
+      return null;
+    });
+  }, [finishEditing]);
+
+  const applyLayoutInsideFrame = useCallback((nextLayout: FloatingLayout, activeBreakpoint: Breakpoint) => {
+    const doc = iframeRef.current?.contentDocument;
+    if (!doc) return;
+    const selectors: Record<FloatingId, string> = {
+      fab: ".member-chat-fab-wrap",
+      cta: ".public-conversion-cta",
+      toast: ".public-social-proof-toast",
+    };
+    (Object.keys(selectors) as FloatingId[]).forEach(id => {
+      const element = doc.querySelector<HTMLElement>(selectors[id]);
+      const point = nextLayout[activeBreakpoint][id];
+      if (!element) return;
+      element.dataset.visualDraggable = id;
+      element.style.left = `${point.x}%`;
+      element.style.top = `${point.y}%`;
+      element.style.right = "auto";
+      element.style.bottom = "auto";
+      element.style.transform = "translate(-50%, -50%)";
+    });
+  }, []);
+
   useEffect(() => {
-    const container = editorRootRef.current;
-    if (!container || interactionMode) return;
+    if (frameReady) applyLayoutInsideFrame(layout, breakpoint);
+  }, [layout, breakpoint, frameReady, applyLayoutInsideFrame]);
 
-    const handleClick = (event: MouseEvent) => {
+  const persistLayout = useCallback(async (nextLayout: FloatingLayout) => {
+    const payload = {
+      kind: "notice" as const,
+      title: "Posição dos elementos flutuantes da página pública",
+      summary: null,
+      body: JSON.stringify(nextLayout),
+      resourceUrl: null,
+      resourceCategory: FLOATING_LAYOUT_CATEGORY,
+      resourceType: FLOATING_LAYOUT_RESOURCE,
+      status: "published" as const,
+    };
+    setSavingLayout(true);
+    try {
+      if (layoutRecord) await updateContent.mutateAsync({ id: layoutRecord.id, ...payload });
+      else await createContent.mutateAsync(payload);
+      await utils.admin.content.invalidate();
+      toast.success("Posição salva para este tamanho de tela.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível salvar a posição.");
+    } finally {
+      setSavingLayout(false);
+    }
+  }, [layoutRecord, updateContent, createContent, utils.admin.content]);
+
+  const installEditor = useCallback(() => {
+    cleanupEditorRef.current?.();
+    const frame = iframeRef.current;
+    const doc = frame?.contentDocument;
+    const win = frame?.contentWindow;
+    if (!frame || !doc || !win) return;
+
+    doc.documentElement.dataset.visualSalesEditor = interactionMode ? "preview" : "editing";
+    let style = doc.getElementById("visual-sales-editor-injected-style") as HTMLStyleElement | null;
+    if (!style) {
+      style = doc.createElement("style");
+      style.id = "visual-sales-editor-injected-style";
+      style.textContent = `
+        html[data-visual-sales-editor="editing"] [data-sales-editing="true"]{outline:2px solid #6ee7b7!important;outline-offset:4px;border-radius:4px;cursor:text!important}
+        html[data-visual-sales-editor="editing"] h1:hover,html[data-visual-sales-editor="editing"] h2:hover,html[data-visual-sales-editor="editing"] p:hover,html[data-visual-sales-editor="editing"] .eyebrow:hover,html[data-visual-sales-editor="editing"] li:hover,html[data-visual-sales-editor="editing"] summary:hover{outline:1px dashed rgba(110,231,183,.75);outline-offset:3px}
+        html[data-visual-sales-editor="editing"] img{cursor:pointer}html[data-visual-sales-editor="editing"] img:hover{outline:2px solid rgba(110,231,183,.8);outline-offset:3px}
+        html[data-visual-sales-editor="editing"] [data-visual-draggable]{cursor:grab!important;touch-action:none!important;outline:2px dashed rgba(110,231,183,.85);outline-offset:4px}
+        html[data-visual-sales-editor="editing"] [data-visual-draggable]:active{cursor:grabbing!important}
+      `;
+      doc.head.appendChild(style);
+    }
+
+    const activateText = (sectionId: string, key: string, fieldLabel: string, element: HTMLElement) => {
+      setEditing(current => {
+        if (current && current.element !== element) {
+          current.element.textContent = current.originalValue;
+          finishEditing(current);
+        }
+        const originalValue = element.textContent ?? "";
+        element.contentEditable = "true";
+        element.dataset.salesEditing = "true";
+        element.setAttribute("role", "textbox");
+        element.setAttribute("aria-label", `Editar ${fieldLabel}`);
+        win.setTimeout(() => {
+          element.focus();
+          const selection = win.getSelection();
+          const range = doc.createRange();
+          range.selectNodeContents(element);
+          range.collapse(false);
+          selection?.removeAllRanges();
+          selection?.addRange(range);
+        }, 0);
+        return { sectionId, key, element, originalValue };
+      });
+    };
+
+    const onClick = (event: MouseEvent) => {
+      if (interactionMode) return;
       const target = event.target as HTMLElement | null;
-      if (!target || target.closest("[data-visual-editor-ui]")) return;
-
+      if (!target) return;
       for (const section of PUBLIC_SALES_COPY_SECTIONS) {
-        const root = sectionRoot(container, section);
+        const root = sectionRoot(doc, section);
         if (!root || !root.contains(target)) continue;
-
         if (section.imageSectionId) {
           const image = target.closest("img") as HTMLImageElement | null;
           if (image && root.contains(image)) {
@@ -101,52 +214,82 @@ export default function AdminSalesImages() {
             return;
           }
         }
-
         for (const field of section.fields) {
           if (!field.selector) continue;
           const fieldElement = queryWithin(root, field.selector);
           if (!fieldElement || !(fieldElement === target || fieldElement.contains(target))) continue;
           event.preventDefault();
           event.stopPropagation();
-          if (editing && editing.element !== fieldElement) discardTextEdit();
-          const originalValue = fieldElement.textContent ?? "";
-          fieldElement.contentEditable = "true";
-          fieldElement.dataset.salesEditing = "true";
-          fieldElement.setAttribute("role", "textbox");
-          fieldElement.setAttribute("aria-label", `Editar ${field.label}`);
-          setEditing({ sectionId: section.id, key: field.key, element: fieldElement, originalValue });
-          window.setTimeout(() => {
-            fieldElement.focus();
-            const selection = window.getSelection();
-            const range = document.createRange();
-            range.selectNodeContents(fieldElement);
-            range.collapse(false);
-            selection?.removeAllRanges();
-            selection?.addRange(range);
-          }, 0);
+          activateText(section.id, field.key, field.label, fieldElement);
           return;
         }
       }
     };
 
-    container.addEventListener("click", handleClick, true);
-    return () => container.removeEventListener("click", handleClick, true);
-  }, [interactionMode, editing]);
+    let dragId: FloatingId | null = null;
+    const onPointerDown = (event: PointerEvent) => {
+      if (interactionMode || savingLayout) return;
+      const element = (event.target as HTMLElement | null)?.closest<HTMLElement>("[data-visual-draggable]");
+      const id = element?.dataset.visualDraggable as FloatingId | undefined;
+      if (!element || !id) return;
+      event.preventDefault();
+      event.stopPropagation();
+      dragId = id;
+      try { element.setPointerCapture(event.pointerId); } catch { /* navegador pode não suportar */ }
+    };
+    const onPointerMove = (event: PointerEvent) => {
+      if (!dragId) return;
+      const x = Math.max(3, Math.min(97, (event.clientX / Math.max(1, win.innerWidth)) * 100));
+      const y = Math.max(4, Math.min(96, (event.clientY / Math.max(1, win.innerHeight)) * 100));
+      const id = dragId;
+      setLayout(current => ({ ...current, [breakpoint]: { ...current[breakpoint], [id]: { x, y } } }));
+    };
+    const onPointerUp = (event: PointerEvent) => {
+      if (!dragId) return;
+      const id = dragId;
+      dragId = null;
+      const x = Math.max(3, Math.min(97, (event.clientX / Math.max(1, win.innerWidth)) * 100));
+      const y = Math.max(4, Math.min(96, (event.clientY / Math.max(1, win.innerHeight)) * 100));
+      setLayout(current => {
+        const next = { ...current, [breakpoint]: { ...current[breakpoint], [id]: { x, y } } };
+        void persistLayout(next);
+        return next;
+      });
+    };
 
-  const finishEditing = (state: EditingState | null) => {
-    if (!state) return;
-    state.element.contentEditable = "false";
-    delete state.element.dataset.salesEditing;
-    state.element.removeAttribute("role");
-    state.element.removeAttribute("aria-label");
-  };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (!editing) return;
+      if (event.key === "Escape") {
+        event.preventDefault();
+        discardTextEdit();
+      }
+    };
 
-  const discardTextEdit = () => {
-    if (!editing) return;
-    editing.element.textContent = editing.originalValue;
-    finishEditing(editing);
-    setEditing(null);
-  };
+    const refreshDraggables = () => applyLayoutInsideFrame(layout, breakpoint);
+    const observer = new MutationObserver(refreshDraggables);
+    observer.observe(doc.body, { childList: true, subtree: true });
+    doc.addEventListener("click", onClick, true);
+    doc.addEventListener("pointerdown", onPointerDown, true);
+    doc.addEventListener("pointermove", onPointerMove, true);
+    doc.addEventListener("pointerup", onPointerUp, true);
+    doc.addEventListener("keydown", onKeyDown, true);
+    refreshDraggables();
+    setFrameReady(true);
+
+    cleanupEditorRef.current = () => {
+      observer.disconnect();
+      doc.removeEventListener("click", onClick, true);
+      doc.removeEventListener("pointerdown", onPointerDown, true);
+      doc.removeEventListener("pointermove", onPointerMove, true);
+      doc.removeEventListener("pointerup", onPointerUp, true);
+      doc.removeEventListener("keydown", onKeyDown, true);
+    };
+  }, [interactionMode, savingLayout, breakpoint, layout, editing, finishEditing, discardTextEdit, applyLayoutInsideFrame, persistLayout]);
+
+  useEffect(() => {
+    if (frameReady) installEditor();
+    return () => cleanupEditorRef.current?.();
+  }, [interactionMode, breakpoint]);
 
   const saveTextEdit = async () => {
     if (!editing) return;
@@ -164,12 +307,11 @@ export default function AdminSalesImages() {
         currentValues = defaults;
       }
     }
-    const values = { ...currentValues, [editing.key]: value };
     const payload = {
       kind: "notice" as const,
       title: `Copy: ${section.adminLabel}`,
       summary: null,
-      body: JSON.stringify(values),
+      body: JSON.stringify({ ...currentValues, [editing.key]: value }),
       resourceUrl: null,
       resourceCategory: PUBLIC_SALES_COPY_CATEGORY,
       resourceType: section.id,
@@ -232,82 +374,29 @@ export default function AdminSalesImages() {
     }
   };
 
-  const persistLayout = async (nextLayout: FloatingLayout) => {
-    const payload = {
-      kind: "notice" as const,
-      title: "Posição dos elementos flutuantes da página pública",
-      summary: null,
-      body: JSON.stringify(nextLayout),
-      resourceUrl: null,
-      resourceCategory: FLOATING_LAYOUT_CATEGORY,
-      resourceType: FLOATING_LAYOUT_RESOURCE,
-      status: "published" as const,
-    };
-    setSavingLayout(true);
-    try {
-      if (layoutRecord) await updateContent.mutateAsync({ id: layoutRecord.id, ...payload });
-      else await createContent.mutateAsync(payload);
-      await utils.admin.content.invalidate();
-      toast.success("Posição salva para este tamanho de tela.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível salvar a posição.");
-    } finally {
-      setSavingLayout(false);
-    }
-  };
-
-  const startDrag = (id: FloatingId, event: ReactPointerEvent<HTMLButtonElement>) => {
-    if (interactionMode || savingLayout) return;
-    event.preventDefault();
-    event.currentTarget.setPointerCapture(event.pointerId);
-    const viewport = editorViewportRef.current;
-    if (!viewport) return;
-    const rect = viewport.getBoundingClientRect();
-    const update = (clientX: number, clientY: number) => {
-      const x = Math.max(4, Math.min(96, ((clientX - rect.left) / rect.width) * 100));
-      const y = Math.max(6, Math.min(94, ((clientY - rect.top) / rect.height) * 100));
-      setLayout(current => ({ ...current, [breakpoint]: { ...current[breakpoint], [id]: { x, y } } }));
-    };
-    const move = (moveEvent: PointerEvent) => update(moveEvent.clientX, moveEvent.clientY);
-    const up = (upEvent: PointerEvent) => {
-      update(upEvent.clientX, upEvent.clientY);
-      window.removeEventListener("pointermove", move);
-      window.removeEventListener("pointerup", up);
-      setLayout(current => {
-        void persistLayout(current);
-        return current;
-      });
-    };
-    window.addEventListener("pointermove", move);
-    window.addEventListener("pointerup", up, { once: true });
-  };
-
-  const viewportClass = breakpoint === "desktop" ? "is-desktop" : breakpoint === "tablet" ? "is-tablet" : "is-mobile";
-  const currentLayout = layout[breakpoint];
+  const width = breakpointWidth(breakpoint);
 
   return <DashboardLayout menuItems={adminMenu} title="Administração">
     <main className="visual-editor-shell">
       <header className="visual-editor-toolbar" data-visual-editor-ui>
-        <div className="visual-editor-brand"><MousePointer2 size={18} /><div><strong>Editor visual da página</strong><span>O que você vê aqui é a própria página pública em modo de edição.</span></div></div>
+        <div className="visual-editor-brand"><MousePointer2 size={18} /><div><strong>Editor visual da página</strong><span>A página pública real é carregada abaixo em modo de edição WYSIWYG.</span></div></div>
         <div className="visual-editor-breakpoints" role="group" aria-label="Tamanho da visualização">
           <button className={breakpoint === "desktop" ? "is-active" : ""} onClick={() => setBreakpoint("desktop")} type="button"><Monitor size={16} /><span>Desktop</span></button>
           <button className={breakpoint === "tablet" ? "is-active" : ""} onClick={() => setBreakpoint("tablet")} type="button"><Tablet size={16} /><span>Tablet</span></button>
           <button className={breakpoint === "mobile" ? "is-active" : ""} onClick={() => setBreakpoint("mobile")} type="button"><Smartphone size={16} /><span>Mobile</span></button>
         </div>
-        <button type="button" className={`visual-editor-preview-toggle ${interactionMode ? "is-active" : ""}`} onClick={() => { if (editing) discardTextEdit(); setInteractionMode(value => !value); }}><Eye size={16} />{interactionMode ? "Voltar a editar" : "Testar interação"}</button>
+        <button type="button" className={`visual-editor-preview-toggle ${interactionMode ? "is-active" : ""}`} onClick={() => { discardTextEdit(); setInteractionMode(value => !value); }}><Eye size={16} />{interactionMode ? "Voltar a editar" : "Testar interação"}</button>
       </header>
 
-      <section className={`visual-editor-viewport-wrap ${viewportClass}`}>
-        <div ref={editorViewportRef} className="visual-editor-viewport">
-          <div className="visual-editor-floating-layer" data-visual-editor-ui>
-            <button type="button" className="visual-editor-floating visual-editor-floating-fab" style={{ left: `${currentLayout.fab.x}%`, top: `${currentLayout.fab.y}%` }} onPointerDown={event => startDrag("fab", event)} aria-label="Arrastar botão FAB">FAB</button>
-            <button type="button" className="visual-editor-floating visual-editor-floating-cta" style={{ left: `${currentLayout.cta.x}%`, top: `${currentLayout.cta.y}%` }} onPointerDown={event => startDrag("cta", event)} aria-label="Arrastar CTA">Quero começar</button>
-            <button type="button" className="visual-editor-floating visual-editor-floating-toast" style={{ left: `${currentLayout.toast.x}%`, top: `${currentLayout.toast.y}%` }} onPointerDown={event => startDrag("toast", event)} aria-label="Arrastar toast"><span>PL</span><strong>Toast de notificação</strong></button>
-          </div>
-          <div ref={editorRootRef} className={`visual-editor-stage ${interactionMode ? "is-preview" : "is-editing"}`}>
-            <Home />
-          </div>
-        </div>
+      <section className="visual-editor-iframe-area">
+        <iframe
+          ref={iframeRef}
+          src={withAppBase("/?visual-editor=1")}
+          title="Editor visual da página pública"
+          className="visual-editor-iframe"
+          style={{ width: width ? `${width}px` : "100%" }}
+          onLoad={() => { setFrameReady(true); window.setTimeout(installEditor, 50); }}
+        />
       </section>
 
       <input ref={fileInputRef} type="file" className="sr-only" accept="image/jpeg,image/png,image/gif" onChange={handleFile} />
