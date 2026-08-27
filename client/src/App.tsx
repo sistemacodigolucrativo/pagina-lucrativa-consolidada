@@ -23,6 +23,7 @@ import Preview from "@/pages/Preview";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import AdminAudit from "./pages/AdminAudit";
+import AdminFutureImplementations from "./pages/AdminFutureImplementations";
 import AdminSupport from "./pages/AdminSupport";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationPayment from "./pages/ApplicationPayment";
@@ -69,17 +70,10 @@ function AppRoutes() {
     <Route path="/membros/ebooks" component={EbookReader} />
     <Route path="/membros/produtos" component={MemberLegacyRedirect} />
     <Route path="/membros/rede" component={MemberReferrals} />
-
-
     <Route path="/membros/classificados" component={MemberPublications} />
     <Route path="/membros/materiais" component={MemberPublications} />
-
     <Route path="/membros/artigos" component={MemberPublications} />
     <Route path="/membros/perguntas-frequentes" component={MemberPublications} />
-
-
-
-
     <Route path="/membros/fazer-depoimento" component={MemberTestimonial} />
     <Route path="/membros/meus-dados" component={MemberAccount} />
     <Route path="/membros/configuracoes" component={MemberProfile} />
@@ -99,20 +93,11 @@ function AppRoutes() {
     <Route path="/membros/mais-lucrativos" component={MemberLegacyRedirect} />
     <Route path="/membros/blog" component={MemberLegacyRedirect} />
     <Route path="/membros/bonus" component={MemberLegacyRedirect} />
-
-
-
-
     <Route path="/membros/cartao-certificado" component={MemberCredentials} />
-
-
     <Route path="/membros/ganhos" component={MemberEarnings} />
     <Route path="/membros/recebimentos" component={MemberReceiving} />
     <Route path="/membros/meus-pedidos" component={MemberAffiliateOrders} />
     <Route path="/membros/pontos" component={MemberPerformance} />
-
-
-
     <Route path="/membros/academia" component={MemberCourses} />
     <Route path="/membros/curso-google-ads" component={MemberCourses} />
     <Route path="/membros/curso-facebook-ads" component={MemberCourses} />
@@ -140,6 +125,7 @@ function AppRoutes() {
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/imagens" component={AdminSalesImages} />
     <Route path="/preview" component={Preview} />
+    <Route path="/admin/futuras-implementacoes" component={AdminFutureImplementations} />
     <Route path="/admin/divulgacao" component={AdminOperations} />
     <Route path="/admin/suporte" component={AdminSupport} />
     <Route path="/admin/auditoria" component={AdminAudit} />
