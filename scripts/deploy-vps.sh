@@ -18,6 +18,20 @@ fail() { printf '[deploy] ERRO: %s\n' "$*" >&2; exit 1; }
 [[ -n "$DEPLOY_ROOT" && "$DEPLOY_ROOT" = /* ]] || fail "DEPLOY_ROOT deve ser absoluto."
 [[ -f "$ARTIFACT_PATH" ]] || fail "Artefato não encontrado: $ARTIFACT_PATH"
 
+STATUS_FILE="${DEPLOY_STATUS_FILE:-$DEPLOY_ROOT/deploy-status.json}"
+write_deploy_status() {
+  local status="$1"
+  local progress="$2"
+  local stage="$3"
+  local tmp="${STATUS_FILE}.tmp"
+  mkdir -p "$(dirname "$STATUS_FILE")"
+  printf '{"status":"%s","progress":%s,"stage":"%s","sha":"%s","updatedAt":"%s"}\n' \
+    "$status" "$progress" "$stage" "$TARGET_SHA" "$(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$tmp"
+  mv -f "$tmp" "$STATUS_FILE"
+}
+
+write_deploy_status "deploying" 5 "Preparando publicação"
+
 for cmd in tar node curl systemctl readlink ln date sudo; do
   command -v "$cmd" >/dev/null 2>&1 || fail "$cmd não está disponível."
 done
@@ -30,6 +44,7 @@ fi
 [[ -n "$PNPM_BIN" && -x "$PNPM_BIN" ]] || fail "pnpm não está disponível. Prepare pnpm 10.4.1 na VPS ou defina PNPM_BIN com caminho absoluto executável."
 PNPM_VERSION="$($PNPM_BIN --version)"
 [[ "$PNPM_VERSION" == "10.4.1" ]] || fail "Versão pnpm incompatível: $PNPM_VERSION (esperada 10.4.1)."
+write_deploy_status "deploying" 12 "Ambiente validado"
 
 restart_service() {
   # Requer sudoers NOPASSWD restrito exclusivamente ao restart deste serviço.
@@ -59,6 +74,7 @@ fi
 rollback() {
   local code=$?
   trap - ERR INT TERM
+  write_deploy_status "failed" 100 "Falha no deploy; versão anterior preservada" || true
   if [[ "$SWITCHED" -eq 1 && -n "$PREVIOUS_RELEASE" ]]; then
     printf '[deploy] Falha após ativação. Restaurando release anterior: %s\n' "$PREVIOUS_RELEASE" >&2
     ln -sfn "$PREVIOUS_RELEASE" "$CURRENT_LINK.rollback"
@@ -73,6 +89,7 @@ rollback() {
 }
 trap rollback ERR INT TERM
 
+write_deploy_status "deploying" 20 "Criando novo release"
 log "Criando release $NEW_RELEASE"
 mkdir "$NEW_RELEASE"
 tar -xzf "$ARTIFACT_PATH" -C "$NEW_RELEASE"
@@ -81,12 +98,15 @@ printf '%s\n' "$TARGET_SHA" > "$NEW_RELEASE/.deployed-sha"
 cd "$NEW_RELEASE"
 [[ -f package.json && -f pnpm-lock.yaml ]] || fail "Artefato não contém package.json/pnpm-lock.yaml."
 
+write_deploy_status "deploying" 35 "Instalando dependências"
 log "Instalando dependências do release com pnpm $PNPM_VERSION"
 "$PNPM_BIN" install --frozen-lockfile
+write_deploy_status "deploying" 55 "Gerando build de produção"
 log "Gerando build de produção"
 "$PNPM_BIN" build
 [[ -f dist/index.js ]] || fail "Build não gerou dist/index.js."
 
+write_deploy_status "deploying" 70 "Validando nova versão"
 log "Smoke test isolado na porta $SMOKE_PORT"
 SMOKE_LOG="$NEW_RELEASE/.smoke.log"
 NODE_ENV=production PORT="$SMOKE_PORT" node dist/index.js >"$SMOKE_LOG" 2>&1 &
@@ -101,12 +121,14 @@ done
 cleanup_smoke
 [[ "$SMOKE_OK" -eq 1 ]] || fail "Smoke test do novo release falhou. Consulte $SMOKE_LOG."
 
+write_deploy_status "deploying" 82 "Ativando nova versão"
 log "Ativando release de forma atômica"
 ln -sfn "$NEW_RELEASE" "$CURRENT_LINK.next"
 mv -Tf "$CURRENT_LINK.next" "$CURRENT_LINK"
 SWITCHED=1
 restart_service
 
+write_deploy_status "deploying" 92 "Validando aplicação publicada"
 log "Validando aplicação em $HEALTHCHECK_URL"
 HEALTH_OK=0
 for _ in $(seq 1 30); do
@@ -116,6 +138,7 @@ done
 [[ "$HEALTH_OK" -eq 1 ]] || fail "Health check local falhou após ativação."
 
 if [[ -n "$PUBLIC_HEALTHCHECK_URL" ]]; then
+  write_deploy_status "deploying" 97 "Confirmando endpoint público"
   log "Validando endpoint público"
   curl --fail --silent --show-error --max-time 15 "$PUBLIC_HEALTHCHECK_URL" >/dev/null
 fi
@@ -123,5 +146,6 @@ fi
 trap - ERR INT TERM
 SWITCHED=0
 rm -f "$ARTIFACT_PATH"
+write_deploy_status "completed" 100 "Deploy concluído"
 log "Deploy concluído: $TARGET_SHA"
 log "Release anterior preservado: $PREVIOUS_RELEASE"
