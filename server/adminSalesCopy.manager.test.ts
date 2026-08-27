@@ -18,7 +18,8 @@ describe("gerenciador da página pública", () => {
     expect(admin).toContain("Salvar alterações");
     expect(admin).toContain("Selecionar imagem");
     expect(admin).toContain("Enviar imagem");
-    expect(admin).toContain("w-full sm:w-auto");
+    expect(admin).toContain("min-h-11 w-full");
+    expect(admin).toContain("sm:w-auto");
     expect(admin).toContain("px-3 py-5 sm:p-8");
     expect(admin).toContain("PUBLIC_SALES_COPY_SECTIONS.map");
   });
