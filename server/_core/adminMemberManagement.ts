@@ -68,7 +68,10 @@ async function requireAdmin(req: Request, res: Response) {
 
 async function getControlRow(userId: number) {
   const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
+  // A consulta de bloqueio participa da criação do contexto de autenticação.
+  // Se o banco estiver temporariamente indisponível, não derrubamos toda a sessão;
+  // operações administrativas que gravam estado continuam falhando de forma segura.
+  if (!db) return null;
   const rows = await db.select().from(managedContent).where(and(
     eq(managedContent.resourceCategory, CONTROL_CATEGORY),
     eq(managedContent.resourceType, String(userId)),
@@ -108,11 +111,8 @@ async function purgeMember(userId: number) {
   if (!db) throw new Error("Banco de dados indisponível.");
 
   await db.transaction(async tx => {
-    // Os indicados sobrevivem: ao remover os vínculos cujo sponsor é o membro excluído,
-    // eles passam a ficar órfãos, sem serem apagados.
     await tx.delete(referralLinks).where(eq(referralLinks.sponsorId, userId));
     await tx.delete(referralLinks).where(eq(referralLinks.referredUserId, userId));
-
     await tx.delete(memberInvitations).where(eq(memberInvitations.userId, userId));
     await tx.delete(memberActivities).where(eq(memberActivities.userId, userId));
     await tx.delete(memberContacts).where(eq(memberContacts.userId, userId));
@@ -130,11 +130,7 @@ async function purgeMember(userId: number) {
     await tx.delete(campaignLinks).where(eq(campaignLinks.userId, userId));
     await tx.delete(products).where(eq(products.ownerId, userId));
     await tx.delete(applicationAccessTokens).where(eq(applicationAccessTokens.ownerUserId, userId));
-
-    // Pedidos são registros comerciais e não devem desaparecer junto com a conta.
-    // Apenas o vínculo de propriedade/indicação é removido.
     await tx.update(applications).set({ ownerUserId: null, affiliateSlug: null }).where(eq(applications.ownerUserId, userId));
-
     await tx.delete(receivingPreferences).where(eq(receivingPreferences.userId, userId));
     await tx.delete(memberAccountDetails).where(eq(memberAccountDetails.userId, userId));
     await tx.delete(userSecurityRecovery).where(eq(userSecurityRecovery.userId, userId));
@@ -239,7 +235,6 @@ export function registerAdminMemberManagement(app: Express, appPrefix: string) {
     });
   }
 
-  // Garante a exclusão definitiva mesmo sem visita manual à tela administrativa.
   const timer = setInterval(() => { void purgeExpiredMemberDeletions().catch(error => console.error("[MemberDeletion]", error)); }, 60 * 60 * 1000);
   timer.unref?.();
   void purgeExpiredMemberDeletions().catch(error => console.error("[MemberDeletion]", error));
