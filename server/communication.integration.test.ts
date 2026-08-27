@@ -14,11 +14,12 @@ describe("fluxo de comunicação preparada", () => {
     expect(router).toContain('z.enum(["prepared", "cancelled"])');
   });
 
-  it("centraliza comunicação do membro em Minha operação e preserva administração", () => {
+  it("centraliza comunicação do membro em Minha operação sem restaurar a tela administrativa removida", () => {
     const app = read("client/src/App.tsx");
     expect(app).toContain('path="/membros/emails-site" component={MemberLegacyRedirect}');
     expect(app).toContain('path="/membros/emails-interessados" component={MemberLegacyRedirect}');
     expect(app).toContain('path="/membros/emails-whatsapp" component={MemberLegacyRedirect}');
-    expect(app).toContain('path="/admin/comunicacoes" component={AdminCommunications}');
+    expect(app).not.toContain('path="/admin/comunicacoes"');
+    expect(app).not.toContain("AdminCommunications");
   });
 });
