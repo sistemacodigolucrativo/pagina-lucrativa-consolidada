@@ -5,11 +5,13 @@ import { resolve } from "node:path";
 const source = readFileSync(resolve(process.cwd(), "client/src/pages/AdminToast.tsx"), "utf8");
 
 describe("admin Toast responsive UX", () => {
-  it("keeps the editor hidden until edit or duplicate is selected", () => {
-    expect(source).toContain('const editorOpen = editingId !== null || duplicateSourceId !== null;');
-    expect(source).toContain('{editorOpen ? <form');
-    expect(source).not.toContain('onClick={startNewModel}');
-    expect(source).not.toContain('Novo modelo');
+  it("edits and duplicates directly inside the selected Toast card", () => {
+    expect(source).toContain('data-inline-toast-editor="true"');
+    expect(source).toContain('editingId === item.id || duplicateSourceId === item.id');
+    expect(source).toContain('Editando este modelo');
+    expect(source).toContain('Duplicando este modelo');
+    expect(source).not.toContain('editorRef');
+    expect(source).not.toContain('editorOpen');
   });
 
   it("uses slim expandable cards with contextual actions", () => {
@@ -22,17 +24,17 @@ describe("admin Toast responsive UX", () => {
     expect(source).toContain('Excluir');
   });
 
-  it("previews the selected model in the real Toast and keeps editing contextual", () => {
-    expect(source).toContain('onClick={() => previewItem(item)}');
-    expect(source).toContain('window.dispatchEvent(new CustomEvent(PUBLIC_TOAST_PREVIEW_EVENT');
-    expect(source).toContain('editorRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" })');
-    expect(source).not.toContain('window.scrollTo({ top: 0');
+  it("keeps preview and save actions inside the inline editor", () => {
+    expect(source).toContain('dispatchPreview(form.message, form.disclaimer)');
+    expect(source).toContain('void saveInline()');
+    expect(source).toContain('Salvar alterações');
+    expect(source).toContain('Criar cópia');
   });
 
   it("duplicates from an existing model into an independent draft", () => {
     expect(source).toContain('function duplicate(item:');
     expect(source).toContain('title: `${item.title} — cópia`');
     expect(source).toContain('status: "draft"');
-    expect(source).toContain('Criar cópia');
+    expect(source).toContain('await create.mutateAsync(payload)');
   });
 });
