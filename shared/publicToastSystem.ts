@@ -10,6 +10,10 @@ export type PublicToastSettings = {
   showSimulationNotice: boolean;
   headerMessage: string;
   footerMessage: string;
+  headerColor: string;
+  nameColor: string;
+  messageColor: string;
+  footerColor: string;
   initialDelaySeconds: number;
   intervalMinSeconds: number;
   intervalMaxSeconds: number;
@@ -25,6 +29,10 @@ export const publicToastDefaultSettings: PublicToastSettings = {
   showSimulationNotice: true,
   headerMessage: "Atividade ilustrativa",
   footerMessage: "Demonstração ilustrativa — não representa uma atividade real.",
+  headerColor: "#FACC15",
+  nameColor: "#38BDF8",
+  messageColor: "#FFFFFF",
+  footerColor: "#F9A8D4",
   initialDelaySeconds: 12,
   intervalMinSeconds: 22,
   intervalMaxSeconds: 60,
@@ -57,6 +65,11 @@ export const publicToastCities = [
   "Goiânia", "Manaus", "Belém", "Porto Alegre", "Florianópolis", "Campinas", "Natal", "João Pessoa",
 ] as const;
 
+function normalizeColor(value: unknown, fallback: string) {
+  const color = String(value ?? "").trim();
+  return /^#[0-9a-fA-F]{6}$/.test(color) ? color.toUpperCase() : fallback;
+}
+
 export function normalizePublicToastSettings(value: Partial<PublicToastSettings> | null | undefined): PublicToastSettings {
   const next = { ...publicToastDefaultSettings, ...(value ?? {}) };
   const initialDelaySeconds = Math.max(1, Math.min(300, Number(next.initialDelaySeconds) || publicToastDefaultSettings.initialDelaySeconds));
@@ -68,6 +81,10 @@ export function normalizePublicToastSettings(value: Partial<PublicToastSettings>
     showSimulationNotice: Boolean(next.showSimulationNotice),
     headerMessage: String(next.headerMessage ?? publicToastDefaultSettings.headerMessage).trim().slice(0, 120),
     footerMessage: String(next.footerMessage ?? publicToastDefaultSettings.footerMessage).trim().slice(0, 500),
+    headerColor: normalizeColor(next.headerColor, publicToastDefaultSettings.headerColor),
+    nameColor: normalizeColor(next.nameColor, publicToastDefaultSettings.nameColor),
+    messageColor: normalizeColor(next.messageColor, publicToastDefaultSettings.messageColor),
+    footerColor: normalizeColor(next.footerColor, publicToastDefaultSettings.footerColor),
     initialDelaySeconds,
     intervalMinSeconds,
     intervalMaxSeconds,
