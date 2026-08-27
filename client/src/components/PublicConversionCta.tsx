@@ -20,8 +20,24 @@ export default function PublicConversionCta() {
 
   if (!isPublicConversionRoute(location) || conversionFormVisible) return null;
 
-  return <a className="public-conversion-cta" style={{ borderRadius: "8px" }} href={withAppBase("/#f")} aria-label="Quero começar agora">
-    <span>Quero começar</span>
-    <ArrowUpRight size={15} aria-hidden="true" />
-  </a>;
+  return (
+    <a
+      className="public-conversion-cta"
+      style={{
+        borderRadius: "10px",
+        minWidth: "auto",
+        minHeight: "44px",
+        padding: "10px 14px",
+        gap: "7px",
+      }}
+      href={withAppBase("/#f")}
+      aria-label="Quero começar agora"
+      title="Quero começar agora"
+    >
+      <span style={{ fontSize: "11px", lineHeight: 1, fontWeight: 800, whiteSpace: "nowrap" }}>
+        Quero começar agora
+      </span>
+      <ArrowUpRight size={16} aria-hidden="true" />
+    </a>
+  );
 }
