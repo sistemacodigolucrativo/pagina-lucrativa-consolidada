@@ -11,6 +11,8 @@ import { registerCampaignRedirectRoutes } from "./campaignRedirect";
 import { registerPublicToastConfig } from "./publicToastConfig";
 import { registerPublicSalesCopyConfig } from "./publicSalesCopyConfig";
 import { registerDeployStatus } from "./deployStatus";
+import { registerAdminMemberManagement } from "./adminMemberManagement";
+import { registerAdminContentManagement } from "./adminContentManagement";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -45,6 +47,8 @@ async function startServer() {
   registerPublicToastConfig(app, appPrefix);
   registerPublicSalesCopyConfig(app, appPrefix);
   registerDeployStatus(app, appPrefix);
+  registerAdminMemberManagement(app, appPrefix);
+  registerAdminContentManagement(app, appPrefix);
   // tRPC API
   for (const trpcPath of trpcPaths) {
     app.use(
