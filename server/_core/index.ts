@@ -10,6 +10,7 @@ import { registerAffiliateLinkTracking } from "./affiliateLinkTracking";
 import { registerCampaignRedirectRoutes } from "./campaignRedirect";
 import { registerPublicToastConfig } from "./publicToastConfig";
 import { registerPublicSalesCopyConfig } from "./publicSalesCopyConfig";
+import { registerDeployStatus } from "./deployStatus";
 import { serveStatic, setupVite } from "./vite";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -43,6 +44,7 @@ async function startServer() {
   registerAffiliateLinkTracking(app);
   registerPublicToastConfig(app, appPrefix);
   registerPublicSalesCopyConfig(app, appPrefix);
+  registerDeployStatus(app, appPrefix);
   // tRPC API
   for (const trpcPath of trpcPaths) {
     app.use(
