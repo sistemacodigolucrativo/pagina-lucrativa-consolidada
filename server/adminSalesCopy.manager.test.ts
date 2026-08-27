@@ -13,15 +13,25 @@ describe("gerenciador da página pública", () => {
     expect(PUBLIC_SALES_COPY_SECTIONS[21]?.id).toBe("offer");
   });
 
-  it("mantém edição individual, upload reaproveitado e layout mobile", () => {
+  it("usa a própria página pública como editor visual responsivo", () => {
     const admin = read("client/src/pages/AdminSalesImages.tsx");
-    expect(admin).toContain("Salvar alterações");
-    expect(admin).toContain("Selecionar imagem");
-    expect(admin).toContain("Enviar imagem");
-    expect(admin).toContain("min-h-11 w-full");
-    expect(admin).toContain("sm:w-auto");
-    expect(admin).toContain("px-3 py-5 sm:p-8");
-    expect(admin).toContain("PUBLIC_SALES_COPY_SECTIONS.map");
+    const css = read("client/src/pages/AdminVisualSalesEditor.css");
+
+    expect(admin).toContain('src={withAppBase("/?visual-editor=1")}');
+    expect(admin).toContain('title="Editor visual da página pública"');
+    expect(admin).toContain('"desktop"');
+    expect(admin).toContain('"tablet"');
+    expect(admin).toContain('"mobile"');
+    expect(admin).toContain("Testar interação");
+    expect(admin).toContain("contentEditable = \"true\"");
+    expect(admin).toContain("Salvar");
+    expect(admin).toContain("Descartar");
+    expect(admin).toContain("Salvar imagem");
+    expect(admin).toContain("PointerEvent");
+    expect(admin).toContain("data.visualDraggable");
+    expect(admin).toContain("PUBLIC_SALES_COPY_SECTIONS");
+    expect(css).toContain(".visual-editor-toolbar");
+    expect(css).toContain("@media(max-width:560px)");
   });
 
   it("expõe e aplica a copy persistida sem alterar o schema", () => {
