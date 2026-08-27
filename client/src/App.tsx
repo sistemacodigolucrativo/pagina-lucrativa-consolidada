@@ -24,6 +24,7 @@ import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
 import AdminAudit from "./pages/AdminAudit";
 import AdminFutureImplementations from "./pages/AdminFutureImplementations";
+import AdminToast from "./pages/AdminToast";
 import AdminSupport from "./pages/AdminSupport";
 import ApplicationConfirmation from "./pages/ApplicationConfirmation";
 import ApplicationPayment from "./pages/ApplicationPayment";
@@ -126,6 +127,7 @@ function AppRoutes() {
     <Route path="/admin/imagens" component={AdminSalesImages} />
     <Route path="/preview" component={Preview} />
     <Route path="/admin/futuras-implementacoes" component={AdminFutureImplementations} />
+    <Route path="/admin/toast" component={AdminToast} />
     <Route path="/admin/divulgacao" component={AdminOperations} />
     <Route path="/admin/suporte" component={AdminSupport} />
     <Route path="/admin/auditoria" component={AdminAudit} />
