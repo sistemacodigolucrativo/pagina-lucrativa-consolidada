@@ -2,6 +2,7 @@ import type { CreateExpressContextOptions } from "@trpc/server/adapters/express"
 import { parse as parseCookieHeader } from "cookie";
 import type { User } from "../../drizzle/schema";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
+import { isMemberAdministrativelyBlocked } from "./adminMemberManagement";
 
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
@@ -15,11 +16,13 @@ export async function createContext(
 ): Promise<TrpcContext> {
   const cookies = parseCookieHeader(opts.req.headers.cookie ?? "");
   const demoUser = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+  const blocked = demoUser?.role === "user" ? await isMemberAdministrativelyBlocked(demoUser.id) : false;
+  const user = blocked ? null : demoUser ?? null;
 
   return {
     req: opts.req,
     res: opts.res,
-    user: demoUser ?? null,
-    authSource: demoUser ? "demo" : null,
+    user,
+    authSource: user ? "demo" : null,
   };
 }
