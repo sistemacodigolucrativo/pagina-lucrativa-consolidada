@@ -25,8 +25,8 @@ describe("fluxo de indicações", () => {
     expect(db).toContain("assertSponsorImmutable");
     expect(db).toContain("db.transaction(async tx =>");
     expect(db).not.toContain("set: { sponsorId: application.ownerUserId, status: \"active\" }");
-    expect(adminReferrals).toContain("Esta tela é somente consultiva.");
-    expect(adminReferrals).toContain("O administrador não cria vínculos manualmente");
+    expect(adminReferrals).toContain("Gerencie contas, bloqueios e exclusões com retenção de 7 dias");
+    expect(adminReferrals).toContain("Os vínculos continuam sendo criados pelo fluxo real de adesão.");
     expect(adminReferrals).toContain("data?.activeCount");
     expect(adminReferrals).not.toContain("createReferral");
     expect(adminReferrals).not.toContain("Vincular indicação");
