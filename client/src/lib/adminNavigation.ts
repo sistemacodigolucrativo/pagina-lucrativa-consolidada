@@ -1,5 +1,5 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { BookOpenCheck, ChartNoAxesCombined, ClipboardList, FileText, ImagePlus, LayoutTemplate, LifeBuoy, Mail, UsersRound } from "lucide-react";
+import { BookOpenCheck, CalendarClock, ChartNoAxesCombined, ClipboardList, FileText, ImagePlus, LayoutTemplate, LifeBuoy, Mail, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
@@ -12,6 +12,7 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: FileText, label: "Depoimentos", path: "/admin/relatos", group: "Relacionamento" },
   { icon: Mail, label: "Comunicações", path: "/admin/comunicacoes", group: "Relacionamento" },
   { icon: LayoutTemplate, label: "Preview", path: "/preview", group: "Sistema" },
+  { icon: CalendarClock, label: "FUTURAS IMPLEMENTAÇÕES", path: "/admin/futuras-implementacoes", group: "Sistema" },
   { icon: ClipboardList, label: "Auditoria", path: "/admin/auditoria", group: "Sistema" },
 ];
 
