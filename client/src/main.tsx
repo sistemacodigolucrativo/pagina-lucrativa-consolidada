@@ -4,6 +4,7 @@ import { httpBatchLink } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
+import PublicSalesCopyRuntime from "./components/PublicSalesCopyRuntime";
 import { withAppBase } from "./lib/devPath";
 import "./index.css";
 
@@ -28,6 +29,7 @@ createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
       <App />
+      <PublicSalesCopyRuntime />
     </QueryClientProvider>
   </trpc.Provider>
 );
