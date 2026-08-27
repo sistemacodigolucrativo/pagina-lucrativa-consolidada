@@ -14,11 +14,13 @@ const routerSource = readFileSync(resolve(process.cwd(), "server/routers.ts"), "
 describe("public sales section image manager", () => {
   it("defines unique stable section IDs for every public block", () => {
     const ids = PUBLIC_SALES_SECTIONS.map(section => section.id);
-    expect(ids.length).toBe(11);
+    expect(ids.length).toBe(13);
     expect(new Set(ids).size).toBe(ids.length);
     expect(ids).toContain("hero_operation");
     expect(ids).toContain("state_desired");
     expect(ids).toContain("comparison");
+    expect(ids).toContain("opportunity_indication");
+    expect(ids).toContain("not_just_course");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "problem_start")?.defaultImage).toBe("/problem-start.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "state_desired")?.defaultImage).toBe("/state-desired.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "mechanism")?.defaultImage).toBe("/mechanism.png");
