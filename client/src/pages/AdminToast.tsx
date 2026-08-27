@@ -44,8 +44,11 @@ export default function AdminToast() {
   const [showArchived, setShowArchived] = useState(false);
   const [form, setForm] = useState<ToastForm>(defaultForm);
 
-  const toastItems = useMemo(() => (content.data ?? []).filter(item => item.kind === "notice" && item.resourceCategory === TOAST_CATEGORY && item.resourceType === TOAST_TYPE), [content.data]);
-  const visibleItems = toastItems.filter(item => showArchived ? item.status === "archived" : item.status !== "archived");
+  const toastItems = useMemo(
+    () => (content.data ?? []).filter(item => item.kind === "notice" && item.resourceCategory === TOAST_CATEGORY && item.resourceType === TOAST_TYPE),
+    [content.data],
+  );
+  const visibleItems = toastItems.filter(item => (showArchived ? item.status === "archived" : item.status !== "archived"));
   const activeCount = toastItems.filter(item => item.status === "published").length;
   const draftCount = toastItems.filter(item => item.status === "draft").length;
   const archivedCount = toastItems.filter(item => item.status === "archived").length;
@@ -128,11 +131,18 @@ export default function AdminToast() {
     <DashboardLayout menuItems={adminMenu} title="Administração">
       <main className="mx-auto w-full max-w-7xl space-y-6 p-4 md:p-8">
         <header className="relative overflow-hidden rounded-3xl border border-emerald-300/15 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,.14),transparent_38%),linear-gradient(145deg,rgba(9,18,16,.98),rgba(3,8,9,.99))] p-6 shadow-2xl md:p-8">
-          <div className="absolute right-5 top-5 rounded-full border border-emerald-300/20 bg-emerald-300/5 p-3 text-emerald-300"><Sparkles className="size-5" /></div>
+          <div className="absolute right-5 top-5 rounded-full border border-emerald-300/20 bg-emerald-300/5 p-3 text-emerald-300">
+            <Sparkles className="size-5" />
+          </div>
           <div className="max-w-3xl">
             <span className="text-[11px] font-semibold uppercase tracking-[.18em] text-emerald-300">Sistema · Prova social</span>
-            <div className="mt-3 flex items-center gap-3"><Bell className="size-7 text-emerald-300" /><h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">Central de Toast</h1></div>
-            <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 md:text-base">Crie e organize modelos de notificação para a experiência pública. Use <strong className="text-white">{{"{{nome}}"}}</strong> e <strong className="text-white">{{"{{cidade}}"}}</strong> como variáveis dinâmicas.</p>
+            <div className="mt-3 flex items-center gap-3">
+              <Bell className="size-7 text-emerald-300" />
+              <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">Central de Toast</h1>
+            </div>
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 md:text-base">
+              Crie e organize modelos de notificação para a experiência pública. Use <strong className="text-white">{"{{nome}}"}</strong> e <strong className="text-white">{"{{cidade}}"}</strong> como variáveis dinâmicas.
+            </p>
           </div>
         </header>
 
