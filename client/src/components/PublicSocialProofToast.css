@@ -1,0 +1,72 @@
+.public-social-proof-toast {
+  position: fixed !important;
+  top: 92px !important;
+  right: 24px !important;
+  bottom: auto !important;
+  z-index: 55;
+  grid-template-columns: 26px minmax(0, 1fr) !important;
+  gap: 9px !important;
+  width: min(340px, calc(100vw - 48px)) !important;
+  min-height: 0 !important;
+  padding: 9px 11px !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, .32), 0 0 20px rgba(3, 214, 96, .06) !important;
+  animation: public-social-proof-toast-top-in .22s var(--ease-out) both !important;
+}
+
+.public-social-proof-toast .public-social-proof-toast-mark {
+  width: 26px !important;
+  height: 26px !important;
+  border-radius: 8px !important;
+  font-size: 8px !important;
+}
+
+.public-social-proof-toast .public-social-proof-toast-copy {
+  gap: 1px !important;
+}
+
+.public-social-proof-toast .public-social-proof-toast-kicker {
+  font-size: 7px !important;
+  letter-spacing: .08em !important;
+  line-height: 1.15 !important;
+}
+
+.public-social-proof-toast .public-social-proof-toast-copy strong {
+  font-size: 10px !important;
+  line-height: 1.25 !important;
+}
+
+.public-social-proof-toast .public-social-proof-toast-copy small {
+  font-size: 7px !important;
+  line-height: 1.2 !important;
+}
+
+@keyframes public-social-proof-toast-top-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 900px) {
+  .public-social-proof-toast {
+    top: 82px !important;
+    right: 16px !important;
+    left: 16px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+}
+
+@media (max-width: 650px) {
+  .public-social-proof-toast {
+    top: 80px !important;
+    right: 8px !important;
+    left: 8px !important;
+    width: auto !important;
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-social-proof-toast { animation: none !important; }
+}
