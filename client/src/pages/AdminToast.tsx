@@ -21,16 +21,14 @@ type ToastForm = {
   status: "draft" | "published";
 };
 
+const PUBLIC_TOAST_PREVIEW_EVENT = "pagina-lucrativa:toast-preview";
+
 const defaultForm = (): ToastForm => ({
   title: "",
   message: "{{nome}} acabou de se cadastrar",
   disclaimer: "Demonstração ilustrativa — não representa uma atividade real.",
   status: "published",
 });
-
-function renderPreview(message: string) {
-  return message.replaceAll("{{nome}}", "Ana S.").replaceAll("{{cidade}}", "Curitiba");
-}
 
 function parseDisclaimer(body?: string | null) {
   if (!body) return "";
@@ -185,6 +183,22 @@ export default function AdminToast() {
     }
   }
 
+  function previewToast() {
+    const message = form.message.trim();
+    if (!message) {
+      toast.error("Informe uma mensagem para visualizar o Toast.");
+      return;
+    }
+    window.dispatchEvent(new CustomEvent(PUBLIC_TOAST_PREVIEW_EVENT, {
+      detail: {
+        message,
+        disclaimer: form.disclaimer.trim(),
+        showSimulationNotice: settings.showSimulationNotice,
+        visibleSeconds: settings.visibleSeconds,
+      },
+    }));
+  }
+
   function edit(item: NonNullable<typeof content.data>[number]) {
     setEditingId(item.id);
     setForm({ title: item.title, message: item.summary ?? "", disclaimer: parseDisclaimer(item.body), status: item.status === "published" ? "published" : "draft" });
@@ -233,8 +247,11 @@ export default function AdminToast() {
         <div className="flex flex-wrap gap-2"><button type="button" onClick={() => setForm({ ...form, message: `${form.message}{{nome}}` })} className="rounded-full border border-emerald-300/20 bg-emerald-300/5 px-3 py-1.5 text-xs text-emerald-200">+ nome</button><button type="button" onClick={() => setForm({ ...form, message: `${form.message}{{cidade}}` })} className="rounded-full border border-emerald-300/20 bg-emerald-300/5 px-3 py-1.5 text-xs text-emerald-200">+ cidade</button></div>
         <label className="block text-sm text-zinc-200">Aviso / rodapé<textarea value={form.disclaimer} onChange={event => setForm({ ...form, disclaimer: event.target.value })} maxLength={4000} rows={2} className="mt-2 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-white outline-none focus:border-emerald-300/50" /></label>
         <label className="block text-sm text-zinc-200">Status<select value={form.status} onChange={event => setForm({ ...form, status: event.target.value as ToastForm["status"] })} className="mt-2 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-white"><option value="published">Ativo</option><option value="draft">Rascunho / desativado</option></select></label>
-        <section className="rounded-2xl border border-emerald-300/15 bg-emerald-300/[.035] p-4"><div className="mb-3 flex items-center gap-2 text-xs uppercase tracking-wider text-emerald-300"><Eye className="size-4" />Preview</div><div className="rounded-2xl border border-emerald-200/20 bg-gradient-to-r from-[#071512] to-[#03090c] p-4 shadow-xl"><div className="flex items-start gap-3"><span className="grid size-9 shrink-0 place-items-center rounded-xl bg-emerald-200 text-[10px] font-bold text-black">PL</span><div className="min-w-0">{settings.showSimulationNotice ? <span className="text-[9px] uppercase tracking-[.14em] text-emerald-300">Atividade ilustrativa</span> : null}<p className="mt-1 text-sm font-medium leading-5 text-white">{renderPreview(form.message) || "Sua mensagem aparecerá aqui."}</p>{settings.showSimulationNotice && form.disclaimer ? <p className="mt-1 text-[10px] leading-4 text-zinc-400">{form.disclaimer}</p> : null}</div></div></div></section>
-        <button disabled={busy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-3 font-semibold text-black disabled:opacity-50">{editingId ? <Pencil className="size-4" /> : <Plus className="size-4" />}{busy ? "Salvando..." : editingId ? "Salvar alterações" : "Criar modelo"}</button>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button type="button" onClick={previewToast} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-emerald-300/25 bg-emerald-300/5 px-4 py-3 font-semibold text-emerald-200 transition hover:bg-emerald-300/10"><Eye className="size-4" />Preview do Toast</button>
+          <button disabled={busy} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-3 font-semibold text-black disabled:opacity-50">{editingId ? <Pencil className="size-4" /> : <Plus className="size-4" />}{busy ? "Salvando..." : editingId ? "Salvar alterações" : "Criar modelo"}</button>
+        </div>
+        <p className="text-xs leading-5 text-zinc-500">O preview aparece no topo da tela, no mesmo componente usado nas páginas públicas, sem salvar ou alterar o modelo.</p>
       </form>
 
       <section className="rounded-3xl border border-white/10 bg-zinc-950/75 p-5 shadow-xl md:p-6">
