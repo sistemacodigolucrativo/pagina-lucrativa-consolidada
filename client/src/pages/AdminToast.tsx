@@ -15,6 +15,7 @@ import {
 } from "@shared/publicToastSystem";
 
 type ToastForm = { title: string; message: string; disclaimer: string; status: "draft" | "published" };
+type ColorKey = "headerColor" | "nameColor" | "messageColor" | "footerColor";
 const PUBLIC_TOAST_PREVIEW_EVENT = "pagina-lucrativa:toast-preview";
 const defaultForm = (): ToastForm => ({ title: "", message: "{{nome}} acabou de se cadastrar", disclaimer: "Demonstração ilustrativa — não representa uma atividade real.", status: "published" });
 
@@ -31,6 +32,9 @@ function Toggle({ checked, onChange, label, description }: { checked: boolean; o
     <span className="min-w-0"><strong className="block text-sm font-medium text-white">{label}</strong><span className="mt-1 block text-xs leading-5 text-zinc-500">{description}</span></span>
     <span className={`relative h-7 w-12 shrink-0 rounded-full transition ${checked ? "bg-emerald-300" : "bg-zinc-700"}`}><span className={`absolute top-1 size-5 rounded-full bg-black transition ${checked ? "left-6" : "left-1"}`} /></span>
   </button>;
+}
+function ColorControl({ label, colorKey, settings, setSettings }: { label: string; colorKey: ColorKey; settings: PublicToastSettings; setSettings: React.Dispatch<React.SetStateAction<PublicToastSettings>> }) {
+  return <label className="text-xs text-zinc-300 sm:text-sm">{label}<span className="mt-2 flex items-center gap-2 rounded-xl border border-white/10 bg-black/60 p-2"><input type="color" value={settings[colorKey]} onChange={event => setSettings(current => ({ ...current, [colorKey]: event.target.value }))} className="h-9 w-10 shrink-0 cursor-pointer rounded-lg border-0 bg-transparent p-0" /><input value={settings[colorKey]} maxLength={7} onChange={event => setSettings(current => ({ ...current, [colorKey]: event.target.value }))} aria-label={`Cor ${label}`} className="min-w-0 flex-1 bg-transparent text-xs uppercase text-white outline-none" /></span></label>;
 }
 
 export default function AdminToast() {
@@ -107,7 +111,7 @@ export default function AdminToast() {
 
   function dispatchPreview(message: string, disclaimer: string) {
     if (!message.trim()) return toast.error("Este modelo não possui uma mensagem para visualizar.");
-    window.dispatchEvent(new CustomEvent(PUBLIC_TOAST_PREVIEW_EVENT, { detail: { message: message.trim(), disclaimer: disclaimer.trim(), showSimulationNotice: settings.showSimulationNotice, headerMessage: settings.headerMessage, footerMessage: settings.footerMessage, visibleSeconds: settings.visibleSeconds } }));
+    window.dispatchEvent(new CustomEvent(PUBLIC_TOAST_PREVIEW_EVENT, { detail: { message: message.trim(), disclaimer: disclaimer.trim(), showSimulationNotice: settings.showSimulationNotice, headerMessage: settings.headerMessage, footerMessage: settings.footerMessage, headerColor: settings.headerColor, nameColor: settings.nameColor, messageColor: settings.messageColor, footerColor: settings.footerColor, visibleSeconds: settings.visibleSeconds } }));
   }
   function previewItem(item: NonNullable<typeof content.data>[number]) { dispatchPreview(item.summary ?? "", parseDisclaimer(item.body)); }
   function edit(item: NonNullable<typeof content.data>[number]) { setDuplicateSourceId(null); setEditingId(item.id); setForm({ title: item.title, message: item.summary ?? "", disclaimer: parseDisclaimer(item.body), status: item.status === "published" ? "published" : "draft" }); focusEditor(); }
@@ -118,7 +122,7 @@ export default function AdminToast() {
     <header className="relative overflow-hidden rounded-2xl border border-emerald-300/15 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,.16),transparent_38%),linear-gradient(145deg,rgba(9,18,16,.98),rgba(3,8,9,.99))] p-4 shadow-2xl sm:rounded-3xl sm:p-6 md:p-8">
       <Sparkles className="absolute right-5 top-5 size-5 text-emerald-300" /><span className="text-[10px] font-semibold uppercase tracking-[.16em] text-emerald-300">Sistema · Prova social</span>
       <div className="mt-2 flex items-center gap-3"><Bell className="size-6 text-emerald-300" /><h1 className="text-2xl font-semibold text-white sm:text-3xl">Central de Toast</h1></div>
-      <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Controle completo dos modelos, frequência, cabeçalho e rodapé exibidos nos Toasts públicos.</p>
+      <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Controle completo dos modelos, frequência, cabeçalho, rodapé e identidade visual dos Toasts públicos.</p>
     </header>
 
     <section className="grid grid-cols-3 gap-2">{[["Ativos", activeCount], ["Rascunhos", draftCount], ["Arquivados", archivedCount]].map(([label, count]) => <article key={String(label)} className="rounded-xl border border-white/10 bg-zinc-950/70 p-3 sm:p-5"><span className="block truncate text-[9px] uppercase text-zinc-500 sm:text-xs">{label}</span><strong className="mt-2 block text-2xl text-white sm:text-3xl">{count}</strong></article>)}</section>
@@ -132,6 +136,16 @@ export default function AdminToast() {
       <div className="mt-4 grid gap-3 lg:grid-cols-2">
         <label className="text-xs text-zinc-300 sm:text-sm">Mensagem de cabeçalho<input value={settings.headerMessage} maxLength={120} onChange={event => setSettings(current => ({ ...current, headerMessage: event.target.value }))} placeholder="Ex.: Atividade ilustrativa" className="mt-2 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-white outline-none focus:border-emerald-300/50" /></label>
         <label className="text-xs text-zinc-300 sm:text-sm">Mensagem de rodapé<input value={settings.footerMessage} maxLength={500} onChange={event => setSettings(current => ({ ...current, footerMessage: event.target.value }))} placeholder="Ex.: Demonstração ilustrativa" className="mt-2 w-full rounded-xl border border-white/10 bg-black/60 px-4 py-3 text-white outline-none focus:border-emerald-300/50" /></label>
+      </div>
+      <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-3 sm:p-4">
+        <span className="text-[10px] uppercase tracking-wider text-emerald-300">Paleta global do Toast</span>
+        <p className="mt-1 text-xs leading-5 text-zinc-500">Uma única definição é aplicada automaticamente a todos os modelos atuais e aos modelos criados futuramente.</p>
+        <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <ColorControl label="Cabeçalho" colorKey="headerColor" settings={settings} setSettings={setSettings} />
+          <ColorControl label="Nome" colorKey="nameColor" settings={settings} setSettings={setSettings} />
+          <ColorControl label="Mensagem" colorKey="messageColor" settings={settings} setSettings={setSettings} />
+          <ColorControl label="Rodapé" colorKey="footerColor" settings={settings} setSettings={setSettings} />
+        </div>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 xl:grid-cols-4">
         <label className="text-xs text-zinc-300">Primeira exibição (s)<input type="number" min={1} max={300} value={settings.initialDelaySeconds} onChange={e => setSettings(c => ({ ...c, initialDelaySeconds: Number(e.target.value) }))} className="mt-2 w-full rounded-xl border border-white/10 bg-black/60 px-3 py-3 text-white" /></label>
