@@ -12,10 +12,22 @@ type DeployState = {
 };
 
 const IDLE: DeployState = { status: "idle", progress: 0 };
+const ACKNOWLEDGED_DEPLOY_KEY = "admin:last-acknowledged-deploy";
+
+function deploymentIdentity(state: DeployState) {
+  return state.sha || state.updatedAt || "completed";
+}
 
 export default function AdminDeployStatus() {
   const [location] = useLocation();
   const [state, setState] = useState<DeployState>(IDLE);
+  const [acknowledgedDeploy, setAcknowledgedDeploy] = useState(() => {
+    try {
+      return window.sessionStorage.getItem(ACKNOWLEDGED_DEPLOY_KEY) ?? "";
+    } catch {
+      return "";
+    }
+  });
   const isAdminRoute = location === "/admin" || location.startsWith("/admin/");
 
   useEffect(() => {
@@ -50,7 +62,21 @@ export default function AdminDeployStatus() {
   if (!isAdminRoute || state.status === "idle" || state.status === "failed") return null;
 
   const completed = state.status === "completed";
+  const currentDeployIdentity = completed ? deploymentIdentity(state) : "";
+  if (completed && acknowledgedDeploy === currentDeployIdentity) return null;
+
   const progress = completed ? 100 : Math.max(1, Math.min(99, Math.round(state.progress || 1)));
+
+  const acknowledgeAndReload = () => {
+    const identity = deploymentIdentity(state);
+    try {
+      window.sessionStorage.setItem(ACKNOWLEDGED_DEPLOY_KEY, identity);
+    } catch {
+      // Se o storage estiver indisponível, o reload continua funcionando normalmente.
+    }
+    setAcknowledgedDeploy(identity);
+    window.location.reload();
+  };
 
   return (
     <div className="fixed inset-x-0 top-0 z-[9999] border-b border-white/10 bg-zinc-950/98 shadow-2xl backdrop-blur-xl" role="status" aria-live="polite">
@@ -79,7 +105,7 @@ export default function AdminDeployStatus() {
         {completed ? (
           <button
             type="button"
-            onClick={() => window.location.reload()}
+            onClick={acknowledgeAndReload}
             className="inline-flex min-h-10 shrink-0 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-3 py-2 text-xs font-bold text-black transition hover:bg-emerald-200 sm:px-4 sm:text-sm"
           >
             <RefreshCw className="size-4" />
