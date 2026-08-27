@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import "./PublicSocialProofToast.css";
 import {
   choosePublicSocialProofIndex,
   formatPublicSocialProof,
