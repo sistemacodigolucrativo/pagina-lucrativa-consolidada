@@ -1,6 +1,5 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { trpc } from "@/lib/trpc";
 import NotFound from "@/pages/NotFound";
 import { Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -123,6 +122,9 @@ function AppRoutes() {
     <Route path="/admin/operacao" component={AdminOperations} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
     <Route path="/admin/membros" component={AdminReferrals} />
+    <Route path="/admin/material-divulgacao" component={AdminPublications} />
+    <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
+    <Route path="/admin/perguntas-frequentes" component={AdminPublications} />
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/imagens" component={AdminSalesImages} />
     <Route path="/preview" component={Preview} />
