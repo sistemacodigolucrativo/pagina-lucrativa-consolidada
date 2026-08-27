@@ -49,7 +49,7 @@ import PublicConversionCta from "./components/PublicConversionCta";
 import AdminDeployStatus from "./components/AdminDeployStatus";
 
 function AppRoutes() {
-  return <Switch>
+  return <><AdminDeployStatus /><Switch>
     <Route path="/" component={Home} />
     <Route path="/pedido/confirmacao" component={ApplicationConfirmation} />
     <Route path="/pedido/:trackingCode/pagamento/instrucoes" component={ApplicationPayment} />
@@ -141,10 +141,10 @@ function AppRoutes() {
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />
     <Route component={NotFound} />
-  </Switch>;
+  </Switch></>;
 }
 function App() {
   const base = DEV_PREFIX;
-  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><AdminDeployStatus /><PublicSocialProofToast /><PublicConversionCta /><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
+  return <ErrorBoundary><ThemeProvider defaultTheme="dark"><TooltipProvider><Toaster /><WouterRouter base={base}><PublicSocialProofToast /><PublicConversionCta /><AppRoutes /></WouterRouter></TooltipProvider></ThemeProvider></ErrorBoundary>;
 }
 export default App;
