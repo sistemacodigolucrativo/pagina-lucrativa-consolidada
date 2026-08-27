@@ -21,6 +21,8 @@ type ActiveNotice = {
   disclaimer: string;
   key: number;
   forceSimulationNotice?: boolean;
+  headerMessage?: string;
+  footerMessage?: string;
 };
 
 type PublicToastResponse = {
@@ -32,6 +34,8 @@ type PublicToastPreviewDetail = {
   message: string;
   disclaimer?: string;
   showSimulationNotice?: boolean;
+  headerMessage?: string;
+  footerMessage?: string;
   visibleSeconds?: number;
 };
 
@@ -82,6 +86,8 @@ export default function PublicSocialProofToast() {
         disclaimer: detail.disclaimer?.trim() ?? "",
         key: Date.now(),
         forceSimulationNotice: detail.showSimulationNotice,
+        headerMessage: detail.headerMessage,
+        footerMessage: detail.footerMessage,
       });
       const visibleMs = Math.max(2, Math.min(30, detail.visibleSeconds ?? settings.visibleSeconds)) * 1000;
       previewDismissRef.current = window.setTimeout(() => setNotice(null), visibleMs);
@@ -142,13 +148,15 @@ export default function PublicSocialProofToast() {
   if (!notice) return null;
 
   const showSimulationNotice = notice.forceSimulationNotice ?? settings.showSimulationNotice;
+  const headerMessage = notice.headerMessage ?? settings.headerMessage;
+  const footerMessage = notice.footerMessage ?? settings.footerMessage ?? notice.disclaimer;
 
   return <aside className="public-social-proof-toast" role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
     <span className="public-social-proof-toast-mark" aria-hidden="true">PL</span>
     <span className="public-social-proof-toast-copy">
-      {showSimulationNotice ? <span className="public-social-proof-toast-kicker">Atividade ilustrativa</span> : null}
+      {showSimulationNotice && headerMessage ? <span className="public-social-proof-toast-kicker">{headerMessage}</span> : null}
       <strong>{notice.message}</strong>
-      {showSimulationNotice && notice.disclaimer ? <small>{notice.disclaimer}</small> : null}
+      {showSimulationNotice && footerMessage ? <small>{footerMessage}</small> : null}
     </span>
   </aside>;
 }
