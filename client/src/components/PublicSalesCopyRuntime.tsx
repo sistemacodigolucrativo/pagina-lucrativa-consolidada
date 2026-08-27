@@ -2,6 +2,9 @@ import { useEffect } from "react";
 import { withAppBase } from "@/lib/devPath";
 import { PUBLIC_SALES_COPY_SECTIONS, type PublicSalesCopyOverrides } from "@shared/publicSalesCopyEditor";
 
+type Point = { x?: number; y?: number };
+type FloatingLayout = Partial<Record<"desktop" | "tablet" | "mobile", Partial<Record<"fab" | "cta" | "toast", Point>>>>;
+
 function sectionRoot(section: (typeof PUBLIC_SALES_COPY_SECTIONS)[number]) {
   if (typeof document === "undefined") return null;
   if (typeof section.referenceCopyIndex === "number") {
@@ -38,9 +41,37 @@ function applyOverrides(overrides: PublicSalesCopyOverrides) {
       if (section.id === "structure_summary" && applyStructureSummary(root, field.key, value)) continue;
       if (!field.selector) continue;
       const target = queryWithin(root, field.selector);
-      if (target && target.textContent !== value) target.textContent = value;
+      if (!target || target.dataset.salesEditing === "true") continue;
+      if (target.textContent !== value) target.textContent = value;
     }
   }
+}
+
+function breakpointForWidth(width: number): "desktop" | "tablet" | "mobile" {
+  if (width <= 560) return "mobile";
+  if (width <= 980) return "tablet";
+  return "desktop";
+}
+
+function applyFloatingLayout(layout: FloatingLayout) {
+  const breakpoint = breakpointForWidth(window.innerWidth);
+  const positions = layout[breakpoint];
+  if (!positions) return;
+  const selectors: Record<"fab" | "cta" | "toast", string> = {
+    fab: ".member-chat-fab-wrap",
+    cta: ".public-conversion-cta",
+    toast: ".public-social-proof-toast",
+  };
+  (Object.keys(selectors) as Array<keyof typeof selectors>).forEach(id => {
+    const point = positions[id];
+    const element = document.querySelector<HTMLElement>(selectors[id]);
+    if (!element || typeof point?.x !== "number" || typeof point?.y !== "number") return;
+    element.style.left = `${Math.max(2, Math.min(98, point.x))}%`;
+    element.style.top = `${Math.max(2, Math.min(98, point.y))}%`;
+    element.style.right = "auto";
+    element.style.bottom = "auto";
+    element.style.transform = "translate(-50%, -50%)";
+  });
 }
 
 export default function PublicSalesCopyRuntime() {
@@ -49,21 +80,29 @@ export default function PublicSalesCopyRuntime() {
     let observer: MutationObserver | null = null;
     let queued = false;
     let overrides: PublicSalesCopyOverrides = {};
+    let floatingLayout: FloatingLayout = {};
 
     const scheduleApply = () => {
       if (queued || cancelled) return;
       queued = true;
       window.requestAnimationFrame(() => {
         queued = false;
-        if (!cancelled) applyOverrides(overrides);
+        if (!cancelled) {
+          applyOverrides(overrides);
+          applyFloatingLayout(floatingLayout);
+        }
       });
     };
 
+    const handleResize = () => scheduleApply();
+    window.addEventListener("resize", handleResize);
+
     fetch(withAppBase("/api/public-sales-copy"), { credentials: "include" })
       .then(response => response.ok ? response.json() : Promise.reject(new Error("Falha ao carregar copy pública")))
-      .then((payload: { overrides?: PublicSalesCopyOverrides }) => {
+      .then((payload: { overrides?: PublicSalesCopyOverrides; floatingLayout?: FloatingLayout }) => {
         if (cancelled) return;
         overrides = payload.overrides ?? {};
+        floatingLayout = payload.floatingLayout ?? {};
         scheduleApply();
         observer = new MutationObserver(scheduleApply);
         observer.observe(document.body, { childList: true, subtree: true });
@@ -73,6 +112,7 @@ export default function PublicSalesCopyRuntime() {
     return () => {
       cancelled = true;
       observer?.disconnect();
+      window.removeEventListener("resize", handleResize);
     };
   }, []);
 
