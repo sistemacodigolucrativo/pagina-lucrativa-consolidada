@@ -29,6 +29,14 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('label: "Catálogo"');
   });
 
+  it("agrupa Academia e E-books em Capacitação sem alterar suas rotas", () => {
+    const navigation = read("client/src/lib/adminNavigation.ts");
+    expect(navigation).toContain('label: "Academia", path: "/admin/academia", group: "Capacitação"');
+    expect(navigation).toContain('label: "E-books", path: "/admin/ebooks", group: "Capacitação"');
+    expect(navigation).not.toContain('label: "Academia", path: "/admin/academia", group: "Conteúdo"');
+    expect(navigation).not.toContain('label: "E-books", path: "/admin/ebooks", group: "Conteúdo"');
+  });
+
   it("mantém Preview no contexto administrativo do sistema", () => {
     const navigation = read("client/src/lib/adminNavigation.ts");
     const preview = read("client/src/pages/Preview.tsx");
