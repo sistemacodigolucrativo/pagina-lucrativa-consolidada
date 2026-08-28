@@ -1,5 +1,5 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { Bell, BookOpenCheck, CalendarClock, ChartNoAxesCombined, FileText, ImagePlus, LayoutTemplate, LifeBuoy, Library, Megaphone, MessageCircleQuestion, UsersRound } from "lucide-react";
+import { Bell, BookOpenCheck, CalendarClock, ChartNoAxesCombined, FileText, ImagePlus, LayoutTemplate, LifeBuoy, Library, Megaphone, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
@@ -11,11 +11,10 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Capacitação" },
   { icon: LifeBuoy, label: "Suporte", path: "/admin/suporte", group: "Relacionamento" },
   { icon: FileText, label: "Depoimentos", path: "/admin/relatos", group: "Relacionamento" },
-  { icon: ImagePlus, label: "Configurar Seções", path: "/admin/imagens", group: "Sistema · Landing Page" },
-  { icon: MessageCircleQuestion, label: "Perguntas Frequentes", path: "/admin/perguntas-frequentes", group: "Sistema · Landing Page" },
+  { icon: ImagePlus, label: "Configurar Seções", path: "/admin/imagens", group: "Sistema" },
   { icon: LayoutTemplate, label: "Preview", path: "/preview", group: "Sistema" },
-  { icon: CalendarClock, label: "FUTURAS IMPLEMENTAÇÕES", path: "/admin/futuras-implementacoes", group: "Sistema" },
   { icon: Bell, label: "Toast", path: "/admin/toast", group: "Sistema" },
+  { icon: CalendarClock, label: "FUTURAS IMPLEMENTAÇÕES", path: "/admin/futuras-implementacoes", group: "Anotações" },
 ];
 
 export function isAdminNavigation(items: Array<{ path: string }>) {
