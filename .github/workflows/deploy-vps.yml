@@ -103,6 +103,16 @@ jobs:
             --exclude='.env.*' \
             -czf "/tmp/pagina-lucrativa-${GITHUB_SHA}.tar.gz" .
 
+      - name: Liberar espaço temporário na VPS
+        if: steps.config.outputs.ready == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ steps.config.outputs.port }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+            "find /tmp -maxdepth 1 -mindepth 1 \( -type d -name 'pagina-lucrativa-deploy-*' -o -type f -name 'pagina-lucrativa-*.tar.gz' \) -exec rm -rf -- {} + || true; df -h / /tmp"
+
       - name: Enviar artefato e script
         if: steps.config.outputs.ready == 'true'
         env:
@@ -128,6 +138,17 @@ jobs:
           REMOTE_DIR="/tmp/pagina-lucrativa-deploy-${TARGET_SHA}"
           ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
             "chmod 700 '$REMOTE_DIR/deploy-vps.sh' && '$REMOTE_DIR/deploy-vps.sh' '$TARGET_SHA' '$VPS_DEPLOY_PATH' '$REMOTE_DIR/pagina-lucrativa-${TARGET_SHA}.tar.gz' 'http://127.0.0.1:3101/'"
+
+      - name: Limpar temporários após deploy
+        if: always() && steps.config.outputs.ready == 'true'
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ steps.config.outputs.port }}
+          TARGET_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
+            "rm -rf -- '/tmp/pagina-lucrativa-deploy-${TARGET_SHA}' '/tmp/pagina-lucrativa-${TARGET_SHA}.tar.gz' || true" || true
 
       - name: Informar deploy não configurado
         if: steps.config.outputs.ready != 'true'
