@@ -50,9 +50,10 @@ describe("central editorial", () => {
     expect(member).toContain('item.kind === "faq"');
   });
 
-  it("separa Material, Biblioteca e FAQ sem renomear contratos técnicos", async () => {
+  it("separa Material e Biblioteca e incorpora FAQ ao Configurar Seções", async () => {
     const member = await readFile(path.join(root, "client/src/pages/MemberPublications.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminPublications.tsx"), "utf8");
+    const faqManager = await readFile(path.join(root, "client/src/components/AdminFaqManager.tsx"), "utf8");
     const operations = await readFile(path.join(root, "client/src/pages/AdminOperations.tsx"), "utf8");
     const navigation = await readFile(path.join(root, "shared/memberOfficeContent.ts"), "utf8");
     const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
@@ -63,15 +64,16 @@ describe("central editorial", () => {
     expect(member).toContain('title: "Material de divulgação"');
     expect(member).toContain('title: "Biblioteca de Recursos"');
     expect(admin).toContain('"/admin/material-divulgacao": { kind: "article"');
-    expect(admin).toContain('"/admin/perguntas-frequentes": { kind: "faq"');
     expect(adminNavigation).toContain('label: "Material de Divulgação", path: "/admin/material-divulgacao"');
     expect(adminNavigation).toContain('label: "Biblioteca de Recursos", path: "/admin/biblioteca-recursos"');
-    expect(adminNavigation).toContain('label: "Perguntas Frequentes", path: "/admin/perguntas-frequentes"');
+    expect(adminNavigation).not.toContain('label: "Perguntas Frequentes"');
+    expect(adminNavigation).toContain('label: "Configurar Seções", path: "/admin/imagens", group: "Sistema"');
+    expect(faqManager).toContain("Perguntas Frequentes");
+    expect(faqManager).toContain('item.kind === "faq"');
     expect(operations).toContain('setLocation("/admin")');
     expect(operations).not.toContain("createContent");
     expect(app).toContain('path="/admin/material-divulgacao" component={AdminPublications}');
     expect(app).toContain('path="/admin/biblioteca-recursos" component={AdminPublications}');
-    expect(app).toContain('path="/admin/perguntas-frequentes" component={AdminPublications}');
     expect(legacyRedirect).toContain('"/membros/blog": "/membros/artigos"');
     expect(legacyRedirect).toContain('"/membros/bonus": "/membros/materiais"');
   });
