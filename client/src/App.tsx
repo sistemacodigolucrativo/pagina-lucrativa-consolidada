@@ -17,7 +17,7 @@ import MemberPerformance from "./pages/MemberPerformance";
 import MemberCourses from "./pages/MemberCourses";
 import AdminCourses from "./pages/AdminCourses";
 import AdminPublications from "@/pages/AdminPublications";
-import AdminSalesImages from "@/pages/AdminSalesImages";
+import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";
 import Preview from "@/pages/Preview";
 import AdminOffice from "./pages/AdminOffice";
 import AdminOperations from "./pages/AdminOperations";
@@ -126,7 +126,7 @@ function AppRoutes() {
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
     <Route path="/admin/perguntas-frequentes" component={AdminPublications} />
     <Route path="/admin/publicacoes" component={AdminPublications} />
-    <Route path="/admin/imagens" component={AdminSalesImages} />
+    <Route path="/admin/imagens" component={AdminSalesSectionsPage} />
     <Route path="/preview" component={Preview} />
     <Route path="/admin/futuras-implementacoes" component={AdminFutureImplementations} />
     <Route path="/admin/toast" component={AdminToast} />
