@@ -116,19 +116,25 @@ jobs:
           set -Eeuo pipefail
           DEPLOY_ROOT="$1"
 
-          find /tmp -maxdepth 1 -mindepth 1 \
+          find /tmp -maxdepth 1 -mindepth 1 -user "$(id -un)" \
             \( -type d -name 'pagina-lucrativa-deploy-*' -o -type f -name 'pagina-lucrativa-*.tar.gz' \) \
-            -exec rm -rf -- {} + || true
+            -exec rm -rf -- {} +
 
           RELEASES_DIR="$DEPLOY_ROOT/releases"
           CURRENT_LINK="$DEPLOY_ROOT/current"
           CURRENT_RELEASE="$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
+          PROTECTED_RELEASE="$RELEASES_DIR/20260826-unified-c68a101"
+
+          [ -n "$CURRENT_RELEASE" ] && [ -d "$CURRENT_RELEASE" ] || {
+            echo 'current não aponta para um release válido; limpeza abortada.' >&2
+            exit 1
+          }
 
           if [ -d "$RELEASES_DIR" ]; then
             mapfile -t RELEASES < <(find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-)
             KEPT=0
             for RELEASE in "${RELEASES[@]}"; do
-              if [ "$RELEASE" = "$CURRENT_RELEASE" ]; then
+              if [ "$RELEASE" = "$CURRENT_RELEASE" ] || [ "$RELEASE" = "$PROTECTED_RELEASE" ]; then
                 continue
               fi
               KEPT=$((KEPT + 1))
@@ -176,7 +182,7 @@ jobs:
           TARGET_SHA: ${{ github.sha }}
         run: |
           ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
-            "rm -rf -- '/tmp/pagina-lucrativa-deploy-${TARGET_SHA}' '/tmp/pagina-lucrativa-${TARGET_SHA}.tar.gz' || true" || true
+            "rm -rf -- '/tmp/pagina-lucrativa-deploy-${TARGET_SHA}' '/tmp/pagina-lucrativa-${TARGET_SHA}.tar.gz'"
 
       - name: Informar deploy não configurado
         if: steps.config.outputs.ready != 'true'

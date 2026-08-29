@@ -80,3 +80,11 @@ O release inicial conhecido como funcional (`20260826-unified-c68a101`) não dev
 5. Cadastrar os seis Secrets.
 6. Se o pnpm não estiver no PATH não interativo, expor `PNPM_BIN` ao processo de deploy com o caminho absoluto validado antes de executar o script.
 7. Executar o primeiro deploy de forma controlada, acompanhando Actions, systemd, health check local e HTTPS público.
+
+## Correções de segurança da limpeza
+
+A limpeza pré-deploy remove somente artefatos temporários do próprio usuário SSH do deploy (`$(id -un)`) e não utiliza `|| true` para ocultar falhas de remoção ou de conexão. Assim, arquivos de outros serviços ou arquivos root-owned em `/tmp` não são atingidos silenciosamente.
+
+Antes de enumerar releases, a rotina exige que `current` seja um symlink resolvível para um diretório existente. Se essa condição falhar, a limpeza aborta antes de remover qualquer release. Além do release atualmente ativo, o release funcional protegido `20260826-unified-c68a101` é explicitamente preservado. A rotina mantém ainda os dois releases anteriores mais recentes, e qualquer falha de permissão interrompe o workflow para correção da causa, em vez de ser mascarada.
+
+A normalização inicial da VPS deve ser feita com acesso administrativo, restrita à árvore `/home/ubuntu/servicos/pagina-lucrativa`, corrigindo ownership dos releases legados incompatíveis. Depois disso, criação, instalação, build, extração e limpeza de releases devem ocorrer como `pagina-deploy`, sem uso de `sudo` para operações de arquivos da aplicação.
