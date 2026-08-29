@@ -5,6 +5,7 @@ import { PUBLIC_SALES_SECTIONS } from "../shared/publicSalesSections";
 import { PUBLIC_SALES_COPY_SECTIONS } from "../shared/publicSalesCopyEditor";
 
 const adminPageSource = readFileSync(resolve(process.cwd(), "client/src/pages/AdminSalesImages.tsx"), "utf8");
+const faqManagerSource = readFileSync(resolve(process.cwd(), "client/src/components/AdminFaqManager.tsx"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 const navigationSource = readFileSync(resolve(process.cwd(), "client/src/lib/adminNavigation.ts"), "utf8");
 const previewSource = readFileSync(resolve(process.cwd(), "client/src/pages/Preview.tsx"), "utf8");
@@ -63,14 +64,16 @@ describe("public sales section image manager", () => {
     expect(cssSource).toContain(".preview-model-05-stage");
   });
 
-  it("registers the editor route under the Landing Page navigation group", () => {
+  it("registers Configurar Seções directly under Sistema and removes standalone FAQ navigation", () => {
     expect(appSource).toContain('import AdminSalesImages from "@/pages/AdminSalesImages";');
     expect(appSource).toContain('<Route path="/admin/imagens" component={AdminSalesImages} />');
     expect(appSource).toContain('<Route path="/preview" component={Preview} />');
     expect(navigationSource).toContain('label: "Configurar Seções"');
     expect(navigationSource).toContain('path: "/admin/imagens"');
-    expect(navigationSource).toContain('group: "Sistema · Landing Page"');
-    expect(navigationSource).toContain('label: "Perguntas Frequentes"');
+    expect(navigationSource).toContain('group: "Sistema"');
+    expect(navigationSource).not.toContain('group: "Sistema · Landing Page"');
+    expect(navigationSource).not.toContain('label: "Perguntas Frequentes"');
+    expect(faqManagerSource).toContain("Perguntas Frequentes");
   });
 
   it("uses admin-protected procedures and persistent storage helpers", () => {
