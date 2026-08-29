@@ -103,15 +103,43 @@ jobs:
             --exclude='.env.*' \
             -czf "/tmp/pagina-lucrativa-${GITHUB_SHA}.tar.gz" .
 
-      - name: Liberar espaço temporário na VPS
+      - name: Liberar espaço na VPS
         if: steps.config.outputs.ready == 'true'
         env:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ steps.config.outputs.port }}
+          VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
         run: |
           ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
-            "find /tmp -maxdepth 1 -mindepth 1 \( -type d -name 'pagina-lucrativa-deploy-*' -o -type f -name 'pagina-lucrativa-*.tar.gz' \) -exec rm -rf -- {} + || true; df -h / /tmp"
+            "bash -s -- '$VPS_DEPLOY_PATH'" <<'REMOTE'
+          set -Eeuo pipefail
+          DEPLOY_ROOT="$1"
+
+          find /tmp -maxdepth 1 -mindepth 1 \
+            \( -type d -name 'pagina-lucrativa-deploy-*' -o -type f -name 'pagina-lucrativa-*.tar.gz' \) \
+            -exec rm -rf -- {} + || true
+
+          RELEASES_DIR="$DEPLOY_ROOT/releases"
+          CURRENT_LINK="$DEPLOY_ROOT/current"
+          CURRENT_RELEASE="$(readlink -f "$CURRENT_LINK" 2>/dev/null || true)"
+
+          if [ -d "$RELEASES_DIR" ]; then
+            mapfile -t RELEASES < <(find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | cut -d' ' -f2-)
+            KEPT=0
+            for RELEASE in "${RELEASES[@]}"; do
+              if [ "$RELEASE" = "$CURRENT_RELEASE" ]; then
+                continue
+              fi
+              KEPT=$((KEPT + 1))
+              if [ "$KEPT" -gt 2 ]; then
+                rm -rf -- "$RELEASE"
+              fi
+            done
+          fi
+
+          df -h / /tmp
+          REMOTE
 
       - name: Enviar artefato e script
         if: steps.config.outputs.ready == 'true'
