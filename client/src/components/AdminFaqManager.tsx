@@ -1,7 +1,8 @@
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { MessageCircleQuestion, PencilLine, PlusCircle, Trash2 } from "lucide-react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import { toast } from "sonner";
 
 type Status = "draft" | "published" | "archived";
@@ -17,9 +18,23 @@ export default function AdminFaqManager() {
   const [form, setForm] = useState<Form>(blank);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null);
   const items = useMemo(() => (content.data ?? []).filter(item => item.kind === "faq"), [content.data]);
   const reset = () => { setForm(blank); setEditingId(null); };
   const refresh = () => utils.admin.content.invalidate();
+
+  useEffect(() => {
+    const attach = () => setPortalTarget(document.querySelector<HTMLElement>(".visual-editor-shell"));
+    attach();
+    if (document.querySelector(".visual-editor-shell")) return;
+    const observer = new MutationObserver(() => {
+      if (!document.querySelector(".visual-editor-shell")) return;
+      attach();
+      observer.disconnect();
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -49,9 +64,10 @@ export default function AdminFaqManager() {
     finally { setDeletingId(null); }
   }
 
+  if (!portalTarget) return null;
   const busy = create.isPending || update.isPending || deletingId !== null;
-  return <section className="mx-auto mt-8 w-full max-w-7xl space-y-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-7" data-faq-manager>
-    <header className="space-y-2"><div className="flex items-center gap-2 text-emerald-300"><MessageCircleQuestion size={20}/><span className="text-xs font-semibold uppercase tracking-[0.16em]">Seção final da Landing Page</span></div><h2 className="text-2xl font-semibold text-white">Perguntas Frequentes</h2><p className="max-w-3xl text-sm leading-6 text-zinc-300">Configure aqui as perguntas e respostas exibidas no final da página pública de vendas.</p></header>
+  return createPortal(<section className="mx-auto mt-8 w-full max-w-7xl space-y-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-7" data-faq-manager>
+    <header className="space-y-2"><div className="flex items-center gap-2 text-emerald-300"><MessageCircleQuestion size={20}/><span className="text-xs font-semibold uppercase tracking-[0.16em]">Seção final da página pública</span></div><h2 className="text-2xl font-semibold text-white">Perguntas Frequentes</h2><p className="max-w-3xl text-sm leading-6 text-zinc-300">Configure aqui as perguntas e respostas exibidas no final da página pública de vendas.</p></header>
     <div className="grid gap-6 xl:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
       <form onSubmit={submit} className="space-y-4 rounded-xl border border-white/10 bg-black/25 p-4">
         <label className="block text-sm text-zinc-200">Estado<select value={form.status} onChange={e => setForm({...form,status:e.target.value as Status})} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white"><option value="draft">Rascunho</option><option value="published">Publicado</option><option value="archived">Arquivado</option></select></label>
@@ -61,5 +77,5 @@ export default function AdminFaqManager() {
       </form>
       <div className="space-y-3">{content.isLoading ? <p className="text-sm text-zinc-400">Carregando...</p> : items.length ? items.map(item => <article key={item.id} className="rounded-xl border border-white/10 bg-black/25 p-4"><span className="text-xs uppercase tracking-wider text-emerald-200">{statusLabel(item.status)}</span><h3 className="mt-1 font-medium text-white">{item.title}</h3><p className="mt-2 text-sm text-zinc-400">{item.body || "Sem resposta."}</p><div className="mt-3 flex flex-wrap gap-2"><button type="button" onClick={() => edit(item)} className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200"><PencilLine size={15}/>Editar</button><button type="button" disabled={deletingId===item.id} onClick={() => void remove(item)} className="inline-flex items-center gap-1 rounded-lg border border-red-400/25 px-3 py-2 text-sm text-red-200 disabled:opacity-60"><Trash2 size={15}/>{deletingId===item.id?"Excluindo...":"Excluir"}</button></div></article>) : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-zinc-400">Nenhuma pergunta cadastrada.</p>}</div>
     </div>
-  </section>;
+  </section>, portalTarget);
 }
