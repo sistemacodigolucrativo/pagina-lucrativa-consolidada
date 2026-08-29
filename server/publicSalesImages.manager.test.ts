@@ -5,6 +5,7 @@ import { PUBLIC_SALES_SECTIONS } from "../shared/publicSalesSections";
 import { PUBLIC_SALES_COPY_SECTIONS } from "../shared/publicSalesCopyEditor";
 
 const adminPageSource = readFileSync(resolve(process.cwd(), "client/src/pages/AdminSalesImages.tsx"), "utf8");
+const consolidatedPageSource = readFileSync(resolve(process.cwd(), "client/src/pages/AdminSalesSectionsPage.tsx"), "utf8");
 const faqManagerSource = readFileSync(resolve(process.cwd(), "client/src/components/AdminFaqManager.tsx"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 const navigationSource = readFileSync(resolve(process.cwd(), "client/src/lib/adminNavigation.ts"), "utf8");
@@ -64,15 +65,19 @@ describe("public sales section image manager", () => {
     expect(cssSource).toContain(".preview-model-05-stage");
   });
 
-  it("registers Configurar Seções directly under Sistema and removes standalone FAQ navigation", () => {
-    expect(appSource).toContain('import AdminSalesImages from "@/pages/AdminSalesImages";');
-    expect(appSource).toContain('<Route path="/admin/imagens" component={AdminSalesImages} />');
+  it("registers Configurar Seções directly under Sistema and mounts FAQ at the end of the editor", () => {
+    expect(appSource).toContain('import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";');
+    expect(appSource).toContain('<Route path="/admin/imagens" component={AdminSalesSectionsPage} />');
     expect(appSource).toContain('<Route path="/preview" component={Preview} />');
     expect(navigationSource).toContain('label: "Configurar Seções"');
     expect(navigationSource).toContain('path: "/admin/imagens"');
     expect(navigationSource).toContain('group: "Sistema"');
     expect(navigationSource).not.toContain('group: "Sistema · Landing Page"');
     expect(navigationSource).not.toContain('label: "Perguntas Frequentes"');
+    expect(consolidatedPageSource).toContain("<AdminSalesImages />");
+    expect(consolidatedPageSource).toContain("<AdminFaqManager />");
+    expect(faqManagerSource).toContain('document.querySelector<HTMLElement>(".visual-editor-shell")');
+    expect(faqManagerSource).toContain("createPortal");
     expect(faqManagerSource).toContain("Perguntas Frequentes");
   });
 
