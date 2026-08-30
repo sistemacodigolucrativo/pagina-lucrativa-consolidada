@@ -573,3 +573,61 @@ Conclusao:
 ```text
 MIGRACAO CONCLUIDA
 ```
+
+## Publicacao dos arquivos atualizados em RelatorioGPT
+
+Data: 2026-08-30
+
+Foram adicionadas copias dos arquivos atualizados no projeto dentro da pasta de relatorio:
+
+```text
+RelatorioGPT/arquivos-atualizados/scripts/install-vps.sh
+RelatorioGPT/arquivos-atualizados/drizzle/0002_volatile_thanos.sql
+RelatorioGPT/arquivos-atualizados/drizzle/meta/0002_snapshot.json
+RelatorioGPT/arquivos-atualizados/drizzle/meta/_journal.json
+```
+
+Checksums SHA256:
+
+```text
+2afb263c67891f16b11b625b980a7c30be2f2adda75d1d17c3173df8e82a3a6b  RelatorioGPT/arquivos-atualizados/scripts/install-vps.sh
+5276b5a5656f22b478469f8a72c12cd4501a31a9d06a006aef364cc9902364ca  RelatorioGPT/arquivos-atualizados/drizzle/0002_volatile_thanos.sql
+a5480c1059d39103b2747686c3a55fd953aa92c540e1f17ebba32d93bd06c2f2  RelatorioGPT/arquivos-atualizados/drizzle/meta/0002_snapshot.json
+13a52e52fc921083e7bfbbafc8ed32e4223efee75f7cab7688da85dd6e1b57a1  RelatorioGPT/arquivos-atualizados/drizzle/meta/_journal.json
+```
+
+## SSL instalado na nova VPS
+
+Data: 2026-08-30
+
+Dominio configurado:
+
+```text
+ocodigolucrativo.site
+```
+
+Alteracao realizada na VPS:
+
+```text
+Nginx passou a responder por ocodigolucrativo.site e www.ocodigolucrativo.site.
+Certificado Let's Encrypt emitido via certbot/nginx.
+Redirect HTTPS habilitado pelo certbot.
+Renovacao automatica habilitada pelo certbot.timer.
+```
+
+Certificado:
+
+```text
+Certificate Name: ocodigolucrativo.site
+Key Type: ECDSA
+Certificate Path: /etc/letsencrypt/live/ocodigolucrativo.site/fullchain.pem
+Private Key Path: /etc/letsencrypt/live/ocodigolucrativo.site/privkey.pem
+Expiry Date: 2026-11-28 02:49:42+00:00
+```
+
+Validacao:
+
+```text
+nginx -t -> sucesso
+https://ocodigolucrativo.site/ -> 200
+```
