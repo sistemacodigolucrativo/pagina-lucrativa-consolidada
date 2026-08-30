@@ -31,6 +31,7 @@ describe("central editorial", () => {
 
   it("mantém Biblioteca de Recursos no mesmo contrato e em gestor dedicado", async () => {
     const member = await readFile(path.join(root, "client/src/pages/MemberPublications.tsx"), "utf8");
+    const library = await readFile(path.join(root, "client/src/components/resources/LibraryResourcesPremium.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminPublications.tsx"), "utf8");
     const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
     const migration = await readFile(path.join(root, "drizzle/migrations/0026_add_managed_content_resource_fields.sql"), "utf8");
@@ -43,10 +44,11 @@ describe("central editorial", () => {
     expect(admin).toContain("Link do Google Drive");
     expect(admin).toContain("O arquivo precisa estar compartilhado no Google Drive");
     expect(member).toContain("Recursos disponibilizados para apoiar sua divulgação e sua rotina.");
-    expect(member).toContain("Recursos disponíveis");
-    expect(member).toContain("Ver detalhes");
-    expect(member).toContain("Acessar recurso");
-    expect(member).toContain('target="_blank"');
+    expect(member).toContain("LibraryResourcesPremium");
+    expect(library).toContain("Recursos disponíveis");
+    expect(library).toContain("Ver detalhes");
+    expect(library).toContain("Acessar recurso");
+    expect(library).toContain('target="_blank"');
     expect(member).toContain('item.kind === "faq"');
   });
 
