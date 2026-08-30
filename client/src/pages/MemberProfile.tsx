@@ -170,7 +170,7 @@ export default function MemberProfile() {
   const profilePhotoUrl = profile.data?.photoUrl ? withAppBase(profile.data.photoUrl) : "";
 
   return <DashboardLayout menuItems={menu} title="Escritório Virtual"><main className="mx-auto w-full max-w-5xl space-y-6 p-5 sm:p-8">
-    <header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Página personalizada</span><h1 className="text-3xl font-semibold text-white">Editar perfil</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Configure os dados públicos exibidos na sua Página Lucrativa.</p></header>
+    <header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Página personalizada</span><h1 className="text-3xl font-semibold text-white">Editar perfil</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Configure os dados públicos exibidos no seu Código Lucrativo.</p></header>
     <aside className="rounded-xl border border-emerald-300/30 bg-emerald-300/10 px-4 py-3 text-sm leading-6 text-emerald-50">Aqui você configura os dados de exibição que aparecerão na sua página pública, acessada através do seu link de indicação.</aside>
 
     <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">

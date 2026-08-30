@@ -14,7 +14,7 @@ const heroSection = PUBLIC_SALES_SECTIONS[0];
 const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "hero_operation");
 
 const faqItems = [
-  ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital da Página Lucrativa: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
+  ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital do Código Lucrativo: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
   ["É somente uma página?", "Não. A página é a porta de entrada. O ecossistema inclui painel de operação, perfil público, link pessoal, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os módulos disponíveis."],
   ["Preciso criar um produto ou saber programação?", "Você não precisa desenvolver a infraestrutura tecnológica do zero. A criação de uma oferta, a divulgação e a operação comercial continuam sendo responsabilidades do membro."],
   ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
@@ -27,9 +27,9 @@ const faqItems = [
 ];
 
 const packageItems = [
-  ["Página Lucrativa personalizada", "Uma página pública para apresentar sua estrutura e receber solicitações."],
+  ["Código Lucrativo personalizado", "Uma página pública para apresentar sua estrutura e receber solicitações."],
   ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
-  ["Link principal de indicação", "Um endereço próprio para divulgar sua Página Lucrativa."],
+  ["Link principal de indicação", "Um endereço próprio para divulgar seu Código Lucrativo."],
   ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
   ["Meus pedidos", "Área para acompanhar solicitações atribuídas e confirmações de pagamento."],
   ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
@@ -85,7 +85,7 @@ function resolveNavigationHref(path: string) {
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">PL</span><span>Página Lucrativa</span></span>;
+  return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">PL</span><span>Código Lucrativo</span></span>;
 }
 
 function Eyebrow({ children }: { children: string }) {
@@ -98,7 +98,7 @@ function JoinButton({ className = "" }: { className?: string }) {
 
 function TopPromoBanner() {
   return <section className="top-promo-banner" aria-label="Apresentação do Código Lucrativo">
-    <img src={promoBannerImage} alt="Seu negócio digital pronto para começar, com Página Lucrativa, Escritório Virtual, ferramentas e treinamentos." />
+    <img src={promoBannerImage} alt="Seu negócio digital pronto para começar, com Código Lucrativo, Escritório Virtual, ferramentas e treinamentos." />
   </section>;
 }
 
@@ -180,7 +180,7 @@ export default function Home() {
   return <div className="sales-page reference-page">
     <header className="site-header">
       <div className="shell nav">
-        <a href="#inicio" aria-label="Página Lucrativa — início" onClick={closeMenu}><Brand /></a>
+        <a href="#inicio" aria-label="Código Lucrativo — início" onClick={closeMenu}><Brand /></a>
         <nav className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
           <div className="nav-links-group nav-links-public" aria-label="Navegação da página">
             {publicNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} onClick={closeMenu}>{label}</a>)}
@@ -222,7 +222,7 @@ export default function Home() {
                   {affiliate.data.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
                   <div className="affiliate-profile-summary-main">
                     <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por:</span>
-                    <strong className="affiliate-profile-presenter">Apresentador(a) da Página Lucrativa</strong>
+                    <strong className="affiliate-profile-presenter">Apresentador(a) do Código Lucrativo</strong>
                     <strong className="affiliate-profile-name">{publicProfileName}</strong>
                     {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
                   </div>
@@ -233,7 +233,7 @@ export default function Home() {
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
             <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
             <TopPromoBanner />
-            <p>Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
+            <p>Receba acesso a um Código Lucrativo personalizado, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">A estrutura já existe. Você personaliza<br className="sales-trust-break" />e coloca sua operação em movimento.</span></div>
           </div>
@@ -291,7 +291,7 @@ export default function Home() {
       })}
 
       <section className="sales-section reference-videos" id="videos">
-        <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos da Página Lucrativa" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
+        <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
       </section>
 
       <section className="sales-section sprint-fit" id="perfil-ideal">
