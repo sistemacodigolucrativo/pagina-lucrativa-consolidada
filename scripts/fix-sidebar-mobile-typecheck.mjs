@@ -15,3 +15,4 @@ source = source.replace(
 
 writeFileSync(path, source);
 console.log("Sidebar mobile typecheck fix applied.");
+// trigger
