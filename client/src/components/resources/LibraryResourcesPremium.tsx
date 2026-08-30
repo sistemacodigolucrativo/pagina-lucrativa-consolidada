@@ -80,7 +80,7 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   const categories = useMemo(() => {
-    const unique = [...new Set(items.map(item => item.resourceCategory?.trim()).filter((value): value is string => Boolean(value)))].sort((a, b) => a.localeCompare(b, "pt-BR"));
+    const unique = Array.from(new Set(items.map(item => item.resourceCategory?.trim()).filter((value): value is string => Boolean(value)))).sort((a, b) => a.localeCompare(b, "pt-BR"));
     return ["Todos", ...unique];
   }, [items]);
 
