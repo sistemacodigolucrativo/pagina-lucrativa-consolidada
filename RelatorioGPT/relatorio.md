@@ -631,3 +631,90 @@ Validacao:
 nginx -t -> sucesso
 https://ocodigolucrativo.site/ -> 200
 ```
+
+## Correcao cirurgica do HTTP 521 publico
+
+Data: 2026-08-30
+
+Contexto:
+
+```text
+O teste real do autodeploy chegou corretamente a nova VPS, executou SSH, envio do artefato, criacao da release, pnpm install, build, smoke test na porta 3199, ativacao da release e health check local em http://127.0.0.1:3101/.
+A falha observada no workflow foi no endpoint publico https://ocodigolucrativo.site/, que retornou HTTP 521 via Cloudflare e acionou rollback corretamente.
+```
+
+Verificacao DNS/IP:
+
+```text
+IP publico da nova VPS: 18.217.248.201
+DNS publico de ocodigolucrativo.site: Cloudflare proxy
+A records observados: 104.21.18.249, 172.67.184.69
+AAAA records observados: 2606:4700:3037::ac43:b845, 2606:4700:3035::6815:12f9
+```
+
+Conclusao sobre DNS/Cloudflare:
+
+```text
+O dominio esta proxied pelo Cloudflare, portanto dig nao retorna diretamente 18.217.248.201.
+O teste HTTPS publico final mostrou que o Cloudflare ja esta chegando corretamente na origem nova.
+```
+
+Causa exata encontrada na VPS:
+
+```text
+O 521 do Cloudflare nao estava mais reproduzivel no momento da verificacao: https://ocodigolucrativo.site/ ja respondia 200.
+A origem HTTPS tambem respondeu 200 diretamente com --resolve para 18.217.248.201.
+O problema concreto restante encontrado foi que http://18.217.248.201/ retornava 404 porque, apos a configuracao do Certbot, o vhost Nginx ficou preso ao server_name do dominio e o bloco HTTP retornava 404 para hosts fora do dominio.
+```
+
+Correcao aplicada:
+
+```text
+Arquivo alterado na VPS: /etc/nginx/sites-available/pagina-lucrativa
+O server_name passou a incluir ocodigolucrativo.site, www.ocodigolucrativo.site, 18.217.248.201 e _.
+O bloco HTTP porta 80 passou a ser default_server e a fazer proxy para http://127.0.0.1:3101/ para o IP/default, mantendo redirect para o dominio principal quando aplicavel.
+Nginx recarregado com sucesso.
+```
+
+Estado Nginx:
+
+```text
+nginx -t -> sucesso
+nginx service -> active
+listen 80 -> ativo
+listen 443 -> ativo
+proxy_pass -> http://127.0.0.1:3101
+```
+
+Estado SSL:
+
+```text
+Certificado Let's Encrypt existente para ocodigolucrativo.site.
+Origem HTTPS direta validada com --resolve para 18.217.248.201 -> 200.
+Cloudflare HTTPS publico -> 200.
+```
+
+Portas/firewall:
+
+```text
+porta 80 -> Nginx escutando
+porta 443 -> Nginx escutando
+porta 3101 -> Node escutando
+ufw -> inactive
+```
+
+Validacoes finais exigidas:
+
+```text
+curl -I http://127.0.0.1:3101/ -> HTTP/1.1 200 OK
+curl -I http://18.217.248.201/ -> HTTP/1.1 200 OK
+curl -I https://ocodigolucrativo.site/ -> HTTP/2 200
+```
+
+Conclusao:
+
+```text
+Endpoint publico HTTPS esta respondendo 200 pela nova VPS.
+Nao foi feito push novo nesta etapa.
+Nao houve alteracao de codigo da aplicacao, instalador, deploy-vps.yml ou deploy-vps.sh.
+```
