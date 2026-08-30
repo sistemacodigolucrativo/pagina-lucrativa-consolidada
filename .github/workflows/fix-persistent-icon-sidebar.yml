@@ -12,6 +12,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
       - name: Aplicar correção cirúrgica
         shell: bash
         run: |
@@ -43,7 +50,6 @@ jobs:
               raise SystemExit('Mobile duplicate trigger block not found')
           s = s.replace(mobile_block, '', 1)
 
-          # activeMenuItem is only needed by the removed duplicate mobile header.
           active_line = '  const activeMenuItem = menuItems.find(item => isNavigationItemActive(item.path, activePath));\n'
           if active_line not in s:
               raise SystemExit('activeMenuItem line not found')
@@ -76,8 +82,8 @@ jobs:
               raise SystemExit('Sidebar gap class not found')
           u = u.replace(old_gap, new_gap, 1)
 
-          old_container = '''          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) md:flex",'''
-          new_container = '''          "fixed inset-y-0 z-10 h-svh w-(--sidebar-width)",\n          persistentOnMobile && isMobile ? "flex" : "hidden md:flex",'''
+          old_container = '          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) md:flex",'
+          new_container = '          "fixed inset-y-0 z-10 h-svh w-(--sidebar-width)",\n          persistentOnMobile && isMobile ? "flex" : "hidden md:flex",'
           if old_container not in u:
               raise SystemExit('Sidebar container class not found')
           u = u.replace(old_container, new_container, 1)
