@@ -7,6 +7,7 @@ import App from "./App";
 import PublicSalesCopyRuntime from "./components/PublicSalesCopyRuntime";
 import { withAppBase } from "./lib/devPath";
 import "./index.css";
+import "./dashboard-premium.css";
 
 const queryClient = new QueryClient();
 
