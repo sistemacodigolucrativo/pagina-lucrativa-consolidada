@@ -40,7 +40,7 @@ const demoAccounts: StoredDemoAccount[] = [
   {
     username: "admin",
     openId: "local_demo_admin",
-    name: "Administrador Página Lucrativa",
+    name: "Administrador Código Lucrativo",
     email: "administrador@pagina-lucrativa.local",
     role: "admin",
     credentialHash: "f6bd2d1a9a2798aa5b2a000d477587b65aaac9a417064d91ed2bcd8714bbba89",
@@ -48,7 +48,7 @@ const demoAccounts: StoredDemoAccount[] = [
   {
     username: "user",
     openId: "local_demo_member",
-    name: "Membro Página Lucrativa",
+    name: "Membro Código Lucrativo",
     email: "membro@pagina-lucrativa.local",
     role: "user",
     credentialHash: "61b7de306ccf11d6c81f85e56e86571766d10c01e72449b0171a4966d97e1793",
@@ -96,7 +96,7 @@ export async function resolveDemoAccount(username: string, password: string): Pr
     id: localUser.id,
     username: localUser.email ?? normalizedUsername,
     openId: localUser.openId,
-    name: localUser.name ?? localUser.email ?? "Membro Página Lucrativa",
+    name: localUser.name ?? localUser.email ?? "Membro Código Lucrativo",
     email: localUser.email ?? normalizedUsername,
     loginMethod: localUser.loginMethod,
     role: localUser.role,
