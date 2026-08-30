@@ -80,6 +80,26 @@ Credenciais:
 Nenhum token, secret ou chave privada foi gravado no projeto.
 ```
 
+## Continuidade da integracao Obsidian
+
+Data: 2026-08-30
+
+Complemento aplicado apos revisao de cobertura:
+
+- shell autenticado passou a exibir a identidade visual Obsidian/C. Lucrativo de forma global;
+- indicador de modo `Admin Mode` / `Member Mode` incorporado ao topo dos paineis;
+- estilos globais adicionais foram limitados a `.dashboard-inset`, cobrindo headers, cards, formularios, tabelas, listas, botoes, estados vazios e superficies das telas admin/membros restantes;
+- nenhuma rota, regra de negocio, permissao, chamada tRPC ou workflow de deploy foi alterado.
+
+Validacoes executadas nesta continuidade:
+
+```text
+pnpm check -> sucesso
+pnpm build -> sucesso
+pnpm vitest run server/adminOffice.responsive.test.ts server/memberPages.responsive.test.ts server/adminNavigation.catalog.test.ts server/memberOfficeContent.test.ts shared/memberOfficeContent.test.ts -> 10 testes passaram
+git diff --check -> sucesso
+```
+
 ## Contexto
 
 O trabalho foi realizado primeiro com restricao de nao alterar o GitHub remoto. A VPS correta para o trabalho foi confirmada como `18.217.248.201`, com IP privado `172.31.22.36`.

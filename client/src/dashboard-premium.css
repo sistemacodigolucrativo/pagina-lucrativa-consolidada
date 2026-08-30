@@ -36,6 +36,7 @@
   letter-spacing: -.08em;
   box-shadow: 0 5px 18px rgba(155, 212, 181, .12);
 }
+.dashboard-brand-mark svg { width: 16px; height: 16px; stroke-width: 2.4; }
 .dashboard-brand-name,
 .dashboard-brand-subtitle { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dashboard-brand-name { color: var(--ivory); font: 700 13px/1.1 "Space Grotesk", sans-serif; letter-spacing: -.035em; }
@@ -83,6 +84,7 @@
 .dashboard-topbar-meta { display: flex; align-items: center; gap: 13px; padding-right: 48px; color: var(--muted); font: 9px/1 "DM Mono", monospace; letter-spacing: .09em; text-transform: uppercase; }
 .dashboard-live-indicator { display: inline-flex; align-items: center; gap: 7px; white-space: nowrap; }
 .dashboard-live-indicator i { width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.dashboard-mode-pill { padding: 5px 8px; border: 1px solid rgba(155, 212, 181, .24); border-radius: 999px; color: var(--gold-bright); background: rgba(155, 212, 181, .06); }
 .dashboard-shortcut { padding: 5px 7px; border: 1px solid var(--line-soft); border-radius: 6px; color: #78938d; }
 .dashboard-notifications { position: absolute; top: 16px; right: 25px; z-index: 25; }
 .dashboard-notification-trigger { position: relative; display: inline-flex; width: 38px; height: 38px; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 11px; transition: color .18s var(--ease-out), background .18s var(--ease-out), border-color .18s var(--ease-out); }

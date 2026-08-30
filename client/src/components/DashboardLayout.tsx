@@ -32,6 +32,7 @@ import {
   LayoutDashboard,
   LogOut,
   PanelLeft,
+  Sparkles,
   type LucideIcon,
   Users,
 } from "lucide-react";
@@ -254,13 +255,13 @@ function DashboardLayoutContent({
               </button>
               {!isCompact ? (
                 <div className="dashboard-brand min-w-0">
-                  <span className="dashboard-brand-mark" aria-hidden="true">C</span>
+                  <span className="dashboard-brand-mark" aria-hidden="true"><Sparkles /></span>
                   <div className="min-w-0">
-                    <span className="dashboard-brand-name">{title}</span>
-                    {subtitle ? <span className="dashboard-brand-subtitle">{subtitle}</span> : <span className="dashboard-brand-subtitle">Workspace seguro</span>}
+                    <span className="dashboard-brand-name">C. Lucrativo</span>
+                    {subtitle ? <span className="dashboard-brand-subtitle">{subtitle}</span> : <span className="dashboard-brand-subtitle">{memberOfficeNavigation ? "Member Mode" : "Admin Mode"}</span>}
                   </div>
                 </div>
-              ) : <span className="dashboard-brand-mark" aria-hidden="true">C</span>}
+              ) : <span className="dashboard-brand-mark" aria-hidden="true"><Sparkles /></span>}
             </div>
           </SidebarHeader>
 
@@ -381,6 +382,7 @@ function DashboardLayoutContent({
             </div>
           </div>
           <div className="dashboard-topbar-meta">
+            <span className="dashboard-mode-pill">{memberOfficeNavigation ? "Member Mode" : "Admin Mode"}</span>
             <span className="dashboard-live-indicator"><i aria-hidden="true" /> Operação protegida</span>
             <span className="dashboard-shortcut">CTRL B</span>
           </div>
