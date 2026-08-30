@@ -12,7 +12,7 @@ async function signIn(page: Page, username: string, password: string, destinatio
   await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}${destination}(?:[/?#]|$)`));
 }
 
-test.describe('Página Lucrativa 2026 publicada', () => {
+test.describe('Código Lucrativo 2026 publicada', () => {
   test('o prefixo legado redireciona permanentemente para a raiz canônica', async ({ page }) => {
     await page.goto('/paginalucrativa/');
     await expect(page).toHaveURL(new RegExp('/$'));
@@ -21,7 +21,7 @@ test.describe('Página Lucrativa 2026 publicada', () => {
   test('a landing pública exibe a marca, navegação e formulário de pedido', async ({ page }) => {
     await page.goto(route('/'));
 
-    await expect(page).toHaveTitle(/Página Lucrativa.*Negócio Digital/i);
+    await expect(page).toHaveTitle(/Código Lucrativo.*Negócio Digital/i);
     await expect(page.getByRole('link', { name: /Quero conhecer a estrutura/i }).first()).toBeVisible();
     await expect(page.getByRole('link', { name: /Quero conhecer a estrutura/i }).first()).toBeVisible();
     await expect(page.locator('#f')).toContainText(/pedido|formulário/i);
@@ -182,7 +182,7 @@ test.describe('Página Lucrativa 2026 publicada', () => {
       const firstText = await toast.innerText();
       expect(firstText).toMatch(/atividade ilustrativa/i);
       expect(firstText).toContain('não representa uma compra real');
-      expect(firstText).toMatch(/está conhecendo a Página Lucrativa/);
+      expect(firstText).toMatch(/está conhecendo a Código Lucrativo/);
 
       await expect.poll(async () => toast.isVisible().then(visible => visible ? toast.innerText() : ''), { timeout: 2_000 }).not.toBe(firstText);
 
@@ -244,12 +244,12 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await expect(password).toHaveAttribute('type', 'password');
 
     await expect(page.getByRole('button', { name: 'Recuperar acesso' })).toBeDisabled();
-    await expect(page.getByText('Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Página Lucrativa.', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Código Lucrativo.', { exact: true })).toHaveCount(0);
   });
 
   test('membro e administrador entram nos respectivos ambientes', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
-    await expect(page.getByText('Página Lucrativa', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Código Lucrativo', { exact: true }).first()).toBeVisible();
 
     await page.context().clearCookies();
     await page.goto(route('/acesso'));
@@ -531,7 +531,7 @@ test.describe('Página Lucrativa 2026 publicada', () => {
     await page.goto(route('/admin'));
 
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros(?:[/?#]|$)`));
-    await expect(page.getByText('Página Lucrativa', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Código Lucrativo', { exact: true }).first()).toBeVisible();
   });
 
   test('administração carrega ferramentas de curadoria sem gravar registros', async ({ page }) => {

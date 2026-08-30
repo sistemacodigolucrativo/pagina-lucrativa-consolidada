@@ -8,7 +8,7 @@
 
 O projeto não possui, no modelo público auditado, uma fonte de eventos de compra reais com autorização explícita para divulgar nome e cidade. O schema possui dados pessoais de usuários e perfis, mas esses campos não devem ser reutilizados como prova social pública sem base de consentimento e sem uma regra clara de exposição.
 
-Por esse motivo, a implementação não afirma que uma pessoa “acabou de adquirir” a Página Lucrativa. O aviso usa o texto **“está conhecendo a Página Lucrativa”**, exibe o rótulo **“Atividade ilustrativa”** e inclui a nota **“Demonstração ilustrativa — não representa uma compra real.”**. Assim, a variação de nomes e cidades atende ao objetivo visual e de navegação sem transformar dados sintéticos em alegações factuais de compra.
+Por esse motivo, a implementação não afirma que uma pessoa “acabou de adquirir” a Código Lucrativo. O aviso usa o texto **“está conhecendo a Código Lucrativo”**, exibe o rótulo **“Atividade ilustrativa”** e inclui a nota **“Demonstração ilustrativa — não representa uma compra real.”**. Assim, a variação de nomes e cidades atende ao objetivo visual e de navegação sem transformar dados sintéticos em alegações factuais de compra.
 
 Para futuramente exibir compras reais, será necessária uma fonte de eventos aprovada, com critérios de recência, minimização de dados, consentimento e regra de anonimização ou publicação autorizada.
 

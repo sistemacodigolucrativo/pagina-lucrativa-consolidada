@@ -1,6 +1,6 @@
 # Plano de Remoção — Pedidos do Painel Administrativo
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Documento de origem:** `docs/auditoria-remocao-pedidos-admin.md`
 

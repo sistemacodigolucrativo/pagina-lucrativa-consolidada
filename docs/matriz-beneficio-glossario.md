@@ -39,7 +39,7 @@ A ordem importa. A monetização aparece como uso comercial possível da infraes
 
 | Termo oficial | Definição no projeto | Termos a evitar como sinônimos |
 |---|---|---|
-| **Página Lucrativa** | Nome do produto/ecossistema entregue ao membro | Página, site, oportunidade — isoladamente |
+| **Código Lucrativo** | Nome do produto/ecossistema entregue ao membro | Página, site, oportunidade — isoladamente |
 | **Estrutura Digital** | Conjunto de página, perfil, Escritório Virtual, ferramentas, conteúdos e fluxos disponíveis | Sistema mágico, renda pronta |
 | **Estrutura Digital Replicável** | Mecanismo narrativo: infraestrutura já existente que o membro recebe, personaliza e opera | Copiar e ganhar, duplicação automática |
 | **Escritório Virtual** | Painel autenticado para organizar operação, dados, campanhas, pedidos, conteúdos e registros | Área administrativa — em copy comercial |

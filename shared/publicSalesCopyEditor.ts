@@ -34,7 +34,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     fields: [
       f("kicker", "Chamada superior", "Para quem quer começar no digital sem começar do zero", "text", ".sales-kicker"),
       f("title", "Título", "Negócio digital pronto para começar — sem construir toda a estrutura sozinho.", "textarea", "h1"),
-      f("description", "Texto", "Receba acesso a uma Página Lucrativa personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.", "textarea", ".sales-hero-copy > p"),
+      f("description", "Texto", "Receba acesso a uma Código Lucrativo personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.", "textarea", ".sales-hero-copy > p"),
       f("trust", "Mensagem de apoio", "A estrutura já existe. Você personaliza e coloca sua operação em movimento.", "textarea", ".sales-trust-copy"),
     ],
   },
@@ -84,9 +84,9 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
       f("title", "Título", "Uma base completa para começar com organização.", "textarea", "h2"),
       f("description", "Texto", "A oferta reúne os elementos necessários para configurar sua presença, divulgar e acompanhar sua própria operação.", "textarea", ".sales-section-heading > p"),
       ...[
-        ["Página Lucrativa personalizada", "Uma página pública para apresentar sua estrutura e receber solicitações."],
+        ["Código Lucrativo personalizada", "Uma página pública para apresentar sua estrutura e receber solicitações."],
         ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
-        ["Link principal de indicação", "Um endereço próprio para divulgar sua Página Lucrativa."],
+        ["Link principal de indicação", "Um endereço próprio para divulgar sua Código Lucrativo."],
         ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
         ["Meus pedidos", "Área para acompanhar solicitações atribuídas e confirmações de pagamento."],
         ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
@@ -119,10 +119,10 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     ]],
     ["not_just_course", "O diferencial", "O diferencial", "Não é apenas um curso: conhecimento, estrutura, ferramentas e aplicação trabalham juntos.", [
       "Um treinamento pode ensinar conceitos. Aqui, o aprendizado está conectado a uma estrutura digital que você pode configurar e utilizar durante a execução.",
-      "A proposta combina conhecimento, Página Lucrativa, Escritório Virtual, materiais e recursos de divulgação para que você consiga aprender e colocar o processo em prática dentro do mesmo ecossistema.",
+      "A proposta combina conhecimento, Código Lucrativo, Escritório Virtual, materiais e recursos de divulgação para que você consiga aprender e colocar o processo em prática dentro do mesmo ecossistema.",
       "Isso não elimina a necessidade de aprender, divulgar e vender. O diferencial é não precisar construir toda a infraestrutura tecnológica antes de começar.",
     ]],
-    ["product_real", "O produto real", "O produto real", "Página Lucrativa não é apenas uma página.", [
+    ["product_real", "O produto real", "O produto real", "Código Lucrativo não é apenas uma página.", [
       "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria operação.",
       "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em movimento — sem precisar começar pela construção da tecnologia.",
     ]],
@@ -131,13 +131,13 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
       "Você entra, entende o que está disponível, personaliza seus dados, aprende a utilizar os recursos e começa a movimentar o projeto com mais clareza.",
     ]],
     ["mechanism", "O mecanismo", "O mecanismo", "Conheça a Estrutura Digital Replicável.", [
-      "A Página Lucrativa organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
+      "A Código Lucrativo organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
       "A jornada é simples de entender: entre, receba a estrutura, personalize, aprenda, divulgue e acompanhe sua operação.",
       "Replicável significa reutilizar uma base de operação já estruturada. Não significa copiar resultados, receber dinheiro automaticamente, obter vendas garantidas ou eliminar a necessidade de execução comercial.",
     ]],
     ["comparison", "A comparação", "A comparação", "O que você teria de montar se começasse sozinho?", [
       "Produto ou oferta, site, landing page, área do usuário, autenticação, banco de dados, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
-      "É justamente essa etapa de construção que a Página Lucrativa reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
+      "É justamente essa etapa de construção que a Código Lucrativo reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
     ]],
     ["ease_real", "A facilidade real", "A facilidade real", "Você não precisa saber programar para começar.", [
       "A infraestrutura tecnológica já foi desenvolvida. O Escritório Virtual apresenta os caminhos disponíveis e concentra as configurações que pertencem à sua conta.",
@@ -212,7 +212,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
       f("title", "Título", "Clareza para decidir com segurança.", "textarea", "h2"),
       f("intro", "Texto de abertura", "Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.", "textarea", ".copy-stack > p:first-child"),
       ...[
-        ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital da Página Lucrativa: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
+        ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital da Código Lucrativo: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
         ["É somente uma página?", "Não. A página é a porta de entrada. O ecossistema inclui painel de operação, perfil público, link pessoal, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os módulos disponíveis."],
         ["Preciso criar um produto ou saber programação?", "Você não precisa desenvolver a infraestrutura tecnológica do zero. A criação de uma oferta, a divulgação e a operação comercial continuam sendo responsabilidades do membro."],
         ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],

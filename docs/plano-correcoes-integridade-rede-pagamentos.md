@@ -1,6 +1,6 @@
 # Plano de Correções — Integridade da Rede e dos Pagamentos
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch de trabalho:** `ManusIA-Edit`
 **Documento relacionado:** `docs/auditoria-integridade-rede-pagamentos.md`
 

@@ -1,6 +1,6 @@
 # Plano de Remoção — Financeiro Legado e Venda Manual do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Documento de entrada:** `plano-03-remover-financeiro-legado-admin.md`
 **Documento de auditoria:** `docs/auditoria-remocao-financeiro-admin.md`

@@ -863,7 +863,7 @@ export async function markMemberGettingStartedMetricsViewed(userId: number) {
   ]);
   if (Number(campaignClickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0) <= 0) throw new Error("As métricas só podem ser marcadas após o primeiro clique registrado.");
   const profileRows = await db.select({ id: memberProfiles.id }).from(memberProfiles).where(eq(memberProfiles.userId, userId)).limit(1);
-  if (!profileRows[0]) throw new Error("Configure sua Página Lucrativa antes de acompanhar métricas.");
+  if (!profileRows[0]) throw new Error("Configure seu Código Lucrativo antes de acompanhar métricas.");
   await db.update(memberProfiles).set({ metricsViewedAt: new Date() }).where(eq(memberProfiles.userId, userId));
   return getMemberProfile(userId);
 }
@@ -1048,7 +1048,7 @@ export async function getPublicSalesSocialProof() {
     testimonials: testimonials.map(item => ({
       ...item,
       rating: Math.min(5, Math.max(1, Number(item.rating ?? 0))),
-      memberName: item.memberName || "Membro da Página Lucrativa",
+      memberName: item.memberName || "Membro do Código Lucrativo",
       location: [item.city, item.state].filter(Boolean).join(" - ") || "Local não informado",
     })),
   };

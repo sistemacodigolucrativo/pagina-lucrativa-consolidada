@@ -1,6 +1,6 @@
 # Correções Aplicadas — Integridade da Rede e dos Pagamentos
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Commit de origem:** `1a5a488`
 **Status:** correções aplicadas e validadas localmente

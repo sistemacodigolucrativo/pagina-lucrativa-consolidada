@@ -1,6 +1,6 @@
 # Auditoria — Remoção do Financeiro Legado do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Base da auditoria:** commit `2b3bb7f`
 **Objetivo:** retirar do painel administrativo o módulo de lançamentos financeiros manuais sem apagar histórico, adesões, ganhos do membro ou métricas de campanhas.

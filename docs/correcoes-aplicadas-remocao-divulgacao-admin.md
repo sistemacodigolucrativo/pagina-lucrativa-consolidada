@@ -1,6 +1,6 @@
 # Correções Aplicadas — Remoção da Divulgação do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Base:** commit `0ced064`
 **Status:** implementação aplicada e validada localmente

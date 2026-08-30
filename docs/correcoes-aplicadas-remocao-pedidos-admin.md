@@ -1,6 +1,6 @@
 # Correções Aplicadas — Remoção de Pedidos do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Base:** commit `46caf1c`
 **Status:** implementado e validado no workspace

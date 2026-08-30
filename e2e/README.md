@@ -1,6 +1,6 @@
 # Testes E2E publicados
 
-Esta suíte valida o domínio publicado da Página Lucrativa, sem inserir pedidos, produtos, lançamentos, contatos ou qualquer outro registro persistente. Os cenários incluem landing pública, login local, bloqueios de rota, navegação do Escritório Virtual, curadoria administrativa e logout.
+Esta suíte valida o domínio publicado da Código Lucrativo, sem inserir pedidos, produtos, lançamentos, contatos ou qualquer outro registro persistente. Os cenários incluem landing pública, login local, bloqueios de rota, navegação do Escritório Virtual, curadoria administrativa e logout.
 
 ## Execução na VPS
 

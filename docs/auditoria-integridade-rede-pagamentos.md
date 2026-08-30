@@ -1,6 +1,6 @@
 # Auditoria de Integridade da Rede e dos Pagamentos
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Commit-base:** `1a5a488` — `Melhora visao administrativa da rede`
 **Data da auditoria:** 25/08/2026

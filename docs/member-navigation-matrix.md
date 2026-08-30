@@ -23,7 +23,7 @@ A matriz abaixo define a nova arquitetura global. As rotas são preservadas; som
 | 17 | `/membros/emails-whatsapp` | WhatsApp | Comunicação | Divulgação & Contatos | Contatos — WhatsApp | Registros relacionados à captação por WhatsApp. |
 | 18 | `/membros/emails-site` | Conteúdos do site | Comunicação | Divulgação & Contatos | Comunicações do site | Mensagens e comunicações relacionadas ao site e artigos. |
 | 19 | `/membros/automacoes` | Preparar comunicações | Conteúdos e materiais | Divulgação & Contatos | Automações | Preparação de comunicações nos canais realmente suportados. |
-| 20 | `/membros/blog` | Artigos e blog | Minha operação | Conteúdos & Materiais | Blog | Publicações editoriais e artigos da Página Lucrativa. |
+| 20 | `/membros/blog` | Artigos e blog | Minha operação | Conteúdos & Materiais | Blog | Publicações editoriais e artigos da Código Lucrativo. |
 | 21 | `/membros/artigos` | Artigos e marketing | Conteúdos e materiais | Conteúdos & Materiais | Artigos | Conteúdos editoriais de marketing e execução. |
 | 22 | `/membros/materiais` | Biblioteca de recursos | Conteúdos e materiais | Conteúdos & Materiais | Materiais e downloads | Materiais publicados para consulta e uso orientado. |
 | 23 | `/membros/bonus` | Bônus | Conteúdos e materiais | Conteúdos & Materiais | Bônus e materiais extras | Recursos adicionais publicados para os membros. |

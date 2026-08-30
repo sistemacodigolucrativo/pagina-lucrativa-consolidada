@@ -1,7 +1,7 @@
-# Substituição do repositório — Página Lucrativa
+# Substituição do repositório — Código Lucrativo
 
 - [x] Inspecionar o branch padrão e o conteúdo atual do repositório de destino.
-- [x] Preparar uma cópia independente e publicável da Página Lucrativa atual.
+- [x] Preparar uma cópia independente e publicável da Código Lucrativo atual.
 - [x] Remover o conteúdo rastreado do repositório de destino e inserir a nova página.
 - [x] Criar e enviar o commit para o branch padrão do repositório privado.
 - [x] Confirmar a atualização remota e reportar o resultado ao usuário.
@@ -11,7 +11,7 @@
 - [x] Mapear as seções, navegação e interações da página pública de referência.
 - [x] Acessar a conta fornecida e documentar a navegação da área de membros.
 - [x] Definir os modelos de dados e a arquitetura dos painéis administrativo e de membros.
-- [x] Implementar a nova experiência preservando a linguagem visual da Página Lucrativa 2026.
+- [x] Implementar a nova experiência preservando a linguagem visual da Código Lucrativo 2026.
 - [x] Validar desktop e mobile e disponibilizar a prévia navegável no workspace.
 - [x] Validar a responsividade mobile da rota administrativa e corrigir eventuais problemas antes da entrega.
 - [x] Salvar checkpoint e sincronizar a versão validada no repositório privado.
@@ -20,26 +20,26 @@
 
 - [x] Comparar integralmente o conteúdo da landing original com a prévia atual e listar os blocos ausentes.
 - [x] Restaurar os textos, seções e hierarquia editorial equivalentes ao material enviado, sem inventar conteúdo de clientes.
-- [x] Corrigir o rodapé e o copyright para a identidade e o ano da Página Lucrativa 2026.
+- [x] Corrigir o rodapé e o copyright para a identidade e o ano da Código Lucrativo 2026.
 - [x] Validar a prévia atualizada e sincronizar a correção com o repositório privado.
 
 # Fidelidade ao site de referência
 
 - [x] Inventariar a copy, a ordem de seções, os CTAs e os destinos de fluxo atuais de paginalucrativa.com.br.
-- [x] Confrontar o inventário com a Página Lucrativa 2026 e definir cada ajuste de equivalência necessário.
+- [x] Confrontar o inventário com a Código Lucrativo 2026 e definir cada ajuste de equivalência necessário.
 - [x] Reproduzir os blocos públicos, o fluxo de aplicação e as transições de área observados na referência.
 - [x] Validar em desktop e mobile e sincronizar a versão equivalente com o repositório privado.
 
 # Lacunas de fidelidade identificadas
 
 - [x] Substituir os blocos autorais e os números resumidos por copy e hierarquia estritamente equivalentes à referência pública.
-- [x] Incluir explicitamente o ano de 2026 no rodapé, preservando a declaração de copyright da Página Lucrativa.
+- [x] Incluir explicitamente o ano de 2026 no rodapé, preservando a declaração de copyright da Código Lucrativo.
 - [x] Documentar e alinhar os destinos de cada CTA, do formulário ao acesso de personalização e ao Escritório Virtual.
 
 # Atualização do repositório e implantação em VPS
 
-- [x] Localizar o repositório da Página Lucrativa no GitHub e confirmar seu branch principal.
-- [x] Sincronizar a versão atual validada da Página Lucrativa 2026 no repositório correto.
+- [x] Localizar o repositório da Código Lucrativo no GitHub e confirmar seu branch principal.
+- [x] Sincronizar a versão atual validada da Código Lucrativo 2026 no repositório correto.
 - [x] Verificar se há conectividade e credenciais SSH autorizadas para 18.119.174.102.
 - [x] Preservar o miniapp na raiz da VPS, conforme solicitação posterior do usuário.
 - [x] Confirmar a disponibilidade pública da prévia pela porta dedicada.
@@ -50,19 +50,19 @@
 - [x] Informar ao usuário o conflito do miniapp já publicado na raiz do IP.
 - [x] Preparar o pacote de implantação após a confirmação do ambiente e a autorização para uma porta dedicada.
 - [x] Manter a raiz do IP sem alterações para preservar o miniapp existente.
-- [x] Verificar o acesso externo à Página Lucrativa pelo IP com porta dedicada.
+- [x] Verificar o acesso externo à Código Lucrativo pelo IP com porta dedicada.
 
 # Prévia isolada em porta dedicada
 
 - [x] Confirmar uma porta TCP livre e externamente acessível sem alterar o miniapp da raiz.
-- [x] Preparar a Página Lucrativa 2026 para executar como serviço isolado de visualização.
+- [x] Preparar a Código Lucrativo 2026 para executar como serviço isolado de visualização.
 - [x] Publicar o serviço na porta selecionada preservando todos os serviços existentes.
 - [x] Confirmar o acesso externo pelo IP com a porta e informar o endereço de prévia ao usuário.
 - [x] Registrar a inspeção somente leitura do firewall da VPS: UFW inativo, iptables com política INPUT ACCEPT e nenhum conjunto nftables retornado.
 
 # Auditoria comparativa com as páginas de referência
 
-- [x] Coletar evidências atuais da landing pública, da área de membros de referência e da Página Lucrativa 2026 publicada.
+- [x] Coletar evidências atuais da landing pública, da área de membros de referência e da Código Lucrativo 2026 publicada.
 - [x] Comparar contexto, sequência de seções, copy, CTAs e fluxos observáveis entre as versões.
 - [x] Verificar especificamente a presença e a equivalência visual das imagens de depoimentos, sem reproduzir material de terceiros sem autorização.
 - [x] Apresentar as correspondências, divergências e itens deliberadamente não replicados.
@@ -96,11 +96,11 @@
 # Arquivo compactado no repositório privado
 
 - [x] Gerar uma cópia compactada da versão final do projeto, sem dependências, arquivos de ambiente ou dados sensíveis.
-- [x] Enviar o arquivo compactado ao repositório privado da Página Lucrativa e confirmar o commit correspondente.
+- [x] Enviar o arquivo compactado ao repositório privado da Código Lucrativo e confirmar o commit correspondente.
 
 # Confirmação final do repositório remoto
 
-- [x] Conferir o branch principal e o último commit remoto do repositório Página Lucrativa.
+- [x] Conferir o branch principal e o último commit remoto do repositório Código Lucrativo.
 - [x] Enviar qualquer alteração final que não esteja sincronizada e confirmar o resultado ao usuário.
 - [x] Confirmar ao usuário a sincronização final do branch `main` no commit remoto `0d03bb8`.
 
@@ -108,20 +108,20 @@
 
 - [x] Confirmar a titularidade ou a autorização explícita para copiar integralmente os e-books de referência em formato HTML.
 - [x] Inventariar as sessões, ferramentas e e-books disponíveis na área de membros de referência usando a conta autorizada.
-- [ ] Implementar as ferramentas observáveis e autorizadas no painel de membros da Página Lucrativa 2026.
+- [ ] Implementar as ferramentas observáveis e autorizadas no painel de membros da Código Lucrativo 2026.
 - [x] Criar leitores HTML e uma gestão administrativa para listar, editar e publicar cada e-book autorizado.
-- [x] Validar as novas funcionalidades diretamente na VPS e sincronizar a versão final no repositório remoto Página Lucrativa.
+- [x] Validar as novas funcionalidades diretamente na VPS e sincronizar a versão final no repositório remoto Código Lucrativo.
 
-# Domínio público da Página Lucrativa
+# Domínio público da Código Lucrativo
 
 - [x] Verificar DNS, certificados e a configuração Nginx atual de ocodigolucrativo.site na VPS.
-- [ ] Configurar `www.ocodigolucrativo.site/paginalucrativa` como proxy da Página Lucrativa na porta 3101, sem alterar a raiz ou o miniapp existente.
+- [ ] Configurar `www.ocodigolucrativo.site/paginalucrativa` como proxy da Código Lucrativo na porta 3101, sem alterar a raiz ou o miniapp existente.
 - [ ] Validar HTTP, HTTPS e as rotas de assets pela nova URL antes da entrega.
 
 # Mídia da landing de referência
 
 - [ ] Inventariar imagens, vídeos e posicionamentos da landing de referência, distinguindo materiais autorizados de dados de terceiros.
-- [ ] Integrar as imagens e vídeos autorizados nos blocos correspondentes da Página Lucrativa 2026.
+- [ ] Integrar as imagens e vídeos autorizados nos blocos correspondentes da Código Lucrativo 2026.
 - [ ] Validar a reprodução de mídia e o comportamento responsivo diretamente na VPS.
 - [ ] Adaptar o roteamento do cliente ao prefixo `/paginalucrativa` para eliminar a página 404 na URL pública solicitada.
 
@@ -222,7 +222,7 @@
 - [x] Executar a suíte E2E contra o domínio publicado, corrigir falhas identificadas e arquivar as evidências.
 - [x] Sincronizar a suíte, as evidências permitidas e o relatório de execução com o repositório privado.
 
-- [x] Substituir a redação interna de validação da tela de acesso por copy apropriada da Página Lucrativa, removendo menções a sessão temporária, demonstração e Manus.
+- [x] Substituir a redação interna de validação da tela de acesso por copy apropriada da Código Lucrativo, removendo menções a sessão temporária, demonstração e Manus.
 
 - [x] Revisar a terminologia visível do Escritório Virtual e dos perfis locais, removendo rótulos de demonstração e substituindo painel de operação por Escritório Virtual quando aplicável.
 
@@ -272,8 +272,8 @@
 - [x] Comparar as versões em `/membros` e `/paginalucrativa`, incluindo origem de implantação, ativos e fluxos de acesso.
 - [x] Determinar qual versão contém a implementação mais atualizada e se há alterações independentes que justifiquem merge.
 
-# Migração da Página Lucrativa para a raiz do domínio
-- [x] Tornar `https://ocodigolucrativo.site/` a URL canônica da Página Lucrativa, com landing, acesso e painéis operando sem o prefixo `/paginalucrativa`.
+# Migração da Código Lucrativo para a raiz do domínio
+- [x] Tornar `https://ocodigolucrativo.site/` a URL canônica da Código Lucrativo, com landing, acesso e painéis operando sem o prefixo `/paginalucrativa`.
 - [x] Substituir o prefixo `/paginalucrativa` por redirecionamentos permanentes de compatibilidade para as rotas equivalentes da raiz.
 - [x] Validar ativos, CTAs, autenticação, rotas de membro e rotas administrativas no domínio raiz antes da sincronização.
 

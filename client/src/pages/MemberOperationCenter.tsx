@@ -159,7 +159,7 @@ export default function MemberOperationCenter() {
     if (!campaignForm.name.trim()) nextErrors.name = "Este campo é obrigatório.";
     if (!campaignForm.slug.trim()) nextErrors.slug = "Este campo é obrigatório.";
     if (campaignForm.slug.trim() && !/^[a-z0-9-]{3,128}$/.test(campaignForm.slug.trim())) nextErrors.slug = "Use letras, números e hífens, com pelo menos 3 caracteres.";
-    if (!campaignForm.destinationUrl.trim()) nextErrors.destinationUrl = "Configure sua Página Lucrativa primeiro.";
+    if (!campaignForm.destinationUrl.trim()) nextErrors.destinationUrl = "Configure sua Código Lucrativo primeiro.";
     if (campaignForm.destinationUrl.trim() && !validateHttpUrl(campaignForm.destinationUrl)) nextErrors.destinationUrl = "O destino precisa ser uma URL válida.";
     if (Object.keys(nextErrors).length) {
       setCampaignErrors(nextErrors);
@@ -256,10 +256,10 @@ export default function MemberOperationCenter() {
         {activeTab === "campaigns" && (isDisclosureGuide ? <section className="space-y-6">
           <Panel title="Link de indicação" icon={<Link2 className="size-5 text-emerald-300" />}>
             <div className="space-y-4">
-              <p className="text-sm leading-6 text-zinc-400">Use este link principal para divulgar sua Página Lucrativa.</p>
+              <p className="text-sm leading-6 text-zinc-400">Use este link principal para divulgar sua Código Lucrativo.</p>
               <div className="rounded-xl border border-white/10 bg-black/30 p-4">
                 <span className="text-xs uppercase tracking-wider text-zinc-500">URL individual do membro</span>
-                <p className="mt-2 break-all font-mono text-sm text-emerald-100">{referralUrl || "Configure sua Página Lucrativa para liberar seu link principal."}</p>
+                <p className="mt-2 break-all font-mono text-sm text-emerald-100">{referralUrl || "Configure sua Código Lucrativo para liberar seu link principal."}</p>
               </div>
               <button type="button" onClick={copyReferralLink} disabled={!referralUrl} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50">
                 <Copy className="size-4" />{copiedReferral ? "Link copiado!" : "Copiar link"}
@@ -277,7 +277,7 @@ export default function MemberOperationCenter() {
             <label className="text-sm text-zinc-200">Origem <span className="text-zinc-500">(opcional)</span><select value={campaignForm.source} onChange={event => setCampaignForm({ ...campaignForm, source: event.target.value })} className={fieldClass}><option value="">Outra / não definida</option><option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="whatsapp">WhatsApp</option><option value="youtube">YouTube</option><option value="google">Google</option><option value="tiktok">TikTok</option></select></label>
             <label className="text-sm text-zinc-200">Meio <span className="text-zinc-500">(opcional)</span><select value={campaignForm.medium} onChange={event => setCampaignForm({ ...campaignForm, medium: event.target.value })} className={fieldClass}><option value="social">Social</option><option value="messaging">Mensagem</option><option value="paid">Anúncio pago</option><option value="organic">Orgânico</option><option value="referral">Indicação</option><option value="other">Outro</option></select></label>
             <label className="text-sm text-zinc-200">Identificação do conteúdo <span className="text-zinc-500">(opcional)</span><input value={campaignForm.content} onChange={event => setCampaignForm({ ...campaignForm, content: event.target.value })} className={fieldClass} placeholder="reels-01, bio, grupo-a..." /></label>
-            <label className="text-sm text-zinc-200">Destino automático *<input readOnly value={campaignForm.destinationUrl} aria-invalid={Boolean(campaignErrors.destinationUrl) || undefined} className={`${fieldClass} cursor-not-allowed text-zinc-400`} placeholder="Configure sua Página Lucrativa" />{campaignErrors.destinationUrl ? <small className={errorClass} role="alert">{campaignErrors.destinationUrl}</small> : null}</label>
+            <label className="text-sm text-zinc-200">Destino automático *<input readOnly value={campaignForm.destinationUrl} aria-invalid={Boolean(campaignErrors.destinationUrl) || undefined} className={`${fieldClass} cursor-not-allowed text-zinc-400`} placeholder="Configure sua Código Lucrativo" />{campaignErrors.destinationUrl ? <small className={errorClass} role="alert">{campaignErrors.destinationUrl}</small> : null}</label>
             <div className="lg:col-span-2"><button disabled={createCampaign.isPending || !profileSlug} className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-50"><Plus className="size-4" />Criar campanha</button>{!profileSlug ? <a href={withAppBase("/membros/configuracoes")} className="ml-3 text-sm text-amber-200 underline">Configure sua página primeiro</a> : null}</div>
           </form>
           <Panel title="Minhas campanhas" icon={<Link2 className="size-5 text-emerald-300" />}>

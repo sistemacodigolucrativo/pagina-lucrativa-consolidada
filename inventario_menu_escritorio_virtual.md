@@ -18,10 +18,10 @@
 | Ferramentas administrativas | Meu patrocinador | `/membros/patrocinador` |
 | Ferramentas administrativas | Meus indicados | `/membros/rede` |
 | Ferramentas administrativas | Venda seus produtos | `/membros/produtos` |
-| Ferramentas administrativas | Blog Página Lucrativa | `/membros/blog` |
+| Ferramentas administrativas | Blog Código Lucrativo | `/membros/blog` |
 | Ferramentas administrativas | Classificados | `/membros/classificados` |
 | Ferramentas administrativas | Histórico de visitas | `/membros/historico` |
-| Ferramentas administrativas | Cursos Página Lucrativa | `/membros/academia` |
+| Ferramentas administrativas | Cursos Código Lucrativo | `/membros/academia` |
 | Ferramentas administrativas | Perguntas frequentes | `/membros/perguntas-frequentes` |
 | Ferramentas administrativas | Convidar amigos | `/membros/convites` |
 | Complemento | Baixar produtos | `/membros/materiais` |

@@ -1,4 +1,4 @@
-# Arquitetura — Página Lucrativa 2026
+# Arquitetura — Código Lucrativo 2026
 
 ## Princípios da reestruturação
 

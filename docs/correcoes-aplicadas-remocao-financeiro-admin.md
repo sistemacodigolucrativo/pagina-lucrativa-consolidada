@@ -1,6 +1,6 @@
 # Correções Aplicadas — Remoção do Financeiro Legado do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Base:** commit `2b3bb7f`
 **Status:** implementação aplicada e validada localmente

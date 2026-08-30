@@ -85,7 +85,7 @@ function resolveNavigationHref(path: string) {
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">PL</span><span>Código Lucrativo</span></span>;
+  return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">CL</span><span>Código Lucrativo</span></span>;
 }
 
 function Eyebrow({ children }: { children: string }) {
@@ -147,7 +147,7 @@ export default function Home() {
   }, [profileDetailsOpen]);
   const [, setLocation] = useLocation();
   const affiliateSlug = normalizeAffiliateSlug(typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("afiliado"));
-  const affiliate = trpc.public.affiliateProfile.useQuery({ slug: affiliateSlug ?? "pagina-lucrativa" }, { enabled: Boolean(affiliateSlug) });
+  const affiliate = trpc.public.affiliateProfile.useQuery({ slug: affiliateSlug ?? "codigo-lucrativo" }, { enabled: Boolean(affiliateSlug) });
   const publicProfileName = affiliate.data?.name || affiliate.data?.slug || affiliateSlug || "Perfil público";
   const publicSocialLinks = affiliate.data ? [
     ["Website", affiliate.data.websiteUrl],

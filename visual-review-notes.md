@@ -6,7 +6,7 @@ A landing e o escritório compartilham a base carvão, marfim e dourado e mantê
 
 ## Ajustes de direção preservados para evolução
 
-A marca continuará centralizada em **Página Lucrativa**. As próximas iterações visuais devem reforçar o contraste entre superfícies de painel e artefatos de trabalho — como fichas, selos e papéis operacionais — sem incluir avaliações, atividade de usuários ou métricas inventadas.
+A marca continuará centralizada em **Código Lucrativo**. As próximas iterações visuais devem reforçar o contraste entre superfícies de painel e artefatos de trabalho — como fichas, selos e papéis operacionais — sem incluir avaliações, atividade de usuários ou métricas inventadas.
 
 ## Validação responsiva
 
@@ -16,4 +16,4 @@ A validação adicional do painel administrativo em tela móvel confirmou a leit
 
 Na revisão posterior de equivalência, a landing pública foi verificada em desktop e mobile com a sequência longa de blocos da referência, CTAs “Faça parte”, formulário de pedido e rodapé com a declaração de direitos autorais. As páginas de confirmação e personalização preservam a leitura e os botões de fluxo em telas compactas.
 
-Após a correção final, a faixa institucional do apresentador, a sequência de blocos de copy, os CTAs convergentes para o formulário, o fechamento da oferta e o rodapé “Copyright © 2026 Página Lucrativa. Todos os direitos reservados.” permanecem legíveis e sem sobreposição nas duas larguras verificadas.
+Após a correção final, a faixa institucional do apresentador, a sequência de blocos de copy, os CTAs convergentes para o formulário, o fechamento da oferta e o rodapé “Copyright © 2026 Código Lucrativo. Todos os direitos reservados.” permanecem legíveis e sem sobreposição nas duas larguras verificadas.

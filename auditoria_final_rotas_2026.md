@@ -1,4 +1,4 @@
-# Auditoria final de rotas e operações — Página Lucrativa 2026
+# Auditoria final de rotas e operações — Código Lucrativo 2026
 
 **Data:** 18 de agosto de 2026  
 **Origem verificada:** release ativo da VPS, serviço `pagina-lucrativa.service` na porta 3101.

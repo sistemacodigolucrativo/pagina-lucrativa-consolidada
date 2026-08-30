@@ -1,6 +1,6 @@
-# Página Lucrativa — Estrutura Digital Pronta
+# Código Lucrativo — Estrutura Digital Pronta
 
-A Página Lucrativa é uma aplicação web fullstack que apresenta e opera uma **estrutura de negócio digital pronta para começar**. A reformulação desta versão reposiciona a comunicação comercial de uma oferta centrada em preço e ganhos para uma proposta baseada em infraestrutura existente: Página Lucrativa personalizada, Escritório Virtual, campanhas, pedidos, contatos, produtos, Academia, materiais, acompanhamento e recursos administrativos disponíveis para cada membro.
+A Código Lucrativo é uma aplicação web fullstack que apresenta e opera uma **estrutura de negócio digital pronta para começar**. A reformulação desta versão reposiciona a comunicação comercial de uma oferta centrada em preço e ganhos para uma proposta baseada em infraestrutura existente: Código Lucrativo personalizada, Escritório Virtual, campanhas, pedidos, contatos, produtos, Academia, materiais, acompanhamento e recursos administrativos disponíveis para cada membro.
 
 > A linha central da experiência é: **não comece do zero; receba uma estrutura digital já desenvolvida, personalize sua operação, aprenda a utilizar as ferramentas, divulgue e acompanhe os registros da sua atividade.**
 
@@ -117,8 +117,8 @@ O processo de produção serve o cliente compilado e mantém as rotas client-sid
 O fluxo mínimo é instalar Node.js, pnpm e MySQL, clonar o repositório, criar o `.env`, instalar dependências, aplicar o banco, gerar o build e iniciar o processo de produção.
 
 ```bash
-git clone <URL-DO-REPOSITORIO> pagina-lucrativa
-cd pagina-lucrativa
+git clone <URL-DO-REPOSITORIO> codigo-lucrativo
+cd codigo-lucrativo
 corepack enable
 corepack prepare pnpm@10.4.1 --activate
 pnpm install --frozen-lockfile

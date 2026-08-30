@@ -1,6 +1,6 @@
 # Relatório de reorganização do menu público e menu hambúrguer
 
-**Projeto:** Página Lucrativa  
+**Projeto:** Código Lucrativo  
 **Data da validação:** 26 de agosto de 2026  
 **Autor:** Manus AI  
 **Escopo:** reorganização exclusiva da navegação pública da landing page e do menu hambúrguer.

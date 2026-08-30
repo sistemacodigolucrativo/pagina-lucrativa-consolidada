@@ -2,7 +2,7 @@
 
 ## Causa raiz
 
-A captura enviada pelo usuário estava correta. O banner não vinha de cache do navegador nem dos componentes da Página Lucrativa. A origem era o plugin `vite-plugin-manus-runtime`, registrado em `vite.config.ts`, que injeta o runtime de preview no HTML de desenvolvimento. O runtime contém o componente compilado `src/modules/Alert/PreviewerModeAlert.tsx` e o texto:
+A captura enviada pelo usuário estava correta. O banner não vinha de cache do navegador nem dos componentes da Código Lucrativo. A origem era o plugin `vite-plugin-manus-runtime`, registrado em `vite.config.ts`, que injeta o runtime de preview no HTML de desenvolvimento. O runtime contém o componente compilado `src/modules/Alert/PreviewerModeAlert.tsx` e o texto:
 
 > This page is not live and cannot be shared directly. Please publish to get a public link.
 

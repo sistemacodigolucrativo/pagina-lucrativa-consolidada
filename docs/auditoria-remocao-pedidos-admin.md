@@ -1,6 +1,6 @@
 # Auditoria — Remoção do Módulo Global de Pedidos do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch de trabalho:** `ManusIA-Edit`
 **Base da auditoria:** commit `46caf1c`
 **Objetivo:** retirar o módulo operacional global de Pedidos do painel administrativo sem remover pedidos, pagamentos, tracking, comprovantes, ativação ou a operação do membro/patrocinador.

@@ -78,7 +78,7 @@ O membro não registra venda nem solicita saque nessa tela. Registros antigos de
 
 O sistema global antigo de senha especial foi removido da aplicação ativa. As rotas `/senha-especial/:code`, `/membros/mensagem-especial` e `/admin/mensagem-especial` não fazem mais parte do fluxo.
 
-Os dados públicos iniciais da Página Lucrativa passaram a ser coletados durante `/personalizar?codigo=...`, antes do primeiro login. Com isso, o gate pós-login `/membros/perfil-inicial` foi removido.
+Os dados públicos iniciais da Código Lucrativo passaram a ser coletados durante `/personalizar?codigo=...`, antes do primeiro login. Com isso, o gate pós-login `/membros/perfil-inicial` foi removido.
 
 ## Navegação do membro
 

@@ -1,6 +1,6 @@
 # Plano de Remoção — Divulgação do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Documento de entrada:** `plano-04-remover-divulgacao-admin.md`
 **Documento de auditoria:** `docs/auditoria-remocao-divulgacao-admin.md`

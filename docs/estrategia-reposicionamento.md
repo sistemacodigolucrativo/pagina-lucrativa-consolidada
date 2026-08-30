@@ -1,10 +1,10 @@
-# Estratégia de reposicionamento da Página Lucrativa
+# Estratégia de reposicionamento da Código Lucrativo
 
 ## Big Idea
 
 > **Não comece do zero.**
 
-O visitante que deseja criar renda ou um projeto pela internet costuma imaginar apenas o resultado final, mas trava diante do custo invisível de construir tudo: escolher uma oferta, preparar produto, desenvolver página, configurar área de usuário, organizar materiais, criar links, acompanhar pedidos, estruturar contatos e aprender divulgação. A Página Lucrativa será apresentada como a forma de começar com uma infraestrutura digital já desenvolvida, em vez de transformar o visitante em responsável por construir cada camada sozinho.
+O visitante que deseja criar renda ou um projeto pela internet costuma imaginar apenas o resultado final, mas trava diante do custo invisível de construir tudo: escolher uma oferta, preparar produto, desenvolver página, configurar área de usuário, organizar materiais, criar links, acompanhar pedidos, estruturar contatos e aprender divulgação. A Código Lucrativo será apresentada como a forma de começar com uma infraestrutura digital já desenvolvida, em vez de transformar o visitante em responsável por construir cada camada sozinho.
 
 ## Categoria percebida
 
@@ -40,7 +40,7 @@ O avatar secundário é o pequeno empreendedor ou profissional autônomo que já
 | 02 | “Começar do zero parece complicado.” | Demonstrar o custo invisível de construir cada componente. |
 | 03 | “É isso que me trava.” | Nomear a sobrecarga técnica e operacional. |
 | 04 | “Existe uma estrutura que já resolveu essa etapa.” | Introduzir a Estrutura Digital Replicável. |
-| 05 | “Então não é somente uma página.” | Reenquadrar Página Lucrativa como ecossistema. |
+| 05 | “Então não é somente uma página.” | Reenquadrar Código Lucrativo como ecossistema. |
 | 06 | “Existe um Escritório inteiro por trás.” | Mostrar painel, ferramentas, cursos e materiais. |
 | 07 | “Entendi como funciona.” | Explicar o passo a passo e a atribuição dos pedidos. |
 | 08 | “Consigo me imaginar utilizando.” | Mostrar personalização, campanhas, acompanhamento e biblioteca. |
@@ -55,7 +55,7 @@ A oferta deve mostrar que a aquisição não é apenas uma página. A composiç�
 
 | Camada | Entrega percebida | Condição de comunicação |
 |---|---|---|
-| Base | Página pública da Página Lucrativa | Disponível como ponto de apresentação; não gera renda sozinha. |
+| Base | Página pública da Código Lucrativo | Disponível como ponto de apresentação; não gera renda sozinha. |
 | Identidade | Perfil público personalizado | Depende do preenchimento dos dados pelo membro. |
 | Acesso | Escritório Virtual | Painel autenticado com módulos e dados da própria conta. |
 | Divulgação | Link pessoal e campanhas | Organiza a origem; métricas dependem de registros. |
@@ -70,7 +70,7 @@ A oferta deve mostrar que a aquisição não é apenas uma página. A composiç�
 
 ## Comparação “fazer sozinho”
 
-A comparação deve mostrar componentes e complexidade sem inventar economia financeira. O visitante que decide construir sozinho precisaria planejar produto ou oferta, página pública, perfil, área de usuário, banco de dados, autenticação, sistema de pedidos, atribuição de links, campanhas, contatos, materiais, treinamento, painel, acompanhamento e suporte. A Página Lucrativa elimina a etapa de desenvolver toda essa base tecnológica; não elimina a necessidade de aprender, divulgar, atender, vender e acompanhar a operação.
+A comparação deve mostrar componentes e complexidade sem inventar economia financeira. O visitante que decide construir sozinho precisaria planejar produto ou oferta, página pública, perfil, área de usuário, banco de dados, autenticação, sistema de pedidos, atribuição de links, campanhas, contatos, materiais, treinamento, painel, acompanhamento e suporte. A Código Lucrativo elimina a etapa de desenvolver toda essa base tecnológica; não elimina a necessidade de aprender, divulgar, atender, vender e acompanhar a operação.
 
 ## Tratamento do preço
 

@@ -1,6 +1,6 @@
 # Auditoria — Remoção da Divulgação do Admin
 
-**Projeto:** Página Lucrativa
+**Projeto:** Código Lucrativo
 **Branch:** `ManusIA-Edit`
 **Base da auditoria:** commit `0ced064`
 **Objetivo:** remover a supervisão administrativa global de contatos captados, preservando a Central de Divulgação do membro e todos os dados operacionais relacionados.
