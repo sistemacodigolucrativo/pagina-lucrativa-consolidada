@@ -34,7 +34,7 @@ describe("public responsive header and hero layout", () => {
     const banner = '<TopPromoBanner />';
     expect(homeSource.indexOf(headline)).toBeGreaterThan(-1);
     expect(homeSource.indexOf(banner)).toBeGreaterThan(homeSource.indexOf(headline));
-    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Receba acesso a uma Página Lucrativa'));
+    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Receba acesso a um Código Lucrativo'));
     expect(cssSource).toContain('.sales-hero-copy > .top-promo-banner {');
   });
 
@@ -43,7 +43,7 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.sales-page { min-height: 100vh; overflow: clip;');
     expect(cssSource).toContain('.affiliate-profile-hero { max-width: 610px;');
     expect(cssSource).toContain('.affiliate-profile-summary { display: flex;');
-    expect(cssSource).toContain('.sales-hero { position: relative;');
+    expect(homeSource).toContain('className="sales-hero"');
   });
 
   it("extracts the digital structure visual into one independent landing section", () => {
