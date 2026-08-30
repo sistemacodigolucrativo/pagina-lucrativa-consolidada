@@ -4,6 +4,7 @@ import { extname, join, relative } from "node:path";
 
 const root = process.cwd();
 const ignoredDirectories = new Set([".git", "node_modules", "dist", "build", "coverage", ".turbo", ".next"]);
+const ignoredFiles = new Set(["server/legacyBranding.guard.test.ts"]);
 const textExtensions = new Set([
   ".ts", ".tsx", ".js", ".jsx", ".json", ".md", ".yml", ".yaml", ".css", ".html", ".sh", ".sql", ".txt", ".toml", ".env",
 ]);
@@ -28,9 +29,14 @@ function collectFiles(directory: string, output: string[] = []) {
   for (const entry of readdirSync(directory)) {
     if (ignoredDirectories.has(entry)) continue;
     const absolute = join(directory, entry);
-    const info = statSync(absolute);
-    if (info.isDirectory()) collectFiles(absolute, output);
-    else if (info.isFile() && isTextFile(absolute)) output.push(absolute);
+    try {
+      const info = statSync(absolute);
+      if (info.isDirectory()) collectFiles(absolute, output);
+      else if (info.isFile() && isTextFile(absolute) && !ignoredFiles.has(relative(root, absolute))) output.push(absolute);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== "ENOENT") throw error;
+    }
   }
   return output;
 }
