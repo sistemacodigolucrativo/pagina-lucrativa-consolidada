@@ -450,3 +450,16 @@ RelatorioGPT/relatorio.md           este relatorio
 - O autodeploy foi validado localmente como `pagina-deploy`.
 - GitHub Actions real ainda depende da chave publica correspondente ao secret existente.
 - Nenhum token, chave privada ou secret foi escrito neste relatorio.
+
+## Migração final do autodeploy
+
+Data da migracao final: 2026-08-30
+
+Status inicial desta etapa:
+
+```text
+Instalador incorporado ao GitHub no commit 2dbb7e57343619259a153e5370b57e595911b756.
+Secrets de destino atualizados para a nova VPS.
+VPS_SSH_KEY preservado.
+Teste real do GitHub Actions pendente neste momento.
+```
