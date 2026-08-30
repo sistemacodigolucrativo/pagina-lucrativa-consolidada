@@ -14,7 +14,7 @@ import { createContext } from "./_core/context";
 const demoUser = {
   id: 2,
   openId: "local_demo_member",
-  name: "Membro Página Lucrativa",
+  name: "Membro Código Lucrativo",
   email: "membro@pagina-lucrativa.local",
   loginMethod: "local_demo",
   role: "user" as const,
