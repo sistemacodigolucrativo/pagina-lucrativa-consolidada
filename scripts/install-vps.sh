@@ -259,6 +259,12 @@ configure_autodeploy_contract() {
   as_root chown "$SERVICE_USER:$DEPLOY_USER" "$DEPLOY_ROOT"
   as_root chown "$SERVICE_USER:$DEPLOY_USER" "$RELEASES_DIR"
   as_root chmod 2775 "$DEPLOY_ROOT" "$RELEASES_DIR"
+  if [[ -d "$RELEASES_DIR" ]]; then
+    while IFS= read -r -d '' release_dir; do
+      as_root chown -R "$SERVICE_USER:$DEPLOY_USER" "$release_dir"
+      as_root chmod -R g+rwX "$release_dir"
+    done < <(find "$RELEASES_DIR" -mindepth 1 -maxdepth 1 -type d -print0)
+  fi
   as_root chown -h "$SERVICE_USER:$DEPLOY_USER" "$CURRENT_LINK"
   as_root chown "$SERVICE_USER:$DEPLOY_USER" "$ENV_FILE"
   as_root chmod 640 "$ENV_FILE"
