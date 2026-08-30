@@ -6,8 +6,8 @@ type PublicPageKey = "institutional" | "terms" | "privacy" | "commercialRules" |
 const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: string; sections: Array<[string, string]> }> = {
   institutional: {
     eyebrow: "Institucional",
-    title: "Quem está por trás da Página Lucrativa",
-    intro: "A Página Lucrativa é uma estrutura digital criada para organizar apresentação, divulgação, pedidos e acompanhamento em uma operação comercial simples e transparente.",
+    title: "Quem está por trás do Código Lucrativo",
+    intro: "O Código Lucrativo é uma estrutura digital criada para organizar apresentação, divulgação, pedidos e acompanhamento em uma operação comercial simples e transparente.",
     sections: [
       ["História do projeto", "O projeto nasceu da necessidade de entregar uma base pronta para quem deseja começar no digital sem montar página, painel e jornada operacional do zero."],
       ["Origem da ideia", "A ideia central é reunir página pública, Escritório Virtual, campanhas, pedidos, conteúdos e recursos de apoio em uma experiência única."],
@@ -19,22 +19,22 @@ const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: stri
   terms: {
     eyebrow: "Termos",
     title: "Termos de Uso",
-    intro: "Estes termos reúnem condições gerais de uso da Página Lucrativa e dos recursos disponibilizados aos visitantes, compradores e membros.",
+    intro: "Estes termos reúnem condições gerais de uso do Código Lucrativo e dos recursos disponibilizados aos visitantes, compradores e membros.",
     sections: [
       ["Uso da estrutura", "O acesso à plataforma deve respeitar as regras comerciais vigentes, os dados reais cadastrados e a finalidade de divulgação e acompanhamento."],
       ["Responsabilidade do membro", "O membro é responsável por seus dados públicos, seus meios de recebimento, sua divulgação e sua comunicação com compradores."],
-      ["Resultados", "A Página Lucrativa não garante ganhos, vendas, pedidos ou aprovação automática. Qualquer resultado depende de execução, mercado e operação real."],
+      ["Resultados", "O Código Lucrativo não garante ganhos, vendas, pedidos ou aprovação automática. Qualquer resultado depende de execução, mercado e operação real."],
       ["Alterações", "Funcionalidades, conteúdos e regras podem ser ajustados para preservar segurança, clareza operacional e evolução do projeto."],
     ],
   },
   privacy: {
     eyebrow: "Privacidade",
     title: "Política de Privacidade",
-    intro: "Esta página resume como os dados são tratados dentro da operação da Página Lucrativa.",
+    intro: "Esta página resume como os dados são tratados dentro da operação do Código Lucrativo.",
     sections: [
       ["Dados coletados", "Podem ser coletados dados de cadastro, contato, pedidos, acompanhamento, perfil público e registros necessários ao funcionamento da plataforma."],
       ["Finalidade", "Os dados são utilizados para identificação, liberação de acesso, personalização da página, atribuição de pedidos, suporte e operação dos módulos contratados."],
-      ["Dados públicos", "Somente informações configuradas para exibição pública aparecem na Página Lucrativa do membro. Dados cadastrais internos permanecem separados."],
+      ["Dados públicos", "Somente informações configuradas para exibição pública aparecem no Código Lucrativo do membro. Dados cadastrais internos permanecem separados."],
       ["Segurança", "Credenciais e informações sensíveis devem ser protegidas. O usuário deve manter seus dados de acesso em sigilo."],
     ],
   },
