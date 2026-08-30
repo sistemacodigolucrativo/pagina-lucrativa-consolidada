@@ -9,13 +9,13 @@ export default function MemberEarnings() {
   const data = finance.data;
   const confirmedEntries = data?.entries.filter(entry => entry.paymentStatus === "confirmed") ?? [];
 
-  return <DashboardLayout menuItems={memberDashboardMenuItems} title="Ganhos e extrato" subtitle="Relatório das adesões atribuídas à sua Página Lucrativa.">
+  return <DashboardLayout menuItems={memberDashboardMenuItems} title="Ganhos e extrato" subtitle="Relatório das adesões atribuídas ao seu Código Lucrativo.">
     <div className="office-page">
       <section className="office-intro">
         <div>
           <span className="office-eyebrow">Relatório de adesões</span>
           <h1>Ganhos e extrato de adesões</h1>
-          <p>Consulte as adesões atribuídas à sua Página Lucrativa e os valores dos pagamentos que você confirmou diretamente com seus compradores. O pagamento ocorre diretamente entre comprador e patrocinador; a Página Lucrativa apenas registra o status da adesão.</p>
+          <p>Consulte as adesões atribuídas ao seu Código Lucrativo e os valores dos pagamentos que você confirmou diretamente com seus compradores. O pagamento ocorre diretamente entre comprador e patrocinador; o Código Lucrativo apenas registra o status da adesão.</p>
         </div>
       </section>
 
