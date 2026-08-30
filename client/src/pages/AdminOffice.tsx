@@ -1,15 +1,16 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
-import { BookOpenCheck, ClipboardList, FileText, LifeBuoy, UsersRound } from "lucide-react";
-import { Link, useLocation } from "wouter";
+import { ClipboardList } from "lucide-react";
+import { KeyboardEvent } from "react";
+import { useLocation } from "wouter";
 
 function attentionLabel(count: number, singular: string, plural: string) {
   return count === 1 ? singular : plural;
 }
 
 export default function AdminOffice() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const overview = trpc.admin.overview.useQuery();
   const content = trpc.admin.content.useQuery();
   const tickets = trpc.admin.tickets.useQuery();
@@ -22,6 +23,13 @@ export default function AdminOffice() {
   const publishedContent = content.data?.filter(item => item.status === "published").length ?? 0;
   const openTickets = tickets.data?.filter(ticket => ticket.status === "open").length ?? 0;
   const pendingTestimonials = testimonials.data?.filter(item => item.status === "pending").length ?? 0;
+
+  const openCard = (path: string) => setLocation(path);
+  const openCardWithKeyboard = (event: KeyboardEvent<HTMLElement>, path: string) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    setLocation(path);
+  };
 
   if (!isKnownAdminPath) {
     return (
@@ -59,15 +67,69 @@ export default function AdminOffice() {
         ) : (
           <>
             <section className="office-stat-grid office-overview-stats">
-              <article><span>Total de membros</span><strong>{data?.memberCount ?? 0}</strong><small>Contas de membros cadastradas</small></article>
-              <article><span>Conteúdos publicados</span><strong>{publishedContent}</strong><small>Publicações ativas para membros</small></article>
-              <article><span>Cursos publicados</span><strong>{data?.publishedCourseCount ?? 0}</strong><small>Trilhas ativas para membros</small></article>
-              <article><span>Depoimentos pendentes</span><strong>{pendingTestimonials}</strong><small>Aguardando revisão administrativa</small></article>
+              <article
+                role="link"
+                tabIndex={0}
+                className="cursor-pointer"
+                aria-label="Abrir Membros e Rede"
+                onClick={() => openCard("/admin/membros")}
+                onKeyDown={event => openCardWithKeyboard(event, "/admin/membros")}
+              >
+                <span>Membros e rede</span><strong>{data?.memberCount ?? 0}</strong><small>Total de membros cadastrados</small>
+              </article>
+              <article
+                role="link"
+                tabIndex={0}
+                className="cursor-pointer"
+                aria-label="Abrir Publicações"
+                onClick={() => openCard("/admin/publicacoes")}
+                onKeyDown={event => openCardWithKeyboard(event, "/admin/publicacoes")}
+              >
+                <span>Conteúdos publicados</span><strong>{publishedContent}</strong><small>Publicações ativas para membros</small>
+              </article>
+              <article
+                role="link"
+                tabIndex={0}
+                className="cursor-pointer"
+                aria-label="Abrir Academia"
+                onClick={() => openCard("/admin/academia")}
+                onKeyDown={event => openCardWithKeyboard(event, "/admin/academia")}
+              >
+                <span>Cursos publicados</span><strong>{data?.publishedCourseCount ?? 0}</strong><small>Trilhas ativas para membros</small>
+              </article>
+              <article
+                role="link"
+                tabIndex={0}
+                className="cursor-pointer"
+                aria-label="Abrir Depoimentos"
+                onClick={() => openCard("/admin/relatos")}
+                onKeyDown={event => openCardWithKeyboard(event, "/admin/relatos")}
+              >
+                <span>Depoimentos pendentes</span><strong>{pendingTestimonials}</strong><small>Aguardando revisão administrativa</small>
+              </article>
             </section>
 
             <section className="office-stat-grid office-overview-stats">
-              <article><span>Tickets abertos</span><strong>{openTickets}</strong><small>Solicitações de suporte</small></article>
-              <article><span>Rascunhos</span><strong>{draftContent}</strong><small>Conteúdos que exigem revisão</small></article>
+              <article
+                role="link"
+                tabIndex={0}
+                className="cursor-pointer"
+                aria-label="Abrir Suporte"
+                onClick={() => openCard("/admin/suporte")}
+                onKeyDown={event => openCardWithKeyboard(event, "/admin/suporte")}
+              >
+                <span>Tickets abertos</span><strong>{openTickets}</strong><small>Solicitações de suporte</small>
+              </article>
+              <article
+                role="link"
+                tabIndex={0}
+                className="cursor-pointer"
+                aria-label="Abrir Publicações em revisão"
+                onClick={() => openCard("/admin/publicacoes")}
+                onKeyDown={event => openCardWithKeyboard(event, "/admin/publicacoes")}
+              >
+                <span>Rascunhos</span><strong>{draftContent}</strong><small>Conteúdos que exigem revisão</small>
+              </article>
             </section>
 
             <section className="office-next">
@@ -79,13 +141,6 @@ export default function AdminOffice() {
                 </p>
               </div>
               <ClipboardList size={34} />
-            </section>
-
-            <section className="office-workspace">
-              <article><UsersRound size={24} className="text-emerald-300" /><h2>Membros e rede</h2><p>Consulte vínculos de indicação criados pelo fluxo de adesão.</p><Link href="/admin/membros">Abrir módulo</Link></article>
-              <article><LifeBuoy size={24} className="text-emerald-300" /><h2>Suporte</h2><p>Responda aos chamados enviados pelos membros.</p><Link href="/admin/suporte">Responder suporte</Link></article>
-              <article><FileText size={24} className="text-emerald-300" /><h2>Publicações</h2><p>Publique materiais de divulgação, recursos, FAQ e comunicações.</p><Link href="/admin/publicacoes">Novo conteúdo</Link></article>
-              <article><BookOpenCheck size={24} className="text-emerald-300" /><h2>Academia</h2><p>{data?.publishedCourseCount ?? 0} cursos publicados para os membros.</p><Link href="/admin/academia">Gerenciar cursos</Link></article>
             </section>
           </>
         )}
