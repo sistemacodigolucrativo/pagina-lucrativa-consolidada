@@ -448,18 +448,128 @@ RelatorioGPT/relatorio.md           este relatorio
 - O script `scripts/deploy-vps.sh` existente foi preservado.
 - O workflow `.github/workflows/deploy-vps.yml` existente foi preservado.
 - O autodeploy foi validado localmente como `pagina-deploy`.
-- GitHub Actions real ainda depende da chave publica correspondente ao secret existente.
+- GitHub Actions real foi migrado para a nova VPS e validado com sucesso.
 - Nenhum token, chave privada ou secret foi escrito neste relatorio.
 
 ## Migração final do autodeploy
 
 Data da migracao final: 2026-08-30
 
-Status inicial desta etapa:
+Arquivos do instalador incorporados ao GitHub:
 
 ```text
-Instalador incorporado ao GitHub no commit 2dbb7e57343619259a153e5370b57e595911b756.
-Secrets de destino atualizados para a nova VPS.
-VPS_SSH_KEY preservado.
-Teste real do GitHub Actions pendente neste momento.
+scripts/install-vps.sh
+drizzle/0002_volatile_thanos.sql
+drizzle/meta/0002_snapshot.json
+drizzle/meta/_journal.json
+```
+
+Commits/SHA relevantes:
+
+```text
+2dbb7e57343619259a153e5370b57e595911b756 - instalador base e migracao Drizzle versionada
+3c2c0898dfafb2a49c8746eb5ca552d3c78622b8 - permissao idempotente dos releases para cleanup do deploy
+9c654b847a9896adaf47e0a52a25e4d8ac092b15 - normalizacao do pnpm store/cache do usuario de deploy
+```
+
+Secrets alterados no GitHub Actions, apenas nomes:
+
+```text
+VPS_HOST
+VPS_PORT
+VPS_USER
+VPS_DEPLOY_PATH
+VPS_KNOWN_HOSTS
+```
+
+Confirmacao:
+
+```text
+VPS_SSH_KEY foi preservado.
+Nenhuma chave privada foi alterada, gerada ou gravada no repositorio.
+```
+
+Workflow/run utilizado no teste real:
+
+```text
+workflow: Validar e publicar na VPS
+arquivo: .github/workflows/deploy-vps.yml
+run: 33289740850
+url: https://github.com/sistemacodigolucrativo/pagina-lucrativa-consolidada/actions/runs/33289740850
+resultado: success
+```
+
+IP efetivamente atingido pelo deploy:
+
+```text
+18.217.248.201
+```
+
+Release criada pelo GitHub Actions:
+
+```text
+/home/ubuntu/servicos/pagina-lucrativa/releases/20260830T031420Z-9c654b84
+```
+
+SHA implantado:
+
+```text
+9c654b847a9896adaf47e0a52a25e4d8ac092b15
+```
+
+Resultado do deploy no log do GitHub Actions:
+
+```text
+[deploy] Criando release .../releases/20260830T031420Z-9c654b84
+[deploy] Instalando dependências do release com pnpm 10.4.1
+[deploy] Smoke test isolado na porta 3199
+[deploy] Ativando release de forma atômica
+[deploy] Deploy concluído: 9c654b847a9896adaf47e0a52a25e4d8ac092b15
+[deploy] Release anterior preservado: .../releases/20260830T015143Z-edb0aad6
+```
+
+Health checks finais na nova VPS:
+
+```text
+http://127.0.0.1:3101/ -> 200
+http://18.217.248.201/ -> 200
+```
+
+Status de `pagina-lucrativa.service`:
+
+```text
+active
+```
+
+`deploy-status.json` final:
+
+```json
+{"status":"completed","progress":100,"stage":"Deploy concluído","sha":"9c654b847a9896adaf47e0a52a25e4d8ac092b15","updatedAt":"2026-08-30T03:14:45Z"}
+```
+
+Falhas encontradas durante a migracao e correcoes pontuais:
+
+```text
+run 33289476233:
+falha em "Liberar espaço na VPS"
+causa: releases antigos tinham ownership/permissao incompatíveis com pagina-deploy para cleanup.
+correcao: ajustar releases existentes na VPS e incorporar no install-vps.sh a normalizacao idempotente dos releases.
+
+run 33289609183:
+falha em "Executar deploy atômico com rollback"
+causa: pnpm store/cache do usuario pagina-deploy continha arquivos com owner ubuntu, gerando EPERM em chmod de hardlinks.
+correcao: corrigir ownership do pnpm store/cache na VPS e incorporar no install-vps.sh a normalizacao idempotente desses diretorios.
+```
+
+Confirmacao sobre a VPS antiga:
+
+```text
+A VPS antiga nao foi desinstalada, apagada, parada ou alterada nesta etapa.
+Depois da troca dos Secrets, o GitHub Actions passou a publicar na nova VPS 18.217.248.201.
+```
+
+Conclusao:
+
+```text
+MIGRACAO CONCLUIDA
 ```
