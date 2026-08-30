@@ -85,7 +85,7 @@ export default function DemoLogin() {
       <div className="relative mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl flex-col">
         <header className="flex items-center justify-between border-b border-white/10 pb-5">
           <Link href="/" className="inline-flex items-center gap-2 text-sm text-[#f5f0e7]/65 transition-colors hover:text-[#03d660]">
-            <ArrowLeft className="h-4 w-4" /> Voltar para a Página Lucrativa
+            <ArrowLeft className="h-4 w-4" /> Voltar para o Código Lucrativo
           </Link>
           <span className="hidden items-center gap-2 font-mono text-[10px] uppercase tracking-[0.18em] text-[#f5f0e7]/45 sm:inline-flex">
             <span className="h-1.5 w-1.5 rounded-full bg-[#03d660] shadow-[0_0_14px_rgba(3,214,96,0.9)]" /> Acesso reservado
@@ -181,7 +181,7 @@ export default function DemoLogin() {
           </div>
         </section>
 
-        <footer className="pb-2 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-[#f5f0e7]/32">Página Lucrativa · Acesso protegido</footer>
+        <footer className="pb-2 text-center font-mono text-[10px] uppercase tracking-[0.16em] text-[#f5f0e7]/32">Código Lucrativo · Acesso protegido</footer>
       </div>
     </main>
   );
