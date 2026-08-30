@@ -57,7 +57,7 @@ describe("public social proof policy and rotation", () => {
 
   it("uses transparent illustrative copy instead of claiming a verified purchase", () => {
     const message = formatPublicSocialProof(publicSocialProofEntries[0]!);
-    expect(message).toContain("está conhecendo a Página Lucrativa");
+    expect(message).toContain("está conhecendo o Código Lucrativo");
     expect(message).not.toContain("acabou de adquirir");
     expect(publicSocialProofDisclaimer).toContain("não representa uma compra real");
   });
