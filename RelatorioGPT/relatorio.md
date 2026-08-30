@@ -273,9 +273,9 @@ status: completed
 sha: edb0aad6dc608d9f04f9c9a73137aebea551b83a
 ```
 
-## Pendencia para GitHub Actions real
+## Pendencia anterior para GitHub Actions real
 
-O fluxo GitHub Actions ponta a ponta ainda nao foi executado porque falta instalar na VPS a chave publica correspondente ao secret existente `VPS_SSH_KEY`.
+O fluxo GitHub Actions ponta a ponta ainda nao havia sido executado porque faltava instalar na VPS a chave publica correspondente ao secret existente `VPS_SSH_KEY`.
 
 Arquivo preparado:
 
@@ -283,7 +283,7 @@ Arquivo preparado:
 /home/pagina-deploy/.ssh/authorized_keys
 ```
 
-Estado observado:
+Estado observado antes da proxima etapa:
 
 ```text
 authorized_keys existe, permissoes corretas, mas esta vazio
@@ -305,6 +305,108 @@ Tambem e necessario adicionar a chave publica correspondente ao `VPS_SSH_KEY` ex
 
 ```text
 /home/pagina-deploy/.ssh/authorized_keys
+```
+
+## Atualizacao - chave SSH do autodeploy na nova VPS
+
+Data da atualizacao: 2026-08-30
+
+Foi confirmada pela VPS antiga a chave publica usada pelo GitHub Actions existente:
+
+```text
+no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZYhyaX0ZgkB7QGMJOY00J6wKQkoGT+X8kGvKWxqJyg github-actions-pagina-lucrativa
+```
+
+Fingerprint esperado:
+
+```text
+SHA256:TDjUtaDIGyWRl0Mr0gjaFV200WqQQFM9DJw40+Sc4Eo
+```
+
+Acao realizada na nova VPS:
+
+```text
+chave publica instalada: sim
+arquivo: /home/pagina-deploy/.ssh/authorized_keys
+owner: pagina-deploy:pagina-deploy
+~/.ssh: 700
+authorized_keys: 600
+duplicacao apos reexecucao da etapa do instalador: nao
+ocorrencias da chave no authorized_keys: 1
+```
+
+Fingerprint validado na VPS:
+
+```text
+256 SHA256:TDjUtaDIGyWRl0Mr0gjaFV200WqQQFM9DJw40+Sc4Eo github-actions-pagina-lucrativa (ED25519)
+```
+
+Alteracao feita no instalador local:
+
+```text
+scripts/install-vps.sh
+```
+
+O valor padrao de `DEPLOY_PUBLIC_KEY` passou a ser a chave publica confirmada do GitHub Actions. A logica existente foi preservada: o instalador cria o diretorio `.ssh`, cria/preserva `authorized_keys`, aplica owner/permissoes corretos e adiciona a chave apenas se ela ainda nao existir.
+
+Nenhuma chave privada foi gravada no instalador.
+
+Contrato confrontado com a VPS funcional:
+
+```text
+VPS_USER=pagina-deploy
+VPS_PORT=22
+DEPLOY_ROOT=/home/ubuntu/servicos/pagina-lucrativa
+Node=v22.23.2
+pnpm=10.4.1
+servico=pagina-lucrativa.service
+porta interna=3101
+smoke test esperado=3199
+sudo permitido somente: /usr/bin/systemctl restart pagina-lucrativa.service
+```
+
+Validacoes executadas nesta etapa:
+
+```text
+pagina-deploy executa node -> v22.23.2
+pagina-deploy executa pnpm -> 10.4.1
+sudo -n restart pagina-lucrativa.service -> ok
+http://127.0.0.1:3101/ -> 200
+http://18.217.248.201/ -> 200
+authorized_keys apos reexecucao da etapa -> 1 ocorrencia da chave
+```
+
+Valores exatos para configurar/atualizar nos GitHub Actions Secrets para apontar para a nova VPS:
+
+```text
+VPS_HOST=18.217.248.201
+VPS_PORT=22
+VPS_USER=pagina-deploy
+VPS_DEPLOY_PATH=/home/ubuntu/servicos/pagina-lucrativa
+VPS_KNOWN_HOSTS<<EOF
+18.217.248.201 ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCnoagn6QnGyVIaifhnA/biBWYjDiKBYfeCWjeHZT/HTrwTPeKmWJ4zbkahg/3cEAjGGoYmZxp00kOoGmHKPchSQ4HVnNQfESwc2ma9mNBr8YV7RLAwvE/UCSMu/5KdgEghn8ofH00h1aJX3dE1EzAYn/LRIRXDYrAQHmopVsprKLTv83Nb1xsVQihiYtbzextfz0eJ5jmpjeZ7Iho35wC29++4shEciy9tLl+5cVO+9zN4qRnQAGhMxa4r2hdZRQE5ShnfGlz94kiae2Oqlc1Bf3RjTWDfz9Bui/pgsTNbTBK7lWv7N959nBqotuupH30W5gVrIizTUGWs5gaNbgWqpDoCkKh6FMLXnMwmiVBrOCsqxd17HHDsgztGLHu5f3p/OAZIjEfrbgKftaIf55b+lPy7MnujxVaZZWDrQV+3g7cChlURj/ia9yb3VCAa+bC+45H/tGth3ZezRV53EcqB0sCjJDCL/LeAwSbtvQukq6rHgTRDET2Upejf+5oEgK0=
+18.217.248.201 ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBPz9PD2Bn4FeUBllWr2I2PDXnRdPdeZpHUpyabLZKu43siHneS6q/E/lpFFI2918DRNC9zxsKRgm2fkLwvBuwxo=
+18.217.248.201 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIG2fKwzNRLYIyfy5+rIQvctjHSYZgbbmdA2hxT8wV8zr
+EOF
+```
+
+Secret que deve ser preservado:
+
+```text
+VPS_SSH_KEY=<manter a chave privada existente ja usada pelo GitHub Actions>
+```
+
+Impedimento restante:
+
+```text
+Nenhum impedimento do lado da VPS para receber a chave existente.
+Falta apenas atualizar/configurar externamente os secrets acima no GitHub e executar um unico teste real ponta a ponta do GitHub Actions.
+```
+
+Observacao operacional: houve uma tentativa de carregar apenas a funcao do instalador que acabou chamando o `main`; ela foi interrompida antes de migrations/build/troca de `current`. O release parcial nao ativo criado nessa tentativa foi movido para:
+
+```text
+/tmp/pagina-lucrativa-partial-release-20260830T024754Z-eced505f
 ```
 
 ## Estado do site
