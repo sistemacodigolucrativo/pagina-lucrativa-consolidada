@@ -1,9 +1,21 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
-import { BookOpenCheck, ChartNoAxesCombined, ClipboardList, FileText, LifeBuoy, UsersRound } from "lucide-react";
+import {
+  BookOpenCheck,
+  ChartNoAxesCombined,
+  ClipboardList,
+  FileText,
+  LifeBuoy,
+  UsersRound,
+} from "lucide-react";
 import { useLocation } from "wouter";
-import { LoadingPanel, MetricCard, SectionHeader, StatePanel } from "@/components/dashboard/PanelPrimitives";
+import {
+  LoadingPanel,
+  MetricCard,
+  SectionHeader,
+  StatePanel,
+} from "@/components/dashboard/PanelPrimitives";
 
 function attentionLabel(count: number, singular: string, plural: string) {
   return count === 1 ? singular : plural;
@@ -24,6 +36,8 @@ export default function AdminOffice() {
   const testimonialItems = testimonials.data;
   const draftContent = contentItems?.filter(item => item.status === "draft").length ?? 0;
   const publishedContent = contentItems?.filter(item => item.status === "published").length ?? 0;
+  const totalContent = contentItems?.length ?? 0;
+  const publicationRate = totalContent > 0 ? (publishedContent / totalContent) * 100 : 0;
   const openTickets = ticketItems?.filter(ticket => ticket.status === "open").length ?? 0;
   const pendingTestimonials = testimonialItems?.filter(item => item.status === "pending").length ?? 0;
 
@@ -42,7 +56,11 @@ export default function AdminOffice() {
   return (
     <DashboardLayout menuItems={adminMenu} title="Administração">
       <div className="office-page admin-page">
-        <SectionHeader eyebrow="Visão geral" title="Dashboard" detail="Indicadores executivos e filas que exigem decisão administrativa." />
+        <SectionHeader
+          eyebrow="Console administrativo"
+          title="Cockpit executivo"
+          detail="Indicadores reais do sistema, conteúdo publicado e filas que exigem decisão administrativa."
+        />
 
         {overview.isLoading ? (
           <LoadingPanel label="Carregando dashboard" />
@@ -51,15 +69,65 @@ export default function AdminOffice() {
         ) : (
           <>
             <section className="office-stat-grid office-overview-stats">
-              <MetricCard icon={UsersRound} label="Membros e rede" value={data?.memberCount ?? 0} detail="Total de membros cadastrados" aria-label="Abrir Membros e Rede" onClick={() => openCard("/admin/membros")} />
-              <MetricCard icon={FileText} label="Conteúdos publicados" value={publishedContent} detail="Publicações ativas para membros" ariaLabel="Abrir Publicações" onActivate={() => openCard("/admin/publicacoes")} />
-              <MetricCard icon={BookOpenCheck} label="Cursos publicados" value={data?.publishedCourseCount ?? 0} detail="Trilhas ativas para membros" ariaLabel="Abrir Academia" onActivate={() => openCard("/admin/academia")} />
-              <MetricCard icon={ChartNoAxesCombined} label="Depoimentos pendentes" value={pendingTestimonials} detail="Aguardando revisão administrativa" ariaLabel="Abrir Depoimentos" onActivate={() => openCard("/admin/relatos")} />
+              <MetricCard
+                icon={UsersRound}
+                label="Membros e rede"
+                value={data?.memberCount ?? 0}
+                detail="Total de membros cadastrados"
+                aria-label="Abrir Membros e Rede"
+                onClick={() => openCard("/admin/membros")}
+              />
+              <MetricCard
+                icon={FileText}
+                label="Conteúdos publicados"
+                value={publishedContent}
+                detail={`${totalContent} conteúdos cadastrados`}
+                ariaLabel="Abrir Publicações"
+                onActivate={() => openCard("/admin/publicacoes")}
+              />
+              <MetricCard
+                icon={BookOpenCheck}
+                label="Cursos publicados"
+                value={data?.publishedCourseCount ?? 0}
+                detail="Trilhas ativas para membros"
+                ariaLabel="Abrir Academia"
+                onActivate={() => openCard("/admin/academia")}
+              />
+              <MetricCard
+                icon={ChartNoAxesCombined}
+                label="Taxa de publicação"
+                value={`${publicationRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
+                detail="Publicados / conteúdos cadastrados"
+                ariaLabel="Abrir Publicações"
+                onActivate={() => openCard("/admin/publicacoes")}
+              />
             </section>
 
             <section className="office-stat-grid office-overview-stats">
-              <MetricCard icon={LifeBuoy} label="Tickets abertos" value={openTickets} detail="Solicitações de suporte" aria-label="Abrir Suporte" onClick={() => openCard("/admin/suporte")} />
-              <MetricCard icon={FileText} label="Rascunhos" value={draftContent} detail="Conteúdos que exigem revisão" ariaLabel="Abrir Publicações em revisão" onActivate={() => openCard("/admin/publicacoes")} />
+              <MetricCard
+                icon={LifeBuoy}
+                label="Tickets abertos"
+                value={openTickets}
+                detail="Solicitações de suporte"
+                aria-label="Abrir Suporte"
+                onClick={() => openCard("/admin/suporte")}
+              />
+              <MetricCard
+                icon={ClipboardList}
+                label="Depoimentos pendentes"
+                value={pendingTestimonials}
+                detail="Aguardando revisão administrativa"
+                ariaLabel="Abrir Depoimentos"
+                onActivate={() => openCard("/admin/relatos")}
+              />
+              <MetricCard
+                icon={FileText}
+                label="Rascunhos"
+                value={draftContent}
+                detail="Conteúdos que exigem revisão"
+                ariaLabel="Abrir Publicações em revisão"
+                onActivate={() => openCard("/admin/publicacoes")}
+              />
             </section>
 
             <section className="office-next">
