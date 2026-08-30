@@ -1,16 +1,7 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -25,23 +16,12 @@ import {
   SidebarProvider,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Bell,
-  ChevronDown,
-  LayoutDashboard,
-  LogOut,
-  PanelLeft,
-  type LucideIcon,
-  Users,
-} from "lucide-react";
+import { Bell, ChevronDown, LayoutDashboard, LogOut, PanelLeft, type LucideIcon, Users } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
-import {
-  isMemberOfficeNavigation,
-  memberDashboardMenuItems,
-} from "@/lib/memberDashboardNavigation";
+import { DashboardLayoutSkeleton } from "./DashboardLayoutSkeleton";
+import { isMemberOfficeNavigation, memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
 import { adminMenu, isAdminNavigation } from "@/lib/adminNavigation";
 
 const defaultMenuItems = [
@@ -49,12 +29,7 @@ const defaultMenuItems = [
   { icon: Users, label: "Page 2", path: "/some-path" },
 ];
 
-export type DashboardMenuItem = {
-  icon: LucideIcon;
-  label: string;
-  path: string;
-  group?: string;
-};
+export type DashboardMenuItem = { icon: LucideIcon; label: string; path: string; group?: string };
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
@@ -71,12 +46,7 @@ function isNavigationItemActive(itemPath: string, activePath: string) {
     || (itemPath === "/membros/operacao" && activePath.startsWith("/membros/operacao/"));
 }
 
-export default function DashboardLayout({
-  children,
-  menuItems = defaultMenuItems,
-  title = "Escritório",
-  subtitle,
-}: {
+export default function DashboardLayout({ children, menuItems = defaultMenuItems, title = "Escritório", subtitle }: {
   children: React.ReactNode;
   menuItems?: DashboardMenuItem[];
   title?: string;
@@ -88,37 +58,17 @@ export default function DashboardLayout({
   });
   const { loading, user } = useAuth();
   const [, setLocation] = useLocation();
-  const navigationMenuItems = isMemberOfficeNavigation(menuItems)
-    ? memberDashboardMenuItems
-    : isAdminNavigation(menuItems)
-      ? adminMenu
-      : menuItems;
+  const navigationMenuItems = isMemberOfficeNavigation(menuItems) ? memberDashboardMenuItems : isAdminNavigation(menuItems) ? adminMenu : menuItems;
   const requiresAdmin = navigationMenuItems.some(item => item.path === "/admin" || item.path.startsWith("/admin/"));
-  const redirectPath = !loading && !user
-    ? "/acesso"
-    : !loading && requiresAdmin && user?.role !== "admin"
-      ? "/membros"
-      : null;
+  const redirectPath = !loading && !user ? "/acesso" : !loading && requiresAdmin && user?.role !== "admin" ? "/membros" : null;
 
-  useEffect(() => {
-    localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
-  }, [sidebarWidth]);
+  useEffect(() => { localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString()); }, [sidebarWidth]);
+  useEffect(() => { if (redirectPath) setLocation(redirectPath); }, [redirectPath, setLocation]);
 
-  useEffect(() => {
-    if (redirectPath) setLocation(redirectPath);
-  }, [redirectPath, setLocation]);
-  if (loading || redirectPath) {
-    return <DashboardLayoutSkeleton />
-  }
+  if (loading || redirectPath) return <DashboardLayoutSkeleton />;
+
   return (
-    <SidebarProvider
-      defaultOpen={false}
-      style={
-        {
-          "--sidebar-width": `${sidebarWidth}px`,
-        } as CSSProperties
-      }
-    >
+    <SidebarProvider defaultOpen={false} style={{ "--sidebar-width": `${sidebarWidth}px` } as CSSProperties}>
       <DashboardLayoutContent setSidebarWidth={setSidebarWidth} menuItems={navigationMenuItems} title={title} subtitle={subtitle}>
         {children}
       </DashboardLayoutContent>
@@ -134,20 +84,10 @@ type DashboardLayoutContentProps = {
   subtitle?: string;
 };
 
-function DashboardLayoutContent({
-  children,
-  setSidebarWidth,
-  menuItems,
-  title,
-  subtitle,
-}: DashboardLayoutContentProps) {
+function DashboardLayoutContent({ children, setSidebarWidth, menuItems, title, subtitle }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
-  const handleLogout = async () => {
-    await logout();
-    setLocation("/");
-  };
-  const { state, setOpen } = useSidebar();
+  const { state, setOpen, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
@@ -168,34 +108,25 @@ function DashboardLayoutContent({
   const markNotificationRead = trpc.member.markNotificationRead.useMutation({
     onSuccess: async notification => {
       await notifications.refetch();
-      if (notification.entityType === "application") setLocation(`/membros/meus-pedidos`);
+      if (notification.entityType === "application") setLocation("/membros/meus-pedidos");
     },
   });
 
+  const handleLogout = async () => { await logout(); setLocation("/"); };
   const isGroupOpen = (group: string, items: DashboardMenuItem[]) => {
     if (groupOverrides[group] !== undefined) return groupOverrides[group];
     if (!memberOfficeNavigation || isCollapsed) return true;
     return items.some(item => isNavigationItemActive(item.path, activePath));
   };
-
   const toggleGroup = (group: string, items: DashboardMenuItem[]) => {
-    setGroupOverrides(current => ({
-      ...current,
-      [group]: !(current[group] ?? isGroupOpen(group, items)),
-    }));
+    setGroupOverrides(current => ({ ...current, [group]: !(current[group] ?? isGroupOpen(group, items)) }));
   };
 
-  useEffect(() => {
-    if (isCollapsed) {
-      setIsResizing(false);
-    }
-  }, [isCollapsed]);
+  useEffect(() => { if (isCollapsed) setIsResizing(false); }, [isCollapsed]);
 
   useEffect(() => {
     if (!memberOfficeNavigation) return;
-    const activeGroup = Object.entries(groupedMenuItems).find(([, items]) =>
-      items.some(item => isNavigationItemActive(item.path, activePath)),
-    )?.[0] ?? null;
+    const activeGroup = Object.entries(groupedMenuItems).find(([, items]) => items.some(item => isNavigationItemActive(item.path, activePath)))?.[0] ?? null;
     if (activeGroupRef.current === activeGroup) return;
     activeGroupRef.current = activeGroup;
     setGroupOverrides(activeGroup ? { [activeGroup]: true } : {});
@@ -204,25 +135,17 @@ function DashboardLayoutContent({
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
-
       const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
       const newWidth = e.clientX - sidebarLeft;
-      if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
-        setSidebarWidth(newWidth);
-      }
+      if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) setSidebarWidth(newWidth);
     };
-
-    const handleMouseUp = () => {
-      setIsResizing(false);
-    };
-
+    const handleMouseUp = () => setIsResizing(false);
     if (isResizing) {
       document.addEventListener("mousemove", handleMouseMove);
       document.addEventListener("mouseup", handleMouseUp);
       document.body.style.cursor = "col-resize";
       document.body.style.userSelect = "none";
     }
-
     return () => {
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
@@ -237,31 +160,19 @@ function DashboardLayoutContent({
         <Sidebar
           collapsible="icon"
           persistentOnMobile
-          className="border-r-0 transition-[width] duration-200 ease-out"
+          className="border-r border-border/70 bg-sidebar shadow-2xl transition-[width] duration-200 ease-out"
           disableTransition={isResizing}
         >
-          <SidebarHeader className="h-16 justify-center">
-            <div className="flex items-center gap-3 px-2 transition-all w-full">
-              <button
-                type="button"
-                onClick={() => setOpen(isCollapsed)}
-                className="h-9 w-9 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
-                aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
-                title={isCollapsed ? "Expandir menu" : "Recolher menu"}
-              >
+          <SidebarHeader className="h-16 justify-center bg-sidebar">
+            <div className="flex w-full items-center gap-3 px-2 transition-all">
+              <button type="button" onClick={() => setOpen(isCollapsed)} className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors hover:bg-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"} title={isCollapsed ? "Expandir menu" : "Recolher menu"}>
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
-              {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="font-semibold tracking-tight truncate">
-                    {title}
-                  </span>{subtitle ? <span className="hidden text-xs text-muted-foreground lg:inline">{subtitle}</span> : null}
-                </div>
-              ) : null}
+              {!isCollapsed ? <div className="flex min-w-0 items-center gap-2"><span className="truncate font-semibold tracking-tight">{title}</span>{subtitle ? <span className="hidden text-xs text-muted-foreground lg:inline">{subtitle}</span> : null}</div> : null}
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="gap-0 overflow-y-auto overscroll-contain pb-4">
+          <SidebarContent className="gap-0 overflow-y-auto overscroll-contain bg-sidebar pb-4">
             {Object.entries(groupedMenuItems).map(([group, items]) => {
               const hasSubmenu = items.length > 1;
               const groupOpen = isGroupOpen(group, items);
@@ -276,11 +187,12 @@ function DashboardLayoutContent({
                           onClick={() => {
                             setGroupOverrides(current => ({ ...current, [group]: true }));
                             setLocation(item.path);
+                            if (isMobile) setOpen(false);
                           }}
                           tooltip={item.label}
                           aria-label={item.label}
                           title={isCollapsed ? item.label : undefined}
-                          className="h-10 transition-all duration-200 font-normal"
+                          className="h-10 font-normal transition-all duration-200"
                         >
                           <item.icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-primary" : ""}`} />
                           <span>{item.label}</span>
@@ -291,33 +203,22 @@ function DashboardLayoutContent({
                 </SidebarMenu>
               );
 
-              if (!hasSubmenu) {
-                return (
-                  <SidebarGroup key={group} className="px-2 py-1">
-                    <SidebarGroupLabel className="px-2 text-[9px] uppercase tracking-[.12em] text-muted-foreground group-data-[collapsible=icon]:sr-only">
-                      {group}
-                    </SidebarGroupLabel>
-                    {menuContent}
-                  </SidebarGroup>
-                );
-              }
+              if (!hasSubmenu) return (
+                <SidebarGroup key={group} className="px-2 py-1">
+                  <SidebarGroupLabel className="px-2 text-[9px] uppercase tracking-[.12em] text-muted-foreground group-data-[collapsible=icon]:sr-only">{group}</SidebarGroupLabel>
+                  {menuContent}
+                </SidebarGroup>
+              );
 
               return (
                 <SidebarGroup key={group} className="px-2 py-1">
                   <Collapsible open={groupOpen} onOpenChange={() => toggleGroup(group, items)}>
                     <CollapsibleTrigger asChild>
-                      <button
-                        type="button"
-                        className="flex h-8 w-full items-center justify-between rounded-md px-2 text-left text-[9px] uppercase tracking-[.12em] text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[collapsible=icon]:sr-only"
-                        aria-label={`${group}: ${groupOpen ? "recolher" : "expandir"} submenu`}
-                      >
-                        <span>{group}</span>
-                        <ChevronDown className={`size-3 transition-transform duration-200 ${groupOpen ? "rotate-180" : ""}`} />
+                      <button type="button" className="flex h-8 w-full items-center justify-between rounded-md px-2 text-left text-[9px] uppercase tracking-[.12em] text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[collapsible=icon]:sr-only" aria-label={`${group}: ${groupOpen ? "recolher" : "expandir"} submenu`}>
+                        <span>{group}</span><ChevronDown className={`size-3 transition-transform duration-200 ${groupOpen ? "rotate-180" : ""}`} />
                       </button>
                     </CollapsibleTrigger>
-                    <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-none">
-                      {menuContent}
-                    </CollapsibleContent>
+                    <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-none">{menuContent}</CollapsibleContent>
                   </Collapsible>
                 </SidebarGroup>
               );
@@ -327,45 +228,30 @@ function DashboardLayoutContent({
           <SidebarFooter className="border-t border-border/60 bg-sidebar p-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <Avatar className="h-9 w-9 border shrink-0">
-                    <AvatarFallback className="text-xs font-medium">
-                      {user?.name?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0 group-data-[collapsible=icon]:hidden">
-                    <p className="text-sm font-medium truncate leading-none">
-                      {user?.name || "-"}
-                    </p>
-                    <p className="text-xs text-muted-foreground truncate mt-1.5">
-                      {user?.email || "-"}
-                    </p>
-                  </div>
+                <button className="flex w-full items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-accent/50 group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Avatar className="h-9 w-9 shrink-0 border"><AvatarFallback className="text-xs font-medium">{user?.name?.charAt(0).toUpperCase()}</AvatarFallback></Avatar>
+                  <div className="min-w-0 flex-1 group-data-[collapsible=icon]:hidden"><p className="truncate text-sm font-medium leading-none">{user?.name || "-"}</p><p className="mt-1.5 truncate text-xs text-muted-foreground">{user?.email || "-"}</p></div>
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
                 {user?.role === "admin" && !location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation("/admin")} className="cursor-pointer"><span>Voltar para Administração</span></DropdownMenuItem> : null}
                 {user?.role === "admin" && location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation("/membros")} className="cursor-pointer"><span>Abrir meu Escritório</span></DropdownMenuItem> : null}
-                <DropdownMenuItem
-                  onClick={handleLogout}
-                  className="cursor-pointer text-destructive focus:text-destructive"
-                >
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sair</span>
-                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive"><LogOut className="mr-2 h-4 w-4" /><span>Sair</span></DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
-        <div
-          className={`absolute top-0 right-0 hidden w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors md:block ${isCollapsed ? "md:hidden" : ""}`}
-          onMouseDown={() => {
-            if (isCollapsed) return;
-            setIsResizing(true);
-          }}
-          style={{ zIndex: 50 }}
-        />
+        <div className={`absolute right-0 top-0 hidden h-full w-1 cursor-col-resize transition-colors hover:bg-primary/20 md:block ${isCollapsed ? "md:hidden" : ""}`} onMouseDown={() => { if (!isCollapsed) setIsResizing(true); }} style={{ zIndex: 50 }} />
       </div>
+
+      {isMobile && !isCollapsed ? (
+        <button
+          type="button"
+          aria-label="Recolher menu"
+          onClick={() => setOpen(false)}
+          className="fixed inset-0 z-[9] bg-black/70 backdrop-blur-[1px] md:hidden"
+        />
+      ) : null}
 
       <SidebarInset>
         {memberOfficeNavigation && user?.role === "user" ? (
@@ -380,7 +266,7 @@ function DashboardLayoutContent({
             </section> : null}
           </div>
         ) : null}
-        <main className="flex-1 p-4">{children}</main>
+        <main className="min-w-0 flex-1 overflow-x-hidden p-2 sm:p-4">{children}</main>
       </SidebarInset>
     </>
   );
