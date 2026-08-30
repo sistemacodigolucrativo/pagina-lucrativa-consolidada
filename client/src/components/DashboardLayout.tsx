@@ -149,7 +149,7 @@ function DashboardLayoutContent({
     await logout();
     setLocation("/");
   };
-  const { state, toggleSidebar, setOpenMobile } = useSidebar();
+  const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
@@ -185,7 +185,7 @@ function DashboardLayoutContent({
 
   const handleSidebarDoubleInteraction = () => {
     if (isMobile) {
-      setOpenMobile(current => !current);
+      setOpenMobile(!openMobile);
       return;
     }
     toggleSidebar();
