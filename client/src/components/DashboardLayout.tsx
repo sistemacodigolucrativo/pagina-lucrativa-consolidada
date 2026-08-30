@@ -114,6 +114,7 @@ export default function DashboardLayout({
   }
   return (
     <SidebarProvider
+      defaultOpen={false}
       style={
         {
           "--sidebar-width": `${sidebarWidth}px`,
@@ -148,7 +149,7 @@ function DashboardLayoutContent({
     await logout();
     setLocation("/");
   };
-  const { state, toggleSidebar } = useSidebar();
+  const { state, toggleSidebar, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
@@ -162,6 +163,7 @@ function DashboardLayoutContent({
     return groups;
   }, {});
   const isMobile = useIsMobile();
+  const lastTouchRef = useRef(0);
   const memberOfficeNavigation = isMemberOfficeNavigation(menuItems);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notifications = trpc.member.notifications.useQuery(undefined, {
@@ -179,6 +181,27 @@ function DashboardLayoutContent({
     if (groupOverrides[group] !== undefined) return groupOverrides[group];
     if (!memberOfficeNavigation || isCollapsed) return true;
     return items.some(item => isNavigationItemActive(item.path, activePath));
+  };
+
+  const handleSidebarDoubleInteraction = () => {
+    if (isMobile) {
+      setOpenMobile(current => !current);
+      return;
+    }
+    toggleSidebar();
+  };
+
+  const handleSidebarTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
+    const target = event.target as HTMLElement;
+    if (target.closest("button, a, [role='menuitem'], [data-sidebar='menu-button']")) return;
+    const now = Date.now();
+    if (now - lastTouchRef.current <= 350) {
+      event.preventDefault();
+      handleSidebarDoubleInteraction();
+      lastTouchRef.current = 0;
+      return;
+    }
+    lastTouchRef.current = now;
   };
 
   const toggleGroup = (group: string, items: DashboardMenuItem[]) => {
@@ -236,18 +259,33 @@ function DashboardLayoutContent({
 
   return (
     <>
-      <div className="relative" ref={sidebarRef}>
+      <div
+        className="relative"
+        ref={sidebarRef}
+        onDoubleClick={event => {
+          const target = event.target as HTMLElement;
+          if (target.closest("button, a, [role='menuitem'], [data-sidebar='menu-button']")) return;
+          handleSidebarDoubleInteraction();
+        }}
+        onTouchEnd={handleSidebarTouchEnd}
+        aria-label="Navegação lateral: toque duas vezes em uma área livre para expandir ou recolher"
+      >
         <Sidebar
           collapsible="icon"
-          className="border-r-0"
+          className="border-r-0 transition-[width] duration-200 ease-out"
           disableTransition={isResizing}
         >
           <SidebarHeader className="h-16 justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
-                onClick={toggleSidebar}
+                onDoubleClick={event => {
+                  event.stopPropagation();
+                  handleSidebarDoubleInteraction();
+                }}
+                onClick={event => event.stopPropagation()}
                 className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
-                aria-label="Alternar navegação"
+                aria-label="Expandir ou recolher navegação com duplo clique"
+                title="Duplo clique para expandir ou recolher"
               >
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -278,9 +316,11 @@ function DashboardLayoutContent({
                             setLocation(item.path);
                           }}
                           tooltip={item.label}
-                          className="h-10 transition-all font-normal"
+                          aria-label={item.label}
+                          title={isCollapsed ? item.label : undefined}
+                          className="h-10 transition-all duration-200 font-normal"
                         >
-                          <item.icon className={`h-4 w-4 ${isActive ? "text-primary" : ""}`} />
+                          <item.icon className={`h-4 w-4 shrink-0 transition-colors ${isActive ? "text-primary" : ""}`} />
                           <span>{item.label}</span>
                         </SidebarMenuButton>
                       </SidebarMenuItem>
