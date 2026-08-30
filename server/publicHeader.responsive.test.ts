@@ -43,7 +43,7 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.sales-page { min-height: 100vh; overflow: clip;');
     expect(cssSource).toContain('.affiliate-profile-hero { max-width: 610px;');
     expect(cssSource).toContain('.affiliate-profile-summary { display: flex;');
-    expect(homeSource).toContain('className="sales-hero"');
+    expect(cssSource).toContain('.sales-hero { position: relative;');
   });
 
   it("extracts the digital structure visual into one independent landing section", () => {
