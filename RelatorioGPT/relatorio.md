@@ -119,6 +119,37 @@ http://18.217.248.201/ -> HTTP 200
 https://ocodigolucrativo.site/ -> HTTP 200
 ```
 
+## Correcao visual do menu Obsidian
+
+Data: 2026-08-30
+
+Problema observado: o menu implantado ainda estava visualmente diferente do template Obsidian porque usava a estrutura antiga com grupos recolhiveis/redimensionaveis e estilo de item ativo diferente.
+
+Correcao aplicada:
+
+- categorias do menu agora ficam sempre abertas, como no template Obsidian;
+- removido o uso de submenus recolhiveis para a navegação principal;
+- sidebar passou a abrir por padrao no desktop;
+- identidade `C. Lucrativo` mantida no topo com icone emerald;
+- rodape recebeu seletor visual `Admin Mode` / `Member Mode`, preservando permissao real;
+- estilo dos itens de menu foi ajustado para o padrao Obsidian: fundo zinc/preto, texto zinc, ativo emerald suave.
+
+Arquivos alterados:
+
+```text
+client/src/components/DashboardLayout.tsx
+client/src/dashboard-premium.css
+RelatorioGPT/relatorio.md
+```
+
+Validacoes:
+
+```text
+pnpm check -> sucesso
+pnpm build -> sucesso
+git diff --check -> sucesso
+```
+
 ## Contexto
 
 O trabalho foi realizado primeiro com restricao de nao alterar o GitHub remoto. A VPS correta para o trabalho foi confirmada como `18.217.248.201`, com IP privado `172.31.22.36`.

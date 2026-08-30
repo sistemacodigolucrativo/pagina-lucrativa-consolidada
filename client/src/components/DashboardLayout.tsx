@@ -7,11 +7,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
@@ -28,11 +23,12 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Bell,
-  ChevronDown,
   LayoutDashboard,
   LogOut,
   PanelLeft,
+  Shield,
   Sparkles,
+  User,
   type LucideIcon,
   Users,
 } from "lucide-react";
@@ -114,7 +110,7 @@ export default function DashboardLayout({
   }
   return (
     <SidebarProvider
-      defaultOpen={false}
+      defaultOpen={true}
       style={
         {
           "--sidebar-width": `${sidebarWidth}px`,
@@ -153,9 +149,7 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const isCompact = !isMobile && isCollapsed;
   const [isResizing, setIsResizing] = useState(false);
-  const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activeGroupRef = useRef<string | null>(null);
   const activePath = location || "/";
   const groupedMenuItems = menuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
     const group = item.group ?? "Navegação";
@@ -175,34 +169,11 @@ function DashboardLayoutContent({
     },
   });
 
-  const isGroupOpen = (group: string, items: DashboardMenuItem[]) => {
-    if (groupOverrides[group] !== undefined) return groupOverrides[group];
-    if (!memberOfficeNavigation || isCompact) return true;
-    return items.some(item => isNavigationItemActive(item.path, activePath));
-  };
-
-  const toggleGroup = (group: string, items: DashboardMenuItem[]) => {
-    setGroupOverrides(current => ({
-      ...current,
-      [group]: !(current[group] ?? isGroupOpen(group, items)),
-    }));
-  };
-
   useEffect(() => {
     if (isCompact) {
       setIsResizing(false);
     }
   }, [isCompact]);
-
-  useEffect(() => {
-    if (!memberOfficeNavigation) return;
-    const activeGroup = Object.entries(groupedMenuItems).find(([, items]) =>
-      items.some(item => isNavigationItemActive(item.path, activePath)),
-    )?.[0] ?? null;
-    if (activeGroupRef.current === activeGroup) return;
-    activeGroupRef.current = activeGroup;
-    setGroupOverrides(activeGroup ? { [activeGroup]: true } : {});
-  }, [activePath, groupedMenuItems, memberOfficeNavigation]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -266,10 +237,11 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="dashboard-sidebar-content gap-0 overflow-y-auto overscroll-contain pb-4">
-            {Object.entries(groupedMenuItems).map(([group, items]) => {
-              const hasSubmenu = items.length > 1;
-              const groupOpen = isGroupOpen(group, items);
-              const menuContent = (
+            {Object.entries(groupedMenuItems).map(([group, items]) => (
+              <SidebarGroup key={group} className="dashboard-menu-category px-4 py-2">
+                <SidebarGroupLabel className="dashboard-category-label px-3 text-xs font-bold uppercase tracking-wider text-zinc-500 group-data-[collapsible=icon]:sr-only">
+                  {group}
+                </SidebarGroupLabel>
                 <SidebarMenu>
                   {items.map(item => {
                     const isActive = isNavigationItemActive(item.path, activePath);
@@ -278,7 +250,6 @@ function DashboardLayoutContent({
                         <SidebarMenuButton
                           isActive={isActive}
                           onClick={() => {
-                            setGroupOverrides(current => ({ ...current, [group]: true }));
                             setLocation(item.path);
                             if (isMobile) setOpenMobile(false);
                           }}
@@ -294,42 +265,30 @@ function DashboardLayoutContent({
                     );
                   })}
                 </SidebarMenu>
-              );
-
-              if (!hasSubmenu) {
-                return (
-                  <SidebarGroup key={group} className="px-2 py-1">
-                    <SidebarGroupLabel className="px-2 text-[9px] uppercase tracking-[.12em] text-muted-foreground group-data-[collapsible=icon]:sr-only">
-                      {group}
-                    </SidebarGroupLabel>
-                    {menuContent}
-                  </SidebarGroup>
-                );
-              }
-
-              return (
-                <SidebarGroup key={group} className="px-2 py-1">
-                  <Collapsible open={groupOpen} onOpenChange={() => toggleGroup(group, items)}>
-                    <CollapsibleTrigger asChild>
-                      <button
-                        type="button"
-                        className="flex h-8 w-full items-center justify-between rounded-md px-2 text-left text-[9px] uppercase tracking-[.12em] text-muted-foreground transition-colors hover:bg-accent/70 hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring group-data-[collapsible=icon]:sr-only"
-                        aria-label={`${group}: ${groupOpen ? "recolher" : "expandir"} submenu`}
-                      >
-                        <span>{group}</span>
-                        <ChevronDown className={`size-3 transition-transform duration-200 ${groupOpen ? "rotate-180" : ""}`} />
-                      </button>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-none">
-                      {menuContent}
-                    </CollapsibleContent>
-                  </Collapsible>
-                </SidebarGroup>
-              );
-            })}
+              </SidebarGroup>
+            ))}
           </SidebarContent>
 
           <SidebarFooter className="dashboard-sidebar-footer border-t border-border/60 bg-sidebar p-3">
+            <div className="dashboard-mode-switch group-data-[collapsible=icon]:hidden">
+              <button
+                type="button"
+                onClick={() => user?.role === "admin" ? setLocation("/admin") : undefined}
+                disabled={user?.role !== "admin"}
+                className={`dashboard-mode-button${location.startsWith("/admin") ? " is-active" : ""}`}
+              >
+                <Shield className="size-4" />
+                Admin Mode
+              </button>
+              <button
+                type="button"
+                onClick={() => setLocation("/membros")}
+                className={`dashboard-mode-button${!location.startsWith("/admin") ? " is-active" : ""}`}
+              >
+                <User className="size-4" />
+                Member Mode
+              </button>
+            </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button aria-label="Abrir menu da conta" className="dashboard-account flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/50 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
