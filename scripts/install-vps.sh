@@ -299,6 +299,9 @@ configure_autodeploy_contract() {
   local pnpm_bin
   pnpm_bin="${PNPM_BIN_FOR_DEPLOY:-$(command -v pnpm)}"
   as_root sudo -u "$DEPLOY_USER" env HOME="/home/$DEPLOY_USER" bash -lc "corepack prepare 'pnpm@$PNPM_VERSION' --activate >/dev/null"
+  as_root install -d -m 775 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "/home/$DEPLOY_USER/.local/share/pnpm"
+  as_root install -d -m 775 -o "$DEPLOY_USER" -g "$DEPLOY_USER" "/home/$DEPLOY_USER/.cache/node"
+  as_root chown -R "$DEPLOY_USER:$DEPLOY_USER" "/home/$DEPLOY_USER/.local/share/pnpm" "/home/$DEPLOY_USER/.cache/node"
   as_root sudo -u "$DEPLOY_USER" env HOME="/home/$DEPLOY_USER" bash -lc "cd '/home/$DEPLOY_USER' && '$pnpm_bin' --version | grep -qx '$PNPM_VERSION'"
   as_root sudo -u "$DEPLOY_USER" sudo -n -l /usr/bin/systemctl restart "$SERVICE_NAME" >/dev/null
 }
