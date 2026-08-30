@@ -64,7 +64,7 @@ export function choosePublicSocialProofIndex(
 }
 
 export function formatPublicSocialProof(entry: PublicSocialProofEntry): string {
-  return `${entry.name}, de ${entry.city}, está conhecendo a Página Lucrativa.`;
+  return `${entry.name}, de ${entry.city}, está conhecendo o Código Lucrativo.`;
 }
 
 export const publicSocialProofDisclaimer = "Demonstração ilustrativa — não representa uma compra real.";
