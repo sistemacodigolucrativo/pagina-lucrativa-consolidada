@@ -30,7 +30,8 @@ describe("fluxo de indicações", () => {
     expect(adminReferrals).toContain("data?.activeCount");
     expect(adminReferrals).not.toContain("createReferral");
     expect(adminReferrals).not.toContain("Vincular indicação");
-    expect(adminOffice).toContain("Consulte vínculos de indicação criados pelo fluxo de adesão.");
+    expect(adminOffice).toContain('aria-label="Abrir Membros e Rede"');
+    expect(adminOffice).toContain('onClick={() => openCard("/admin/membros")}');
     expect(memberReferrals).toContain("network.error");
     expect(memberReferrals).toContain("Tentar novamente");
     expect(guards).toContain("assertReceiptUploadAllowed");
