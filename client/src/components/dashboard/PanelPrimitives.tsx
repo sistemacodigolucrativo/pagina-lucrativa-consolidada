@@ -1,4 +1,4 @@
-import { ArrowUpRight, CircleAlert, LoaderCircle, type LucideIcon } from "lucide-react";
+import { ArrowUpRight, CircleAlert, HelpCircle, LoaderCircle, type LucideIcon } from "lucide-react";
 import type { ReactNode, KeyboardEvent } from "react";
 
 type SectionHeaderProps = {
@@ -89,5 +89,91 @@ export function StatePanel({
       <h2>{title}</h2>
       <p>{message}</p>
     </section>
+  );
+}
+
+type ObsidianCardProps = {
+  title?: string;
+  eyebrow?: string;
+  description?: string;
+  action?: ReactNode;
+  children: ReactNode;
+  className?: string;
+};
+
+export function ObsidianCard({
+  title,
+  eyebrow,
+  description,
+  action,
+  children,
+  className,
+}: ObsidianCardProps) {
+  return (
+    <section className={`obsidian-card${className ? ` ${className}` : ""}`}>
+      {(title || eyebrow || description || action) ? (
+        <header className="obsidian-card-header">
+          <div>
+            {eyebrow ? <span className="obsidian-eyebrow">{eyebrow}</span> : null}
+            {title ? <h2>{title}</h2> : null}
+            {description ? <p>{description}</p> : null}
+          </div>
+          {action ? <div className="obsidian-card-action">{action}</div> : null}
+        </header>
+      ) : null}
+      <div className="obsidian-card-content">{children}</div>
+    </section>
+  );
+}
+
+export function ObsidianBadge({
+  children,
+  variant = "neutral",
+}: {
+  children: ReactNode;
+  variant?: "success" | "warning" | "danger" | "info" | "neutral";
+}) {
+  return <span className={`obsidian-badge is-${variant}`}>{children}</span>;
+}
+
+export function PlaceholderFeatureCard({
+  title,
+  description,
+  icon: Icon = HelpCircle,
+  status = "Preparado",
+}: {
+  title: string;
+  description: string;
+  icon?: LucideIcon;
+  status?: string;
+}) {
+  return (
+    <article className="obsidian-placeholder-card">
+      <span className="obsidian-placeholder-icon"><Icon aria-hidden="true" /></span>
+      <div>
+        <ObsidianBadge>{status}</ObsidianBadge>
+        <h3>{title}</h3>
+        <p>{description}</p>
+      </div>
+    </article>
+  );
+}
+
+export function ObsidianProgressBars({
+  values,
+  labels,
+}: {
+  values: number[];
+  labels?: string[];
+}) {
+  return (
+    <div className="obsidian-bars" aria-label="Prévia visual de gráfico">
+      {values.map((value, index) => (
+        <div key={`${value}-${index}`} className="obsidian-bar-column">
+          <span style={{ height: `${Math.max(8, Math.min(100, value))}%` }} />
+          {labels?.[index] ? <small>{labels[index]}</small> : null}
+        </div>
+      ))}
+    </div>
   );
 }

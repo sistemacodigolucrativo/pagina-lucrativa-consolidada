@@ -3,11 +3,16 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { formatCurrency } from "@shared/dashboard";
-import { ChevronRight, Copy, CircleDollarSign, Link2, MousePointerClick, Percent, UsersRound } from "lucide-react";
+import { BookOpenCheck, ChevronRight, Copy, CircleDollarSign, Link2, MousePointerClick, Percent, Sparkles, Target, UsersRound } from "lucide-react";
 import { memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import {
+  ObsidianBadge,
+  ObsidianCard,
+  PlaceholderFeatureCard,
+} from "@/components/dashboard/PanelPrimitives";
 
 const menuItems: DashboardMenuItem[] = memberDashboardMenuItems;
 const overviewOnboardingStorageBase = "pagina-lucrativa.member-office-onboarding.dismissed";
@@ -96,7 +101,7 @@ export default function MemberOffice() {
   const analytics = trpc.member.analytics.useQuery({ period: "all" }, { enabled: currentPath === "/membros" });
   const referrals = trpc.member.referrals.useQuery(undefined, { enabled: currentPath === "/membros" });
   const campaigns = trpc.member.campaigns.useQuery(undefined, { enabled: currentPath === "/membros/campanhas" });
-  const academy = trpc.member.academy.useQuery(undefined, { enabled: currentPath === "/membros/academia" });
+  const academy = trpc.member.academy.useQuery(undefined, { enabled: currentPath === "/membros/academia" || currentPath === "/membros" });
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const onboardingStorageKey = useMemo(() => auth.user?.id ? `${overviewOnboardingStorageBase}.${auth.user.id}` : overviewOnboardingStorageBase, [auth.user?.id]);
 
@@ -164,6 +169,7 @@ export default function MemberOffice() {
     const conversions = analytics.data?.totals.conversions ?? 0;
     const conversionRate = visits > 0 ? (conversions / visits) * 100 : 0;
     const metricUnavailable = analytics.isError || referrals.isError;
+    const nextCourse = academy.data?.[0];
 
     return <>
       <SectionIntro eyebrow="Escritório Virtual" title="Visão geral" detail="Acompanhe os indicadores globais da sua conta e acesse rapidamente seus principais caminhos de divulgação." />
@@ -183,6 +189,53 @@ export default function MemberOffice() {
         <article><span>Taxa de conversão</span><Percent className="mt-4 size-5 text-emerald-300" /><strong>{analytics.isLoading ? "..." : analytics.isError ? "—" : `${conversionRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}</strong><small>{analytics.isError ? "Indicador indisponível" : "Resultados / visitas"}</small></article>
       </section>
       {metricUnavailable ? <p className="mt-4 rounded-xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-3 text-sm text-yellow-50">Alguns indicadores não puderam ser carregados agora. Atualize a página para tentar novamente.</p> : null}
+
+      <section className="obsidian-dashboard-grid" aria-label="Blocos visuais Obsidian integrados ao painel de membros">
+        <ObsidianCard
+          className="obsidian-card-wide"
+          eyebrow="Continuar aprendendo"
+          title={nextCourse?.title ?? "Academia preparada para sua próxima aula"}
+          description={nextCourse?.summary || "Componente visual preservado do template Obsidian. Quando houver curso publicado, ele usa os dados reais da Academia."}
+          action={<a className="obsidian-button is-primary" href={withAppBase("/membros/academia")}><BookOpenCheck aria-hidden="true" />Abrir Academia</a>}
+        >
+          <div className="obsidian-learning-card">
+            <span className="obsidian-learning-thumbnail" aria-hidden="true">{nextCourse ? "Aula" : "{{course.thumbnail}}"}</span>
+            <div>
+              <ObsidianBadge variant={nextCourse ? "success" : "neutral"}>{nextCourse ? "Publicado" : "Placeholder"}</ObsidianBadge>
+              <h3>{nextCourse?.title ?? "{{course.title}}"}</h3>
+              <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level}` : "{{course.modules}} módulos · {{course.progress}}% de progresso"}</p>
+              <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: nextCourse ? "12%" : "45%" }} /></div>
+            </div>
+          </div>
+        </ObsidianCard>
+
+        <ObsidianCard eyebrow="Central de ação" title="Atalhos da operação">
+          <div className="obsidian-action-stack">
+            <a href={withAppBase("/membros/operacao")}><Target aria-hidden="true" />Central de Divulgação</a>
+            <a href={withAppBase("/membros/como-divulgar")}><Sparkles aria-hidden="true" />Primeiros passos</a>
+            <a href={withAppBase("/membros/configuracoes")}><Link2 aria-hidden="true" />Minha página e perfil</a>
+          </div>
+        </ObsidianCard>
+      </section>
+
+      <section className="obsidian-placeholder-grid" aria-label="Placeholders preservados do template de membros">
+        <PlaceholderFeatureCard
+          icon={CircleDollarSign}
+          title="Solicitação de saque"
+          description="Placeholder visual mantido do template. O sistema atual informa adesões confirmadas e não cria saque sem backend próprio."
+        />
+        <PlaceholderFeatureCard
+          icon={BookOpenCheck}
+          title="Progresso detalhado de aulas"
+          description="Área preparada para progresso por aula quando o backend expuser essa granularidade."
+        />
+        <PlaceholderFeatureCard
+          icon={Target}
+          title="Gráfico de desempenho"
+          description="Espaço preservado para gráfico histórico real sem simular métricas inexistentes."
+        />
+      </section>
+
       <section className="office-workspace">
         <article><span className="office-eyebrow">Divulgação</span><h2>Ver campanhas</h2><p>Crie e organize campanhas de divulgação com links rastreáveis.</p><a href={withAppBase("/membros/operacao/campanhas")}>Abrir campanhas <ChevronRight size={15} /></a></article>
         <article><span className="office-eyebrow">Rede</span><h2>Ver indicados</h2><p>Consulte os vínculos diretos ativos da sua rede.</p><a href={withAppBase("/membros/rede")}>Abrir rede <ChevronRight size={15} /></a></article>

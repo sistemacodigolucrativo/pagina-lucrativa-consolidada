@@ -6,6 +6,80 @@ Clone local usado: `/home/ubuntu/pagina-lucrativa-consolidada`
 Branch inicial: `main`  
 SHA inicial: `edb0aad6dc608d9f04f9c9a73137aebea551b83a`
 
+## Implementacao dos templates Obsidian nos paineis
+
+Data: 2026-08-30
+Branch de trabalho: `layout-paineis-demo`
+SHA base da branch antes da implementacao: `b355e6e88f3161b48340a7c323c384e6d3d9a262`
+
+Fonte analisada:
+
+```text
+/home/ubuntu/untitled (4).zip
+```
+
+Conclusao da analise: Obsidian foi tratado como template/interface dos paineis, nao como projeto separado. O `App.tsx` real do Pagina Lucrativa, suas rotas autenticadas, tRPC, permissoes, autenticacao e regras de negocio foram preservados.
+
+Mapeamento registrado em:
+
+```text
+docs/obsidian-template-integration.md
+```
+
+Arquivos alterados nesta etapa:
+
+```text
+client/src/components/dashboard/PanelPrimitives.tsx
+client/src/c1-obsidian-emerald.css
+client/src/pages/AdminOffice.tsx
+client/src/pages/MemberOffice.tsx
+docs/obsidian-template-integration.md
+RelatorioGPT/relatorio.md
+```
+
+Alteracoes aplicadas:
+
+- criadas primitivas visuais Obsidian reutilizaveis no painel real;
+- cockpit administrativo recebeu blocos Obsidian de grafico/log/acoes sem remover metricas reais existentes;
+- painel de membros recebeu bloco Obsidian de continuidade da Academia usando dado real quando disponivel;
+- placeholders do template foram preservados visualmente sem backend inventado;
+- funcionalidades reais existentes permaneceram nas rotas e consultas originais.
+
+Placeholders preservados sem implementacao artificial:
+
+```text
+Filtros avancados
+Exportacao de relatorios
+Indicadores historicos
+Solicitacao de saque
+Progresso detalhado de aulas
+Grafico de desempenho
+```
+
+Validacoes executadas:
+
+```text
+pnpm check -> sucesso
+pnpm build -> sucesso
+pnpm vitest run server/adminOffice.responsive.test.ts server/memberPages.responsive.test.ts server/adminNavigation.catalog.test.ts server/memberOfficeContent.test.ts shared/memberOfficeContent.test.ts -> 10 testes passaram
+git diff --check -> sucesso
+```
+
+Observacao sobre testes gerais:
+
+```text
+pnpm test -> 209 testes passaram, 1 teste falhou por ambiente de banco.
+Falha: server/context.auth.test.ts
+Causa: Access denied for user 'ubuntu'@'localhost'
+Conclusao: falha ambiental de credencial/local DB, nao causada pela alteracao visual dos paineis.
+```
+
+Credenciais:
+
+```text
+Nenhum token, secret ou chave privada foi gravado no projeto.
+```
+
 ## Contexto
 
 O trabalho foi realizado primeiro com restricao de nao alterar o GitHub remoto. A VPS correta para o trabalho foi confirmada como `18.217.248.201`, com IP privado `172.31.22.36`.

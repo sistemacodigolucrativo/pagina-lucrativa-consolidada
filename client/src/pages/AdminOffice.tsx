@@ -5,14 +5,21 @@ import {
   BookOpenCheck,
   ChartNoAxesCombined,
   ClipboardList,
+  Download,
+  Filter,
   FileText,
   LifeBuoy,
+  MoreHorizontal,
   UsersRound,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import {
   LoadingPanel,
   MetricCard,
+  ObsidianBadge,
+  ObsidianCard,
+  ObsidianProgressBars,
+  PlaceholderFeatureCard,
   SectionHeader,
   StatePanel,
 } from "@/components/dashboard/PanelPrimitives";
@@ -30,6 +37,7 @@ export default function AdminOffice() {
   const data = overview.data;
   const currentPath = location.split("?")[0] || "/";
   const isKnownAdminPath = currentPath === "/admin" || adminMenu.some(item => item.path === currentPath);
+  const activities = trpc.admin.activities.useQuery(undefined, { enabled: isKnownAdminPath });
 
   const contentItems = content.data;
   const ticketItems = tickets.data;
@@ -60,6 +68,18 @@ export default function AdminOffice() {
           eyebrow="Console administrativo"
           title="Cockpit executivo"
           detail="Indicadores reais do sistema, conteúdo publicado e filas que exigem decisão administrativa."
+          action={
+            <div className="obsidian-action-row" aria-label="Ações visuais preservadas do template Obsidian">
+              <button type="button" className="obsidian-button is-secondary" disabled title="Placeholder visual: filtros avançados">
+                <Filter aria-hidden="true" />
+                Filtros
+              </button>
+              <button type="button" className="obsidian-button is-primary" disabled title="Placeholder visual: exportação de relatório">
+                <Download aria-hidden="true" />
+                Relatório
+              </button>
+            </div>
+          }
         />
 
         {overview.isLoading ? (
@@ -130,6 +150,64 @@ export default function AdminOffice() {
               />
             </section>
 
+            <section className="obsidian-dashboard-grid" aria-label="Blocos visuais Obsidian integrados ao painel administrativo">
+              <ObsidianCard
+                className="obsidian-card-wide"
+                eyebrow="Análise visual"
+                title="Crescimento de membros ativos"
+                description="Estrutura visual preservada do template Obsidian. A série temporal fica pronta para receber métrica histórica real quando o backend expuser essa agregação."
+              >
+                <ObsidianProgressBars values={[40, 60, 45, 80, 55, 90, 75]} labels={["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"]} />
+              </ObsidianCard>
+
+              <ObsidianCard
+                eyebrow="Log operacional"
+                title="Atividades recentes"
+                action={<button type="button" className="obsidian-icon-button" disabled aria-label="Mais ações"><MoreHorizontal aria-hidden="true" /></button>}
+              >
+                {activities.isLoading ? (
+                  <p className="obsidian-muted">Carregando atividades...</p>
+                ) : activities.data?.length ? (
+                  <div className="obsidian-activity-list">
+                    {activities.data.slice(0, 5).map(activity => (
+                      <article key={activity.id}>
+                        <span className="obsidian-activity-dot" aria-hidden="true" />
+                        <div>
+                          <p>{activity.description}</p>
+                          <time>{new Date(activity.createdAt).toLocaleString("pt-BR")}</time>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                ) : (
+                  <PlaceholderFeatureCard
+                    icon={ClipboardList}
+                    title="Sem atividade recente"
+                    description="O componente de log do Obsidian foi preservado e exibirá eventos quando houver registros administrativos."
+                    status="Aguardando dados"
+                  />
+                )}
+              </ObsidianCard>
+            </section>
+
+            <section className="obsidian-placeholder-grid" aria-label="Placeholders preservados do template administrativo">
+              <PlaceholderFeatureCard
+                icon={Filter}
+                title="Filtros avançados"
+                description="Placeholder visual mantido. Nenhuma regra de negócio foi criada enquanto não houver backend próprio."
+              />
+              <PlaceholderFeatureCard
+                icon={Download}
+                title="Exportação de relatórios"
+                description="Placeholder visual mantido para futura exportação administrativa, sem alteração nas APIs atuais."
+              />
+              <PlaceholderFeatureCard
+                icon={ChartNoAxesCombined}
+                title="Indicadores históricos"
+                description="Área preparada para séries temporais reais sem substituir os indicadores já existentes."
+              />
+            </section>
+
             <section className="office-next">
               <div>
                 <span className="office-eyebrow">Precisa de atenção</span>
@@ -137,6 +215,10 @@ export default function AdminOffice() {
                 <p>
                   {openTickets} {attentionLabel(openTickets, "ticket aberto", "tickets abertos")}, {pendingTestimonials} {attentionLabel(pendingTestimonials, "depoimento em análise", "depoimentos em análise")} e {draftContent} {attentionLabel(draftContent, "rascunho", "rascunhos")}.
                 </p>
+                <div className="obsidian-status-row">
+                  <ObsidianBadge variant={openTickets ? "warning" : "success"}>{openTickets ? "Suporte pendente" : "Suporte em dia"}</ObsidianBadge>
+                  <ObsidianBadge variant={pendingTestimonials ? "warning" : "success"}>{pendingTestimonials ? "Moderação pendente" : "Moderação em dia"}</ObsidianBadge>
+                </div>
               </div>
               <ClipboardList size={34} />
             </section>
