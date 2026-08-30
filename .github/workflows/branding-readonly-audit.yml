@@ -1,0 +1,54 @@
+name: Auditoria final de branding
+
+on:
+  push:
+    paths:
+      - ".github/workflows/branding-readonly-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Inventariar resíduos legados
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import os, re
+          root='.'
+          skip_dirs={'.git','node_modules','dist','build','coverage','.next','.turbo'}
+          exts={'.ts','.tsx','.js','.jsx','.json','.md','.yml','.yaml','.css','.html','.sh','.sql','.txt','.toml','.env'}
+          pattern=re.compile(r'Página Lucrativa|Pagina Lucrativa|página lucrativa|pagina lucrativa|pagina-lucrativa|pagina_lucrativa|paginaLucrativa|PaginaLucrativa', re.I)
+          findings={}
+          for base, dirs, files in os.walk(root):
+              dirs[:] = [d for d in dirs if d not in skip_dirs]
+              for name in files:
+                  path=os.path.join(base,name)
+                  rel=os.path.relpath(path,root)
+                  if rel=='.github/workflows/branding-readonly-audit.yml':
+                      continue
+                  if os.path.splitext(name)[1].lower() not in exts and not name.endswith('.env.example'):
+                      continue
+                  try:
+                      with open(path,'r',encoding='utf-8') as f:
+                          lines=f.readlines()
+                  except (UnicodeDecodeError, FileNotFoundError, OSError):
+                      continue
+                  hits=[]
+                  for n,line in enumerate(lines,1):
+                      if pattern.search(line):
+                          hits.append((n,line.strip()))
+                  if hits:
+                      findings[rel]=hits
+          total=sum(len(v) for v in findings.values())
+          print(f'REMAINING_UNIQUE_LINES={total}')
+          print(f'REMAINING_FILES={len(findings)}')
+          for path,hits in sorted(findings.items()):
+              print(f'FILE {path} | {len(hits)}')
+              for n,line in hits[:4]:
+                  print(f'  L{n}: {line[:240]}')
+          PY
