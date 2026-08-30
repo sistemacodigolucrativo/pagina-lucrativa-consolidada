@@ -30,7 +30,7 @@ export default function VioletaNeonActivationCard({
     <div className="violeta-neon-seal" aria-hidden="true"><span>PL</span><small>ativação</small></div>
     <div className="violeta-neon-price">R$ 50,00 <small>acesso inicial</small></div>
     <h3>Ative sua estrutura digital</h3>
-    <p>Solicite o acesso à Página Lucrativa e siga para os meios de pagamento disponíveis.</p>
+    <p>Solicite o acesso ao Código Lucrativo e siga para os meios de pagamento disponíveis.</p>
     <ul className="violeta-neon-benefits">{benefits.map(item => <li key={item}><Check size={15} /> {item}</li>)}</ul>
     <label className="application-field violeta-neon-field"><span>Nome completo</span><input name="fullName" autoComplete="name" required minLength={3} placeholder="Seu nome completo" /></label>
     <label className="application-field violeta-neon-field"><span>E-mail</span><input name="email" type="email" autoComplete="email" required maxLength={320} value={contact.email} onChange={event => onEmailChange(event.target.value)} placeholder="voce@email.com" /></label>
