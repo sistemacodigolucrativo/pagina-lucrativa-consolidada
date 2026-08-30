@@ -59,7 +59,7 @@ export const PUBLIC_SALES_SECTIONS = [
     title: "Não é apenas um curso: conhecimento, estrutura, ferramentas e aplicação trabalham juntos.",
     body: [
       "Um treinamento pode ensinar conceitos. Aqui, o aprendizado está conectado a uma estrutura digital que você pode configurar e utilizar durante a execução.",
-      "A proposta combina conhecimento, Página Lucrativa, Escritório Virtual, materiais e recursos de divulgação para que você consiga aprender e colocar o processo em prática dentro do mesmo ecossistema.",
+      "A proposta combina conhecimento, Código Lucrativo, Escritório Virtual, materiais e recursos de divulgação para que você consiga aprender e colocar o processo em prática dentro do mesmo ecossistema.",
       "Isso não elimina a necessidade de aprender, divulgar e vender. O diferencial é não precisar construir toda a infraestrutura tecnológica antes de começar.",
     ],
     defaultImage: "/comparison.png",
@@ -68,7 +68,7 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "product_real",
     eyebrow: "O produto real",
-    title: "Página Lucrativa não é apenas uma página.",
+    title: "Código Lucrativo não é apenas uma página.",
     body: [
       "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria operação.",
       "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em movimento — sem precisar começar pela construção da tecnologia.",
@@ -92,7 +92,7 @@ export const PUBLIC_SALES_SECTIONS = [
     eyebrow: "O mecanismo",
     title: "Conheça a Estrutura Digital Replicável.",
     body: [
-      "A Página Lucrativa organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
+      "O Código Lucrativo organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
       "A jornada é simples de entender: entre, receba a estrutura, personalize, aprenda, divulgue e acompanhe sua operação.",
       "Replicável significa reutilizar uma base de operação já estruturada. Não significa copiar resultados, receber dinheiro automaticamente, obter vendas garantidas ou eliminar a necessidade de execução comercial.",
     ],
@@ -105,7 +105,7 @@ export const PUBLIC_SALES_SECTIONS = [
     title: "O que você teria de montar se começasse sozinho?",
     body: [
       "Produto ou oferta, site, landing page, área do usuário, autenticação, banco de dados, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
-      "É justamente essa etapa de construção que a Página Lucrativa reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
+      "É justamente essa etapa de construção que o Código Lucrativo reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
     ],
     defaultImage: "/comparison.png",
     defaultAlt: "Comparação entre construir componentes desconectados sozinho e operar uma estrutura digital organizada",
