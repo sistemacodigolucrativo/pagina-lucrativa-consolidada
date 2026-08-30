@@ -92,7 +92,7 @@ export default function MemberGettingStarted() {
     const baseSteps = [
       {
         id: "profile" as const,
-        title: "Configure sua Página Lucrativa",
+        title: "Configure seu Código Lucrativo",
         path: "/membros/configuracoes",
         action: "Iniciar configuração",
         requirements: [
