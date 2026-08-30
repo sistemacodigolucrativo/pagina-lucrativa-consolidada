@@ -14,7 +14,7 @@ import {
 } from "@shared/publicToastSystem";
 import { withAppBase } from "@/lib/devPath";
 
-export const PUBLIC_TOAST_PREVIEW_EVENT = "pagina-lucrativa:toast-preview";
+export const PUBLIC_TOAST_PREVIEW_EVENT = "codigo-lucrativo:toast-preview";
 
 type ActiveNotice = {
   message: string;
@@ -151,7 +151,7 @@ export default function PublicSocialProofToast() {
   } as CSSProperties;
 
   return <aside className="public-social-proof-toast" style={style} role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
-    <span className="public-social-proof-toast-mark" aria-hidden="true">PL</span>
+    <span className="public-social-proof-toast-mark" aria-hidden="true">CL</span>
     <span className="public-social-proof-toast-copy">
       {showSimulationNotice && headerMessage ? <span className="public-social-proof-toast-kicker">{headerMessage}</span> : null}
       <strong>{colorizedMessage(notice.message, notice.displayName, colors.nameColor)}</strong>

@@ -11,7 +11,7 @@ describe("local storage fallback", () => {
   const previousForgeKey = process.env.BUILT_IN_FORGE_API_KEY;
 
   beforeAll(async () => {
-    tempDir = await mkdtemp(path.join(os.tmpdir(), "pagina-lucrativa-storage-"));
+    tempDir = await mkdtemp(path.join(os.tmpdir(), "codigo-lucrativo-storage-"));
     process.env.LOCAL_STORAGE_DIR = tempDir;
     delete process.env.BUILT_IN_FORGE_API_URL;
     delete process.env.BUILT_IN_FORGE_API_KEY;

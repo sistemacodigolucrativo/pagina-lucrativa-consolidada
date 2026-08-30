@@ -16,7 +16,7 @@ import {
 
 type ToastForm = { title: string; message: string; disclaimer: string; status: "draft" | "published" };
 type ColorKey = "headerColor" | "nameColor" | "messageColor" | "footerColor";
-const PUBLIC_TOAST_PREVIEW_EVENT = "pagina-lucrativa:toast-preview";
+const PUBLIC_TOAST_PREVIEW_EVENT = "codigo-lucrativo:toast-preview";
 
 function parseDisclaimer(body?: string | null) {
   if (!body) return "";
