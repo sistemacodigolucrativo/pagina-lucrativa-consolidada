@@ -27,7 +27,7 @@ describe("melhorias da página pública", () => {
     expect(app).toContain('path="/regras-comerciais" component={CommercialRulesPage}');
     expect(app).toContain('path="/contato" component={ContactPage}');
     expect(home).toContain("footerLinks");
-    expect(publicInfo).toContain("Quem está por trás da Página Lucrativa");
+    expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
     expect(publicInfo).toContain("História do projeto");
     expect(publicInfo).toContain("Origem da ideia");
     expect(publicInfo).toContain("Tempo de atuação");
