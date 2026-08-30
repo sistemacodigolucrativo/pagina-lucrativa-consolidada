@@ -100,6 +100,25 @@ pnpm vitest run server/adminOffice.responsive.test.ts server/memberPages.respons
 git diff --check -> sucesso
 ```
 
+Deploy automatico desta continuidade:
+
+```text
+commit implantado: bd568ea3431cdd4f0f95a08b83bbb650101faf83
+workflow/run: 33340558745
+resultado GitHub Actions: success
+release na VPS: /home/ubuntu/servicos/pagina-lucrativa/releases/20260830T230020Z-bd568ea3
+pagina-lucrativa.service: active
+deploy-status.json: completed, progress 100
+```
+
+Health checks apos deploy:
+
+```text
+http://127.0.0.1:3101/ -> HTTP 200
+http://18.217.248.201/ -> HTTP 200
+https://ocodigolucrativo.site/ -> HTTP 200
+```
+
 ## Contexto
 
 O trabalho foi realizado primeiro com restricao de nao alterar o GitHub remoto. A VPS correta para o trabalho foi confirmada como `18.217.248.201`, com IP privado `172.31.22.36`.
