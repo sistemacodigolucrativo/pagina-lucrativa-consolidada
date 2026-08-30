@@ -155,6 +155,7 @@ function Sidebar({
   variant = "sidebar",
   collapsible = "offcanvas",
   disableTransition = false,
+  persistentOnMobile = false,
   className,
   children,
   ...props
@@ -163,6 +164,7 @@ function Sidebar({
   variant?: "sidebar" | "floating" | "inset";
   collapsible?: "offcanvas" | "icon" | "none";
   disableTransition?: boolean;
+  persistentOnMobile?: boolean;
 }) {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
 
@@ -181,7 +183,7 @@ function Sidebar({
     );
   }
 
-  if (isMobile) {
+  if (isMobile && !persistentOnMobile) {
     return (
       <Sheet open={openMobile} onOpenChange={setOpenMobile} {...props}>
         <SheetContent
@@ -208,7 +210,7 @@ function Sidebar({
 
   return (
     <div
-      className="group peer text-sidebar-foreground hidden md:block"
+      className={cn("group peer text-sidebar-foreground", persistentOnMobile && isMobile ? "block" : "hidden md:block")}
       data-state={state}
       data-collapsible={state === "collapsed" ? collapsible : ""}
       data-variant={variant}
@@ -219,7 +221,9 @@ function Sidebar({
       <div
         data-slot="sidebar-gap"
         className={cn(
-          "relative w-(--sidebar-width) bg-transparent",
+          persistentOnMobile && isMobile
+            ? "relative w-(--sidebar-width-icon) shrink-0 bg-transparent"
+            : "relative w-(--sidebar-width) bg-transparent",
           disableTransition
             ? "transition-none"
             : "transition-[width] duration-200 ease-linear",
@@ -233,7 +237,8 @@ function Sidebar({
       <div
         data-slot="sidebar-container"
         className={cn(
-          "fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) md:flex",
+          "fixed inset-y-0 z-10 h-svh w-(--sidebar-width)",
+          persistentOnMobile && isMobile ? "flex" : "hidden md:flex",
           disableTransition
             ? "transition-none"
             : "transition-[left,right,width] duration-200 ease-linear",

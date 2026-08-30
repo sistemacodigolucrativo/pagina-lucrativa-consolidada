@@ -23,10 +23,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { useIsMobile } from "@/hooks/useMobile";
 import {
   Bell,
   ChevronDown,
@@ -149,21 +147,18 @@ function DashboardLayoutContent({
     await logout();
     setLocation("/");
   };
-  const { state, toggleSidebar, openMobile, setOpenMobile } = useSidebar();
+  const { state, setOpen } = useSidebar();
   const isCollapsed = state === "collapsed";
   const [isResizing, setIsResizing] = useState(false);
   const [groupOverrides, setGroupOverrides] = useState<Record<string, boolean>>({});
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeGroupRef = useRef<string | null>(null);
   const activePath = location || "/";
-  const activeMenuItem = menuItems.find(item => isNavigationItemActive(item.path, activePath));
   const groupedMenuItems = menuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
     const group = item.group ?? "Navegação";
     groups[group] = [...(groups[group] ?? []), item];
     return groups;
   }, {});
-  const isMobile = useIsMobile();
-  const lastTouchRef = useRef(0);
   const memberOfficeNavigation = isMemberOfficeNavigation(menuItems);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notifications = trpc.member.notifications.useQuery(undefined, {
@@ -181,27 +176,6 @@ function DashboardLayoutContent({
     if (groupOverrides[group] !== undefined) return groupOverrides[group];
     if (!memberOfficeNavigation || isCollapsed) return true;
     return items.some(item => isNavigationItemActive(item.path, activePath));
-  };
-
-  const handleSidebarDoubleInteraction = () => {
-    if (isMobile) {
-      setOpenMobile(!openMobile);
-      return;
-    }
-    toggleSidebar();
-  };
-
-  const handleSidebarTouchEnd = (event: React.TouchEvent<HTMLDivElement>) => {
-    const target = event.target as HTMLElement;
-    if (target.closest("button, a, [role='menuitem'], [data-sidebar='menu-button']")) return;
-    const now = Date.now();
-    if (now - lastTouchRef.current <= 350) {
-      event.preventDefault();
-      handleSidebarDoubleInteraction();
-      lastTouchRef.current = 0;
-      return;
-    }
-    lastTouchRef.current = now;
   };
 
   const toggleGroup = (group: string, items: DashboardMenuItem[]) => {
@@ -259,33 +233,21 @@ function DashboardLayoutContent({
 
   return (
     <>
-      <div
-        className="relative"
-        ref={sidebarRef}
-        onDoubleClick={event => {
-          const target = event.target as HTMLElement;
-          if (target.closest("button, a, [role='menuitem'], [data-sidebar='menu-button']")) return;
-          handleSidebarDoubleInteraction();
-        }}
-        onTouchEnd={handleSidebarTouchEnd}
-        aria-label="Navegação lateral: toque duas vezes em uma área livre para expandir ou recolher"
-      >
+      <div className="relative" ref={sidebarRef}>
         <Sidebar
           collapsible="icon"
+          persistentOnMobile
           className="border-r-0 transition-[width] duration-200 ease-out"
           disableTransition={isResizing}
         >
           <SidebarHeader className="h-16 justify-center">
             <div className="flex items-center gap-3 px-2 transition-all w-full">
               <button
-                onDoubleClick={event => {
-                  event.stopPropagation();
-                  handleSidebarDoubleInteraction();
-                }}
-                onClick={event => event.stopPropagation()}
-                className="h-8 w-8 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
-                aria-label="Expandir ou recolher navegação com duplo clique"
-                title="Duplo clique para expandir ou recolher"
+                type="button"
+                onClick={() => setOpen(isCollapsed)}
+                className="h-9 w-9 flex items-center justify-center hover:bg-accent rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring shrink-0"
+                aria-label={isCollapsed ? "Expandir menu" : "Recolher menu"}
+                title={isCollapsed ? "Expandir menu" : "Recolher menu"}
               >
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
@@ -396,7 +358,7 @@ function DashboardLayoutContent({
           </SidebarFooter>
         </Sidebar>
         <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
+          className={`absolute top-0 right-0 hidden w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors md:block ${isCollapsed ? "md:hidden" : ""}`}
           onMouseDown={() => {
             if (isCollapsed) return;
             setIsResizing(true);
@@ -418,20 +380,6 @@ function DashboardLayoutContent({
             </section> : null}
           </div>
         ) : null}
-        {isMobile && (
-          <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
-            <div className="flex items-center gap-2">
-              <SidebarTrigger className="h-9 w-9 rounded-lg bg-background" />
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col gap-1">
-                  <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         <main className="flex-1 p-4">{children}</main>
       </SidebarInset>
     </>
