@@ -1001,6 +1001,24 @@ export async function getPublicAffiliateProfile(slug: string) {
   return rows[0] ?? null;
 }
 
+export async function resolveDefaultAffiliateProfile() {
+  const db = await getDb();
+  if (!db || !ENV.ownerOpenId) return null;
+  const rows = await db.select({
+    userId: memberProfiles.userId,
+    slug: memberProfiles.slug,
+  }).from(users)
+    .innerJoin(memberProfiles, eq(memberProfiles.userId, users.id))
+    .where(and(eq(users.openId, ENV.ownerOpenId), eq(users.role, "admin")))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
+export async function getDefaultPublicAffiliateProfile() {
+  const defaultAffiliate = await resolveDefaultAffiliateProfile();
+  return defaultAffiliate ? getPublicAffiliateProfile(defaultAffiliate.slug) : null;
+}
+
 export async function getMemberTickets(userId: number) {
   const db = await getDb();
   if (!db) return [];
@@ -1162,12 +1180,13 @@ export async function createApplication(input: ApplicationInput, request?: Campa
   if (!db) throw new Error("O banco de dados não está disponível no momento.");
   const trackingCode = `PL-${randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
   const affiliateSlug = input.affiliateSlug ?? null;
+  const hasExplicitAffiliateSlug = input.affiliateSlugProvided === true || Boolean(affiliateSlug);
   let owner = affiliateSlug
     ? await db.select({ userId: memberProfiles.userId, slug: memberProfiles.slug }).from(memberProfiles).where(eq(memberProfiles.slug, affiliateSlug)).limit(1)
     : [];
-  if (!owner[0] && !affiliateSlug) {
-    const defaultMembers = await db.select({ userId: memberProfiles.userId, slug: memberProfiles.slug }).from(memberProfiles).innerJoin(users, eq(users.id, memberProfiles.userId)).where(eq(users.role, "user")).limit(2);
-    if (defaultMembers.length === 1) owner = defaultMembers;
+  if (!owner[0] && !hasExplicitAffiliateSlug) {
+    const defaultAffiliate = await resolveDefaultAffiliateProfile();
+    if (defaultAffiliate) owner = [defaultAffiliate];
   }
   const visitorId = readCampaignCookie(request, "pl_visitor");
   const sessionId = readCampaignCookie(request, "pl_session");

@@ -891,3 +891,64 @@ Endpoint publico HTTPS esta respondendo 200 pela nova VPS.
 Nao foi feito push novo nesta etapa.
 Nao houve alteracao de codigo da aplicacao, instalador, deploy-vps.yml ou deploy-vps.sh.
 ```
+
+## Implementacao do afiliado padrao do administrador global
+
+Objetivo:
+
+```text
+Quando a Home publica e acessada pelo dominio puro, sem ?afiliado=, o sistema resolve dinamicamente o perfil de membro do administrador global e usa esse perfil como indicador padrao.
+```
+
+Comportamento antes:
+
+```text
+createApplication() tentava fallback somente quando affiliateSlug era null.
+Esse fallback procurava membros comuns com users.role = "user" e so atribuia automaticamente quando havia exatamente um membro comum.
+A Home publica so carregava perfil de afiliado quando havia ?afiliado=SLUG na URL.
+```
+
+Comportamento depois:
+
+```text
+Afiliado explicito valido continua tendo prioridade.
+Dominio puro resolve o administrador global via ENV.ownerOpenId / OWNER_OPEN_ID.
+O perfil publico usado pela Home e o memberProfile do administrador global, quando existir.
+Pedidos criados sem afiliado explicito recebem ownerUserId/affiliateSlug do administrador global, quando ele possuir memberProfile.
+Se houver afiliado explicito inexistente, o sistema nao troca pelo admin.
+Se o admin global nao possuir memberProfile, o resolver retorna null e nao escolhe outro membro aleatorio.
+O tracking de / sem afiliado passa a registrar clique em affiliateLinkClickEvents para o admin padrao, sem criar campanha artificial.
+```
+
+Arquivos alterados:
+
+```text
+server/db.ts
+server/routers.ts
+server/_core/affiliateLinkTracking.ts
+server/_core/adminMemberManagement.ts
+shared/applications.ts
+client/src/pages/Home.tsx
+server/applications.integration.test.ts
+server/affiliateLinkTracking.test.ts
+server/publicProfile.modal.responsive.test.ts
+docs/afiliado-padrao-admin-global.md
+RelatorioGPT/relatorio.md
+```
+
+Validacoes:
+
+```text
+pnpm check -> sucesso
+pnpm test -> sucesso, 65 arquivos e 216 testes aprovados
+pnpm build -> sucesso
+git diff --check -> sucesso
+```
+
+Observacao operacional:
+
+```text
+Na VPS atual, OWNER_OPEN_ID esta presente, mas a consulta local indicou users=0 e memberProfiles=1 no banco pagina_lucrativa.
+Portanto, o teste manual real de atribuicao ao admin depende de existir usuario admin com openId correspondente e memberProfile vinculado.
+Com o estado atual do banco, o comportamento seguro esperado e resolver null, sem escolher outro membro.
+```

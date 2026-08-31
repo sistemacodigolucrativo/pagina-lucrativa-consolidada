@@ -146,16 +146,21 @@ export default function Home() {
     };
   }, [profileDetailsOpen]);
   const [, setLocation] = useLocation();
-  const affiliateSlug = normalizeAffiliateSlug(typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("afiliado"));
-  const affiliate = trpc.public.affiliateProfile.useQuery({ slug: affiliateSlug ?? "codigo-lucrativo" }, { enabled: Boolean(affiliateSlug) });
-  const publicProfileName = affiliate.data?.name || affiliate.data?.slug || affiliateSlug || "Perfil público";
-  const publicSocialLinks = affiliate.data ? [
-    ["Website", affiliate.data.websiteUrl],
-    ["Facebook", affiliate.data.facebookUrl],
-    ["Instagram", affiliate.data.instagramUrl],
-    ["Twitter", affiliate.data.twitterUrl],
-    ["Linkedin", affiliate.data.linkedinUrl],
-    ["Youtube", affiliate.data.youtubeUrl],
+  const affiliateParams = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
+  const hasExplicitAffiliate = affiliateParams?.has("afiliado") ?? false;
+  const explicitAffiliateSlug = normalizeAffiliateSlug(affiliateParams?.get("afiliado"));
+  const affiliate = trpc.public.affiliateProfile.useQuery({ slug: explicitAffiliateSlug ?? "codigo-lucrativo" }, { enabled: Boolean(explicitAffiliateSlug) });
+  const defaultAffiliate = trpc.public.defaultAffiliateProfile.useQuery(undefined, { enabled: !hasExplicitAffiliate });
+  const effectiveAffiliate = hasExplicitAffiliate ? affiliate.data : affiliate.data ?? defaultAffiliate.data;
+  const effectiveAffiliateSlug = explicitAffiliateSlug ?? (!hasExplicitAffiliate ? defaultAffiliate.data?.slug ?? null : null);
+  const publicProfileName = effectiveAffiliate?.name || effectiveAffiliate?.slug || explicitAffiliateSlug || "Perfil público";
+  const publicSocialLinks = effectiveAffiliate ? [
+    ["Website", effectiveAffiliate.websiteUrl],
+    ["Facebook", effectiveAffiliate.facebookUrl],
+    ["Instagram", effectiveAffiliate.instagramUrl],
+    ["Twitter", effectiveAffiliate.twitterUrl],
+    ["Linkedin", effectiveAffiliate.linkedinUrl],
+    ["Youtube", effectiveAffiliate.youtubeUrl],
   ].filter((entry): entry is [string, string] => Boolean(entry[1])) : [];
   const application = trpc.applications.submit.useMutation({
     onSuccess: data => {
@@ -171,7 +176,8 @@ export default function Home() {
       fullName: String(form.get("fullName") ?? ""),
       email: normalizeEmail(applicationContact.email),
       whatsapp: normalizePhone(applicationContact.whatsapp),
-      affiliateSlug,
+      affiliateSlug: effectiveAffiliateSlug,
+      affiliateSlugProvided: hasExplicitAffiliate,
     });
   }
 
@@ -194,18 +200,18 @@ export default function Home() {
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
     </header>
-    {affiliate.data && profileDetailsOpen ? <div className="affiliate-profile-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setProfileDetailsOpen(false); }}>
+    {effectiveAffiliate && profileDetailsOpen ? <div className="affiliate-profile-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setProfileDetailsOpen(false); }}>
       <section className="affiliate-profile-modal" role="dialog" aria-modal="true" aria-labelledby="affiliate-profile-modal-title">
         <button type="button" className="affiliate-profile-modal-close" aria-label="Fechar perfil público" onClick={() => setProfileDetailsOpen(false)}>×</button>
         <div className="affiliate-profile-modal-heading">
-          {affiliate.data.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-modal-avatar" /> : <div className="affiliate-profile-modal-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+          {effectiveAffiliate.photoUrl ? <img src={withAppBase(effectiveAffiliate.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-modal-avatar" /> : <div className="affiliate-profile-modal-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
           <div><span className="affiliate-profile-modal-eyebrow">Perfil público</span><h2 id="affiliate-profile-modal-title">{publicProfileName}</h2></div>
         </div>
-        {affiliate.data.bio ? <p className="affiliate-profile-modal-bio">{affiliate.data.bio}</p> : null}
+        {effectiveAffiliate.bio ? <p className="affiliate-profile-modal-bio">{effectiveAffiliate.bio}</p> : null}
         <div className="affiliate-profile-modal-details">
           {publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}><span>{label}</span><strong>{url}</strong></a>)}
-          {affiliate.data.skype ? <div><span>Skype</span><strong>{affiliate.data.skype}</strong></div> : null}
-          {affiliate.data.whatsapp ? <a href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><span>Contato</span><strong>WhatsApp</strong></a> : null}
+          {effectiveAffiliate.skype ? <div><span>Skype</span><strong>{effectiveAffiliate.skype}</strong></div> : null}
+          {effectiveAffiliate.whatsapp ? <a href={`https://wa.me/${effectiveAffiliate.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><span>Contato</span><strong>WhatsApp</strong></a> : null}
         </div>
         <button type="button" className="affiliate-profile-modal-action btn btn-ghost" onClick={() => setProfileDetailsOpen(false)}>Fechar</button>
       </section>
@@ -216,10 +222,10 @@ export default function Home() {
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            {affiliate.data ? (
+            {effectiveAffiliate ? (
               <section className="affiliate-profile-hero" aria-label="Perfil público do apresentador">
                 <div className="affiliate-profile-summary">
-                  {affiliate.data.photoUrl ? <img src={withAppBase(affiliate.data.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+                  {effectiveAffiliate.photoUrl ? <img src={withAppBase(effectiveAffiliate.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
                   <div className="affiliate-profile-summary-main">
                     <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por:</span>
                     <strong className="affiliate-profile-presenter">Apresentador(a) do Código Lucrativo</strong>
@@ -339,7 +345,7 @@ export default function Home() {
           <span className="text-[11px] text-[#7d817d]">© 2026 · Todos os direitos reservados. · <span className="text-[#03d660]">⭐ v2.0</span></span>
         </div>
         <nav className="footer-links justify-center" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}</a>)}</nav>
-        {affiliate.data?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${affiliate.data.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}
+        {effectiveAffiliate?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${effectiveAffiliate.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}
       </div>
     </footer>
     <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={30} strokeWidth={2.2} /></button></div>

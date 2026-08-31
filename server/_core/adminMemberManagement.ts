@@ -72,12 +72,17 @@ async function getControlRow(userId: number) {
   // Se o banco estiver temporariamente indisponível, não derrubamos toda a sessão;
   // operações administrativas que gravam estado continuam falhando de forma segura.
   if (!db) return null;
-  const rows = await db.select().from(managedContent).where(and(
-    eq(managedContent.resourceCategory, CONTROL_CATEGORY),
-    eq(managedContent.resourceType, String(userId)),
-    eq(managedContent.status, "published"),
-  )).orderBy(desc(managedContent.updatedAt)).limit(1);
-  return rows[0] ?? null;
+  try {
+    const rows = await db.select().from(managedContent).where(and(
+      eq(managedContent.resourceCategory, CONTROL_CATEGORY),
+      eq(managedContent.resourceType, String(userId)),
+      eq(managedContent.status, "published"),
+    )).orderBy(desc(managedContent.updatedAt)).limit(1);
+    return rows[0] ?? null;
+  } catch (error) {
+    console.warn("[AdminMemberManagement] Failed to read member control state:", error);
+    return null;
+  }
 }
 
 async function saveControl(userId: number, adminId: number, next: MemberControl) {

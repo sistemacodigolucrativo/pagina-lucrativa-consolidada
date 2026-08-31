@@ -43,6 +43,7 @@ import {
   getPublishedContent,
   getPublicSalesSectionImages,
   getAdminPublicSalesSectionImages,
+  getDefaultPublicAffiliateProfile,
   getPublicAffiliateProfile,
   getPublishedEbook,
   getPublishedEbooks,
@@ -330,6 +331,7 @@ export const appRouter = router({
   }),
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
+    defaultAffiliateProfile: publicProcedure.query(() => getDefaultPublicAffiliateProfile()),
     applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
     salesSocialProof: publicProcedure.query(() => getPublicSalesSocialProof()),

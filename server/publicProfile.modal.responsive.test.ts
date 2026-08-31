@@ -17,7 +17,7 @@ describe("public profile summary and modal", () => {
 
   it("shows only essential summary information and exposes Ver mais dialog", () => {
     expect(homeSource).toContain("affiliate-profile-avatar");
-    expect(homeSource).toContain("withAppBase(affiliate.data.photoUrl)");
+    expect(homeSource).toContain("withAppBase(effectiveAffiliate.photoUrl)");
     expect(homeSource).toContain("affiliate-profile-kicker");
     expect(homeSource).toContain("Esta estrutura está sendo apresentada por");
     expect(homeSource).toContain("publicProfileName");

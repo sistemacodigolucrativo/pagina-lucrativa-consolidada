@@ -7,6 +7,7 @@ export const applicationInputSchema = z.object({
   email: normalizedEmailZodSchema,
   whatsapp: phoneZodSchema,
   affiliateSlug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/, "Identificador de indicação inválido.").min(3).max(96).optional().nullable(),
+  affiliateSlugProvided: z.boolean().optional(),
 });
 
 export type ApplicationInput = z.infer<typeof applicationInputSchema>;

@@ -1,5 +1,5 @@
 import type { Express, NextFunction, Request, Response } from "express";
-import { recordPublicAffiliateLinkClick } from "../db";
+import { recordPublicAffiliateLinkClick, resolveDefaultAffiliateProfile } from "../db";
 import {
   getOrCreateTrackingCookie,
   getTrackingDeviceType,
@@ -22,7 +22,10 @@ export function registerAffiliateLinkTracking(app: Express) {
       }
 
       const rawSlug = req.query.afiliado;
-      const memberSlug = typeof rawSlug === "string" ? rawSlug.trim().toLowerCase() : null;
+      const hasExplicitAffiliate = Object.prototype.hasOwnProperty.call(req.query, "afiliado");
+      const explicitMemberSlug = typeof rawSlug === "string" ? rawSlug.trim().toLowerCase() : null;
+      const defaultAffiliate = !hasExplicitAffiliate ? await resolveDefaultAffiliateProfile() : null;
+      const memberSlug = explicitMemberSlug || defaultAffiliate?.slug || null;
       if (!memberSlug || !affiliateSlugPattern.test(memberSlug)) {
         next();
         return;

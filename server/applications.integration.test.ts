@@ -61,9 +61,51 @@ describe("gestão de solicitações públicas", () => {
 
   it("não usa patrocinador fallback quando o pedido informa afiliado explícito inválido", async () => {
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
-    expect(db).toContain("if (!owner[0] && !affiliateSlug)");
+    expect(db).toContain("const hasExplicitAffiliateSlug = input.affiliateSlugProvided === true || Boolean(affiliateSlug)");
+    expect(db).toContain("if (!owner[0] && !hasExplicitAffiliateSlug)");
     expect(db).toContain("affiliateSlug: owner[0]?.slug ?? null");
     expect(db).toContain("ownerUserId: owner[0]?.userId ?? null");
+  });
+
+  it("resolve o administrador global como afiliado padrão quando o pedido não informa afiliado", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const appSchema = await readFile(path.join(root, "shared/applications.ts"), "utf8");
+    expect(db).toContain("export async function resolveDefaultAffiliateProfile()");
+    expect(db).toContain("!ENV.ownerOpenId");
+    expect(db).toContain("eq(users.openId, ENV.ownerOpenId)");
+    expect(db).toContain('eq(users.role, "admin")');
+    expect(db).toContain("const defaultAffiliate = await resolveDefaultAffiliateProfile()");
+    expect(db).not.toContain('where(eq(users.role, "user")).limit(2)');
+    expect(appSchema).toContain("affiliateSlugProvided: z.boolean().optional()");
+  });
+
+  it("não cria perfil fictício nem escolhe membro aleatório quando o admin não possui memberProfile", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const resolver = db.slice(db.indexOf("export async function resolveDefaultAffiliateProfile"), db.indexOf("export async function getDefaultPublicAffiliateProfile"));
+    expect(resolver).toContain(".innerJoin(memberProfiles");
+    expect(resolver).toContain("return rows[0] ?? null");
+    expect(resolver).not.toContain("insert(memberProfiles)");
+    expect(resolver).not.toContain('eq(users.role, "user")');
+  });
+
+  it("mantém prioridade do afiliado explícito sobre o fallback administrativo", async () => {
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const createApplication = db.slice(db.indexOf("export async function createApplication"), db.indexOf("export async function getMemberAffiliateApplications"));
+    expect(createApplication).toContain("affiliateSlug\n    ? await db.select");
+    expect(createApplication.indexOf("affiliateSlug\n    ? await db.select")).toBeLessThan(createApplication.indexOf("const defaultAffiliate = await resolveDefaultAffiliateProfile()"));
+    expect(createApplication).toContain("if (!owner[0] && !hasExplicitAffiliateSlug)");
+  });
+
+  it("resolve o perfil público padrão da Home sem query string", async () => {
+    const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+    const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    expect(router).toContain("defaultAffiliateProfile: publicProcedure.query");
+    expect(db).toContain("export async function getDefaultPublicAffiliateProfile()");
+    expect(home).toContain("const hasExplicitAffiliate = affiliateParams?.has(\"afiliado\") ?? false");
+    expect(home).toContain("trpc.public.defaultAffiliateProfile.useQuery(undefined, { enabled: !hasExplicitAffiliate })");
+    expect(home).toContain("const effectiveAffiliate = hasExplicitAffiliate ? affiliate.data : affiliate.data ?? defaultAffiliate.data");
+    expect(home).toContain("affiliateSlugProvided: hasExplicitAffiliate");
   });
 
   it("mantém o perfil público do afiliado como fonte da identidade visual permitida", async () => {
@@ -78,7 +120,7 @@ describe("gestão de solicitações públicas", () => {
     expect(publicProfile).not.toContain("email: users.email");
     expect(home).toContain("affiliate-profile-hero");
     expect(home).toContain("affiliate-profile-summary");
-    expect(home).toContain("withAppBase(affiliate.data.photoUrl)");
+    expect(home).toContain("withAppBase(effectiveAffiliate.photoUrl)");
     expect(home).toContain("affiliate-profile-avatar-fallback");
     expect(home).toContain("Ver perfil");
   });
