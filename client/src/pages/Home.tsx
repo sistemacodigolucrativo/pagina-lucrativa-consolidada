@@ -1,5 +1,5 @@
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUpRight, Menu, MessageCircle, Star, X } from "lucide-react";
+import { FormEvent, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ArrowDown, ArrowUpRight, ChevronLeft, ChevronRight, Menu, MessageCircle, Star, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
@@ -102,7 +102,52 @@ function TopPromoBanner() {
   </section>;
 }
 
+function RatingStars({ rating }: { rating: number }) {
+  return <span className="rating-stars" aria-hidden="true">
+    {Array.from({ length: 5 }).map((_, index) => {
+      const fillPercent = Math.max(0, Math.min(1, rating - index)) * 100;
+      return <span key={index} className="rating-star-wrap">
+        <Star size={18} />
+        <span className="rating-star-fill" style={{ width: `${fillPercent}%` }}><Star size={18} fill="currentColor" /></span>
+      </span>;
+    })}
+  </span>;
+}
+
+const virtualOfficeSlides = [
+  { title: "Dashboard", caption: "Acompanhe sua operação em um só lugar." },
+  { title: "Campanhas", caption: "Organize seus links e materiais de divulgação." },
+  { title: "Meus pedidos", caption: "Visualize solicitações e acompanhe cada etapa." },
+  { title: "Biblioteca", caption: "Tenha seus materiais disponíveis no Escritório Virtual." },
+  { title: "Academia", caption: "Acesse conteúdos de aprendizado em uma área dedicada." },
+  { title: "Perfil", caption: "Configure sua presença pública com dados próprios." },
+];
+
 function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; imageAlt: string }) {
+  const [activeSlide, setActiveSlide] = useState(0);
+  const touchStartX = useRef<number | null>(null);
+  const currentSlide = virtualOfficeSlides[activeSlide] ?? virtualOfficeSlides[0];
+  const previousSlide = () => setActiveSlide(current => current === 0 ? virtualOfficeSlides.length - 1 : current - 1);
+  const nextSlide = () => setActiveSlide(current => current === virtualOfficeSlides.length - 1 ? 0 : current + 1);
+  const handleCarouselKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "ArrowLeft") {
+      event.preventDefault();
+      previousSlide();
+    }
+    if (event.key === "ArrowRight") {
+      event.preventDefault();
+      nextSlide();
+    }
+  };
+  const handleTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    if (touchStartX.current === null) return;
+    const deltaX = event.changedTouches[0]?.clientX ? event.changedTouches[0].clientX - touchStartX.current : 0;
+    touchStartX.current = null;
+    if (Math.abs(deltaX) < 36) return;
+    if (deltaX > 0) previousSlide();
+    else nextSlide();
+  };
+
   return <section className="sales-section structure-showcase" id="estrutura-digital" aria-labelledby="structure-showcase-title">
     <div className="shell">
       <div className="structure-showcase-heading">
@@ -111,10 +156,20 @@ function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; i
         <p>Uma composição visual da base que você personaliza, divulga e acompanha no Escritório Virtual.</p>
       </div>
       <div className="structure-showcase-stage">
-        {image ? <div className="hero-photo-wrap"><img src={image} alt={imageAlt} /><div className="photo-overlay" aria-hidden="true" /></div> : <div className="hero-photo-wrap hero-photo-empty" aria-hidden="true" />}
+        <div className="hero-photo-wrap virtual-office-carousel" role="region" aria-roledescription="carrossel" aria-label="Demonstração visual do Escritório Virtual" tabIndex={0} onKeyDown={handleCarouselKeyDown} onTouchStart={event => { touchStartX.current = event.touches[0]?.clientX ?? null; }} onTouchEnd={handleTouchEnd}>
+          {image ? <img src={image} alt={imageAlt} aria-hidden="true" /> : null}
+          <div className="photo-overlay" aria-hidden="true" />
+          <div className="virtual-office-carousel-controls" aria-label="Controles do carrossel">
+            <button type="button" onClick={previousSlide} aria-label="Ver tela anterior do Escritório Virtual"><ChevronLeft size={16} /></button>
+            <div className="virtual-office-carousel-dots" role="tablist" aria-label="Telas do Escritório Virtual">
+              {virtualOfficeSlides.map((slide, index) => <button key={slide.title} type="button" role="tab" aria-selected={index === activeSlide} aria-label={`Ver ${slide.title}`} onClick={() => setActiveSlide(index)} />)}
+            </div>
+            <button type="button" onClick={nextSlide} aria-label="Ver próxima tela do Escritório Virtual"><ChevronRight size={16} /></button>
+          </div>
+        </div>
         <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
-        <div className="sprint-stamp"><span>estrutura</span><strong>pronta<br />para operar</strong><small>personalize e comece</small></div>
-        <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>personalize<br />e acompanhe</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · campanhas · pedidos</span></div>
+        <div className="sprint-stamp" aria-live="polite"><span>tela</span><strong>{currentSlide.title}</strong><small>escritório virtual</small></div>
+        <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>{currentSlide.caption}</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · campanhas · pedidos</span></div>
       </div>
     </div>
   </section>;
@@ -182,6 +237,9 @@ export default function Home() {
   }
 
   const closeMenu = () => setMenuOpen(false);
+  const reviewCount = socialProof.data?.reviewCount ?? 0;
+  const averageRating = socialProof.data?.averageRating ?? null;
+  const formattedAverageRating = averageRating !== null ? averageRating.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : null;
 
   return <div className="sales-page reference-page">
     <header className="site-header">
@@ -262,12 +320,12 @@ export default function Home() {
       <section className="sales-section sales-social-proof" id="depoimentos">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Prova social</Eyebrow><h2>Membros reais, dados reais da plataforma.</h2></div>
-            <p>Os indicadores abaixo são carregados dos registros existentes. Depoimentos aparecem somente depois de enviados pelo membro e aprovados pela administração.</p>
+            <div><Eyebrow>Quem já faz parte</Eyebrow><h2>Pessoas construindo seus próprios resultados.</h2></div>
+            <p>Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua operação digital.</p>
           </div>
           <div className="social-proof-stats">
             <article><span>Total de membros</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.memberCount ?? 0}</strong></article>
-            <article><span>Total de avaliações</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.reviewCount ?? 0}</strong></article>
+            <article className="social-proof-rating-card"><span>Avaliação média</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : averageRating !== null && formattedAverageRating ? <div className="social-proof-rating-summary" aria-label={`Avaliação média ${formattedAverageRating} de 5 em ${reviewCount} avaliações`}><RatingStars rating={averageRating} /><strong>{formattedAverageRating} / 5</strong><small>{reviewCount} {reviewCount === 1 ? "avaliação" : "avaliações"}</small></div> : <div className="social-proof-rating-empty"><strong>Aguardando avaliações</strong><small>Assim que houver avaliações disponíveis, a média aparecerá aqui.</small></div>}</article>
           </div>
           {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : socialProof.data?.testimonials.length ? <div className="testimonial-grid">{socialProof.data.testimonials.map(item => <article key={item.id} className="testimonial-card">
             {item.photoUrl ? <img src={withAppBase(item.photoUrl)} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}

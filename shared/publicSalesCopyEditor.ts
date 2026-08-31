@@ -69,9 +69,9 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     publicOrder: 4,
     sectionSelector: ".sales-social-proof",
     fields: [
-      f("eyebrow", "Identificação", "Prova social", "text", ".eyebrow"),
-      f("title", "Título", "Membros reais, dados reais da plataforma.", "textarea", "h2"),
-      f("description", "Texto", "Os indicadores abaixo são carregados dos registros existentes. Depoimentos aparecem somente depois de enviados pelo membro e aprovados pela administração.", "textarea", ".sales-section-heading > p"),
+      f("eyebrow", "Identificação", "Quem já faz parte", "text", ".eyebrow"),
+      f("title", "Título", "Pessoas construindo seus próprios resultados.", "textarea", "h2"),
+      f("description", "Texto", "Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua operação digital.", "textarea", ".sales-section-heading > p"),
     ],
   },
   {

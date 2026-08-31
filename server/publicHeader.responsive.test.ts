@@ -57,13 +57,59 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('className="sales-section structure-showcase"');
     expect(homeSource).toContain('id="estrutura-digital"');
     expect(homeSource).toContain('className="structure-showcase-stage"');
+    expect(homeSource).toContain("virtualOfficeSlides");
+    expect(homeSource).toContain('aria-roledescription="carrossel"');
+    expect(homeSource).toContain('aria-label="Demonstração visual do Escritório Virtual"');
+    expect(homeSource).toContain('onKeyDown={handleCarouselKeyDown}');
+    expect(homeSource).toContain('onTouchStart');
+    expect(homeSource).toContain('onTouchEnd={handleTouchEnd}');
+    expect(homeSource).toContain('aria-label="Ver tela anterior do Escritório Virtual"');
+    expect(homeSource).toContain('aria-label="Ver próxima tela do Escritório Virtual"');
+    expect(homeSource).toContain('role="tablist"');
+    expect(homeSource).not.toContain("Screenshot reservado");
+    expect(homeSource).toContain("Dashboard");
+    expect(homeSource).toContain("Campanhas");
+    expect(homeSource).toContain("Meus pedidos");
+    expect(homeSource).toContain("Biblioteca");
+    expect(homeSource).toContain("Academia");
+    expect(homeSource).toContain("Perfil");
     expect(homeSource).toContain('className="sales-author-badge"');
     expect(homeSource).toContain('className="sprint-stamp"');
     expect(homeSource).toContain('className="sprint-paper-card"');
+    expect(homeSource).toContain("{currentSlide.title}");
+    expect(homeSource).toContain("{currentSlide.caption}");
     expect(homeSource).not.toContain('className="sales-hero-side');
     expect(cssSource).toContain('.structure-showcase { position: relative;');
     expect(cssSource).toContain('.structure-showcase > .shell { position: relative;');
     expect(cssSource).toContain('.structure-showcase-stage { position: relative;');
+    expect(cssSource).toContain('.virtual-office-carousel { display: grid;');
+    expect(cssSource).toContain('.virtual-office-carousel-dots button[aria-selected="true"]');
+    expect(cssSource).toContain('.sprint-stamp { container-type: inline-size;');
+    expect(cssSource).toContain('.sprint-paper-card { container-type: inline-size;');
+    expect(cssSource).toContain('font: 700 clamp(16px, 9cqw, 22px)/.98');
+  });
+
+  it("uses natural social proof heading and copy", () => {
+    expect(homeSource).toContain("<Eyebrow>Quem já faz parte</Eyebrow>");
+    expect(homeSource).not.toContain("<Eyebrow>Prova social</Eyebrow>");
+    expect(homeSource).toContain("<h2>Pessoas construindo seus próprios resultados.</h2>");
+    expect(homeSource).toContain("Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua operação digital.");
+    expect(homeSource).not.toContain("Membros reais, dados reais da plataforma.");
+    expect(homeSource).not.toContain("Os indicadores abaixo são carregados dos registros existentes.");
+    expect(homeSource).not.toContain("Depoimentos aparecem somente depois de enviados pelo membro e aprovados pela administração.");
+  });
+
+  it("shows average rating with fractional stars and review count", () => {
+    expect(homeSource).toContain("function RatingStars");
+    expect(homeSource).toContain("fillPercent");
+    expect(homeSource).toContain("social-proof-rating-card");
+    expect(homeSource).toContain("Avaliação média");
+    expect(homeSource).toContain("formattedAverageRating");
+    expect(homeSource).toContain("reviewCount === 1 ? \"avaliação\" : \"avaliações\"");
+    expect(homeSource).toContain("Aguardando avaliações");
+    expect(homeSource).not.toContain("<span>Total de avaliações</span><strong>");
+    expect(cssSource).toContain(".rating-star-fill");
+    expect(cssSource).toContain(".social-proof-rating-summary");
   });
 
   it("mounts the social proof toast once at router scope and gates private routes", () => {

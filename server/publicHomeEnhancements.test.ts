@@ -9,7 +9,7 @@ describe("melhorias da página pública", () => {
     const home = read("client/src/pages/Home.tsx");
     expect(home).toContain("salesSocialProof.useQuery");
     expect(home).toContain("Total de membros");
-    expect(home).toContain("Total de avaliações");
+    expect(home).toContain("Avaliação média");
     expect(home).toContain("Tudo o que você recebe");
     expect(home).toContain("Para quem é");
     expect(home).toContain("Para quem não é");

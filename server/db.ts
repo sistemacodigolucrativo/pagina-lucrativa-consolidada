@@ -1068,10 +1068,13 @@ export async function getPublicSalesSectionImages() {
 
 export async function getPublicSalesSocialProof() {
   const db = await getDb();
-  if (!db) return { memberCount: 0, reviewCount: 0, testimonials: [] };
+  if (!db) return { memberCount: 0, reviewCount: 0, averageRating: null, testimonials: [] };
   const [members, reviews, testimonials] = await Promise.all([
     db.select({ value: sql<number>`COUNT(*)` }).from(users).where(eq(users.role, "user")),
-    db.select({ value: sql<number>`COUNT(*)` }).from(memberTestimonials).where(and(eq(memberTestimonials.status, "approved"), sql`${memberTestimonials.rating} IS NOT NULL`)),
+    db.select({
+      count: sql<number>`COUNT(*)`,
+      average: sql<number>`AVG(${memberTestimonials.rating})`,
+    }).from(memberTestimonials).where(and(eq(memberTestimonials.status, "approved"), sql`${memberTestimonials.rating} IS NOT NULL`)),
     db.select({
       id: memberTestimonials.id,
       content: memberTestimonials.content,
@@ -1088,9 +1091,12 @@ export async function getPublicSalesSocialProof() {
       .orderBy(desc(memberTestimonials.updatedAt))
       .limit(6),
   ]);
+  const reviewCount = Number(reviews[0]?.count ?? 0);
+  const averageRating = reviewCount > 0 ? Math.round(Number(reviews[0]?.average ?? 0) * 10) / 10 : null;
   return {
     memberCount: Number(members[0]?.value ?? 0),
-    reviewCount: Number(reviews[0]?.value ?? 0),
+    reviewCount,
+    averageRating,
     testimonials: testimonials.map(item => ({
       ...item,
       rating: Math.min(5, Math.max(1, Number(item.rating ?? 0))),

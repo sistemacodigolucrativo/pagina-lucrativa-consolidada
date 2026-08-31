@@ -31,6 +31,8 @@ describe("relatos próprios de membros", () => {
     expect(router).toContain("salesSocialProof: publicProcedure.query");
     expect(db).toContain("getPublicSalesSocialProof");
     expect(db).toContain('eq(memberTestimonials.status, "approved")');
+    expect(db).toContain("AVG(${memberTestimonials.rating})");
+    expect(db).toContain("averageRating");
     expect(db).toContain("memberProfiles.photoUrl");
     expect(db).toContain("memberProfiles.city");
     expect(db).toContain("memberProfiles.state");
