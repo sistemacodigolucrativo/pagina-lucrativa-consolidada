@@ -1,0 +1,55 @@
+/* Ajuste cirúrgico do topo da Home pública.
+ * Mantém apenas o espaço necessário para o toast entre o apresentador e o primeiro texto.
+ */
+.reference-page .sales-hero {
+  padding-top: 14px;
+}
+
+.reference-page .sales-hero-copy {
+  padding-top: 0;
+}
+
+.reference-page .public-social-proof-toast-slot {
+  min-height: 0;
+  margin: 0 0 10px;
+}
+
+.reference-page .public-social-proof-toast-slot:empty {
+  display: none;
+  margin: 0;
+}
+
+.reference-page .public-social-proof-toast-slot:not(:empty) {
+  display: flex;
+  min-height: 0;
+  margin-bottom: 10px;
+}
+
+.reference-page .sales-kicker {
+  margin-top: 0;
+  margin-bottom: 18px;
+}
+
+@media (max-width: 900px) {
+  .reference-page .sales-hero {
+    padding-top: 12px;
+  }
+
+  .reference-page .public-social-proof-toast-slot:not(:empty) {
+    margin-bottom: 8px;
+  }
+}
+
+@media (max-width: 560px) {
+  .reference-page .sales-hero {
+    padding-top: 10px;
+  }
+
+  .reference-page .public-social-proof-toast-slot:not(:empty) {
+    margin-bottom: 7px;
+  }
+
+  .reference-page .sales-kicker {
+    margin-bottom: 16px;
+  }
+}
