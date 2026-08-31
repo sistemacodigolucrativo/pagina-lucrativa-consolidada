@@ -219,18 +219,14 @@
 .dashboard-inset .obsidian-preview-tile{min-width:0;padding:15px;border:1px solid var(--c1-line);border-radius:14px;background:linear-gradient(145deg,rgba(16,185,129,.035),transparent 42%),var(--c1-panel)}
 .dashboard-inset .obsidian-preview-tile h3{margin:10px 0 4px;color:var(--c1-text);font-size:15px}
 .dashboard-inset .obsidian-preview-tile p{margin:0;color:var(--c1-muted);font-size:12px}
-.dashboard-inset .obsidian-floating-preview-menu{position:fixed;top:76px;right:18px;z-index:60;width:min(340px,calc(100vw - 36px));max-height:calc(100dvh - 94px);overflow:hidden;border:1px solid rgba(96,165,250,.3);border-radius:16px;background:rgba(5,7,8,.94);box-shadow:0 24px 80px rgba(0,0,0,.48);backdrop-filter:blur(18px)}
+.dashboard-inset .obsidian-floating-preview-menu{position:fixed;right:18px;bottom:18px;z-index:60;width:min(340px,calc(100vw - 36px));max-height:min(520px,calc(100dvh - 36px));overflow:hidden;border:1px solid rgba(96,165,250,.3);border-radius:16px;background:rgba(5,7,8,.94);box-shadow:0 24px 80px rgba(0,0,0,.48);backdrop-filter:blur(18px)}
 .dashboard-inset .obsidian-floating-preview-menu header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 13px;border-bottom:1px solid var(--c1-line)}
 .dashboard-inset .obsidian-floating-preview-menu header span{color:var(--c1-info);font:800 10px/1.2 "DM Mono",monospace;letter-spacing:.14em;text-transform:uppercase}
-.dashboard-inset .obsidian-floating-preview-menu header div{display:flex;align-items:center;gap:8px}
-.dashboard-inset .obsidian-floating-preview-menu header button,.dashboard-inset .obsidian-floating-preview-toggle{display:grid;width:28px;height:28px;place-items:center;border:1px solid rgba(96,165,250,.32);border-radius:9px;background:rgba(96,165,250,.1);color:#bfdbfe;font-size:18px;font-weight:800;line-height:1}
-.dashboard-inset .obsidian-floating-preview-menu header button:hover,.dashboard-inset .obsidian-floating-preview-toggle:hover{border-color:var(--c1-line-strong);background:rgba(16,185,129,.1);color:var(--c1-emerald-bright)}
-.dashboard-inset .obsidian-floating-preview-toggle{position:fixed;top:76px;right:18px;z-index:60;box-shadow:0 16px 50px rgba(0,0,0,.42);backdrop-filter:blur(18px)}
 .dashboard-inset .obsidian-floating-preview-menu header a{color:#dce3e1;font-size:11px;font-weight:720;text-decoration:none}
-.dashboard-inset .obsidian-floating-preview-links{display:grid;gap:4px;max-height:calc(100dvh - 148px);overflow:auto;padding:8px}
-.dashboard-inset .obsidian-floating-preview-links a{display:flex;align-items:center;gap:9px;min-height:36px;border:1px solid transparent;border-radius:10px;padding:8px 9px;color:#aeb8b6;font-size:12px;font-weight:650;text-decoration:none}
-.dashboard-inset .obsidian-floating-preview-links a:hover{border-color:var(--c1-line-strong);background:rgba(16,185,129,.075);color:var(--c1-emerald-bright)}
-.dashboard-inset .obsidian-floating-preview-links a.is-active{border-color:rgba(96,165,250,.32);background:rgba(96,165,250,.1);color:#bfdbfe}
+.dashboard-inset .obsidian-floating-preview-menu div{display:grid;gap:4px;max-height:440px;overflow:auto;padding:8px}
+.dashboard-inset .obsidian-floating-preview-menu div a{display:flex;align-items:center;gap:9px;min-height:36px;border:1px solid transparent;border-radius:10px;padding:8px 9px;color:#aeb8b6;font-size:12px;font-weight:650;text-decoration:none}
+.dashboard-inset .obsidian-floating-preview-menu div a:hover{border-color:var(--c1-line-strong);background:rgba(16,185,129,.075);color:var(--c1-emerald-bright)}
+.dashboard-inset .obsidian-floating-preview-menu div a.is-active{border-color:rgba(96,165,250,.32);background:rgba(96,165,250,.1);color:#bfdbfe}
 .dashboard-inset .obsidian-floating-preview-menu svg{width:14px;height:14px;flex:0 0 auto}
 
 /* Tablet: preserve density without squeezing operational content. */
@@ -259,9 +255,8 @@
  .dashboard-inset .obsidian-action-row .obsidian-button{flex:1}
  .dashboard-inset .obsidian-learning-card{grid-template-columns:1fr}
  .dashboard-inset .obsidian-learning-thumbnail{height:120px}
- .dashboard-inset .obsidian-floating-preview-menu{top:70px;right:12px;width:calc(100vw - 24px);max-height:calc(100dvh - 82px)}
- .dashboard-inset .obsidian-floating-preview-toggle{top:70px;right:12px}
- .dashboard-inset .obsidian-floating-preview-links{max-height:calc(100dvh - 135px)}
+ .dashboard-inset .obsidian-floating-preview-menu{right:12px;bottom:12px;width:calc(100vw - 24px);max-height:46dvh}
+ .dashboard-inset .obsidian-floating-preview-menu div{max-height:calc(46dvh - 53px)}
 }
 @media(max-width:430px){
  .dashboard-inset .dashboard-main :where(.gap-6){gap:1rem}
