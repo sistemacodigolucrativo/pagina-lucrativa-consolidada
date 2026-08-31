@@ -9,6 +9,7 @@ import { withAppBase } from "./lib/devPath";
 import "./index.css";
 import "./dashboard-premium.css";
 import "./c1-obsidian-emerald.css";
+import "./home-spacing-fixes.css";
 
 const queryClient = new QueryClient();
 
