@@ -143,6 +143,17 @@
 .dashboard-inset .dashboard-main :where(.border-dashed){border-style:dashed!important;border-color:rgba(52,211,153,.28)!important}
 .dashboard-inset .dashboard-main :where(.visual-editor-shell){color:var(--c1-text)}
 .dashboard-inset .dashboard-main :where(.visual-editor-toolbar,[data-visual-editor-ui]){border-color:var(--c1-line);background:var(--c1-panel)}
+.dashboard-inset .dashboard-form-heading{container-type:inline-size;min-width:0}
+.dashboard-inset .dashboard-form-heading>svg{flex:0 0 auto}
+.dashboard-inset .dashboard-responsive-title{display:flex;min-width:0;flex:1 1 auto;flex-wrap:nowrap;align-items:baseline;gap:.42em;overflow:hidden;color:var(--c1-text)!important;font-size:clamp(.95rem,3.2cqi,1.125rem);line-height:1.18;letter-spacing:-.035em;text-wrap:balance}
+.dashboard-inset .dashboard-responsive-title>span{min-width:0}
+.dashboard-inset .dashboard-responsive-title-phrase{white-space:nowrap}
+@container (max-width: 420px){
+ .dashboard-inset .dashboard-responsive-title{font-size:clamp(.82rem,4.4cqi,.98rem);gap:.32em}
+}
+@container (max-width: 330px){
+ .dashboard-inset .dashboard-responsive-title{font-size:.78rem}
+}
 
 /* Obsidian template primitives integrated into the real panels. */
 .dashboard-inset .obsidian-action-row{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end}

@@ -150,6 +150,35 @@ pnpm build -> sucesso
 git diff --check -> sucesso
 ```
 
+## Correcao de responsividade de texto por container
+
+Data: 2026-08-31
+
+Problema observado: o titulo `Novo conteúdo — Biblioteca de Recursos` quebrava visualmente antes de `Recursos`, mesmo quando ainda havia ajuste possivel de tamanho dentro do container.
+
+Correcao aplicada:
+
+- o titulo do formulario de publicacoes foi separado em trechos sem alterar o texto exibido;
+- a frase `Biblioteca de Recursos` passou a ser preservada como unidade visual;
+- adicionada classe de titulo responsivo com `container-type: inline-size`;
+- fonte passa a reduzir conforme a largura do container antes de quebrar de forma inadequada.
+
+Arquivos alterados:
+
+```text
+client/src/pages/AdminPublications.tsx
+client/src/c1-obsidian-emerald.css
+RelatorioGPT/relatorio.md
+```
+
+Validacoes:
+
+```text
+pnpm check -> sucesso
+pnpm build -> sucesso
+git diff --check -> sucesso
+```
+
 ## Contexto
 
 O trabalho foi realizado primeiro com restricao de nao alterar o GitHub remoto. A VPS correta para o trabalho foi confirmada como `18.217.248.201`, com IP privado `172.31.22.36`.

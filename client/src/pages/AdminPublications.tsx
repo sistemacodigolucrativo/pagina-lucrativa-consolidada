@@ -30,6 +30,15 @@ function blankForm(kind: ContentKind): PublicationForm { return { kind, title: "
 function isGoogleDriveUrl(value: string) { try { const url = new URL(value); return url.protocol === "https:" && googleDriveHosts.has(url.hostname.toLowerCase()); } catch { return false; } }
 function friendlyPublicationError(message: string) { if (message.includes("Google Drive") || message.includes("resourceUrl") || message.includes("invalid_string")) return message.includes("Informe o link") ? missingGoogleDriveUrlMessage : googleDriveUrlMessage; return message; }
 function statusLabel(status: ContentStatus) { return status === "published" ? "Publicado" : status === "archived" ? "Arquivado" : "Rascunho"; }
+function FormTitle({ editing, title }: { editing: boolean; title: string }) {
+  return (
+    <h2 className="dashboard-responsive-title font-medium">
+      <span>{editing ? "Editar" : "Novo conteúdo"}</span>
+      <span aria-hidden="true">—</span>
+      <span className="dashboard-responsive-title-phrase">{title}</span>
+    </h2>
+  );
+}
 
 export default function AdminPublications() {
   const config = currentConfig();
@@ -78,7 +87,7 @@ export default function AdminPublications() {
     <header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{config.eyebrow}</span><h1 className="text-3xl font-semibold text-white">{config.title}</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">{config.description}</p></header>
     <section className="grid gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       <form onSubmit={submit} className="space-y-4 rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
-        <div className="flex items-center gap-2 text-white"><FilePenLine className="size-5 text-emerald-300" /><h2 className="font-medium">{editingId ? `Editar ${config.title}` : `Novo conteúdo — ${config.title}`}</h2></div>
+        <div className="dashboard-form-heading flex items-center gap-2 text-white"><FilePenLine className="size-5 text-emerald-300" /><FormTitle editing={Boolean(editingId)} title={config.title} /></div>
         <label className="block text-sm text-zinc-200">Estado<select value={form.status} onChange={event => setForm({ ...form, status: event.target.value as ContentStatus })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white"><option value="draft">Rascunho</option><option value="published">Publicado</option><option value="archived">Arquivado</option></select></label>
         <label className="block text-sm text-zinc-200">Título<input required value={form.title} onChange={event => setForm({ ...form, title: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" /></label>
         <label className="block text-sm text-zinc-200">Resumo / descrição breve<textarea value={form.summary} onChange={event => setForm({ ...form, summary: event.target.value })} className="mt-1 min-h-20 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" /></label>
