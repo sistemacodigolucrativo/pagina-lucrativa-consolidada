@@ -5,6 +5,8 @@ import { PUBLIC_SALES_COPY_SECTIONS, type PublicSalesCopyOverrides } from "@shar
 type Point = { x?: number; y?: number };
 type FloatingLayout = Partial<Record<"desktop" | "tablet" | "mobile", Partial<Record<"fab" | "cta" | "toast", Point>>>>;
 
+const deprecatedTestimonialsEmptyCopy = "Depoimentos aprovados com avaliação aparecerão aqui assim que estiverem disponíveis.";
+
 function sectionRoot(section: (typeof PUBLIC_SALES_COPY_SECTIONS)[number]) {
   if (typeof document === "undefined") return null;
   if (typeof section.referenceCopyIndex === "number") {
@@ -45,6 +47,13 @@ function applyOverrides(overrides: PublicSalesCopyOverrides) {
       if (target.textContent !== value) target.textContent = value;
     }
   }
+}
+
+function removeDeprecatedPublicTestimonialsCopy() {
+  const candidates = document.querySelectorAll<HTMLElement>(".sales-social-proof .social-proof-empty");
+  candidates.forEach(element => {
+    if (element.textContent?.trim() === deprecatedTestimonialsEmptyCopy) element.remove();
+  });
 }
 
 function breakpointForWidth(width: number): "desktop" | "tablet" | "mobile" {
@@ -90,6 +99,7 @@ export default function PublicSalesCopyRuntime() {
         if (!cancelled) {
           applyOverrides(overrides);
           applyFloatingLayout(floatingLayout);
+          removeDeprecatedPublicTestimonialsCopy();
         }
       });
     };
