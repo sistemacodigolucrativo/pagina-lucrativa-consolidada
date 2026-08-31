@@ -10,7 +10,7 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Capacitação" },
   { icon: BookOpenCheck, label: "E-books", path: "/admin/ebooks", group: "Capacitação" },
   { icon: LifeBuoy, label: "Suporte", path: "/admin/suporte", group: "Relacionamento" },
-  { icon: FileText, label: "Depoimentos", path: "/admin/relatos", group: "Relacionamento" },
+  { icon: FileText, label: "Agradecimentos", path: "/admin/relatos", group: "Relacionamento" },
   { icon: ImagePlus, label: "Configurar Seções", path: "/admin/imagens", group: "Sistema" },
   { icon: LayoutTemplate, label: "Preview", path: "/preview", group: "Sistema" },
   { icon: Bell, label: "Toast", path: "/admin/toast", group: "Sistema" },
