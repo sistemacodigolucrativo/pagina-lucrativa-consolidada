@@ -9,6 +9,14 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import {
+  isObsidianPreviewEnabled,
+  obsidianPreviewCourses,
+  obsidianPreviewEarnings,
+  obsidianPreviewEbooks,
+  obsidianPreviewMemberMetrics,
+  obsidianPreviewNetwork,
+} from "@/lib/obsidianPreviewData";
+import {
   ObsidianBadge,
   ObsidianCard,
   PlaceholderFeatureCard,
@@ -94,6 +102,7 @@ function OverviewOnboardingModal({ open, onDismiss }: { open: boolean; onDismiss
 export default function MemberOffice() {
   const [location] = useLocation();
   const currentPath = location.split("?")[0] || "/";
+  const previewEnabled = isObsidianPreviewEnabled();
   const forceTour = location.includes("tour=1") || (typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tour") === "1");
   const auth = useAuth();
   const needsOverview = ["/membros", "/membros/ganhos", "/membros/configuracoes"].includes(currentPath);
@@ -138,8 +147,8 @@ export default function MemberOffice() {
   };
 
   const renderBody = () => {
-    if (needsOverview && overview.isLoading) return <LoadingPanel />;
-    if (needsOverview && overview.isError) return <QueryState title="Não foi possível carregar a visão geral." message="Atualize a página para tentar novamente. Nenhum indicador foi apresentado como zero enquanto a consulta estava indisponível." />;
+    if (!previewEnabled && needsOverview && overview.isLoading) return <LoadingPanel />;
+    if (!previewEnabled && needsOverview && overview.isError) return <QueryState title="Não foi possível carregar a visão geral." message="Atualize a página para tentar novamente. Nenhum indicador foi apresentado como zero enquanto a consulta estava indisponível." />;
     const data = overview.data;
 
     if (currentPath === "/membros/campanhas" && campaigns.isLoading) return <LoadingPanel />;
@@ -149,8 +158,9 @@ export default function MemberOffice() {
       const confirmedApplications = data?.recentApplications?.filter(application => application.paymentStatus === "confirmed") ?? [];
       return <><SectionIntro eyebrow="Relatório de adesões" title="Ganhos e extrato de adesões" detail="Acompanhe os pagamentos confirmados atribuídos ao seu Código Lucrativo." /><div className="office-balance"><span>Valor das adesões confirmadas</span><strong>{formatCurrency(data?.confirmedApplicationValueCents ?? 0)}</strong><p>Valor informativo dos pagamentos confirmados diretamente entre comprador e patrocinador. A plataforma não mantém saldo interno nem processa saques.</p></div>{confirmedApplications.length ? <div className="office-list">{confirmedApplications.map(application => <article key={application.id}><div><h3>{application.fullName}</h3><p>{application.whatsapp}</p></div><time className="text-sm text-zinc-400">{new Date(application.updatedAt).toLocaleDateString("pt-BR")}</time></article>)}</div> : <section className="office-empty"><span className="office-empty-mark">PL</span><h2>Sem adesões confirmadas por enquanto.</h2><p>Quando um pagamento for confirmado, ele aparecerá automaticamente neste relatório.</p></section>}</>;
     }
-    if (currentPath === "/membros/academia" && academy.isLoading) return <LoadingPanel />;
-    if (currentPath === "/membros/academia" && academy.isError) return <QueryState title="Não foi possível carregar os cursos." message="Atualize a página para tentar novamente. O painel não assumirá que não há cursos enquanto a consulta estiver indisponível." />;
+    if (currentPath === "/membros/academia" && !previewEnabled && academy.isLoading) return <LoadingPanel />;
+    if (currentPath === "/membros/academia" && !previewEnabled && academy.isError) return <QueryState title="Não foi possível carregar os cursos." message="Atualize a página para tentar novamente. O painel não assumirá que não há cursos enquanto a consulta estiver indisponível." />;
+    if (currentPath === "/membros/academia" && previewEnabled) return <><SectionIntro eyebrow="Arquivo Z" title="Cursos e e-books — prévia povoada" detail="Dados temporários do template Obsidian para validação visual da área de capacitação." /><div className="office-course-grid">{obsidianPreviewCourses.map(course => <article key={course.id}><span>{course.status}</span><h2>{course.title}</h2><p>{course.modules} módulos · {course.students.toLocaleString("pt-BR")} alunos</p><footer><small>{course.progress}%</small><span>{course.thumbnail}</span></footer></article>)}</div><section className="obsidian-preview-grid is-compact">{obsidianPreviewEbooks.map(ebook => <article key={ebook.id} className="obsidian-preview-tile"><ObsidianBadge variant={ebook.status === "Publicado" ? "success" : "warning"}>{ebook.status}</ObsidianBadge><h3>{ebook.title}</h3><p>{ebook.category}</p></article>)}</section></>;
     if (currentPath === "/membros/academia") return <><SectionIntro eyebrow="Academia de execução" title="Aprenda e aplique" detail="Cursos publicados e progresso individual para transformar estudo em ações da sua operação digital." />{academy.data?.length ? <div className="office-course-grid">{academy.data.map(course => <article key={course.id}><span>{course.level}</span><h2>{course.title}</h2><p>{course.summary || "Conteúdo em preparação."}</p><footer><small>{course.durationMinutes} min</small><span>Disponível em breve</span></footer></article>)}</div> : <section className="office-empty"><span className="office-empty-mark">PL</span><h2>A área de estudo está sendo preparada.</h2><p>Os conteúdos publicados pela administração aparecerão aqui, organizados por etapa e tema.</p></section>}</>;
     if (currentPath === "/membros/rede") return <ModulePanel detail={{ eyebrow: "Minha operação", title: "Minha rede direta", detail: "Consulte o patrocinador e os indicados diretos vinculados à sua conta, com privacidade e rastreabilidade.", notes: ["A rede exibida representa vínculos diretos registrados pela operação.", "Indicação não significa venda, pagamento ou ganho automático."] }} />;
     if (currentPath === "/membros/materiais") return <ModulePanel detail={{ eyebrow: "Biblioteca de Recursos", title: "Biblioteca de Recursos", detail: "Acesse recursos publicados para apoiar sua divulgação e sua rotina.", notes: ["Os itens aparecem conforme publicação administrativa.", "Use cada recurso de acordo com sua licença e finalidade."] }} />;
@@ -164,15 +174,32 @@ export default function MemberOffice() {
     }
 
     const profileSlug = data?.profile?.slug ?? "";
-    const affiliateLink = profileSlug ? buildAffiliateLink(profileSlug) : "";
-    const visits = analytics.data?.totals.clicks ?? 0;
-    const conversions = analytics.data?.totals.conversions ?? 0;
+    const affiliateLink = previewEnabled ? buildAffiliateLink("demo-seed-membro-1") : profileSlug ? buildAffiliateLink(profileSlug) : "";
+    const visits = previewEnabled ? 2840 : analytics.data?.totals.clicks ?? 0;
+    const conversions = previewEnabled ? 247 : analytics.data?.totals.conversions ?? 0;
     const conversionRate = visits > 0 ? (conversions / visits) * 100 : 0;
-    const metricUnavailable = analytics.isError || referrals.isError;
-    const nextCourse = academy.data?.[0];
+    const metricUnavailable = !previewEnabled && (analytics.isError || referrals.isError);
+    const nextCourse = previewEnabled ? obsidianPreviewCourses[1] : academy.data?.[0];
+    const nextCourseTitle = nextCourse?.title ?? "Academia preparada para sua próxima aula";
+    const nextCourseDescription = previewEnabled
+      ? "Mock temporário do arquivo Z para validar o bloco de curso com conteúdo preenchido."
+      : academy.data?.[0]?.summary || "Componente visual preservado do template Obsidian. Quando houver curso publicado, ele usa os dados reais da Academia.";
+    const nextCourseMeta = previewEnabled
+      ? `${obsidianPreviewCourses[1].modules} módulos · ${obsidianPreviewCourses[1].students.toLocaleString("pt-BR")} alunos`
+      : academy.data?.[0]
+        ? `${academy.data[0].durationMinutes} min · ${academy.data[0].level}`
+        : "{{course.modules}} módulos · {{course.progress}}% de progresso";
+    const nextCourseProgress = previewEnabled ? obsidianPreviewCourses[1].progress : academy.data?.[0] ? 12 : 45;
 
     return <>
       <SectionIntro eyebrow="Escritório Virtual" title="Visão geral" detail="Acompanhe os indicadores globais da sua conta e acesse rapidamente seus principais caminhos de divulgação." />
+      {previewEnabled ? (
+        <section className="obsidian-preview-banner" aria-label="Modo de prévia Obsidian">
+          <ObsidianBadge variant="info">Prévia Obsidian ativa</ObsidianBadge>
+          <p>Mocks temporários do template carregados apenas no frontend para você validar o painel povoado. Banco e dados reais não foram alterados.</p>
+          <a href="?obsidianPreview=0">Desativar prévia</a>
+        </section>
+      ) : null}
       <section className="mt-7 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-5 sm:p-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="min-w-0">
@@ -183,10 +210,10 @@ export default function MemberOffice() {
         </div>
       </section>
       <section className="office-stat-grid office-overview-stats">
-        <article><span>Ganhos totais</span><CircleDollarSign className="mt-4 size-5 text-emerald-300" /><strong>{formatCurrency(data?.confirmedApplicationValueCents ?? 0)}</strong><small>Pagamentos confirmados</small></article>
-        <article><span>Indicados</span><UsersRound className="mt-4 size-5 text-emerald-300" /><strong>{referrals.isLoading ? "..." : referrals.isError ? "—" : referrals.data?.activeCount ?? 0}</strong><small>{referrals.isError ? "Indicador indisponível" : "Indicações diretas ativas"}</small></article>
-        <article><span>Visitas</span><MousePointerClick className="mt-4 size-5 text-emerald-300" /><strong>{analytics.isLoading ? "..." : analytics.isError ? "—" : visits}</strong><small>{analytics.isError ? "Indicador indisponível" : "Link principal + campanhas"}</small></article>
-        <article><span>Taxa de conversão</span><Percent className="mt-4 size-5 text-emerald-300" /><strong>{analytics.isLoading ? "..." : analytics.isError ? "—" : `${conversionRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}</strong><small>{analytics.isError ? "Indicador indisponível" : "Resultados / visitas"}</small></article>
+        <article><span>Ganhos totais</span><CircleDollarSign className="mt-4 size-5 text-emerald-300" /><strong>{previewEnabled ? obsidianPreviewMemberMetrics.balance : formatCurrency(data?.confirmedApplicationValueCents ?? 0)}</strong><small>Pagamentos confirmados</small></article>
+        <article><span>Indicados</span><UsersRound className="mt-4 size-5 text-emerald-300" /><strong>{previewEnabled ? obsidianPreviewNetwork.length : referrals.isLoading ? "..." : referrals.isError ? "—" : referrals.data?.activeCount ?? 0}</strong><small>{referrals.isError && !previewEnabled ? "Indicador indisponível" : "Indicações diretas ativas"}</small></article>
+        <article><span>Visitas</span><MousePointerClick className="mt-4 size-5 text-emerald-300" /><strong>{previewEnabled ? obsidianPreviewMemberMetrics.visits : analytics.isLoading ? "..." : analytics.isError ? "—" : visits}</strong><small>{analytics.isError && !previewEnabled ? "Indicador indisponível" : "Link principal + campanhas"}</small></article>
+        <article><span>Taxa de conversão</span><Percent className="mt-4 size-5 text-emerald-300" /><strong>{previewEnabled ? obsidianPreviewMemberMetrics.conversion : analytics.isLoading ? "..." : analytics.isError ? "—" : `${conversionRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}</strong><small>{analytics.isError && !previewEnabled ? "Indicador indisponível" : "Resultados / visitas"}</small></article>
       </section>
       {metricUnavailable ? <p className="mt-4 rounded-xl border border-yellow-300/25 bg-yellow-300/10 px-4 py-3 text-sm text-yellow-50">Alguns indicadores não puderam ser carregados agora. Atualize a página para tentar novamente.</p> : null}
 
@@ -194,8 +221,8 @@ export default function MemberOffice() {
         <ObsidianCard
           className="obsidian-card-wide"
           eyebrow="Continuar aprendendo"
-          title={nextCourse?.title ?? "Academia preparada para sua próxima aula"}
-          description={nextCourse?.summary || "Componente visual preservado do template Obsidian. Quando houver curso publicado, ele usa os dados reais da Academia."}
+          title={nextCourseTitle}
+          description={nextCourseDescription}
           action={<a className="obsidian-button is-primary" href={withAppBase("/membros/academia")}><BookOpenCheck aria-hidden="true" />Abrir Academia</a>}
         >
           <div className="obsidian-learning-card">
@@ -203,8 +230,8 @@ export default function MemberOffice() {
             <div>
               <ObsidianBadge variant={nextCourse ? "success" : "neutral"}>{nextCourse ? "Publicado" : "Placeholder"}</ObsidianBadge>
               <h3>{nextCourse?.title ?? "{{course.title}}"}</h3>
-              <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level}` : "{{course.modules}} módulos · {{course.progress}}% de progresso"}</p>
-              <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: nextCourse ? "12%" : "45%" }} /></div>
+              <p>{nextCourseMeta}</p>
+              <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: `${nextCourseProgress}%` }} /></div>
             </div>
           </div>
         </ObsidianCard>
@@ -235,6 +262,35 @@ export default function MemberOffice() {
           description="Espaço preservado para gráfico histórico real sem simular métricas inexistentes."
         />
       </section>
+
+      {previewEnabled ? (
+        <section className="obsidian-preview-grid" aria-label="Dados temporários de população visual do painel de membros">
+          <ObsidianCard eyebrow="Arquivo Y" title="Métricas do dashboard">
+            <div className="obsidian-preview-list">
+              <article><div><strong>Receita mensal</strong><span>{obsidianPreviewMemberMetrics.monthlyRevenue}</span></div><ObsidianBadge variant="success">Ativo</ObsidianBadge></article>
+              <article><div><strong>Cursos ativos</strong><span>{obsidianPreviewMemberMetrics.activeCourses} trilhas</span></div><ObsidianBadge variant="info">Academia</ObsidianBadge></article>
+              <article><div><strong>Conversão</strong><span>{obsidianPreviewMemberMetrics.conversion}</span></div><ObsidianBadge variant="warning">Prévia</ObsidianBadge></article>
+            </div>
+          </ObsidianCard>
+
+          <ObsidianCard eyebrow="Arquivo X" title="Rede e ganhos">
+            <div className="obsidian-preview-list">
+              {obsidianPreviewNetwork.map(member => (
+                <article key={member.id}>
+                  <div><strong>{member.name}</strong><span>Nível {member.level} · {member.sales} vendas</span></div>
+                  <ObsidianBadge variant={member.status === "Ativo" ? "success" : "neutral"}>{member.status}</ObsidianBadge>
+                </article>
+              ))}
+              {obsidianPreviewEarnings.slice(0, 2).map(earning => (
+                <article key={earning.id}>
+                  <div><strong>{earning.amount}</strong><span>{earning.date} · {earning.method}</span></div>
+                  <ObsidianBadge variant={earning.status === "Pago" ? "success" : "warning"}>{earning.status}</ObsidianBadge>
+                </article>
+              ))}
+            </div>
+          </ObsidianCard>
+        </section>
+      ) : null}
 
       <section className="office-workspace">
         <article><span className="office-eyebrow">Divulgação</span><h2>Ver campanhas</h2><p>Crie e organize campanhas de divulgação com links rastreáveis.</p><a href={withAppBase("/membros/operacao/campanhas")}>Abrir campanhas <ChevronRight size={15} /></a></article>
