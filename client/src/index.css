@@ -196,8 +196,7 @@ img { display: block; max-width: 100%; }
 .sales-grid-glow { position: absolute; right: 8%; top: 23%; width: 420px; height: 420px; border-radius: 50%; opacity: .48; background: radial-gradient(circle, rgba(3, 214, 96, .22), transparent 66%); filter: blur(10px); }
 .sales-hero-grid { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1fr); align-items: center; }
 .sales-hero-copy { max-width: 780px; }
-.public-social-proof-toast-slot:empty { display: none; }
-.public-social-proof-toast-slot:not(:empty) { display: flex; width: min(360px, 100%); margin: 0 0 18px; }
+.public-social-proof-toast-slot { display: flex; align-items: center; width: min(360px, 100%); min-height: 62px; margin: 0 0 28px; }
 .sales-kicker { max-width: 470px; margin-bottom: 25px; color: var(--muted); font: 11px/1.6 "DM Mono", monospace; letter-spacing: .1em; text-transform: uppercase; overflow-wrap: normal; }
 .sales-kicker-tail { white-space: nowrap; }
 .sales-kicker::before { content: ""; display: inline-block; width: 28px; height: 1px; margin: 0 10px 4px 0; background: var(--gold); }
@@ -561,7 +560,7 @@ img { display: block; max-width: 100%; }
   .nav-links { gap: 0; }
   .nav-links a { padding: 13px 12px; }
   .nav-actions .btn { min-height: 40px; padding: 11px 13px; }
-  .sales-hero { min-height: auto; padding: 38px 0 70px; }
+  .sales-hero { min-height: auto; padding: 30px 0 70px; }
   .affiliate-profile-hero { padding: 11px 0; }
   .affiliate-profile-hero .affiliate-profile-summary { gap: 9px; margin-left: 0; }
   .affiliate-profile-avatar { width: 42px; height: 42px; border-radius: 9px; }

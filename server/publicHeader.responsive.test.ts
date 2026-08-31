@@ -125,8 +125,10 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).toContain('role="status"');
     expect(homeSource).toContain('id="public-social-proof-toast-slot"');
     expect(homeSource.indexOf('id="public-social-proof-toast-slot"')).toBeLessThan(homeSource.indexOf('className="sales-kicker"'));
-    expect(cssSource).toContain('.public-social-proof-toast-slot:empty { display: none; }');
-    expect(cssSource).toContain('.public-social-proof-toast-slot:not(:empty)');
+    expect(cssSource).toContain('.public-social-proof-toast-slot { display: flex; align-items: center;');
+    expect(cssSource).toContain('min-height: 62px; margin: 0 0 28px;');
+    expect(cssSource).not.toContain('.public-social-proof-toast-slot:empty');
+    expect(cssSource).not.toContain('.public-social-proof-toast-slot:not(:empty)');
     expect(cssSource).toContain('.public-social-proof-toast { position: fixed;');
     expect(socialProofSource).toContain('public-social-proof-toast-inline');
     expect(socialProofSource).not.toContain('top: 92px');
@@ -164,7 +166,7 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.mobile-menu-button { display: none; flex: 0 0 auto;');
     expect(cssSource).toContain('margin-left: auto;');
     expect(cssSource).toContain('  .mobile-menu-button { display: inline-flex; }');
-    expect(cssSource).toContain('  .sales-hero { min-height: auto; padding: 38px 0 70px; }');
+    expect(cssSource).toContain('  .sales-hero { min-height: auto; padding: 30px 0 70px; }');
   });
 
   it("loads the edited promo banner through the environment-aware app base", () => {
