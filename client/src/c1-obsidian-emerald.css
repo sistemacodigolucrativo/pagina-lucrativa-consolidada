@@ -205,20 +205,6 @@
 .dashboard-inset .obsidian-action-stack a{display:flex;align-items:center;gap:10px;min-height:44px;border:1px solid var(--c1-line);border-radius:12px;padding:11px 12px;color:#dce3e1;background:rgba(255,255,255,.018);font-size:13px;font-weight:650}
 .dashboard-inset .obsidian-action-stack a:hover{border-color:var(--c1-line-strong);background:rgba(16,185,129,.075);color:var(--c1-emerald-bright)}
 .dashboard-inset .obsidian-action-stack svg{width:16px;height:16px;color:var(--c1-emerald-bright)}
-.dashboard-inset .obsidian-preview-banner{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:16px;padding:12px 14px;border:1px solid rgba(96,165,250,.28);border-radius:14px;background:rgba(96,165,250,.07)}
-.dashboard-inset .obsidian-preview-banner p{margin:0;flex:1 1 260px;color:#dce3e1;font-size:12px;line-height:1.5}
-.dashboard-inset .obsidian-preview-banner a{color:var(--c1-info);font-size:12px;font-weight:720;text-decoration:none}
-.dashboard-inset .obsidian-preview-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:16px}
-.dashboard-inset .obsidian-preview-grid.is-compact{grid-template-columns:repeat(3,minmax(0,1fr))}
-.dashboard-inset .obsidian-preview-list{display:grid;gap:10px}
-.dashboard-inset .obsidian-preview-list article{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:12px;border:1px solid var(--c1-line);border-radius:12px;background:rgba(255,255,255,.018)}
-.dashboard-inset .obsidian-preview-list strong{display:block;min-width:0;overflow:hidden;color:var(--c1-text);font-size:13px;text-overflow:ellipsis;white-space:nowrap}
-.dashboard-inset .obsidian-preview-list span{display:block;margin-top:3px;min-width:0;overflow:hidden;color:var(--c1-muted);font-size:12px;text-overflow:ellipsis;white-space:nowrap}
-.dashboard-inset .obsidian-preview-list small{display:inline-flex;align-items:center;gap:4px;color:var(--c1-muted);font-size:11px}
-.dashboard-inset .obsidian-preview-list small svg{width:12px;height:12px;color:var(--c1-warning)}
-.dashboard-inset .obsidian-preview-tile{min-width:0;padding:15px;border:1px solid var(--c1-line);border-radius:14px;background:linear-gradient(145deg,rgba(16,185,129,.035),transparent 42%),var(--c1-panel)}
-.dashboard-inset .obsidian-preview-tile h3{margin:10px 0 4px;color:var(--c1-text);font-size:15px}
-.dashboard-inset .obsidian-preview-tile p{margin:0;color:var(--c1-muted);font-size:12px}
 
 /* Tablet: preserve density without squeezing operational content. */
 @media(max-width:1024px){
@@ -226,7 +212,6 @@
  .dashboard-inset .dashboard-main :where(.grid-cols-3){grid-template-columns:repeat(2,minmax(0,1fr))}
  .dashboard-inset .obsidian-dashboard-grid{grid-template-columns:1fr}
  .dashboard-inset .obsidian-placeholder-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
- .dashboard-inset .obsidian-preview-grid,.dashboard-inset .obsidian-preview-grid.is-compact{grid-template-columns:1fr}
 }
 /* Mobile: forms/cards become single column; data tables remain contained and scrollable. */
 @media(max-width:760px){

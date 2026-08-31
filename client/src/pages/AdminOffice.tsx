@@ -10,18 +10,9 @@ import {
   FileText,
   LifeBuoy,
   MoreHorizontal,
-  Star,
   UsersRound,
 } from "lucide-react";
 import { useLocation } from "wouter";
-import {
-  isObsidianPreviewEnabled,
-  obsidianPreviewActivities,
-  obsidianPreviewAdminMetrics,
-  obsidianPreviewMembers,
-  obsidianPreviewTestimonials,
-  obsidianPreviewTickets,
-} from "@/lib/obsidianPreviewData";
 import {
   LoadingPanel,
   MetricCard,
@@ -39,7 +30,6 @@ function attentionLabel(count: number, singular: string, plural: string) {
 
 export default function AdminOffice() {
   const [location, setLocation] = useLocation();
-  const previewEnabled = isObsidianPreviewEnabled();
   const overview = trpc.admin.overview.useQuery();
   const content = trpc.admin.content.useQuery();
   const tickets = trpc.admin.tickets.useQuery();
@@ -58,14 +48,6 @@ export default function AdminOffice() {
   const publicationRate = totalContent > 0 ? (publishedContent / totalContent) * 100 : 0;
   const openTickets = ticketItems?.filter(ticket => ticket.status === "open").length ?? 0;
   const pendingTestimonials = testimonialItems?.filter(item => item.status === "pending").length ?? 0;
-  const displayMemberCount = previewEnabled ? obsidianPreviewAdminMetrics.totalMembers : data?.memberCount ?? 0;
-  const displayPublishedContent = previewEnabled ? "327" : publishedContent;
-  const displayTotalContent = previewEnabled ? "412" : totalContent;
-  const displayPublishedCourseCount = previewEnabled ? "23" : data?.publishedCourseCount ?? 0;
-  const displayPublicationRate = previewEnabled ? obsidianPreviewAdminMetrics.conversion : `${publicationRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`;
-  const displayOpenTickets = previewEnabled ? obsidianPreviewAdminMetrics.activeTickets : openTickets;
-  const displayPendingTestimonials = previewEnabled ? "18" : pendingTestimonials;
-  const displayDraftContent = previewEnabled ? "85" : draftContent;
 
   const openCard = (path: string) => setLocation(path);
 
@@ -106,19 +88,11 @@ export default function AdminOffice() {
           <StatePanel error title="Área exclusiva da administração." message="Esta rota só é liberada para contas com permissão administrativa no projeto." />
         ) : (
           <>
-            {previewEnabled ? (
-              <section className="obsidian-preview-banner" aria-label="Modo de prévia Obsidian">
-                <ObsidianBadge variant="info">Prévia Obsidian ativa</ObsidianBadge>
-                <p>Dados temporários do template carregados apenas no frontend para validação visual. Banco e dados reais não foram alterados.</p>
-                <a href="?obsidianPreview=0">Desativar prévia</a>
-              </section>
-            ) : null}
-
             <section className="office-stat-grid office-overview-stats">
               <MetricCard
                 icon={UsersRound}
                 label="Membros e rede"
-                value={displayMemberCount}
+                value={data?.memberCount ?? 0}
                 detail="Total de membros cadastrados"
                 aria-label="Abrir Membros e Rede"
                 onClick={() => openCard("/admin/membros")}
@@ -126,15 +100,15 @@ export default function AdminOffice() {
               <MetricCard
                 icon={FileText}
                 label="Conteúdos publicados"
-                value={displayPublishedContent}
-                detail={`${displayTotalContent} conteúdos cadastrados`}
+                value={publishedContent}
+                detail={`${totalContent} conteúdos cadastrados`}
                 ariaLabel="Abrir Publicações"
                 onActivate={() => openCard("/admin/publicacoes")}
               />
               <MetricCard
                 icon={BookOpenCheck}
                 label="Cursos publicados"
-                value={displayPublishedCourseCount}
+                value={data?.publishedCourseCount ?? 0}
                 detail="Trilhas ativas para membros"
                 ariaLabel="Abrir Academia"
                 onActivate={() => openCard("/admin/academia")}
@@ -142,7 +116,7 @@ export default function AdminOffice() {
               <MetricCard
                 icon={ChartNoAxesCombined}
                 label="Taxa de publicação"
-                value={displayPublicationRate}
+                value={`${publicationRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
                 detail="Publicados / conteúdos cadastrados"
                 ariaLabel="Abrir Publicações"
                 onActivate={() => openCard("/admin/publicacoes")}
@@ -153,7 +127,7 @@ export default function AdminOffice() {
               <MetricCard
                 icon={LifeBuoy}
                 label="Tickets abertos"
-                value={displayOpenTickets}
+                value={openTickets}
                 detail="Solicitações de suporte"
                 aria-label="Abrir Suporte"
                 onClick={() => openCard("/admin/suporte")}
@@ -161,7 +135,7 @@ export default function AdminOffice() {
               <MetricCard
                 icon={ClipboardList}
                 label="Depoimentos pendentes"
-                value={displayPendingTestimonials}
+                value={pendingTestimonials}
                 detail="Aguardando revisão administrativa"
                 ariaLabel="Abrir Depoimentos"
                 onActivate={() => openCard("/admin/relatos")}
@@ -169,7 +143,7 @@ export default function AdminOffice() {
               <MetricCard
                 icon={FileText}
                 label="Rascunhos"
-                value={displayDraftContent}
+                value={draftContent}
                 detail="Conteúdos que exigem revisão"
                 ariaLabel="Abrir Publicações em revisão"
                 onActivate={() => openCard("/admin/publicacoes")}
@@ -191,19 +165,7 @@ export default function AdminOffice() {
                 title="Atividades recentes"
                 action={<button type="button" className="obsidian-icon-button" disabled aria-label="Mais ações"><MoreHorizontal aria-hidden="true" /></button>}
               >
-                {previewEnabled ? (
-                  <div className="obsidian-activity-list">
-                    {obsidianPreviewActivities.map(activity => (
-                      <article key={activity.id}>
-                        <span className="obsidian-activity-dot" aria-hidden="true" />
-                        <div>
-                          <p><strong>{activity.user}</strong> · {activity.action}</p>
-                          <time>{activity.time}</time>
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                ) : activities.isLoading ? (
+                {activities.isLoading ? (
                   <p className="obsidian-muted">Carregando atividades...</p>
                 ) : activities.data?.length ? (
                   <div className="obsidian-activity-list">
@@ -228,48 +190,6 @@ export default function AdminOffice() {
               </ObsidianCard>
             </section>
 
-            {previewEnabled ? (
-              <section className="obsidian-preview-grid" aria-label="Dados temporários de população visual Obsidian">
-                <ObsidianCard eyebrow="Arquivo X" title="Mocks de membros">
-                  <div className="obsidian-preview-list">
-                    {obsidianPreviewMembers.map(member => (
-                      <article key={member.id}>
-                        <div>
-                          <strong>{member.name}</strong>
-                          <span>{member.email}</span>
-                        </div>
-                        <ObsidianBadge variant={member.status === "Ativo" ? "success" : member.status === "Pendente" ? "warning" : "neutral"}>{member.status}</ObsidianBadge>
-                        <small>{member.plan} · {member.progress}%</small>
-                      </article>
-                    ))}
-                  </div>
-                </ObsidianCard>
-
-                <ObsidianCard eyebrow="Arquivo W" title="Tickets e depoimentos">
-                  <div className="obsidian-preview-list">
-                    {obsidianPreviewTickets.map(ticket => (
-                      <article key={ticket.id}>
-                        <div>
-                          <strong>{ticket.subject}</strong>
-                          <span>{ticket.user} · {ticket.time}</span>
-                        </div>
-                        <ObsidianBadge variant={ticket.priority === "Urgente" ? "danger" : ticket.priority === "Alta" ? "warning" : "neutral"}>{ticket.priority}</ObsidianBadge>
-                      </article>
-                    ))}
-                    {obsidianPreviewTestimonials.map(testimonial => (
-                      <article key={testimonial.id}>
-                        <div>
-                          <strong>{testimonial.user}</strong>
-                          <span>{testimonial.content}</span>
-                        </div>
-                        <small><Star aria-hidden="true" /> {testimonial.rating}/5 · {testimonial.status}</small>
-                      </article>
-                    ))}
-                  </div>
-                </ObsidianCard>
-              </section>
-            ) : null}
-
             <section className="obsidian-placeholder-grid" aria-label="Placeholders preservados do template administrativo">
               <PlaceholderFeatureCard
                 icon={Filter}
@@ -293,11 +213,11 @@ export default function AdminOffice() {
                 <span className="office-eyebrow">Precisa de atenção</span>
                 <h2>Filas administrativas abertas.</h2>
                 <p>
-                  {displayOpenTickets} {attentionLabel(openTickets, "ticket aberto", "tickets abertos")}, {displayPendingTestimonials} {attentionLabel(pendingTestimonials, "depoimento em análise", "depoimentos em análise")} e {displayDraftContent} {attentionLabel(draftContent, "rascunho", "rascunhos")}.
+                  {openTickets} {attentionLabel(openTickets, "ticket aberto", "tickets abertos")}, {pendingTestimonials} {attentionLabel(pendingTestimonials, "depoimento em análise", "depoimentos em análise")} e {draftContent} {attentionLabel(draftContent, "rascunho", "rascunhos")}.
                 </p>
                 <div className="obsidian-status-row">
-                  <ObsidianBadge variant={openTickets || previewEnabled ? "warning" : "success"}>{openTickets || previewEnabled ? "Suporte pendente" : "Suporte em dia"}</ObsidianBadge>
-                  <ObsidianBadge variant={pendingTestimonials || previewEnabled ? "warning" : "success"}>{pendingTestimonials || previewEnabled ? "Moderação pendente" : "Moderação em dia"}</ObsidianBadge>
+                  <ObsidianBadge variant={openTickets ? "warning" : "success"}>{openTickets ? "Suporte pendente" : "Suporte em dia"}</ObsidianBadge>
+                  <ObsidianBadge variant={pendingTestimonials ? "warning" : "success"}>{pendingTestimonials ? "Moderação pendente" : "Moderação em dia"}</ObsidianBadge>
                 </div>
               </div>
               <ClipboardList size={34} />
