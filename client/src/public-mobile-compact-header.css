@@ -1,6 +1,7 @@
 /* Topo público compacto em mobile/tablet.
- * Ao rolar, a navbar sai de cena e permanecem somente o toast e o hambúrguer,
- * sem reservar altura nem provocar layout shift no conteúdo da Home.
+ * O toast nunca participa do fluxo da Home: antes da rolagem ele aparece como
+ * overlay logo abaixo da navbar; após a rolagem passa a ocupar a faixa compacta
+ * ao lado do hambúrguer. Assim não há layout shift nem notificações invisíveis.
  */
 
 @media (max-width: 900px) {
@@ -15,9 +16,34 @@
     overflow: visible;
   }
 
-  html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot .public-social-proof-toast {
-    opacity: 0 !important;
-    visibility: hidden !important;
+  /* Antes de rolar: o toast fica visível como overlay abaixo da navbar,
+   * sem reservar espaço e sem empurrar a primeira seção.
+   */
+  html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 82px);
+    right: 12px;
+    left: 12px;
+    z-index: 2147481900;
+    width: auto;
+    height: auto;
+    pointer-events: none;
+  }
+
+  html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot .public-social-proof-toast,
+  html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot .public-social-proof-toast-inline {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    width: min(100%, 360px) !important;
+    max-width: 360px !important;
+    min-height: 42px !important;
+    margin: 0 auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
     pointer-events: none !important;
   }
 
@@ -66,6 +92,7 @@
     max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 78px);
   }
 
+  /* Após rolar: toast e hambúrguer formam o mini-header compacto. */
   html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot {
     position: fixed;
     top: calc(env(safe-area-inset-top, 0px) + 10px);
@@ -120,6 +147,12 @@
 }
 
 @media (max-width: 560px) {
+  html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot {
+    top: calc(env(safe-area-inset-top, 0px) + 76px);
+    right: 8px;
+    left: 8px;
+  }
+
   html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot {
     right: 62px;
     left: 8px;
