@@ -1,4 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("./db", () => ({
+  authenticateLocalUser: vi.fn(),
+  getStoredPasswordHashByOpenId: vi.fn(),
+  upsertUser: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { resolveDemoAccount, toDemoUser } from "./demoAuth";
 
 describe("identidades locais persistentes", () => {

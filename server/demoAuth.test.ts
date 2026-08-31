@@ -1,13 +1,29 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const dbMocks = vi.hoisted(() => ({
+  authenticateLocalUser: vi.fn(),
+  getStoredPasswordHashByOpenId: vi.fn(),
+  upsertUser: vi.fn(),
+}));
+
+vi.mock("./db", () => dbMocks);
+
 import { createDemoSession, resolveDemoAccount, resolveDemoSession } from "./demoAuth";
 
 describe("resolveDemoAccount", () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    dbMocks.upsertUser.mockResolvedValue(undefined);
+  });
+
   it("reconhece a conta administrativa local", async () => {
     expect(await resolveDemoAccount("admin", "123")).toMatchObject({ openId: "local_demo_admin", role: "admin" });
+    expect(dbMocks.upsertUser).toHaveBeenCalledWith(expect.objectContaining({ openId: "local_demo_admin", role: "admin" }));
   });
 
   it("reconhece a conta de membro local", async () => {
     expect(await resolveDemoAccount("user", "123")).toMatchObject({ openId: "local_demo_member", role: "user" });
+    expect(dbMocks.upsertUser).toHaveBeenCalledWith(expect.objectContaining({ openId: "local_demo_member", role: "user" }));
   });
 
   it("recusa combinações incorretas", async () => {

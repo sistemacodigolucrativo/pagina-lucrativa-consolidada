@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type { User } from "../drizzle/schema";
-import { authenticateLocalUser, getStoredPasswordHashByOpenId } from "./db";
+import { authenticateLocalUser, getStoredPasswordHashByOpenId, upsertUser } from "./db";
 import { hashDemoCredential, hashPassword, hashesMatch } from "./credentialHash";
 
 export const DEMO_SESSION_COOKIE_NAME = process.env.VITE_DEV_PREFIX ? "pl_demo_session_dev" : "pl_demo_session";
@@ -88,6 +88,16 @@ export async function resolveDemoAccount(username: string, password: string): Pr
       : hashesMatch(matched.credentialHash, hashDemoCredential(normalizedUsername, password));
     if (!valid) return null;
     const { credentialHash: _credentialHash, ...account } = matched;
+    upsertUser({
+      openId: account.openId,
+      name: account.name,
+      email: account.email,
+      loginMethod: account.loginMethod ?? "local_demo",
+      role: account.role,
+      lastSignedIn: new Date(),
+    }).catch(error => {
+      console.warn("[DemoAuth] Failed to persist local demo account:", error);
+    });
     return account;
   }
   const localUser = await authenticateLocalUser(normalizedUsername, password);

@@ -952,3 +952,54 @@ Na VPS atual, OWNER_OPEN_ID esta presente, mas a consulta local indicou users=0 
 Portanto, o teste manual real de atribuicao ao admin depende de existir usuario admin com openId correspondente e memberProfile vinculado.
 Com o estado atual do banco, o comportamento seguro esperado e resolver null, sem escolher outro membro.
 ```
+
+## Correcao do card de indicador na Home publica
+
+Causa exata:
+
+```text
+O card/banner de indicador da Home publica ja existia no frontend e a rota public.defaultAffiliateProfile ja existia no backend.
+O problema real estava no banco da VPS: havia memberProfiles com userId=1, mas a tabela users estava vazia.
+Como o resolver do afiliado padrao exige o administrador global resolvido por OWNER_OPEN_ID e seu memberProfile vinculado, a consulta retornava null e o card nao tinha dados para renderizar.
+```
+
+Correcao operacional aplicada na VPS:
+
+```text
+Foi criado/vinculado o usuario administrador canonico na tabela users usando o OWNER_OPEN_ID ja configurado no .env da VPS.
+O perfil existente memberProfiles.userId=1 permaneceu preservado.
+Nenhum identificador sensivel foi registrado no relatorio.
+```
+
+Correcao permanente no codigo:
+
+```text
+server/demoAuth.ts passou a persistir contas demo locais via upsertUser em modo best-effort apos login valido.
+Isso evita que futuras bases fiquem com o perfil de membro do admin sem o registro correspondente em users.
+Nao altera URL publica, nao troca afiliado explicito por admin e nao cria chave/secret.
+```
+
+Arquivos alterados nesta correcao:
+
+```text
+server/demoAuth.ts
+server/demoAuth.test.ts
+server/functionalPersistence.test.ts
+RelatorioGPT/relatorio.md
+```
+
+Validacao local:
+
+```text
+pnpm check -> sucesso
+pnpm test -> sucesso, 65 arquivos e 216 testes aprovados
+pnpm build -> sucesso
+git diff --check -> sucesso
+```
+
+Validacao operacional na VPS:
+
+```text
+public.defaultAffiliateProfile -> retornando perfil do admin com slug marcelo-souza
+Resultado esperado: ao acessar https://ocodigolucrativo.site/ sem ?afiliado=, a Home publica usa esse perfil como indicador padrao e renderiza o card/banner de apresentacao.
+```
