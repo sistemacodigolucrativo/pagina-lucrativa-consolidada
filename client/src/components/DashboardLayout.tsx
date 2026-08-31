@@ -56,6 +56,7 @@ export type DashboardMenuItem = {
 };
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
+const OBSIDIAN_FLOATING_MENU_COLLAPSED_KEY = "pagina-lucrativa.obsidian-preview-menu.collapsed";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
@@ -159,6 +160,10 @@ function DashboardLayoutContent({
   const isCollapsed = state === "collapsed";
   const isCompact = !isMobile && isCollapsed;
   const [isResizing, setIsResizing] = useState(false);
+  const [previewMenuCollapsed, setPreviewMenuCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.sessionStorage.getItem(OBSIDIAN_FLOATING_MENU_COLLAPSED_KEY) === "1";
+  });
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activePath = (location || "/").split("?")[0] || "/";
   const groupedMenuItems = menuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
@@ -184,6 +189,11 @@ function DashboardLayoutContent({
       setIsResizing(false);
     }
   }, [isCompact]);
+
+  useEffect(() => {
+    if (!previewEnabled || typeof window === "undefined") return;
+    window.sessionStorage.setItem(OBSIDIAN_FLOATING_MENU_COLLAPSED_KEY, previewMenuCollapsed ? "1" : "0");
+  }, [previewEnabled, previewMenuCollapsed]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -369,13 +379,34 @@ function DashboardLayoutContent({
           </div>
         ) : null}
         <main className="dashboard-main flex-1">{children}</main>
-        {previewEnabled ? (
+        {previewEnabled && previewMenuCollapsed ? (
+          <button
+            type="button"
+            className="obsidian-floating-preview-toggle"
+            onClick={() => setPreviewMenuCollapsed(false)}
+            aria-label="Expandir menu da prévia Obsidian"
+            title="Expandir menu da prévia"
+          >
+            +
+          </button>
+        ) : null}
+        {previewEnabled && !previewMenuCollapsed ? (
           <nav className="obsidian-floating-preview-menu" aria-label="Navegação temporária da prévia Obsidian">
             <header>
               <span>Prévia povoada</span>
-              <a href={withObsidianPreview(activePath, false) + "?obsidianPreview=0"}>Desligar</a>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setPreviewMenuCollapsed(true)}
+                  aria-label="Recolher menu da prévia Obsidian"
+                  title="Recolher menu"
+                >
+                  −
+                </button>
+                <a href={withObsidianPreview(activePath, false) + "?obsidianPreview=0"}>Desligar</a>
+              </div>
             </header>
-            <div>
+            <div className="obsidian-floating-preview-links">
               {menuItems.map(item => (
                 <a
                   key={item.path}
