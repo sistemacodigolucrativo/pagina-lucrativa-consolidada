@@ -14,6 +14,17 @@
   animation: public-social-proof-toast-top-in .22s var(--ease-out) both !important;
 }
 
+.public-social-proof-toast-inline {
+  position: static !important;
+  inset: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  top: auto !important;
+  left: auto !important;
+  width: 100% !important;
+  max-width: 360px !important;
+}
+
 .public-social-proof-toast .public-social-proof-toast-mark {
   width: 26px !important;
   height: 26px !important;
@@ -47,9 +58,13 @@
 }
 
 @media (max-width: 900px) {
+  .public-social-proof-toast-slot:not(:empty) { width: min(340px, 100%); margin-bottom: 16px; }
   .public-social-proof-toast { top: 82px !important; right: 16px !important; left: 16px !important; width: auto !important; max-width: none !important; }
+  .public-social-proof-toast-inline { position: static !important; inset: auto !important; width: 100% !important; max-width: 340px !important; }
 }
 @media (max-width: 650px) {
+  .public-social-proof-toast-slot:not(:empty) { width: 100%; margin-bottom: 15px; }
   .public-social-proof-toast { top: 80px !important; right: 8px !important; left: 8px !important; width: auto !important; padding: 8px 10px !important; border-radius: 10px !important; }
+  .public-social-proof-toast-inline { position: static !important; inset: auto !important; width: 100% !important; max-width: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { .public-social-proof-toast { animation: none !important; } }

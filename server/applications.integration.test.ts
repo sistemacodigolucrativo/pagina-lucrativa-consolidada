@@ -114,10 +114,13 @@ describe("gestão de solicitações públicas", () => {
     const publicProfile = db.slice(db.indexOf("export async function getPublicAffiliateProfile"), db.indexOf("export async function getMemberTickets"));
     expect(publicProfile).toContain("photoUrl: memberProfiles.photoUrl");
     expect(publicProfile).toContain("whatsapp: memberProfiles.whatsapp");
-    expect(publicProfile).toContain("COALESCE");
+    expect(publicProfile).toContain("userName: users.name");
+    expect(publicProfile).toContain("resolvePublicAffiliateDisplayName(userName, publicProfile.slug)");
     expect(publicProfile).toContain("leftJoin(users");
     expect(publicProfile).not.toContain("innerJoin(users");
     expect(publicProfile).not.toContain("email: users.email");
+    expect(db).toContain("formatSlugAsPublicName(slug)");
+    expect(db).toContain("GENERIC_PUBLIC_PROFILE_NAMES");
     expect(home).toContain("affiliate-profile-hero");
     expect(home).toContain("affiliate-profile-summary");
     expect(home).toContain("withAppBase(effectiveAffiliate.photoUrl)");

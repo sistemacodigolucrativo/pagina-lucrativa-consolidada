@@ -981,13 +981,38 @@ export async function updateMemberPaymentLinks(userId: number, input: { links: M
   return getMemberPaymentLinks(userId);
 }
 
+const GENERIC_PUBLIC_PROFILE_NAMES = new Set([
+  "administrador codigo lucrativo",
+  "administrador código lucrativo",
+  "membro codigo lucrativo",
+  "membro código lucrativo",
+]);
+
+function normalizePublicProfileName(value: string) {
+  return value.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
+
+function formatSlugAsPublicName(slug: string) {
+  return slug
+    .split("-")
+    .filter(Boolean)
+    .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ") || slug;
+}
+
+export function resolvePublicAffiliateDisplayName(name: string | null | undefined, slug: string) {
+  const trimmedName = name?.trim();
+  if (trimmedName && !GENERIC_PUBLIC_PROFILE_NAMES.has(normalizePublicProfileName(trimmedName))) return trimmedName;
+  return formatSlugAsPublicName(slug);
+}
+
 export async function getPublicAffiliateProfile(slug: string) {
   const db = await getDb();
   if (!db) return null;
   const rows = await db.select({
     slug: memberProfiles.slug,
     bio: memberProfiles.bio,
-    name: sql<string>`COALESCE(${users.name}, ${memberProfiles.slug})`,
+    userName: users.name,
     photoUrl: memberProfiles.photoUrl,
     whatsapp: memberProfiles.whatsapp,
     websiteUrl: memberProfiles.websiteUrl,
@@ -998,7 +1023,10 @@ export async function getPublicAffiliateProfile(slug: string) {
     youtubeUrl: memberProfiles.youtubeUrl,
     skype: memberProfiles.skype,
   }).from(memberProfiles).leftJoin(users, eq(users.id, memberProfiles.userId)).where(eq(memberProfiles.slug, slug)).limit(1);
-  return rows[0] ?? null;
+  const profile = rows[0];
+  if (!profile) return null;
+  const { userName, ...publicProfile } = profile;
+  return { ...publicProfile, name: resolvePublicAffiliateDisplayName(userName, publicProfile.slug) };
 }
 
 export async function resolveDefaultAffiliateProfile() {

@@ -23,10 +23,11 @@ const internalLinkSources = [
 describe("public responsive header and hero layout", () => {
   it("renders one header before the hero profile presentation", () => {
     expect((homeSource.match(/className=\"site-header\"/g) ?? []).length).toBe(1);
-    expect(homeSource.indexOf('className="site-header"')).toBeLessThan(homeSource.indexOf('className="sales-hero"'));
-    expect(homeSource.indexOf("affiliate-profile-hero")).toBeGreaterThan(homeSource.indexOf('className="sales-hero-copy reveal-item"'));
-    expect(homeSource.indexOf("affiliate-profile-hero")).toBeLessThan(homeSource.indexOf('className="sales-kicker"'));
-    expect(homeSource).not.toContain("affiliate-banner");
+    expect(homeSource.indexOf('className="site-header"')).toBeLessThan(homeSource.indexOf('className="affiliate-banner"'));
+    expect(homeSource.indexOf('className="affiliate-banner"')).toBeLessThan(homeSource.indexOf('className="sales-hero"'));
+    expect(homeSource.indexOf("affiliate-profile-hero")).toBeGreaterThan(homeSource.indexOf('className="affiliate-banner"'));
+    expect(homeSource.indexOf("affiliate-profile-hero")).toBeLessThan(homeSource.indexOf('className="sales-hero"'));
+    expect(homeSource).toContain("affiliate-banner");
   });
 
   it("places the promo banner immediately after the hero headline", () => {
@@ -41,7 +42,8 @@ describe("public responsive header and hero layout", () => {
   it("keeps the navbar sticky and the hero presentation responsive", () => {
     expect(cssSource).toContain('.site-header { position: sticky; top: 0; z-index: 50;');
     expect(cssSource).toContain('.sales-page { min-height: 100vh; overflow: clip;');
-    expect(cssSource).toContain('.affiliate-profile-hero { max-width: 610px;');
+    expect(cssSource).toContain('.affiliate-banner { position: relative;');
+    expect(cssSource).toContain('.affiliate-profile-hero { max-width: none;');
     expect(cssSource).toContain('.affiliate-profile-summary { display: flex;');
     expect(cssSource).toContain('.sales-hero { position: relative;');
   });
@@ -71,9 +73,17 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
     expect(socialProofSource).toContain('if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0)');
     expect(socialProofSource).toContain('fetch(withAppBase("/api/public-toast-config")');
+    expect(socialProofSource).toContain('createPortal(toast, toastSlot)');
+    expect(socialProofSource).toContain('document.getElementById("public-social-proof-toast-slot")');
     expect(socialProofSource).toContain('settings.showSimulationNotice');
     expect(socialProofSource).toContain('role="status"');
+    expect(homeSource).toContain('id="public-social-proof-toast-slot"');
+    expect(homeSource.indexOf('id="public-social-proof-toast-slot"')).toBeLessThan(homeSource.indexOf('className="sales-kicker"'));
+    expect(cssSource).toContain('.public-social-proof-toast-slot:empty { display: none; }');
+    expect(cssSource).toContain('.public-social-proof-toast-slot:not(:empty)');
     expect(cssSource).toContain('.public-social-proof-toast { position: fixed;');
+    expect(socialProofSource).toContain('public-social-proof-toast-inline');
+    expect(socialProofSource).not.toContain('top: 92px');
     expect(cssSource).toContain('pointer-events: none;');
   });
 

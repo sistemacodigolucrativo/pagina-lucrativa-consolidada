@@ -200,6 +200,23 @@ export default function Home() {
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
     </header>
+    {effectiveAffiliate ? (
+      <section className="affiliate-banner" aria-label="Perfil público do apresentador">
+        <div className="shell affiliate-banner-inner">
+          <div className="affiliate-profile-hero">
+            <div className="affiliate-profile-summary">
+              {effectiveAffiliate.photoUrl ? <img src={withAppBase(effectiveAffiliate.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
+              <div className="affiliate-profile-summary-main">
+                <strong className="affiliate-profile-presenter">Apresentador(a) do Código Lucrativo</strong>
+                <strong className="affiliate-profile-name">{publicProfileName}</strong>
+                {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
+              </div>
+              <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    ) : null}
     {effectiveAffiliate && profileDetailsOpen ? <div className="affiliate-profile-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setProfileDetailsOpen(false); }}>
       <section className="affiliate-profile-modal" role="dialog" aria-modal="true" aria-labelledby="affiliate-profile-modal-title">
         <button type="button" className="affiliate-profile-modal-close" aria-label="Fechar perfil público" onClick={() => setProfileDetailsOpen(false)}>×</button>
@@ -222,20 +239,7 @@ export default function Home() {
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            {effectiveAffiliate ? (
-              <section className="affiliate-profile-hero" aria-label="Perfil público do apresentador">
-                <div className="affiliate-profile-summary">
-                  {effectiveAffiliate.photoUrl ? <img src={withAppBase(effectiveAffiliate.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
-                  <div className="affiliate-profile-summary-main">
-                    <span className="affiliate-profile-kicker">Esta estrutura está sendo apresentada por:</span>
-                    <strong className="affiliate-profile-presenter">Apresentador(a) do Código Lucrativo</strong>
-                    <strong className="affiliate-profile-name">{publicProfileName}</strong>
-                    {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
-                  </div>
-                  <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button>
-                </div>
-              </section>
-            ) : null}
+            <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
             <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
             <TopPromoBanner />

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "wouter";
 import "./PublicSocialProofToast.css";
 import { isPublicSocialProofRoute, randomBetween } from "@shared/publicSocialProof";
@@ -58,6 +59,7 @@ function colorizedMessage(message: string, displayName: string, nameColor: strin
 export default function PublicSocialProofToast() {
   const [location] = useLocation();
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
+  const [toastSlot, setToastSlot] = useState<HTMLElement | null>(null);
   const [templates, setTemplates] = useState<PublicToastTemplate[]>([...publicToastDefaultTemplates]);
   const [settings, setSettings] = useState<PublicToastSettings>(publicToastDefaultSettings);
   const historyRef = useRef<number[]>([]);
@@ -75,6 +77,10 @@ export default function PublicSocialProofToast() {
       .catch(() => { if (active) { setTemplates([...publicToastDefaultTemplates]); setSettings(publicToastDefaultSettings); } });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    setToastSlot(typeof document === "undefined" ? null : document.getElementById("public-social-proof-toast-slot"));
+  }, [location]);
 
   useEffect(() => {
     const handlePreview = (event: Event) => {
@@ -150,7 +156,7 @@ export default function PublicSocialProofToast() {
     "--toast-footer-color": colors.footerColor,
   } as CSSProperties;
 
-  return <aside className="public-social-proof-toast" style={style} role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
+  const toast = <aside className={`public-social-proof-toast${toastSlot ? " public-social-proof-toast-inline" : ""}`} style={style} role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
     <span className="public-social-proof-toast-mark" aria-hidden="true">CL</span>
     <span className="public-social-proof-toast-copy">
       {showSimulationNotice && headerMessage ? <span className="public-social-proof-toast-kicker">{headerMessage}</span> : null}
@@ -158,4 +164,5 @@ export default function PublicSocialProofToast() {
       {showSimulationNotice && footerMessage ? <small>{footerMessage}</small> : null}
     </span>
   </aside>;
+  return toastSlot ? createPortal(toast, toastSlot) : toast;
 }
