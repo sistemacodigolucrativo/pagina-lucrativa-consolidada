@@ -35,7 +35,6 @@ import {
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
-import { isObsidianPreviewEnabled } from "@/lib/obsidianPreviewData";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import {
   isMemberOfficeNavigation,
@@ -68,14 +67,6 @@ function isNavigationItemActive(itemPath: string, activePath: string) {
   return itemPath === activePath
     || (itemPath === "/membros/academia" && isAcademyCourseRoute(activePath))
     || (itemPath === "/membros/operacao" && activePath.startsWith("/membros/operacao/"));
-}
-
-function withObsidianPreview(path: string, enabled: boolean) {
-  if (!enabled) return path;
-  const [pathname, search = ""] = path.split("?");
-  const params = new URLSearchParams(search);
-  params.set("obsidianPreview", "1");
-  return `${pathname}?${params.toString()}`;
 }
 
 export default function DashboardLayout({
@@ -150,7 +141,6 @@ function DashboardLayoutContent({
 }: DashboardLayoutContentProps) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
-  const previewEnabled = isObsidianPreviewEnabled();
   const handleLogout = async () => {
     await logout();
     setLocation("/");
@@ -160,7 +150,7 @@ function DashboardLayoutContent({
   const isCompact = !isMobile && isCollapsed;
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
-  const activePath = (location || "/").split("?")[0] || "/";
+  const activePath = location || "/";
   const groupedMenuItems = menuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
     const group = item.group ?? "Navegação";
     groups[group] = [...(groups[group] ?? []), item];
@@ -260,7 +250,7 @@ function DashboardLayoutContent({
                         <SidebarMenuButton
                           isActive={isActive}
                           onClick={() => {
-                            setLocation(withObsidianPreview(item.path, previewEnabled));
+                            setLocation(item.path);
                             if (isMobile) setOpenMobile(false);
                           }}
                           tooltip={item.label}
@@ -283,7 +273,7 @@ function DashboardLayoutContent({
             <div className="dashboard-mode-switch group-data-[collapsible=icon]:hidden">
               <button
                 type="button"
-                onClick={() => user?.role === "admin" ? setLocation(withObsidianPreview("/admin", previewEnabled)) : undefined}
+                onClick={() => user?.role === "admin" ? setLocation("/admin") : undefined}
                 disabled={user?.role !== "admin"}
                 className={`dashboard-mode-button${location.startsWith("/admin") ? " is-active" : ""}`}
               >
@@ -292,7 +282,7 @@ function DashboardLayoutContent({
               </button>
               <button
                 type="button"
-                onClick={() => setLocation(withObsidianPreview("/membros", previewEnabled))}
+                onClick={() => setLocation("/membros")}
                 className={`dashboard-mode-button${!location.startsWith("/admin") ? " is-active" : ""}`}
               >
                 <User className="size-4" />
@@ -318,8 +308,8 @@ function DashboardLayoutContent({
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                {user?.role === "admin" && !location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation(withObsidianPreview("/admin", previewEnabled))} className="cursor-pointer"><span>Voltar para Administração</span></DropdownMenuItem> : null}
-                {user?.role === "admin" && location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation(withObsidianPreview("/membros", previewEnabled))} className="cursor-pointer"><span>Abrir meu Escritório</span></DropdownMenuItem> : null}
+                {user?.role === "admin" && !location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation("/admin")} className="cursor-pointer"><span>Voltar para Administração</span></DropdownMenuItem> : null}
+                {user?.role === "admin" && location.startsWith("/admin") ? <DropdownMenuItem onClick={() => setLocation("/membros")} className="cursor-pointer"><span>Abrir meu Escritório</span></DropdownMenuItem> : null}
                 <DropdownMenuItem
                   onClick={handleLogout}
                   className="cursor-pointer text-destructive focus:text-destructive"
@@ -369,26 +359,6 @@ function DashboardLayoutContent({
           </div>
         ) : null}
         <main className="dashboard-main flex-1">{children}</main>
-        {previewEnabled ? (
-          <nav className="obsidian-floating-preview-menu" aria-label="Navegação temporária da prévia Obsidian">
-            <header>
-              <span>Prévia povoada</span>
-              <a href={withObsidianPreview(activePath, false) + "?obsidianPreview=0"}>Desligar</a>
-            </header>
-            <div>
-              {menuItems.map(item => (
-                <a
-                  key={item.path}
-                  href={withObsidianPreview(item.path, true)}
-                  className={isNavigationItemActive(item.path, activePath) ? "is-active" : undefined}
-                >
-                  <item.icon aria-hidden="true" />
-                  <span>{item.label}</span>
-                </a>
-              ))}
-            </div>
-          </nav>
-        ) : null}
       </SidebarInset>
     </>
   );
