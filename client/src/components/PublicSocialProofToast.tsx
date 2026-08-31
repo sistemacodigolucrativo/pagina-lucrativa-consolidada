@@ -17,6 +17,10 @@ import { withAppBase } from "@/lib/devPath";
 
 export const PUBLIC_TOAST_PREVIEW_EVENT = "codigo-lucrativo:toast-preview";
 
+const MOBILE_TABLET_QUERY = "(max-width: 900px)";
+const COMPACT_SCROLL_THRESHOLD = 28;
+const MOBILE_SCROLL_RECHECK_MS = 250;
+
 type ActiveNotice = {
   message: string;
   displayName: string;
@@ -124,9 +128,14 @@ export default function PublicSocialProofToast() {
       const available = templates.map((_, index) => index).filter(index => !recent.has(index));
       return randomItem(available.length ? available : templates.map((_, index) => index));
     };
+    const shouldWaitForMobileScroll = () => window.matchMedia(MOBILE_TABLET_QUERY).matches && window.scrollY <= COMPACT_SCROLL_THRESHOLD;
     const scheduleNext = (delay: number) => {
       nextTimer = window.setTimeout(() => {
         if (cancelled) return;
+        if (shouldWaitForMobileScroll()) {
+          scheduleNext(MOBILE_SCROLL_RECHECK_MS);
+          return;
+        }
         const index = chooseIndex();
         const template = templates[index];
         if (!template) return;
