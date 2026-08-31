@@ -30,10 +30,10 @@ describe("manutenção administrativa de relacionamento", () => {
     expect(source).not.toContain('filter(item => item.status !== "archived")');
   });
 
-  it("oferece moderação e exclusão explícita de depoimentos", () => {
+  it("oferece moderação e exclusão explícita de agradecimentos", () => {
     const page = read("client/src/pages/AdminTestimonials.tsx");
     const endpoint = read("server/_core/adminRelationshipMaintenance.ts");
-    expect(page).toContain("Gestão de depoimentos");
+    expect(page).toContain("Gestão de agradecimentos");
     expect(page).toContain("Buscar membro ou conteúdo");
     expect(page).toContain("relationship-maintenance/testimonials");
     expect(page).toContain(">Excluir</button>");
