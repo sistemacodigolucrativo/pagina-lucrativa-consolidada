@@ -1,0 +1,148 @@
+/* Topo público compacto em mobile/tablet.
+ * Ao rolar, a navbar sai de cena e permanecem somente o toast e o hambúrguer,
+ * sem reservar altura nem provocar layout shift no conteúdo da Home.
+ */
+
+@media (max-width: 900px) {
+  .reference-page .public-social-proof-toast-slot,
+  .reference-page .public-social-proof-toast-slot:empty,
+  .reference-page .public-social-proof-toast-slot:not(:empty) {
+    display: block;
+    width: 0;
+    height: 0;
+    min-height: 0;
+    margin: 0;
+    overflow: visible;
+  }
+
+  html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot .public-social-proof-toast {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+  }
+
+  html.public-mobile-scrolled .reference-page .site-header {
+    position: static;
+    height: 0;
+    min-height: 0;
+    border: 0;
+    background: transparent;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  html.public-mobile-scrolled .reference-page .site-header .nav {
+    position: static;
+    min-height: 0;
+    height: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: visible;
+  }
+
+  html.public-mobile-scrolled .reference-page .site-header .nav > a[aria-label*="Código Lucrativo"] {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  html.public-mobile-scrolled .reference-page .mobile-menu-button {
+    position: fixed !important;
+    top: calc(env(safe-area-inset-top, 0px) + 10px) !important;
+    right: 12px !important;
+    left: auto !important;
+    z-index: 2147482000 !important;
+    margin: 0 !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .38), 0 0 0 1px rgba(3, 214, 96, .1);
+    backdrop-filter: blur(12px);
+  }
+
+  html.public-mobile-scrolled .reference-page .nav-links {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 62px);
+    right: 12px;
+    left: 12px;
+    z-index: 2147481990;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 78px);
+  }
+
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    right: 66px;
+    left: 12px;
+    z-index: 2147481900;
+    width: auto;
+    height: auto;
+    pointer-events: none;
+  }
+
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot .public-social-proof-toast,
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot .public-social-proof-toast-inline {
+    position: relative !important;
+    inset: auto !important;
+    top: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: auto !important;
+    display: grid !important;
+    width: min(100%, 360px) !important;
+    max-width: 100% !important;
+    min-height: 42px !important;
+    margin: 0 !important;
+    padding: 7px 9px !important;
+    transform: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    pointer-events: none !important;
+    border-radius: 10px !important;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, .38), 0 0 18px rgba(3, 214, 96, .07) !important;
+    animation: public-mobile-toast-in .2s var(--ease-out) both !important;
+  }
+
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-copy {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-copy strong {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow-wrap: anywhere;
+  }
+
+  html.public-mobile-scrolled .reference-page .sales-hero {
+    padding-top: 12px;
+  }
+}
+
+@media (max-width: 560px) {
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot {
+    right: 62px;
+    left: 8px;
+  }
+
+  html.public-mobile-scrolled .reference-page .mobile-menu-button {
+    right: 8px !important;
+  }
+
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot .public-social-proof-toast,
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot .public-social-proof-toast-inline {
+    min-height: 40px !important;
+    padding: 6px 8px !important;
+  }
+}
+
+@keyframes public-mobile-toast-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot .public-social-proof-toast {
+    animation: none !important;
+  }
+}

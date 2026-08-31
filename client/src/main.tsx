@@ -4,12 +4,14 @@ import { httpBatchLink } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
+import PublicMobileCompactHeaderRuntime from "./components/PublicMobileCompactHeaderRuntime";
 import PublicSalesCopyRuntime from "./components/PublicSalesCopyRuntime";
 import { withAppBase } from "./lib/devPath";
 import "./index.css";
 import "./dashboard-premium.css";
 import "./c1-obsidian-emerald.css";
 import "./home-spacing-fixes.css";
+import "./public-mobile-compact-header.css";
 
 const queryClient = new QueryClient();
 
@@ -33,6 +35,7 @@ createRoot(document.getElementById("root")!).render(
     <QueryClientProvider client={queryClient}>
       <App />
       <PublicSalesCopyRuntime />
+      <PublicMobileCompactHeaderRuntime />
     </QueryClientProvider>
   </trpc.Provider>
 );
