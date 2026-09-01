@@ -129,7 +129,6 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       const card = page.locator('form.violeta-neon-activation-card');
       const cta = page.locator('.public-conversion-cta');
       await expect(card).toHaveCount(1);
-      await expect(card).toContainText('Modelo público · Violeta Neon');
       await expect(card).toContainText('R$ 50,00');
       await expect(card.locator('input[name="fullName"]')).toBeVisible();
       await expect(card.locator('input[name="email"]')).toBeVisible();

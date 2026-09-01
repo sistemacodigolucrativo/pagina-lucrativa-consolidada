@@ -32,11 +32,11 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("places the promo banner immediately after the hero headline", () => {
-    const headline = 'sem precisar construir tudo sozinho.</h1>';
+    const headline = 'sem precisar montar toda a tecnologia sozinho.</h1>';
     const banner = '<TopPromoBanner />';
     expect(homeSource.indexOf(headline)).toBeGreaterThan(-1);
     expect(homeSource.indexOf(banner)).toBeGreaterThan(homeSource.indexOf(headline));
-    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Receba acesso a um Código Lucrativo'));
+    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Tenha seu Código Lucrativo'));
     expect(cssSource).toContain('.sales-hero-copy > .top-promo-banner {');
   });
 
@@ -93,7 +93,7 @@ describe("public responsive header and hero layout", () => {
   it("uses natural social proof heading and copy", () => {
     expect(homeSource).toContain("<Eyebrow>Quem já faz parte</Eyebrow>");
     expect(homeSource).not.toContain("<Eyebrow>Prova social</Eyebrow>");
-    expect(homeSource).toContain("<h2>Pessoas construindo seus próprios resultados.</h2>");
+    expect(homeSource).toContain("<h2>Veja experiências de quem já utiliza a estrutura.</h2>");
     expect(homeSource).toContain("Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.");
     expect(homeSource).not.toContain("Membros reais, dados reais da plataforma.");
     expect(homeSource).not.toContain("Os indicadores abaixo são carregados dos registros existentes.");
@@ -201,7 +201,7 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain("Você personaliza sua página, começa a divulgar");
     const mechanismSource = readFileSync(resolve(process.cwd(), "shared/publicSalesSections.ts"), "utf8");
     expect(mechanismSource).toContain("A estrutura reduz a parte técnica do início.");
-    expect(mechanismSource).toContain("Não significa copiar resultados, receber dinheiro automaticamente, obter vendas garantidas");
+    expect(mechanismSource).toContain("Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas.");
     expect(mechanismSource).not.toContain("centenas de pessoas já estão ganhando e faturando através desse sistema único e exclusivo");
     expect(mechanismSource).not.toContain("Receber dinheiro de forma automaticamente a partir de suas primeiras divulgações");
   });

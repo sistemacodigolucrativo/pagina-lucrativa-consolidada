@@ -31,11 +31,11 @@ export default function PublicConversionCta() {
         gap: "7px",
       }}
       href={withAppBase("/#f")}
-      aria-label="Quero começar agora"
-      title="Quero começar agora"
+      aria-label="Quero ativar minha estrutura"
+      title="Quero ativar minha estrutura"
     >
       <span style={{ fontSize: "11px", lineHeight: 1, fontWeight: 800, whiteSpace: "nowrap" }}>
-        Quero começar agora
+        Quero ativar minha estrutura
       </span>
       <ArrowUpRight size={16} aria-hidden="true" />
     </a>

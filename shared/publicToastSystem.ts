@@ -27,8 +27,8 @@ export const PUBLIC_TOAST_SETTINGS_TYPE = "social-proof-settings";
 export const publicToastDefaultSettings: PublicToastSettings = {
   enabled: true,
   showSimulationNotice: true,
-  headerMessage: "Atividade ilustrativa",
-  footerMessage: "Demonstração ilustrativa — não representa uma atividade real.",
+  headerMessage: "Conheça sua estrutura",
+  footerMessage: "Recursos disponíveis para apoiar sua operação.",
   headerColor: "#FACC15",
   nameColor: "#38BDF8",
   messageColor: "#FFFFFF",
@@ -40,12 +40,12 @@ export const publicToastDefaultSettings: PublicToastSettings = {
 };
 
 export const publicToastDefaultTemplates: readonly PublicToastTemplate[] = [
-  { id: "default-register", title: "Cadastro", message: "{{nome}} está vendo como o Código Lucrativo funciona", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-purchase", title: "Aquisição", message: "{{nome}} está conhecendo a estrutura antes de solicitar acesso", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-group", title: "Entrada no grupo", message: "{{nome}} está explorando os recursos do Escritório Virtual", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-viewing", title: "Visualização", message: "{{nome}} está visualizando a página de apresentação", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-start", title: "Início", message: "{{nome}} está entendendo os primeiros passos", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-slot", title: "Vaga garantida", message: "{{nome}} está avaliando a solicitação de acesso", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-register", title: "Cadastro", message: "Personalize seus dados e organize sua presença digital.", disclaimer: "Informação sobre os recursos da plataforma." },
+  { id: "default-purchase", title: "Aquisição", message: "Acompanhe sua solicitação e as etapas de ativação.", disclaimer: "Informação sobre os recursos da plataforma." },
+  { id: "default-group", title: "Entrada no grupo", message: "Use o Escritório Virtual para acessar os recursos da sua estrutura.", disclaimer: "Informação sobre os recursos da plataforma." },
+  { id: "default-viewing", title: "Visualização", message: "Conheça os recursos disponíveis antes de solicitar seu acesso.", disclaimer: "Informação sobre os recursos da plataforma." },
+  { id: "default-start", title: "Início", message: "Comece configurando sua estrutura e entendendo os primeiros passos.", disclaimer: "Informação sobre os recursos da plataforma." },
+  { id: "default-slot", title: "Vaga garantida", message: "Acompanhe solicitações, campanhas e pedidos em um único ambiente.", disclaimer: "Informação sobre os recursos da plataforma." },
 ];
 
 export const publicToastNames = [

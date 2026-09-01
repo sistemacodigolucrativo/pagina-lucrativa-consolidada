@@ -26,7 +26,7 @@ export default function VioletaNeonActivationCard({
   onWhatsappChange,
 }: VioletaNeonActivationCardProps) {
   return <form className="violeta-neon-activation-card application-form" onSubmit={onSubmit}>
-    <div className="violeta-neon-topline"><span>Modelo público · Violeta Neon</span><i /></div>
+    <div className="violeta-neon-topline"><i /></div>
     <div className="violeta-neon-seal" aria-hidden="true"><span>PL</span><small>acesso</small></div>
     <div className="violeta-neon-price">R$ 50,00 <small>valor da solicitação</small></div>
     <h3>Solicite seu acesso</h3>
@@ -36,7 +36,7 @@ export default function VioletaNeonActivationCard({
     <label className="application-field violeta-neon-field"><span>E-mail</span><input name="email" type="email" autoComplete="email" required maxLength={320} value={contact.email} onChange={event => onEmailChange(event.target.value)} placeholder="voce@email.com" /></label>
     <label className="application-field violeta-neon-field"><span>WhatsApp</span><PhoneInput name="whatsapp" required value={contact.whatsapp} onChange={onWhatsappChange} placeholder="(00) 0 0000-0000" /></label>
     {errorMessage ? <p className="application-error violeta-neon-error" role="alert">{errorMessage}</p> : null}
-    <button className="violeta-neon-submit" type="submit" disabled={isPending}>{isPending ? "Registrando solicitação..." : "Solicitar meu acesso"}<ArrowUpRight size={16} /></button>
+    <button className="violeta-neon-submit" type="submit" disabled={isPending}>{isPending ? "Registrando solicitação..." : "Quero ativar minha estrutura"}<ArrowUpRight size={16} /></button>
     <small className="violeta-neon-privacy">Seus dados serão usados para registrar e acompanhar esta solicitação. O formulário não processa o pagamento automaticamente.</small>
   </form>;
 }

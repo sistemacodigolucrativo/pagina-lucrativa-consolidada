@@ -20,10 +20,10 @@ const faqItems = [
   ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
   ["Como funciona o recebimento?", "O Escritório Virtual permite organizar preferências como PIX, PayPal, PagSeguro e dados bancários, além de acompanhar pedidos, pagamentos confirmados e histórico de adesões. Essas áreas armazenam informações e registros; não processam pagamentos automaticamente."],
   ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e um ponto de partida. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
-  ["O que acontece depois que eu faço a solicitação?", "O formulário registra seus dados e gera um código de acompanhamento. Depois, você acompanha a sequência: solicitação, pagamento, análise e acesso liberado, conforme o fluxo administrativo vigente."],
+  ["O que acontece depois que eu faço a solicitação?", "Depois do envio, você recebe um código para acompanhar sua solicitação. A partir daí, consegue acompanhar as etapas de pagamento, análise e liberação do acesso."],
   ["Existe mensalidade ou garantia?", "A página segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
   ["Posso acessar pelo celular?", "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta."],
-  ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar respostas administrativas. O suporte não representa garantia de aprovação, venda ou resultado financeiro."],
+  ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar as respostas do suporte."],
 ];
 
 const packageItems = [
@@ -45,8 +45,8 @@ const fitItems = [
 ];
 
 const notFitItems = [
-  "Quem procura dinheiro fácil, automático ou garantido.",
-  "Quem não pretende divulgar, aprender ou operar a própria estrutura.",
+  "Quem busca uma solução de renda automática ou resultados garantidos.",
+  "Quem não pretende utilizar e divulgar a própria estrutura.",
   "Quem espera que a plataforma venda sozinha sem ação comercial.",
   "Quem busca uma promessa de resultado fixo em vez de uma ferramenta de trabalho.",
 ];
@@ -93,7 +93,7 @@ function Eyebrow({ children }: { children: string }) {
 }
 
 function JoinButton({ className = "" }: { className?: string }) {
-  return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Solicitar meu acesso <ArrowUpRight size={16} /></a>;
+  return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Quero ativar minha estrutura <ArrowUpRight size={16} /></a>;
 }
 
 function TopPromoBanner() {
@@ -253,7 +253,7 @@ export default function Home() {
           <div className="nav-links-group nav-links-utility" aria-label="Ações e rotas utilitárias">
             {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} className={path === "/acesso" ? "nav-login" : undefined} onClick={closeMenu}>{label}</a>)}
           </div>
-          <a href="#f" className="nav-cta" onClick={closeMenu}>Solicitar meu acesso <ArrowUpRight size={15} /></a>
+          <a href="#f" className="nav-cta" onClick={closeMenu}>Quero ativar minha estrutura <ArrowUpRight size={15} /></a>
         </nav>
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
@@ -299,9 +299,9 @@ export default function Home() {
           <div className="sales-hero-copy reveal-item">
             <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
-            <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar construir tudo sozinho.</h1>
+            <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</h1>
             <TopPromoBanner />
-            <p>Receba acesso a um Código Lucrativo personalizado, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
+            <p>Tenha seu Código Lucrativo personalizado, Escritório Virtual, ferramentas de divulgação, materiais e recursos para aprender, divulgar e acompanhar sua operação em um único ambiente.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">Você personaliza sua página, começa a divulgar<br className="sales-trust-break" />e acompanha o que acontece em um só lugar.</span></div>
           </div>
@@ -320,7 +320,7 @@ export default function Home() {
       <section className="sales-section sales-social-proof" id="depoimentos">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Quem já faz parte</Eyebrow><h2>Pessoas construindo seus próprios resultados.</h2></div>
+            <div><Eyebrow>Quem já faz parte</Eyebrow><h2>Veja experiências de quem já utiliza a estrutura.</h2></div>
             <p>Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.</p>
           </div>
           <div className="social-proof-stats">
@@ -339,8 +339,8 @@ export default function Home() {
       <section className="sales-section sales-package" id="o-que-recebe">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Tudo o que você recebe</Eyebrow><h2>Uma base completa para começar com organização.</h2></div>
-            <p>A oferta reúne os elementos necessários para configurar sua presença, divulgar e acompanhar seus pedidos e campanhas.</p>
+            <div><Eyebrow>Tudo o que você recebe</Eyebrow><h2>Você não recebe apenas uma página. Recebe uma estrutura de operação.</h2></div>
+            <p>Página personalizada, Escritório Virtual, campanhas, pedidos, materiais e aprendizado reunidos para você começar sem montar cada peça separadamente.</p>
           </div>
           <div className="package-grid">{packageItems.map(([title, description]) => <article key={title}><strong>{title}</strong><p>{description}</p></article>)}</div>
         </div>
@@ -385,7 +385,7 @@ export default function Home() {
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com uma <span>estrutura digital pronta.</span></h2><p>Você está solicitando acesso a uma página pública, Escritório Virtual e ferramentas para personalizar, aprender, divulgar e acompanhar seu projeto digital.</p><div className="sales-notes"><span>Valor da solicitação: R$ 50,00</span><span>Solicitação → Pagamento → Análise → Acesso liberado</span></div><p className="offer-closing">O resultado não é automático nem garantido. A estrutura organiza o ponto de partida; pedidos, vendas e ganhos dependem da sua execução e das regras comerciais vigentes.</p></div>
+          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com sua <span>estrutura digital pronta para operar.</span></h2><p>Sua solicitação de acesso reúne Código Lucrativo personalizado, Escritório Virtual, link pessoal, campanhas, acompanhamento de pedidos, materiais e Academia.</p><div className="sales-notes"><span>Valor da solicitação: R$ 50,00</span><span>Solicitação → Pagamento → Análise → Acesso liberado</span></div><p className="offer-closing">A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.</p></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}
