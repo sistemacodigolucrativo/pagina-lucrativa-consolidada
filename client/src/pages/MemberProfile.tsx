@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { normalizePhone, validatePhoneBR } from "@shared/contactValidation";
 import { normalizeHttpUrl, validateHttpUrl } from "@shared/structuredValidation";
 import { ImagePlus, Link2, MapPin, Save, Settings, Share2, Upload, UserRoundPen } from "lucide-react";
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 const menu: DashboardMenuItem[] = [
@@ -167,7 +167,12 @@ export default function MemberProfile() {
     reader.readAsDataURL(file);
   };
 
-  const profilePhotoUrl = profile.data?.photoUrl ? withAppBase(profile.data.photoUrl) : "";
+  const profilePhotoUrl = useMemo(() => {
+    if (!profile.data?.photoUrl) return "";
+    const version = profile.data.updatedAt ? new Date(profile.data.updatedAt).getTime() : "";
+    const separator = profile.data.photoUrl.includes("?") ? "&" : "?";
+    return withAppBase(version ? `${profile.data.photoUrl}${separator}v=${version}` : profile.data.photoUrl);
+  }, [profile.data?.photoUrl, profile.data?.updatedAt]);
 
   return <DashboardLayout menuItems={menu} title="Escritório Virtual"><main className="mx-auto w-full max-w-5xl space-y-6 p-5 sm:p-8">
     <header className="space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Página personalizada</span><h1 className="text-3xl font-semibold text-white">Editar perfil</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">Configure os dados públicos exibidos no seu Código Lucrativo.</p></header>

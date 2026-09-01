@@ -808,6 +808,16 @@ type MemberProfileUpdateInput = {
 
 const cleanOptional = (value?: string | null) => value?.trim() || null;
 
+export function isSupportedProfilePhotoBuffer(buffer: Buffer, contentType: "image/jpeg" | "image/png" | "image/gif") {
+  if (contentType === "image/jpeg") {
+    return buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  }
+  if (contentType === "image/png") {
+    return buffer.length >= 8 && buffer[0] === 0x89 && buffer[1] === 0x50 && buffer[2] === 0x4e && buffer[3] === 0x47 && buffer[4] === 0x0d && buffer[5] === 0x0a && buffer[6] === 0x1a && buffer[7] === 0x0a;
+  }
+  return buffer.length >= 6 && buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46 && buffer[3] === 0x38 && (buffer[4] === 0x37 || buffer[4] === 0x39) && buffer[5] === 0x61;
+}
+
 export async function updateMemberProfile(userId: number, input: MemberProfileUpdateInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
@@ -841,6 +851,7 @@ export async function uploadMemberProfilePhoto(userId: number, input: { dataUrl:
   if (!match || match[1] !== input.contentType) throw new Error("Arquivo de imagem inválido.");
   const buffer = Buffer.from(match[2].replace(/\s/g, ""), "base64");
   if (!buffer.length || buffer.length > 1024 * 1024) throw new Error("A foto deve ter no máximo 1 MB.");
+  if (!isSupportedProfilePhotoBuffer(buffer, input.contentType)) throw new Error("Arquivo de imagem inválido.");
   const extension = input.contentType === "image/jpeg" ? "jpg" : input.contentType.slice("image/".length);
   const stored = await storagePut(`member-profiles/${userId}/profile.${extension}`, buffer, input.contentType);
   const db = await getDb();
