@@ -36,7 +36,7 @@ describe("public responsive header and hero layout", () => {
     const banner = '<TopPromoBanner />';
     expect(homeSource.indexOf(headline)).toBeGreaterThan(-1);
     expect(homeSource.indexOf(banner)).toBeGreaterThan(homeSource.indexOf(headline));
-    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Tenha seu Código Lucrativo'));
+    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Tenha acesso a um método digital pronto'));
     expect(cssSource).toContain('.sales-hero-copy > .top-promo-banner {');
   });
 
@@ -198,7 +198,7 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("keeps the commercial mechanism copy transparent and non-guaranteed", () => {
-    expect(homeSource).toContain("Você personaliza sua página, começa a divulgar");
+    expect(homeSource).toContain("Você configura sua estrutura, começa a divulgar");
     const mechanismSource = readFileSync(resolve(process.cwd(), "shared/publicSalesSections.ts"), "utf8");
     expect(mechanismSource).toContain("A estrutura reduz a parte técnica do início.");
     expect(mechanismSource).toContain("Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas.");

@@ -2,7 +2,7 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "hero_operation",
     eyebrow: "",
-    title: "Você personaliza sua página, começa a divulgar e acompanha o que acontece em um só lugar.",
+    title: "Você configura sua estrutura, começa a divulgar e acompanha o que acontece em um só lugar.",
     body: [],
     defaultImage: "/assets/hero.jpg",
     defaultAlt: "Pessoa planejando sua presença digital",
@@ -13,7 +13,7 @@ export const PUBLIC_SALES_SECTIONS = [
     title: "Você entra, personaliza, aprende, divulga e acompanha.",
     body: [
       "A proposta foi organizada para reduzir a complexidade de começar do zero. Você recebe acesso à estrutura, configura seus dados e entende os recursos disponíveis antes de começar a divulgar.",
-      "Depois, utiliza sua página, seu perfil, seus links e campanhas para apresentar a oferta e acompanhar visitas, contatos e pedidos gerados pelos seus canais de divulgação.",
+      "Depois, utiliza seu perfil, seus links e campanhas para apresentar sua operação e acompanhar visitas, contatos e pedidos gerados pelos seus canais de divulgação.",
       "O sistema organiza a base e o acompanhamento. A execução comercial continua dependendo das suas ações, da sua divulgação e das vendas que realmente acontecerem.",
     ],
     defaultImage: "/problem-start.png",
@@ -22,9 +22,9 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "state_desired",
     eyebrow: "O estado desejado",
-    title: "Começar com uma base pronta muda o ponto de partida.",
+    title: "Começar com um método pronto, validado e consolidado muda o ponto de partida.",
     body: [
-      "Em vez de começar diante de uma tela em branco, você recebe uma base digital que reúne os primeiros caminhos para configurar, divulgar e acompanhar.",
+      "Em vez de começar diante de uma tela em branco, você entra em uma estrutura digital já desenvolvida, com os primeiros caminhos para configurar, divulgar e acompanhar.",
       "Você entra, entende o que está disponível, personaliza seus dados, aprende a utilizar os recursos e começa a movimentar o projeto com mais clareza.",
     ],
     defaultImage: "/state-desired.png",
@@ -33,10 +33,10 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "mechanism",
     eyebrow: "O mecanismo",
-    title: "Uma estrutura pronta que não precisa ser construída novamente a cada novo membro.",
+    title: "Um método pronto e validado para você não precisar construir toda a estrutura do zero.",
     body: [
-      "O Código Lucrativo organiza uma base que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
-      "A jornada é simples de entender: entre, receba sua página, personalize seus dados, aprenda, divulgue e acompanhe.",
+      "O Código Lucrativo reúne uma estrutura já desenvolvida, validada e consolidada, pronta para ser configurada por cada membro sem exigir a construção de toda a tecnologia novamente.",
+      "A jornada é simples de entender: entre, configure sua estrutura, conheça as ferramentas, aprenda, divulgue e acompanhe.",
       "A estrutura reduz a parte técnica do início. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas.",
     ],
     defaultImage: "/mechanism.png",
@@ -45,13 +45,13 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "product_real",
     eyebrow: "O produto real",
-    title: "Código Lucrativo não é apenas uma página.",
+    title: "Código Lucrativo é um método com estrutura digital pronta para operar.",
     body: [
-      "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria conta.",
-      "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em movimento — sem precisar começar pela construção da tecnologia.",
+      "Por trás do método existe um Escritório Virtual que reúne dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria conta.",
+      "Você recebe acesso a um sistema já desenvolvido, validado, consolidado e bem aceito, preparado para ser entendido, personalizado e colocado em movimento — sem precisar começar pela construção da tecnologia.",
     ],
     defaultImage: "/product-real.png",
-    defaultAlt: "Estrutura digital conectando página pública, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento",
+    defaultAlt: "Estrutura digital conectando apresentação, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento",
   },
   {
     id: "behind_structure",
@@ -67,7 +67,7 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "activation_journey",
     eyebrow: "A jornada",
-    title: "Da ativação aos primeiros passos da sua página.",
+    title: "Da ativação aos primeiros passos da sua estrutura.",
     body: [
       "Depois do pedido, acompanhe a solicitação, receba as orientações de acesso, complete seu perfil, configure seus dados e personalize sua presença digital.",
       "Em seguida, conheça os materiais disponíveis, aprenda a utilizar a estrutura, crie seu primeiro link ou campanha e acompanhe os registros gerados pela sua divulgação.",
@@ -126,7 +126,7 @@ export const PUBLIC_SALES_SECTIONS = [
     eyebrow: "Seu ativo digital",
     title: "Sua estrutura pode permanecer disponível online.",
     body: [
-      "Uma página pública pode continuar disponível na internet enquanto sua conta estiver ativa, permitindo que as pessoas encontrem a apresentação e os caminhos que você configurou.",
+      "Sua estrutura de apresentação pode continuar disponível na internet enquanto sua conta estiver ativa, permitindo que as pessoas encontrem os caminhos que você configurou.",
       "A disponibilidade da estrutura permite continuidade de divulgação e acompanhamento enquanto sua conta estiver ativa.",
     ],
     defaultImage: "/digital-asset.png",
@@ -137,7 +137,7 @@ export const PUBLIC_SALES_SECTIONS = [
     eyebrow: "O que você pode avaliar",
     title: "A proposta é baseada em uma estrutura que pode ser vista, configurada e utilizada.",
     body: [
-      "Existe uma página, um perfil, um Escritório Virtual, recursos de campanha, pedidos que você consegue acompanhar, biblioteca de execução e áreas para acompanhar seus registros.",
+      "Existe uma estrutura de apresentação, um perfil, um Escritório Virtual, recursos de campanha, pedidos que você consegue acompanhar, biblioteca de execução e áreas para acompanhar seus registros.",
       "O valor da proposta está em reunir conhecimento e ferramentas para quem quer começar um projeto digital com uma base já desenvolvida e buscar resultados por meio de utilização, divulgação e vendas reais.",
     ],
     defaultImage: "/proof-matters.png",

@@ -14,22 +14,22 @@ const heroSection = PUBLIC_SALES_SECTIONS[0];
 const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "hero_operation");
 
 const faqItems = [
-  ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital do Código Lucrativo: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
-  ["É somente uma página?", "Não. A página é a porta de entrada. O conjunto inclui perfil público, link pessoal, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os recursos disponíveis."],
-  ["Preciso criar um produto?", "A página e o Escritório Virtual já oferecem uma base pronta para apresentação e acompanhamento. Sua divulgação, relacionamento com interessados e execução comercial continuam sendo responsabilidade do membro."],
+  ["O que exatamente estou comprando?", "Você está solicitando acesso ao método Código Lucrativo: um sistema pronto, validado, consolidado e bem aceito, com Escritório Virtual, perfil, ferramentas e recursos para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
+  ["É somente uma página?", "Não. O Código Lucrativo é um método com estrutura digital pronta para operar. O conjunto inclui perfil, Escritório Virtual, links, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os recursos disponíveis."],
+  ["Preciso criar um produto?", "O método e o Escritório Virtual oferecem uma base pronta para configuração, divulgação e acompanhamento. Sua divulgação, relacionamento com interessados e execução comercial continuam sendo responsabilidade do membro."],
   ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
   ["Como funciona o recebimento?", "O Escritório Virtual permite organizar preferências como PIX, PayPal, PagSeguro e dados bancários, além de acompanhar pedidos, pagamentos confirmados e histórico de adesões. Essas áreas armazenam informações e registros; não processam pagamentos automaticamente."],
   ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e um ponto de partida. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
   ["O que acontece depois que eu faço a solicitação?", "Depois do envio, você recebe um código para acompanhar sua solicitação. A partir daí, consegue acompanhar as etapas de pagamento, análise e liberação do acesso."],
-  ["Existe mensalidade ou garantia?", "A página segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
+  ["Existe mensalidade ou garantia?", "O acesso segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
   ["Posso acessar pelo celular?", "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta."],
   ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar as respostas do suporte."],
 ];
 
 const packageItems = [
-  ["Código Lucrativo personalizado", "Uma página pública para apresentar sua estrutura e receber solicitações."],
+  ["Método Código Lucrativo", "Um sistema pronto, validado e organizado para você configurar e colocar em operação."],
   ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
-  ["Link principal de indicação", "Um endereço próprio para divulgar seu Código Lucrativo."],
+  ["Link principal de divulgação", "Um endereço próprio para direcionar interessados à sua estrutura de apresentação."],
   ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
   ["Meus pedidos", "Área para acompanhar solicitações atribuídas e confirmações de pagamento."],
   ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
@@ -56,7 +56,7 @@ const objectionItems = [
   ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
   ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
   ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
-  ["Tenho medo de começar errado.", "A estrutura reduz a tela em branco: você configura sua página, usa os materiais disponíveis e acompanha os próximos passos."],
+  ["Tenho medo de começar errado.", "A estrutura reduz a tela em branco: você configura seus dados, usa os materiais disponíveis e acompanha os próximos passos."],
   ["E se eu ainda não tiver público?", "Você pode começar organizando sua presença, criando campanhas e testando canais de divulgação com clareza."],
 ];
 
@@ -301,9 +301,9 @@ export default function Home() {
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
             <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</h1>
             <TopPromoBanner />
-            <p>Tenha seu Código Lucrativo personalizado, Escritório Virtual, ferramentas de divulgação, materiais e recursos para aprender, divulgar e acompanhar sua operação em um único ambiente.</p>
+            <p>Tenha acesso a um método digital pronto, validado, consolidado e bem aceito, com Escritório Virtual, ferramentas de divulgação, materiais e recursos para aprender, operar e acompanhar sua estrutura em um único ambiente.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
-            <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">Você personaliza sua página, começa a divulgar<br className="sales-trust-break" />e acompanha o que acontece em um só lugar.</span></div>
+            <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">Você configura sua estrutura, começa a divulgar<br className="sales-trust-break" />e acompanha o que acontece em um só lugar.</span></div>
           </div>
         </div>
       </section>
@@ -312,7 +312,7 @@ export default function Home() {
 
       <section className="sales-proof" aria-label="O que a estrutura reúne">
         <div className="shell sales-proof-grid">
-          <div className="sales-proof-group"><strong>Estrutura digital</strong><div className="sales-proof-items"><span>Página</span><span>Perfil</span><span>Escritório</span></div></div>
+          <div className="sales-proof-group"><strong>Estrutura digital</strong><div className="sales-proof-items"><span>Apresentação</span><span>Perfil</span><span>Escritório</span></div></div>
           <div className="sales-proof-group"><strong>Operação organizada</strong><div className="sales-proof-items"><span>Campanhas</span><span>Pedidos</span><span>Conteúdos</span></div></div>
         </div>
       </section>
@@ -339,8 +339,8 @@ export default function Home() {
       <section className="sales-section sales-package" id="o-que-recebe">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Tudo o que você recebe</Eyebrow><h2>Você não recebe apenas uma página. Recebe uma estrutura de operação.</h2></div>
-            <p>Página personalizada, Escritório Virtual, campanhas, pedidos, materiais e aprendizado reunidos para você começar sem montar cada peça separadamente.</p>
+            <div><Eyebrow>Tudo o que você recebe</Eyebrow><h2>Você recebe um método pronto e uma estrutura completa de operação.</h2></div>
+            <p>Um sistema validado, consolidado e bem aceito, com Escritório Virtual, campanhas, acompanhamento, materiais e aprendizado reunidos para você começar sem montar cada peça separadamente.</p>
           </div>
           <div className="package-grid">{packageItems.map(([title, description]) => <article key={title}><strong>{title}</strong><p>{description}</p></article>)}</div>
         </div>
@@ -385,7 +385,7 @@ export default function Home() {
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com sua <span>estrutura digital pronta para operar.</span></h2><p>Sua solicitação de acesso reúne Código Lucrativo personalizado, Escritório Virtual, link pessoal, campanhas, acompanhamento de pedidos, materiais e Academia.</p><div className="sales-notes"><span>Valor da solicitação: R$ 50,00</span><span>Solicitação → Pagamento → Análise → Acesso liberado</span></div><p className="offer-closing">A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.</p></div>
+          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com sua <span>estrutura digital pronta para operar.</span></h2><p>Sua solicitação de acesso reúne o método Código Lucrativo, uma estrutura digital pronta e validada, Escritório Virtual, ferramentas de divulgação, acompanhamento de pedidos, materiais e Academia.</p><div className="sales-notes"><span>Valor da solicitação: R$ 50,00</span><span>Solicitação → Pagamento → Análise → Acesso liberado</span></div><p className="offer-closing">A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.</p></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}
