@@ -40,12 +40,12 @@ export const publicToastDefaultSettings: PublicToastSettings = {
 };
 
 export const publicToastDefaultTemplates: readonly PublicToastTemplate[] = [
-  { id: "default-register", title: "Cadastro", message: "{{nome}} acabou de se cadastrar", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-purchase", title: "Aquisição", message: "{{nome}} acabou de adquirir o programa", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-group", title: "Entrada no grupo", message: "{{nome}} entrou para o grupo", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-viewing", title: "Visualização", message: "{{nome}} está visualizando agora", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-start", title: "Início", message: "{{nome}} acabou de iniciar o programa", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-slot", title: "Vaga garantida", message: "{{nome}} acabou de garantir sua vaga", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-register", title: "Cadastro", message: "{{nome}} está vendo como o Código Lucrativo funciona", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-purchase", title: "Aquisição", message: "{{nome}} está conhecendo a estrutura antes de solicitar acesso", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-group", title: "Entrada no grupo", message: "{{nome}} está explorando os recursos do Escritório Virtual", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-viewing", title: "Visualização", message: "{{nome}} está visualizando a página de apresentação", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-start", title: "Início", message: "{{nome}} está entendendo os primeiros passos", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-slot", title: "Vaga garantida", message: "{{nome}} está avaliando a solicitação de acesso", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
 ];
 
 export const publicToastNames = [

@@ -33,9 +33,9 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     imageAfterField: 1,
     fields: [
       f("kicker", "Chamada superior", "Para quem quer começar no digital sem começar do zero", "text", ".sales-kicker"),
-      f("title", "Título", "Negócio digital pronto para começar — sem construir toda a estrutura sozinho.", "textarea", "h1"),
-      f("description", "Texto", "Receba acesso a uma Código Lucrativo personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.", "textarea", ".sales-hero-copy > p"),
-      f("trust", "Mensagem de apoio", "A estrutura já existe. Você personaliza e coloca sua operação em movimento.", "textarea", ".sales-trust-copy"),
+      f("title", "Título", "Sua estrutura digital pronta para começar — sem precisar construir tudo sozinho.", "textarea", "h1"),
+      f("description", "Texto", "Receba acesso a uma Código Lucrativo personalizada, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, divulgar e acompanhar o seu projeto.", "textarea", ".sales-hero-copy > p"),
+      f("trust", "Mensagem de apoio", "Você personaliza sua página, começa a divulgar e acompanha o que acontece em um só lugar.", "textarea", ".sales-trust-copy"),
     ],
   },
   {
@@ -71,7 +71,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     fields: [
       f("eyebrow", "Identificação", "Quem já faz parte", "text", ".eyebrow"),
       f("title", "Título", "Pessoas construindo seus próprios resultados.", "textarea", "h2"),
-      f("description", "Texto", "Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua operação digital.", "textarea", ".sales-section-heading > p"),
+      f("description", "Texto", "Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.", "textarea", ".sales-section-heading > p"),
     ],
   },
   {
@@ -82,7 +82,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     fields: [
       f("eyebrow", "Identificação", "Tudo o que você recebe", "text", ".eyebrow"),
       f("title", "Título", "Uma base completa para começar com organização.", "textarea", "h2"),
-      f("description", "Texto", "A oferta reúne os elementos necessários para configurar sua presença, divulgar e acompanhar sua própria operação.", "textarea", ".sales-section-heading > p"),
+      f("description", "Texto", "A oferta reúne os elementos necessários para configurar sua presença, divulgar e acompanhar seus pedidos e campanhas.", "textarea", ".sales-section-heading > p"),
       ...[
         ["Código Lucrativo personalizada", "Uma página pública para apresentar sua estrutura e receber solicitações."],
         ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
@@ -101,10 +101,10 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   ...[
     ["problem_start", "Como funciona na prática", "Como funciona na prática", "Você entra, personaliza, aprende, divulga e acompanha.", [
       "A proposta foi organizada para reduzir a complexidade de começar do zero. Você recebe acesso à estrutura, configura seus dados e entende os recursos disponíveis antes de começar a divulgar.",
-      "Depois, utiliza sua página, seu perfil, seus links e campanhas para apresentar a oferta e acompanhar visitas, contatos e pedidos gerados pela sua própria operação.",
+      "Depois, utiliza sua página, seu perfil, seus links e campanhas para apresentar a oferta e acompanhar visitas, contatos e pedidos gerados pelos seus canais de divulgação.",
       "O sistema organiza a base e o acompanhamento. A execução comercial continua dependendo das suas ações, da sua divulgação e das vendas que realmente acontecerem.",
     ]],
-    ["activation_journey", "A jornada", "A jornada", "Da ativação aos primeiros passos da sua operação.", [
+    ["activation_journey", "A jornada", "A jornada", "Da ativação aos primeiros passos da sua página.", [
       "Depois do pedido, acompanhe a solicitação, receba as orientações de acesso, complete seu perfil, configure seus dados e personalize sua presença digital.",
       "Em seguida, conheça os materiais disponíveis, aprenda a utilizar a estrutura, crie seu primeiro link ou campanha e acompanhe os registros gerados pela sua divulgação.",
     ]],
@@ -113,42 +113,42 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
       "Quando uma solicitação chega por um link atribuído ao membro, o sistema pode registrar essa origem e disponibilizar o pedido para acompanhamento dentro do Escritório Virtual.",
       "Quando uma indicação resulta em uma venda válida, a atividade pode gerar receita ao membro conforme as regras comerciais vigentes. A existência da estrutura não representa venda automática, comissão garantida ou promessa de resultado financeiro.",
     ]],
-    ["behind_structure", "O Escritório Virtual", "O Escritório Virtual", "Uma área de operação para organizar o que acontece depois da divulgação.", [
-      "Dentro da estrutura, você encontra perfil personalizado, link pessoal, campanhas, pedidos atribuídos, contatos consentidos, cursos, e-books, materiais, suporte e acompanhamento financeiro conforme os módulos disponíveis para sua conta.",
-      "A função do Escritório Virtual é concentrar ferramentas e informações da operação em um único ambiente, facilitando configuração, divulgação, aprendizado e acompanhamento.",
+    ["behind_structure", "O Escritório Virtual", "O Escritório Virtual", "Um Escritório Virtual para organizar o que acontece depois da divulgação.", [
+      "Dentro da estrutura, você encontra perfil personalizado, link pessoal, campanhas, pedidos atribuídos, contatos recebidos com autorização, cursos, e-books, materiais, suporte e acompanhamento financeiro conforme as áreas disponíveis para sua conta.",
+      "A função do Escritório Virtual é concentrar ferramentas e informações em um único ambiente, facilitando configuração, divulgação, aprendizado e acompanhamento.",
     ]],
     ["not_just_course", "O diferencial", "O diferencial", "Não é apenas um curso: conhecimento, estrutura, ferramentas e aplicação trabalham juntos.", [
       "Um treinamento pode ensinar conceitos. Aqui, o aprendizado está conectado a uma estrutura digital que você pode configurar e utilizar durante a execução.",
-      "A proposta combina conhecimento, Código Lucrativo, Escritório Virtual, materiais e recursos de divulgação para que você consiga aprender e colocar o processo em prática dentro do mesmo ecossistema.",
-      "Isso não elimina a necessidade de aprender, divulgar e vender. O diferencial é não precisar construir toda a infraestrutura tecnológica antes de começar.",
+      "A proposta combina conhecimento, Código Lucrativo, Escritório Virtual, materiais e recursos de divulgação para que você consiga aprender e colocar o processo em prática no mesmo ambiente.",
+      "Isso não elimina a necessidade de aprender, divulgar e vender. O diferencial é não precisar construir toda a parte técnica antes de começar.",
     ]],
     ["product_real", "O produto real", "O produto real", "Código Lucrativo não é apenas uma página.", [
-      "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria operação.",
+      "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria conta.",
       "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em movimento — sem precisar começar pela construção da tecnologia.",
     ]],
     ["state_desired", "O estado desejado", "O estado desejado", "Começar com uma base pronta muda o ponto de partida.", [
-      "Em vez de começar diante de uma tela em branco, você recebe uma base digital que reúne os primeiros caminhos da operação.",
+      "Em vez de começar diante de uma tela em branco, você recebe uma base digital que reúne os primeiros caminhos para configurar, divulgar e acompanhar.",
       "Você entra, entende o que está disponível, personaliza seus dados, aprende a utilizar os recursos e começa a movimentar o projeto com mais clareza.",
     ]],
-    ["mechanism", "O mecanismo", "O mecanismo", "Conheça a Estrutura Digital Replicável.", [
-      "A Código Lucrativo organiza uma infraestrutura que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
-      "A jornada é simples de entender: entre, receba a estrutura, personalize, aprenda, divulgue e acompanhe sua operação.",
-      "Replicável significa reutilizar uma base de operação já estruturada. Não significa copiar resultados, receber dinheiro automaticamente, obter vendas garantidas ou eliminar a necessidade de execução comercial.",
+    ["mechanism", "O mecanismo", "O mecanismo", "Uma estrutura pronta que não precisa ser construída novamente a cada novo membro.", [
+      "A Código Lucrativo organiza uma base que já existe e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
+      "A jornada é simples de entender: entre, receba sua página, personalize seus dados, aprenda, divulgue e acompanhe.",
+      "A estrutura reduz a parte técnica do início. Não significa copiar resultados, receber dinheiro automaticamente, obter vendas garantidas ou eliminar a necessidade de execução comercial.",
     ]],
     ["comparison", "A comparação", "A comparação", "O que você teria de montar se começasse sozinho?", [
-      "Produto ou oferta, site, landing page, área do usuário, autenticação, banco de dados, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
-      "É justamente essa etapa de construção que a Código Lucrativo reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver sua operação.",
+      "Produto ou oferta, site, página de apresentação, área do usuário, acesso seguro, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
+      "É justamente essa etapa de construção que a Código Lucrativo reduz: você começa com uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e desenvolver seu projeto.",
     ]],
     ["ease_real", "A facilidade real", "A facilidade real", "Você não precisa saber programar para começar.", [
-      "A infraestrutura tecnológica já foi desenvolvida. O Escritório Virtual apresenta os caminhos disponíveis e concentra as configurações que pertencem à sua conta.",
+      "A parte técnica já foi desenvolvida. O Escritório Virtual apresenta os caminhos disponíveis e concentra as configurações que pertencem à sua conta.",
       "Isso não elimina o aprendizado nem a execução comercial. Significa que você não precisa criar sistemas do zero antes de aprender a operar um projeto digital.",
     ]],
     ["digital_asset", "Seu ativo digital", "Seu ativo digital", "Sua estrutura pode permanecer disponível online.", [
-      "Uma página pública pode continuar disponível na internet enquanto sua operação estiver ativa, permitindo que as pessoas encontrem a apresentação e os caminhos que você configurou.",
+      "Uma página pública pode continuar disponível na internet enquanto sua conta estiver ativa, permitindo que as pessoas encontrem a apresentação e os caminhos que você configurou.",
       "A disponibilidade da estrutura permite continuidade de divulgação e acompanhamento. Os resultados dependem da oferta, do público, da divulgação e da execução real.",
     ]],
     ["proof_matters", "O que você pode avaliar", "O que você pode avaliar", "A proposta é baseada em uma estrutura que pode ser vista, configurada e utilizada.", [
-      "Existe uma página, um perfil, um Escritório Virtual, recursos de campanha, pedidos rastreáveis, biblioteca de execução e módulos para acompanhar a operação.",
+      "Existe uma página, um perfil, um Escritório Virtual, recursos de campanha, pedidos que você consegue acompanhar, biblioteca de execução e áreas para acompanhar seus registros.",
       "O valor da proposta está em reunir conhecimento e ferramentas para quem quer começar um projeto digital com uma base já desenvolvida e buscar resultados por meio de utilização, divulgação e vendas reais.",
     ]],
   ].map((entry, index) => {

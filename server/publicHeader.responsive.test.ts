@@ -32,7 +32,7 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("places the promo banner immediately after the hero headline", () => {
-    const headline = 'sem construir toda a estrutura sozinho.</h1>';
+    const headline = 'sem precisar construir tudo sozinho.</h1>';
     const banner = '<TopPromoBanner />';
     expect(homeSource.indexOf(headline)).toBeGreaterThan(-1);
     expect(homeSource.indexOf(banner)).toBeGreaterThan(homeSource.indexOf(headline));
@@ -94,7 +94,7 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain("<Eyebrow>Quem já faz parte</Eyebrow>");
     expect(homeSource).not.toContain("<Eyebrow>Prova social</Eyebrow>");
     expect(homeSource).toContain("<h2>Pessoas construindo seus próprios resultados.</h2>");
-    expect(homeSource).toContain("Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua operação digital.");
+    expect(homeSource).toContain("Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.");
     expect(homeSource).not.toContain("Membros reais, dados reais da plataforma.");
     expect(homeSource).not.toContain("Os indicadores abaixo são carregados dos registros existentes.");
     expect(homeSource).not.toContain("Depoimentos aparecem somente depois de enviados pelo membro e aprovados pela administração.");
@@ -198,9 +198,9 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("keeps the commercial mechanism copy transparent and non-guaranteed", () => {
-    expect(homeSource).toContain("A estrutura já existe. Você personaliza");
+    expect(homeSource).toContain("Você personaliza sua página, começa a divulgar");
     const mechanismSource = readFileSync(resolve(process.cwd(), "shared/publicSalesSections.ts"), "utf8");
-    expect(mechanismSource).toContain("Replicável significa reutilizar uma base de operação já estruturada");
+    expect(mechanismSource).toContain("A estrutura reduz a parte técnica do início.");
     expect(mechanismSource).toContain("Não significa copiar resultados, receber dinheiro automaticamente, obter vendas garantidas");
     expect(mechanismSource).not.toContain("centenas de pessoas já estão ganhando e faturando através desse sistema único e exclusivo");
     expect(mechanismSource).not.toContain("Receber dinheiro de forma automaticamente a partir de suas primeiras divulgações");

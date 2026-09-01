@@ -23,14 +23,12 @@ import {
 } from "@/components/ui/sidebar";
 import {
   Bell,
-  LayoutDashboard,
   LogOut,
   PanelLeft,
   Shield,
   Sparkles,
   User,
   type LucideIcon,
-  Users,
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -43,10 +41,7 @@ import {
 } from "@/lib/memberDashboardNavigation";
 import { adminMenu, isAdminNavigation } from "@/lib/adminNavigation";
 
-const defaultMenuItems = [
-  { icon: LayoutDashboard, label: "Page 1", path: "/" },
-  { icon: Users, label: "Page 2", path: "/some-path" },
-];
+const defaultMenuItems: DashboardMenuItem[] = [];
 
 export type DashboardMenuItem = {
   icon: LucideIcon;
@@ -251,7 +246,7 @@ function DashboardLayoutContent({
                   <span className="dashboard-brand-mark" aria-hidden="true"><Sparkles /></span>
                   <div className="min-w-0">
                     <span className="dashboard-brand-name">C. Lucrativo</span>
-                    {subtitle ? <span className="dashboard-brand-subtitle">{subtitle}</span> : <span className="dashboard-brand-subtitle">{memberOfficeNavigation ? "Member Mode" : "Admin Mode"}</span>}
+                    {subtitle ? <span className="dashboard-brand-subtitle">{subtitle}</span> : <span className="dashboard-brand-subtitle">{memberOfficeNavigation ? "Modo Membro" : "Modo Administrativo"}</span>}
                   </div>
                 </div>
               ) : <span className="dashboard-brand-mark" aria-hidden="true"><Sparkles /></span>}
@@ -300,7 +295,7 @@ function DashboardLayoutContent({
                 className={`dashboard-mode-button${location.startsWith("/admin") ? " is-active" : ""}`}
               >
                 <Shield className="size-4" />
-                Admin Mode
+                Modo Administrativo
               </button>
               <button
                 type="button"
@@ -308,7 +303,7 @@ function DashboardLayoutContent({
                 className={`dashboard-mode-button${!location.startsWith("/admin") ? " is-active" : ""}`}
               >
                 <User className="size-4" />
-                Member Mode
+                Modo Membro
               </button>
             </div>
             <DropdownMenu>
@@ -363,7 +358,7 @@ function DashboardLayoutContent({
             </div>
           </div>
           <div className="dashboard-topbar-meta">
-            <span className="dashboard-mode-pill">{memberOfficeNavigation ? "Member Mode" : "Admin Mode"}</span>
+            <span className="dashboard-mode-pill">{memberOfficeNavigation ? "Modo Membro" : "Modo Administrativo"}</span>
             <span className="dashboard-live-indicator"><i aria-hidden="true" /> Operação protegida</span>
             <span className="dashboard-shortcut">CTRL B</span>
           </div>

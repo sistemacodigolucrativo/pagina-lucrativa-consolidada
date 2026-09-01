@@ -15,13 +15,13 @@ const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "he
 
 const faqItems = [
   ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital do Código Lucrativo: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
-  ["É somente uma página?", "Não. A página é a porta de entrada. O ecossistema inclui painel de operação, perfil público, link pessoal, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os módulos disponíveis."],
-  ["Preciso criar um produto ou saber programação?", "Você não precisa desenvolver a infraestrutura tecnológica do zero. A criação de uma oferta, a divulgação e a operação comercial continuam sendo responsabilidades do membro."],
+  ["É somente uma página?", "Não. A página é a porta de entrada. O conjunto inclui perfil público, link pessoal, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os recursos disponíveis."],
+  ["Preciso criar um produto?", "A página e o Escritório Virtual já oferecem uma base pronta para apresentação e acompanhamento. Sua divulgação, relacionamento com interessados e execução comercial continuam sendo responsabilidade do membro."],
   ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
   ["Como funciona o recebimento?", "O Escritório Virtual permite organizar preferências como PIX, PayPal, PagSeguro e dados bancários, além de acompanhar pedidos, pagamentos confirmados e histórico de adesões. Essas áreas armazenam informações e registros; não processam pagamentos automaticamente."],
-  ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e uma base de operação. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
-  ["O que acontece depois que eu faço o pedido?", "O formulário registra seus dados e gera um código de acompanhamento. Depois, você acompanha o status e recebe as orientações reais sobre pagamento, liberação de acesso e personalização, conforme o fluxo administrativo vigente."],
-  ["Existe mensalidade ou garantia?", "A página deve seguir a condição comercial vigente informada no processo de ativação. O formulário não deve esconder custos, etapas ou condições. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
+  ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e um ponto de partida. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
+  ["O que acontece depois que eu faço a solicitação?", "O formulário registra seus dados e gera um código de acompanhamento. Depois, você acompanha a sequência: solicitação, pagamento, análise e acesso liberado, conforme o fluxo administrativo vigente."],
+  ["Existe mensalidade ou garantia?", "A página segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
   ["Posso acessar pelo celular?", "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta."],
   ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar respostas administrativas. O suporte não representa garantia de aprovação, venda ou resultado financeiro."],
 ];
@@ -52,12 +52,12 @@ const notFitItems = [
 ];
 
 const objectionItems = [
-  ["Não sei programação.", "Você não precisa programar. A estrutura já existe e você personaliza os dados principais."],
   ["Nunca trabalhei com internet.", "A jornada foi organizada para começar pelo básico: configurar, divulgar e acompanhar."],
   ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
   ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
-  ["Consigo utilizar pelo celular?", "Sim. As principais áreas foram pensadas para funcionar em navegador mobile."],
   ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
+  ["Tenho medo de começar errado.", "A estrutura reduz a tela em branco: você configura sua página, usa os materiais disponíveis e acompanha os próximos passos."],
+  ["E se eu ainda não tiver público?", "Você pode começar organizando sua presença, criando campanhas e testando canais de divulgação com clareza."],
 ];
 
 const footerLinks = [
@@ -93,7 +93,7 @@ function Eyebrow({ children }: { children: string }) {
 }
 
 function JoinButton({ className = "" }: { className?: string }) {
-  return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Quero conhecer a estrutura <ArrowUpRight size={16} /></a>;
+  return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Solicitar meu acesso <ArrowUpRight size={16} /></a>;
 }
 
 function TopPromoBanner() {
@@ -115,7 +115,7 @@ function RatingStars({ rating }: { rating: number }) {
 }
 
 const virtualOfficeSlides = [
-  { title: "Dashboard", caption: "Acompanhe sua operação em um só lugar." },
+  { title: "Dashboard", caption: "Acompanhe suas informações em um só lugar." },
   { title: "Campanhas", caption: "Organize seus links e materiais de divulgação." },
   { title: "Meus pedidos", caption: "Visualize solicitações e acompanhe cada etapa." },
   { title: "Biblioteca", caption: "Tenha seus materiais disponíveis no Escritório Virtual." },
@@ -253,7 +253,7 @@ export default function Home() {
           <div className="nav-links-group nav-links-utility" aria-label="Ações e rotas utilitárias">
             {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} className={path === "/acesso" ? "nav-login" : undefined} onClick={closeMenu}>{label}</a>)}
           </div>
-          <a href="#f" className="nav-cta" onClick={closeMenu}>Quero começar <ArrowUpRight size={15} /></a>
+          <a href="#f" className="nav-cta" onClick={closeMenu}>Solicitar meu acesso <ArrowUpRight size={15} /></a>
         </nav>
         <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
@@ -299,11 +299,11 @@ export default function Home() {
           <div className="sales-hero-copy reveal-item">
             <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
-            <h1><span>Negócio digital pronto</span> para começar — sem construir toda a estrutura sozinho.</h1>
+            <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar construir tudo sozinho.</h1>
             <TopPromoBanner />
             <p>Receba acesso a um Código Lucrativo personalizado, a um Escritório Virtual, ferramentas de divulgação, materiais e uma jornada para aprender, operar e acompanhar o seu projeto.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
-            <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">A estrutura já existe. Você personaliza<br className="sales-trust-break" />e coloca sua operação em movimento.</span></div>
+            <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">Você personaliza sua página, começa a divulgar<br className="sales-trust-break" />e acompanha o que acontece em um só lugar.</span></div>
           </div>
         </div>
       </section>
@@ -321,7 +321,7 @@ export default function Home() {
         <div className="shell">
           <div className="sales-section-heading">
             <div><Eyebrow>Quem já faz parte</Eyebrow><h2>Pessoas construindo seus próprios resultados.</h2></div>
-            <p>Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua operação digital.</p>
+            <p>Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.</p>
           </div>
           <div className="social-proof-stats">
             <article><span>Total de membros</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.memberCount ?? 0}</strong></article>
@@ -340,7 +340,7 @@ export default function Home() {
         <div className="shell">
           <div className="sales-section-heading">
             <div><Eyebrow>Tudo o que você recebe</Eyebrow><h2>Uma base completa para começar com organização.</h2></div>
-            <p>A oferta reúne os elementos necessários para configurar sua presença, divulgar e acompanhar sua própria operação.</p>
+            <p>A oferta reúne os elementos necessários para configurar sua presença, divulgar e acompanhar seus pedidos e campanhas.</p>
           </div>
           <div className="package-grid">{packageItems.map(([title, description]) => <article key={title}><strong>{title}</strong><p>{description}</p></article>)}</div>
         </div>
@@ -385,7 +385,7 @@ export default function Home() {
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com uma <span>estrutura digital pronta.</span></h2><p>Você não está solicitando apenas uma página. Está solicitando acesso a uma base de operação para personalizar, aprender, divulgar e acompanhar seu projeto digital.</p><div className="sales-notes"><span>Acesso inicial: R$ 50,00</span><span>Condição informada no processo de ativação</span></div><p className="offer-closing">O resultado não é automático nem garantido. A estrutura organiza o ponto de partida; pedidos, vendas e ganhos dependem da sua execução e das regras reais da operação.</p></div>
+          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com uma <span>estrutura digital pronta.</span></h2><p>Você está solicitando acesso a uma página pública, Escritório Virtual e ferramentas para personalizar, aprender, divulgar e acompanhar seu projeto digital.</p><div className="sales-notes"><span>Valor da solicitação: R$ 50,00</span><span>Solicitação → Pagamento → Análise → Acesso liberado</span></div><p className="offer-closing">O resultado não é automático nem garantido. A estrutura organiza o ponto de partida; pedidos, vendas e ganhos dependem da sua execução e das regras comerciais vigentes.</p></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}
