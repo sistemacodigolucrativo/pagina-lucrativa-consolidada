@@ -1,10 +1,9 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { getGettingStartedReturnStepFromLocation, type GettingStartedStepId, withGettingStartedStep } from "@/components/GettingStartedReturnButton";
 import { withAppBase } from "@/lib/devPath";
+import { useMemberGettingStartedProgress, type MemberGettingStartedRequirement } from "@/hooks/useMemberGettingStartedProgress";
 import { trpc } from "@/lib/trpc";
-import { validateEmail, validatePhoneBR } from "@shared/contactValidation";
-import { validateHttpUrl, validatePixKey, validatePixKeyByType } from "@shared/structuredValidation";
-import { BarChart3, CheckCircle2, Circle, CircleDashed, CreditCard, ExternalLink, Link2, MousePointerClick, UserRound, WalletCards } from "lucide-react";
+import { BarChart3, CheckCircle2, Circle, CircleDashed, ExternalLink, UserRound } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
@@ -14,160 +13,14 @@ const menu: DashboardMenuItem[] = [
   { icon: UserRound, label: "Minha página e perfil", path: "/membros/configuracoes", group: "Minha página" },
 ];
 
-type Step = {
-  id: GettingStartedStepId;
-  title: string;
-  path: string;
-  action: string;
-  requirements: Requirement[];
-  done: boolean;
-  unlocked: boolean;
-  icon: React.ReactNode;
-};
-
-type Requirement = {
-  label: string;
-  done: boolean;
-};
-
-function hasText(value: string | null | undefined) {
-  return Boolean(value?.trim());
-}
-
-function hasValidAddress(profile: Record<string, unknown> | null | undefined) {
-  if (!profile) return false;
-  return hasText(profile.address as string | null | undefined);
-}
-
 export default function MemberGettingStarted() {
   const utils = trpc.useUtils();
   const [location] = useLocation();
-  const profile = trpc.member.profile.useQuery();
-  const receiving = trpc.member.receiving.useQuery();
-  const paymentLinks = trpc.member.paymentLinks.useQuery();
-  const campaigns = trpc.member.campaigns.useQuery();
-  const analytics = trpc.member.analytics.useQuery({ period: "all" });
+  const { profile, steps, completed, percentage } = useMemberGettingStartedProgress();
   const returnedStep = useMemo(() => {
     return getGettingStartedReturnStepFromLocation(location);
   }, [location]);
   const [highlightedStep, setHighlightedStep] = useState<GettingStartedStepId | null>(null);
-
-  const profilePhotoReady = Boolean(profile.data?.photoUrl);
-  const profileSlugReady = Boolean(profile.data?.slug && /^(?=.*[a-z0-9])[a-z0-9-]{3,96}$/.test(profile.data.slug));
-  const profileWhatsappReady = validatePhoneBR(profile.data?.whatsapp);
-  const profileAddressReady = hasValidAddress(profile.data);
-  const validPix = Boolean(
-    receiving.data?.pixType
-    && receiving.data?.pixKey
-    && validatePixKeyByType(receiving.data.pixKey, receiving.data.pixType),
-  ) || Boolean(receiving.data?.receivingKey && validatePixKey(receiving.data.receivingKey));
-  const validBankAccounts = [1, 2, 3, 4].some(index => {
-    const data = receiving.data as Record<string, unknown> | null | undefined;
-    return hasText(data?.[`bank${index}Name`] as string | null | undefined)
-      && hasText(data?.[`bank${index}Agency`] as string | null | undefined)
-      && hasText(data?.[`bank${index}Account`] as string | null | undefined)
-      && hasText(data?.[`bank${index}Holder`] as string | null | undefined)
-      && hasText(data?.[`bank${index}Type`] as string | null | undefined);
-  });
-  const validOtherReceiving = Boolean(
-    hasText(receiving.data?.receivingKey)
-    || (receiving.data?.paypalEnabled && validateEmail(receiving.data.paypalEmail))
-    || (receiving.data?.pagseguroEnabled && validateEmail(receiving.data.pagseguroEmail))
-    || paymentLinks.data?.some(link => Boolean(link.isEnabled) && validateHttpUrl(link.paymentUrl)),
-  );
-  const receivingHolderReady = hasText(receiving.data?.holderName);
-  const receivingPreferenceReady = receiving.data?.method === "pix" || receiving.data?.method === "bank_transfer" || receiving.data?.method === "other";
-  const receivingMediumReady = Boolean(
-    receiving.data?.method === "pix" ? validPix
-      : receiving.data?.method === "bank_transfer" ? validBankAccounts
-        : receiving.data?.method === "other" ? validOtherReceiving
-          : false,
-  );
-  const operationReady = Boolean(campaigns.data?.length);
-  const firstClick = (analytics.data?.totals.clicks ?? 0) > 0;
-  const metricsViewed = Boolean(profile.data?.metricsViewedAt);
-  const firstConversion = (analytics.data?.totals.conversions ?? 0) > 0;
-
-  const steps: Step[] = useMemo(() => {
-    const baseSteps = [
-      {
-        id: "profile" as const,
-        title: "Configure seu Código Lucrativo",
-        path: "/membros/configuracoes",
-        action: "Iniciar configuração",
-        requirements: [
-          { label: "Foto de perfil", done: profilePhotoReady },
-          { label: "Identificador da sua página", done: profileSlugReady },
-          { label: "WhatsApp", done: profileWhatsappReady },
-          { label: "Endereço cadastrado", done: profileAddressReady },
-        ],
-        icon: <UserRound className="size-5" />,
-      },
-      {
-        id: "receiving" as const,
-        title: "Configure seus recebimentos",
-        path: "/membros/recebimentos",
-        action: "Configurar recebimentos",
-        requirements: [
-          { label: "Nome do titular", done: receivingHolderReady },
-          { label: "Forma preferida de recebimento", done: receivingPreferenceReady },
-          { label: "Pelo menos uma forma de recebimento configurada", done: receivingMediumReady },
-        ],
-        icon: <WalletCards className="size-5" />,
-      },
-      {
-        id: "campaign" as const,
-        title: "Crie sua primeira campanha de divulgação",
-        path: "/membros/operacao/campanhas",
-        action: "Criar primeira campanha",
-        requirements: [
-          { label: "Primeira campanha criada", done: operationReady },
-        ],
-        icon: <Link2 className="size-5" />,
-      },
-      {
-        id: "disclosure" as const,
-        title: "Faça sua primeira divulgação",
-        path: "/membros/operacao/campanhas",
-        action: "Fazer minha divulgação",
-        requirements: [
-          { label: "Primeiro clique no seu link", done: firstClick },
-        ],
-        icon: <MousePointerClick className="size-5" />,
-      },
-      {
-        id: "metrics" as const,
-        title: "Acompanhe suas métricas",
-        path: "/membros/operacao",
-        action: "Acompanhar métricas",
-        requirements: [
-          { label: "Acessou suas métricas", done: metricsViewed },
-        ],
-        icon: <BarChart3 className="size-5" />,
-      },
-      {
-        id: "conversion" as const,
-        title: "Conquiste sua primeira conversão",
-        path: "/membros/operacao/conversoes",
-        action: "Acompanhar conversões",
-        requirements: [
-          { label: "Primeira conversão gerada", done: firstConversion },
-        ],
-        icon: <CreditCard className="size-5" />,
-      },
-    ];
-    const stepsWithCompletion = baseSteps.map(step => ({
-      ...step,
-      done: step.requirements.every(requirement => requirement.done),
-    }));
-    return stepsWithCompletion.map((step, index) => ({
-      ...step,
-      unlocked: index === 0 || stepsWithCompletion.slice(0, index).every(previous => previous.done),
-    }));
-  }, [firstClick, firstConversion, metricsViewed, operationReady, profileAddressReady, profilePhotoReady, profileSlugReady, profileWhatsappReady, receivingHolderReady, receivingMediumReady, receivingPreferenceReady]);
-
-  const completed = steps.filter(step => step.done).length;
-  const percentage = Math.round((completed / steps.length) * 100);
 
   useEffect(() => {
     if (!returnedStep || !steps.some(step => step.id === returnedStep)) return;
@@ -256,7 +109,7 @@ export default function MemberGettingStarted() {
   );
 }
 
-function RequirementItem({ requirement, locked }: { requirement: Requirement; locked: boolean }) {
+function RequirementItem({ requirement, locked }: { requirement: MemberGettingStartedRequirement; locked: boolean }) {
   const Icon = requirement.done ? CheckCircle2 : CircleDashed;
   const state = requirement.done ? "Concluído" : "Pendente";
   return (

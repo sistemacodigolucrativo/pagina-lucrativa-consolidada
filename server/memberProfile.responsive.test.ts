@@ -15,6 +15,10 @@ describe("MemberProfile responsive hierarchy", () => {
 
     expect(source).toContain("Aqui você configura os dados de exibição que aparecerão na sua página pública");
     expect(source).toContain("Os dados de endereço são usados apenas para controle do cadastro");
+    expect(source).toContain("function formatPostalCode");
+    expect(source).toContain('maxLength={9}');
+    expect(source).toContain('pattern="\\d{5}-\\d{3}"');
+    expect(source).toContain('inputMode="numeric"');
     expect(source).not.toContain("Os dados cadastrais privados da conta ficam separados");
     expect(source).not.toContain("Atualize todos os dados usados");
     expect(source).not.toContain("fonte antiga");

@@ -139,6 +139,7 @@
 .office-action:hover { color: #102019; background: #e0eee4; box-shadow: 0 10px 26px rgba(155, 212, 181, .18); }
 .office-stat-grid { gap: 12px; margin-top: 22px; }
 .office-overview-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.office-earnings-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .office-stat-grid article,
 .office-balance,
 .office-profile-card {
@@ -195,6 +196,7 @@
 .office-onboarding-dismiss:hover { border-color: var(--gold); color: var(--gold-bright); }
 @media (max-width: 900px) {
   .office-overview-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .office-earnings-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 760px) {
   .dashboard-topbar { min-height: 64px; padding: 11px 16px; }
@@ -210,6 +212,9 @@
   .office-list article { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; }
   .office-list-metric { text-align: right; }
   .office-icon-button { display: grid; grid-column: 2; grid-row: 1; }
+}
+@media (max-width: 600px) {
+  .office-earnings-stats { grid-template-columns: 1fr; }
 }
 @media (max-width: 430px) {
   .office-overview-stats { grid-template-columns: 1fr; }

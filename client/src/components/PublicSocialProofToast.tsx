@@ -83,7 +83,9 @@ export default function PublicSocialProofToast() {
   }, []);
 
   useEffect(() => {
-    setToastSlot(typeof document === "undefined" ? null : document.getElementById("public-social-proof-toast-slot"));
+    const nextSlot = typeof document === "undefined" ? null : document.getElementById("public-social-proof-toast-slot");
+    setToastSlot(nextSlot);
+    if (!isPublicSocialProofRoute(location)) setNotice(null);
   }, [location]);
 
   useEffect(() => {
@@ -121,14 +123,17 @@ export default function PublicSocialProofToast() {
     let nextTimer: number | undefined;
     let dismissTimer: number | undefined;
     const clearTimers = () => { if (nextTimer !== undefined) window.clearTimeout(nextTimer); if (dismissTimer !== undefined) window.clearTimeout(dismissTimer); };
-    if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0) return clearTimers;
+    if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0) {
+      setNotice(null);
+      return clearTimers;
+    }
 
     const chooseIndex = () => {
       const recent = new Set(historyRef.current.slice(-Math.min(3, templates.length - 1)));
       const available = templates.map((_, index) => index).filter(index => !recent.has(index));
       return randomItem(available.length ? available : templates.map((_, index) => index));
     };
-    const shouldWaitForMobileScroll = () => window.matchMedia(MOBILE_TABLET_QUERY).matches && window.scrollY <= COMPACT_SCROLL_THRESHOLD;
+    const shouldWaitForMobileScroll = () => !toastSlot && window.matchMedia(MOBILE_TABLET_QUERY).matches && window.scrollY <= COMPACT_SCROLL_THRESHOLD;
     const scheduleNext = (delay: number) => {
       nextTimer = window.setTimeout(() => {
         if (cancelled) return;
@@ -150,9 +155,9 @@ export default function PublicSocialProofToast() {
       }, delay);
     };
     historyRef.current = [];
-    scheduleNext(settings.initialDelaySeconds * 1000);
+    scheduleNext(Math.min(settings.initialDelaySeconds * 1000, 4_000));
     return () => { cancelled = true; clearTimers(); };
-  }, [location, settings, templates]);
+  }, [location, settings, templates, toastSlot]);
 
   if (!notice) return null;
   const showSimulationNotice = notice.forceSimulationNotice ?? settings.showSimulationNotice;

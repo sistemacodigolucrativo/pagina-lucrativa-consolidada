@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
 const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+const publicMobileCssSource = readFileSync(resolve(process.cwd(), "client/src/public-mobile-compact-header.css"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 const socialProofSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicSocialProofToast.tsx"), "utf8");
 const conversionCtaSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicConversionCta.tsx"), "utf8");
@@ -119,6 +120,9 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
     expect(socialProofSource).toContain('if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0)');
     expect(socialProofSource).toContain('fetch(withAppBase("/api/public-toast-config")');
+    expect(socialProofSource).toContain('setNotice(null)');
+    expect(socialProofSource).toContain('Math.min(settings.initialDelaySeconds * 1000, 4_000)');
+    expect(socialProofSource).toContain('!toastSlot && window.matchMedia(MOBILE_TABLET_QUERY).matches');
     expect(socialProofSource).toContain('createPortal(toast, toastSlot)');
     expect(socialProofSource).toContain('document.getElementById("public-social-proof-toast-slot")');
     expect(socialProofSource).toContain('settings.showSimulationNotice');
@@ -133,6 +137,13 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).toContain('public-social-proof-toast-inline');
     expect(socialProofSource).not.toContain('top: 92px');
     expect(cssSource).toContain('pointer-events: none;');
+  });
+
+  it("keeps the public social proof toast in the Home flow on mobile", () => {
+    expect(publicMobileCssSource).toContain("O toast público permanece no fluxo da Home");
+    expect(publicMobileCssSource).not.toContain("html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot");
+    expect(publicMobileCssSource).not.toContain("html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot");
+    expect(publicMobileCssSource).not.toContain("public-mobile-toast-in");
   });
 
   it("keeps the original Violeta Neon Preview isolated from the public copy", () => {

@@ -20,13 +20,13 @@ export default function MemberEarnings() {
       </section>
 
       {finance.isLoading ? <div className="office-loading"><span>Carregando relatório</span><i /><i /><i /></div> : finance.error ? <section className="office-empty"><CircleDollarSign size={26} /><h2>Não foi possível carregar seu relatório.</h2><p>{finance.error.message}</p></section> : <>
-        <section className="office-stat-grid">
+        <section className="office-stat-grid office-earnings-stats">
           <article><span>Adesões confirmadas</span><strong>{data?.confirmedCount ?? 0}</strong><small>Pedidos com pagamento confirmado</small></article>
           <article><span>Valor das adesões confirmadas</span><strong>{formatCurrency(data?.confirmedValueCents ?? 0)}</strong><small>Valor informativo dos pagamentos diretos</small></article>
           <article><span>Aguardando análise</span><strong>{data?.awaitingReviewCount ?? 0}</strong><small>Comprovantes pendentes de conferência</small></article>
         </section>
 
-        <section className="office-section">
+        <section className="office-section mt-7 sm:mt-8">
           <div className="office-section-head">
             <div><span className="office-eyebrow">Histórico de adesões</span><h2>Pedidos atribuídos à sua página</h2></div>
           </div>

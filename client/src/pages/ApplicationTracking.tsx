@@ -54,9 +54,6 @@ export default function ApplicationTracking() {
       <p className="mt-3 text-sm leading-6 text-emerald-50">Seu Código Lucrativo foi liberado para personalização.</p>
       {result.access ? <a className="btn btn-primary mt-5 w-full justify-center sm:w-auto" href={withAppBase(result.access.personalizationUrl)}>Personalizar meu Código Lucrativo <ArrowRight size={16} /></a> : null}
     </section>
-    <div className="access-actions">
-      <Link href="/" className="btn btn-ghost">Voltar à estrutura</Link>
-    </div>
   </div></main>;
 
   if (result && state) return <main className="access-page"><div className="access-card">

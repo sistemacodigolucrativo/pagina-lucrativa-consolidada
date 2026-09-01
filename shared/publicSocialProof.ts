@@ -28,21 +28,9 @@ export const publicSocialProofConfig = {
   recentHistoryLimit: 3,
 } as const;
 
-const publicInfoPaths = new Set([
-  "/institucional",
-  "/termos-de-uso",
-  "/politica-de-privacidade",
-  "/regras-comerciais",
-  "/contato",
-]);
-
 export function isPublicSocialProofRoute(pathname: string): boolean {
   const normalizedPath = pathname.split("?")[0].replace(/\/+$/, "") || "/";
-  return normalizedPath === "/"
-    || normalizedPath === "/acesso"
-    || normalizedPath === "/personalizar"
-    || normalizedPath.startsWith("/pedido/")
-    || publicInfoPaths.has(normalizedPath);
+  return normalizedPath === "/";
 }
 
 export function randomBetween(min: number, max: number, randomValue = Math.random()): number {

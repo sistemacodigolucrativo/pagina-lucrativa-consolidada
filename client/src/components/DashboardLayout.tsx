@@ -35,6 +35,7 @@ import {
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useMemberGettingStartedProgress } from "@/hooks/useMemberGettingStartedProgress";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import {
   isMemberOfficeNavigation,
@@ -150,13 +151,20 @@ function DashboardLayoutContent({
   const isCompact = !isMobile && isCollapsed;
   const [isResizing, setIsResizing] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
   const activePath = location || "/";
-  const groupedMenuItems = menuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
+  const memberOfficeNavigation = isMemberOfficeNavigation(menuItems);
+  const gettingStartedProgress = useMemberGettingStartedProgress({
+    enabled: memberOfficeNavigation && user?.role === "user",
+  });
+  const visibleMenuItems = memberOfficeNavigation && user?.role === "user" && gettingStartedProgress.isComplete
+    ? menuItems.filter(item => item.path !== "/membros/como-divulgar")
+    : menuItems;
+  const groupedMenuItems = visibleMenuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
     const group = item.group ?? "Navegação";
     groups[group] = [...(groups[group] ?? []), item];
     return groups;
   }, {});
-  const memberOfficeNavigation = isMemberOfficeNavigation(menuItems);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notifications = trpc.member.notifications.useQuery(undefined, {
     enabled: memberOfficeNavigation && user?.role === "user",
@@ -174,6 +182,20 @@ function DashboardLayoutContent({
       setIsResizing(false);
     }
   }, [isCompact]);
+
+  useEffect(() => {
+    if (!notificationsOpen) return;
+
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node)) return;
+      if (notificationsRef.current?.contains(target)) return;
+      setNotificationsOpen(false);
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [notificationsOpen]);
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
@@ -347,7 +369,7 @@ function DashboardLayoutContent({
           </div>
         </header>
         {memberOfficeNavigation && user?.role === "user" ? (
-          <div className="dashboard-notifications">
+          <div className="dashboard-notifications" ref={notificationsRef}>
             <button type="button" aria-label={`Notificações${notifications.data?.unreadCount ? `: ${notifications.data.unreadCount} não lidas` : ""}`} onClick={() => setNotificationsOpen(current => !current)} className="dashboard-notification-trigger">
               <Bell className="size-4" />
               {notifications.data?.unreadCount ? <span className="dashboard-notification-count">{notifications.data.unreadCount}</span> : null}

@@ -187,6 +187,19 @@ img { display: block; max-width: 100%; }
   0%, 100% { border-color: rgba(255, 55, 55, .48); box-shadow: 0 0 0 rgba(255, 55, 55, 0); opacity: .82; }
   50% { border-color: rgba(255, 55, 55, 1); box-shadow: 0 0 18px rgba(255, 55, 55, .24); opacity: 1; }
 }
+.codigo-operational-toast[data-sonner-toast][data-styled="true"] {
+  min-height: 56px;
+  padding: 14px 18px;
+  border-radius: 16px;
+  cursor: pointer;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, .24), 0 0 0 1px rgba(255, 255, 255, .03);
+}
+.codigo-operational-toast [data-content] {
+  min-width: 0;
+}
+.codigo-operational-toast [data-title] {
+  line-height: 1.35;
+}
 @media (prefers-reduced-motion: reduce) {
   .tracking-code-warning { animation: none; }
 }

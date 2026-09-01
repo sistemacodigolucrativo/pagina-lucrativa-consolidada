@@ -31,10 +31,10 @@ export default function MemberOperations() {
     return typeof window === "undefined" ? path : `${window.location.origin}${withAppBase(path)}`;
   };
   const contacts = trpc.member.contacts.useQuery(); const invitations = trpc.member.invitations.useQuery(); const activities = trpc.member.activities.useQuery();
-  const [campaign, setCampaign] = useState({ name: "", slug: "", destinationUrl: appHomeUrl }); const [profileForm, setProfileForm] = useState({ slug: "", bio: "", whatsapp: "", websiteUrl: "" }); const [ticket, setTicket] = useState({ subject: "", message: "" });
+  const [campaign, setCampaign] = useState({ name: "", slug: "", destinationUrl: appHomeUrl }); const [profileForm, setProfileForm] = useState({ slug: "", bio: "", whatsapp: "", websiteUrl: "", address: "", postalCode: "", district: "", city: "", state: "" }); const [ticket, setTicket] = useState({ subject: "", message: "" });
   const [contact, setContact] = useState({ name: "", email: "", whatsapp: "", source: "", campaignId: "", consentNote: "", consent: false }); const [invitation, setInvitation] = useState({ contactId: "", channel: "link" as "link" | "email" | "whatsapp", message: "" });
   const [copiedCampaignId, setCopiedCampaignId] = useState<number | null>(null);
-  useEffect(() => { if (profile.data) setProfileForm({ slug: profile.data.slug, bio: profile.data.bio ?? "", whatsapp: normalizePhone(profile.data.whatsapp), websiteUrl: profile.data.websiteUrl ?? "" }); }, [profile.data]);
+  useEffect(() => { if (profile.data) setProfileForm({ slug: profile.data.slug, bio: profile.data.bio ?? "", whatsapp: normalizePhone(profile.data.whatsapp), websiteUrl: profile.data.websiteUrl ?? "", address: profile.data.address ?? "", postalCode: profile.data.postalCode ?? "", district: profile.data.district ?? "", city: profile.data.city ?? "", state: profile.data.state ?? "" }); }, [profile.data]);
   useEffect(() => { if (referralUrl) setCampaign(current => ({ ...current, destinationUrl: referralUrl })); }, [referralUrl]);
   useEffect(() => { if (context.anchorId) document.getElementById(context.anchorId)?.scrollIntoView({ block: "start" }); }, [context.anchorId]);
   const refreshCapture = async () => { await Promise.all([utils.member.contacts.invalidate(), utils.member.invitations.invalidate(), utils.member.activities.invalidate(), utils.member.overview.invalidate()]); };

@@ -30,14 +30,15 @@ describe("Central de Divulgação", () => {
 
   it("mantém retorno guiado quando aberto pelos Primeiros Passos", async () => {
     const gettingStarted = await readFile(path.join(root, "client/src/pages/MemberGettingStarted.tsx"), "utf8");
+    const progressHook = await readFile(path.join(root, "client/src/hooks/useMemberGettingStartedProgress.ts"), "utf8");
     const returnButton = await readFile(path.join(root, "client/src/components/GettingStartedReturnButton.tsx"), "utf8");
     const profile = await readFile(path.join(root, "client/src/pages/MemberProfile.tsx"), "utf8");
     const receiving = await readFile(path.join(root, "client/src/pages/MemberReceiving.tsx"), "utf8");
     const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
 
-    expect(gettingStarted).toContain('id: "profile"');
-    expect(gettingStarted).toContain('id: "disclosure"');
-    expect(gettingStarted).toContain('id: "conversion"');
+    expect(progressHook).toContain('id: "profile"');
+    expect(progressHook).toContain('id: "disclosure"');
+    expect(progressHook).toContain('id: "conversion"');
     expect(gettingStarted).toContain("withGettingStartedStep(step.path, step.id)");
     expect(gettingStarted).toContain("scrollIntoView");
     expect(returnButton).toContain("Voltar para Primeiros Passos");
@@ -50,32 +51,33 @@ describe("Central de Divulgação", () => {
 
   it("bloqueia sequencialmente os cards dos Primeiros Passos", async () => {
     const gettingStarted = await readFile(path.join(root, "client/src/pages/MemberGettingStarted.tsx"), "utf8");
+    const progressHook = await readFile(path.join(root, "client/src/hooks/useMemberGettingStartedProgress.ts"), "utf8");
     expect(gettingStarted).toContain("CheckCircle2");
     expect(gettingStarted).toContain("CircleDashed");
     expect(gettingStarted).toContain("RequirementItem");
-    expect(gettingStarted).toContain("requirements: [");
-    expect(gettingStarted).toContain('label: "Foto de perfil"');
-    expect(gettingStarted).toContain('label: "Identificador da sua página"');
-    expect(gettingStarted).toContain('label: "WhatsApp"');
-    expect(gettingStarted).toContain('label: "Endereço cadastrado"');
-    expect(gettingStarted).toContain('label: "Nome do titular"');
-    expect(gettingStarted).toContain('label: "Forma preferida de recebimento"');
-    expect(gettingStarted).toContain('label: "Pelo menos uma forma de recebimento configurada"');
-    expect(gettingStarted).toContain('label: "Primeira campanha criada"');
-    expect(gettingStarted).toContain('label: "Primeiro clique no seu link"');
-    expect(gettingStarted).toContain('label: "Acessou suas métricas"');
-    expect(gettingStarted).toContain('label: "Primeira conversão gerada"');
-    expect(gettingStarted).toContain("done: step.requirements.every(requirement => requirement.done)");
+    expect(progressHook).toContain("requirements: [");
+    expect(progressHook).toContain('label: "Foto de perfil"');
+    expect(progressHook).toContain('label: "Identificador da sua página"');
+    expect(progressHook).toContain('label: "WhatsApp"');
+    expect(progressHook).toContain('label: "Endereço cadastrado"');
+    expect(progressHook).toContain('label: "Nome do titular"');
+    expect(progressHook).toContain('label: "Forma preferida de recebimento"');
+    expect(progressHook).toContain('label: "Pelo menos uma forma de recebimento configurada"');
+    expect(progressHook).toContain('label: "Primeira campanha criada"');
+    expect(progressHook).toContain('label: "Primeiro clique no seu link"');
+    expect(progressHook).toContain('label: "Acessou suas métricas"');
+    expect(progressHook).toContain('label: "Primeira conversão gerada"');
+    expect(progressHook).toContain("done: step.requirements.every(requirement => requirement.done)");
     expect(gettingStarted).toContain("Parabéns! Etapa {index + 1} concluída.");
-    expect(gettingStarted).toContain("validatePhoneBR(profile.data?.whatsapp)");
-    expect(gettingStarted).toContain("profile.data?.photoUrl");
-    expect(gettingStarted).toContain("hasValidAddress(profile.data)");
-    expect(gettingStarted).toContain("hasText(profile.address");
-    expect(gettingStarted).toContain("hasText(receiving.data?.holderName)");
-    expect(gettingStarted).toContain("validatePixKeyByType");
-    expect(gettingStarted).toContain("validBankAccounts");
-    expect(gettingStarted).toContain("metricsViewed");
-    expect(gettingStarted).toContain("unlocked: index === 0 || stepsWithCompletion.slice(0, index).every(previous => previous.done)");
+    expect(progressHook).toContain("validatePhoneBR(profile.data?.whatsapp)");
+    expect(progressHook).toContain("profile.data?.photoUrl");
+    expect(progressHook).toContain("hasValidAddress(profile.data)");
+    expect(progressHook).toContain("hasText(profile.address");
+    expect(progressHook).toContain("hasText(receiving.data?.holderName)");
+    expect(progressHook).toContain("validatePixKeyByType");
+    expect(progressHook).toContain("validBankAccounts");
+    expect(progressHook).toContain("metricsViewed");
+    expect(progressHook).toContain("unlocked: index === 0 || stepsWithCompletion.slice(0, index).every(previous => previous.done)");
     expect(gettingStarted).toContain("Conclua a etapa anterior");
   });
 
@@ -131,11 +133,11 @@ describe("Central de Divulgação", () => {
 
   it("isola a Etapa 4 em uma experiência de divulgação sem gestão de campanhas", async () => {
     const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
-    const gettingStarted = await readFile(path.join(root, "client/src/pages/MemberGettingStarted.tsx"), "utf8");
+    const progressHook = await readFile(path.join(root, "client/src/hooks/useMemberGettingStartedProgress.ts"), "utf8");
 
-    expect(gettingStarted).toContain('id: "disclosure"');
-    expect(gettingStarted).toContain('action: "Fazer minha divulgação"');
-    expect(gettingStarted).toContain('label: "Primeiro clique no seu link", done: firstClick');
+    expect(progressHook).toContain('id: "disclosure"');
+    expect(progressHook).toContain('action: "Fazer minha divulgação"');
+    expect(progressHook).toContain('label: "Primeiro clique no seu link", done: firstClick');
     expect(center).toContain('onboardingStep === "disclosure"');
     expect(center).toContain("Faça sua primeira divulgação");
     expect(center).toContain("Link de indicação");

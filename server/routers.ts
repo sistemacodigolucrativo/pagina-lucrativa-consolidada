@@ -97,6 +97,12 @@ const campaignInput = z.object({
   medium: z.string().trim().max(96).optional().nullable(),
   content: z.string().trim().max(160).optional().nullable(),
 });
+
+function normalizePostalCode(value: string) {
+  const digits = value.replace(/\D/g, "");
+  return `${digits.slice(0, 5)}-${digits.slice(5)}`;
+}
+
 export const profileInput = z.object({
   slug: z.string().trim().toLowerCase().regex(/^(?=.*[a-z0-9])[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
   bio: z.string().trim().max(2000).optional().nullable(),
@@ -108,13 +114,13 @@ export const profileInput = z.object({
   linkedinUrl: httpUrlZodSchema.max(512).optional().nullable(),
   youtubeUrl: httpUrlZodSchema.max(512).optional().nullable(),
   skype: z.string().trim().max(255).optional().nullable(),
-  address: z.string().trim().max(255).optional().nullable(),
+  address: z.string().trim().min(1, "Este campo é obrigatório.").max(255),
   addressNumber: z.string().trim().max(32).optional().nullable(),
   addressComplement: z.string().trim().max(160).optional().nullable(),
-  postalCode: z.string().trim().max(20).optional().nullable(),
-  district: z.string().trim().max(120).optional().nullable(),
-  city: z.string().trim().max(120).optional().nullable(),
-  state: z.string().trim().max(80).optional().nullable(),
+  postalCode: z.string().trim().min(1, "Este campo é obrigatório.").max(9).regex(/^\d{5}-?\d{3}$/, "Informe um CEP válido no formato 00000-000.").transform(normalizePostalCode),
+  district: z.string().trim().min(1, "Este campo é obrigatório.").max(120),
+  city: z.string().trim().min(1, "Este campo é obrigatório.").max(120),
+  state: z.string().trim().min(1, "Este campo é obrigatório.").max(80),
 });
 
 export const profilePhotoInput = z.object({

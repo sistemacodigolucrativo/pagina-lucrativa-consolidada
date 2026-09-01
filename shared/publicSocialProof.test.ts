@@ -10,9 +10,13 @@ import {
 } from "./publicSocialProof";
 
 describe("public social proof policy and rotation", () => {
-  it("allows only public-facing routes", () => {
+  it("allows only the public Home route", () => {
     for (const path of [
       "/",
+      "/?afiliado=abc",
+    ]) expect(isPublicSocialProofRoute(path)).toBe(true);
+
+    for (const path of [
       "/acesso",
       "/personalizar",
       "/pedido/acompanhar",
@@ -22,9 +26,6 @@ describe("public social proof policy and rotation", () => {
       "/politica-de-privacidade",
       "/regras-comerciais",
       "/contato?source=footer",
-    ]) expect(isPublicSocialProofRoute(path)).toBe(true);
-
-    for (const path of [
       "/membros",
       "/membros/ebooks",
       "/admin",

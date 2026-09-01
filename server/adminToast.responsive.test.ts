@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
 const source = readFileSync(resolve(process.cwd(), "client/src/pages/AdminToast.tsx"), "utf8");
+const sonnerSource = readFileSync(resolve(process.cwd(), "client/src/components/ui/sonner.tsx"), "utf8");
+const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
 
 describe("admin Toast responsive UX", () => {
   it("edits and duplicates directly inside the selected Toast card", () => {
@@ -39,5 +41,15 @@ describe("admin Toast responsive UX", () => {
     expect(source).toContain('title: `${item.title} — cópia`');
     expect(source).toContain('status: "draft"');
     expect(source).toContain('await create.mutateAsync(payload)');
+  });
+
+  it("positions operational Sonner toasts below the navigation and allows click dismissal", () => {
+    expect(sonnerSource).toContain('position="top-right"');
+    expect(sonnerSource).toContain('offset={offset ?? { top: 88, right: 24 }}');
+    expect(sonnerSource).toContain('mobileOffset={mobileOffset ?? { top: 76, right: 12, left: 12 }}');
+    expect(sonnerSource).toContain('target.closest("[data-sonner-toast]")');
+    expect(sonnerSource).toContain("toast.dismiss();");
+    expect(cssSource).toContain(".codigo-operational-toast");
+    expect(cssSource).toContain("cursor: pointer;");
   });
 });

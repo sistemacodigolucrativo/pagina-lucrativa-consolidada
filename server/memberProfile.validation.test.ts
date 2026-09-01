@@ -28,8 +28,15 @@ describe("Editar perfil — contrato completo", () => {
       bio: "Uma apresentação completa.",
       facebookUrl: "https://facebook.com/pessoa",
       address: "Rua das Flores",
+      postalCode: "01001-000",
       state: "SP",
     });
+  });
+
+  it("normaliza CEP sem máscara e rejeita CEP inválido", () => {
+    expect(profileInput.parse({ ...fullProfile, postalCode: "01001000" }).postalCode).toBe("01001-000");
+    expect(() => profileInput.parse({ ...fullProfile, postalCode: "0100A-000" })).toThrow("Informe um CEP válido no formato 00000-000.");
+    expect(() => profileInput.parse({ ...fullProfile, postalCode: "01001-0000" })).toThrow();
   });
 
   it("rejeita slug sem letra ou número e links que não usam HTTP/HTTPS", () => {
@@ -39,10 +46,18 @@ describe("Editar perfil — contrato completo", () => {
   });
 
   it("permite limpar campos opcionais sem transformar nulo em texto", () => {
-    const result = profileInput.parse({ ...fullProfile, bio: null, facebookUrl: null, address: null });
+    const result = profileInput.parse({ ...fullProfile, bio: null, facebookUrl: null, addressComplement: null });
     expect(result.bio).toBeNull();
     expect(result.facebookUrl).toBeNull();
-    expect(result.address).toBeNull();
+    expect(result.addressComplement).toBeNull();
+  });
+
+  it("rejeita perfil sem endereço completo obrigatório", () => {
+    expect(() => profileInput.parse({ ...fullProfile, address: "" })).toThrow("Este campo é obrigatório.");
+    expect(() => profileInput.parse({ ...fullProfile, postalCode: "" })).toThrow("Este campo é obrigatório.");
+    expect(() => profileInput.parse({ ...fullProfile, district: "" })).toThrow("Este campo é obrigatório.");
+    expect(() => profileInput.parse({ ...fullProfile, city: "" })).toThrow("Este campo é obrigatório.");
+    expect(() => profileInput.parse({ ...fullProfile, state: "" })).toThrow("Este campo é obrigatório.");
   });
 });
 
