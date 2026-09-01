@@ -318,6 +318,7 @@ server {
     listen 80;
     listen [::]:80;
     server_name $server_name;
+    client_max_body_size 8m;
 
     location / {
         proxy_pass http://$HOST:$PORT;

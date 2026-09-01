@@ -21,6 +21,13 @@ function readFileAsDataUrl(file: File) {
   });
 }
 
+function receiptUploadErrorMessage(message: string) {
+  if (/413|HTML|Unexpected token|not valid JSON|Request Entity Too Large/i.test(message)) {
+    return "Não foi possível enviar o comprovante. Verifique se o arquivo tem até 5 MB e tente novamente.";
+  }
+  return message;
+}
+
 export default function ApplicationPaymentMethods() {
   const [, setLocation] = useLocation();
   const [, params] = useRoute("/pedido/:trackingCode/pagamento");
@@ -40,7 +47,7 @@ export default function ApplicationPaymentMethods() {
       toast.success("Comprovante enviado. Seu pedido está aguardando análise.");
       setLocation(`/pedido/confirmacao?codigo=${encodeURIComponent(trackingCode)}&comprovante=1`);
     },
-    onError: error => toast.error(error.message),
+    onError: error => toast.error(receiptUploadErrorMessage(error.message)),
   });
 
   const pixKey = payment.data?.pix?.key ?? null;

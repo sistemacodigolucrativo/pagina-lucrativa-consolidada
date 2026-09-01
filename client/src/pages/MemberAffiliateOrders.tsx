@@ -3,7 +3,7 @@ import { withAppBase } from "@/lib/devPath";
 import { memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
 import { applicationPaymentStatusLabel } from "@shared/applications";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, CheckCircle2, ClipboardList, Link2, Loader2, ZoomIn, ZoomOut, XCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardList, Link2, Loader2, X, ZoomIn, ZoomOut, XCircle } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -92,13 +92,14 @@ export default function MemberAffiliateOrders() {
         </>}
       </section>
       {viewerOpen && selectedReceipt?.contentType.startsWith("image/") ? <div className="fixed inset-0 z-[110] flex flex-col bg-black/95 text-white" role="dialog" aria-modal="true" aria-label="Visualizar comprovante ampliado">
-        <header className="flex min-h-14 items-center justify-between gap-3 border-b border-white/10 px-3 py-2 sm:px-5">
-          <button type="button" onClick={() => setViewerOpen(false)} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-white/15 px-4 text-sm font-semibold text-white hover:bg-white/10"><ArrowLeft className="size-4" />Voltar</button>
-          <div className="flex items-center gap-2">
-            <button type="button" onClick={() => setImageZoom(value => Math.max(0.75, Number((value - 0.25).toFixed(2))))} className="inline-flex size-10 items-center justify-center rounded-full border border-white/15 text-white hover:bg-white/10" aria-label="Diminuir zoom"><ZoomOut className="size-4" /></button>
-            <span className="min-w-14 text-center text-xs text-zinc-300">{Math.round(imageZoom * 100)}%</span>
-            <button type="button" onClick={() => setImageZoom(value => Math.min(3, Number((value + 0.25).toFixed(2))))} className="inline-flex size-10 items-center justify-center rounded-full border border-white/15 text-white hover:bg-white/10" aria-label="Aumentar zoom"><ZoomIn className="size-4" /></button>
+        <header className="flex min-h-14 flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2 sm:gap-3 sm:px-5">
+          <button type="button" onClick={() => setViewerOpen(false)} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/15 px-3 text-xs font-semibold text-white hover:bg-white/10 sm:min-h-10 sm:gap-2 sm:px-4 sm:text-sm"><ArrowLeft className="size-4" />Voltar</button>
+          <div className="flex items-center gap-2" aria-label="Controles de zoom do comprovante">
+            <button type="button" onClick={() => setImageZoom(value => Math.max(0.75, Number((value - 0.25).toFixed(2))))} className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 text-white hover:bg-white/10 sm:size-10" aria-label="Diminuir zoom"><ZoomOut className="size-4" /></button>
+            <span className="min-w-12 text-center text-xs text-zinc-300 sm:min-w-14">{Math.round(imageZoom * 100)}%</span>
+            <button type="button" onClick={() => setImageZoom(value => Math.min(3, Number((value + 0.25).toFixed(2))))} className="inline-flex size-9 items-center justify-center rounded-full border border-white/15 text-white hover:bg-white/10 sm:size-10" aria-label="Aumentar zoom"><ZoomIn className="size-4" /></button>
           </div>
+          <button type="button" onClick={() => setViewerOpen(false)} className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-white/15 px-3 text-xs font-semibold text-white hover:bg-white/10 sm:min-h-10 sm:gap-2 sm:px-4 sm:text-sm" aria-label="Fechar visualização do comprovante"><X className="size-4" />Fechar</button>
         </header>
         <div className="flex-1 overflow-auto p-3 sm:p-6">
           <div className="grid min-h-full place-items-center">

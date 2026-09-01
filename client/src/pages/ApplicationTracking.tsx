@@ -46,10 +46,8 @@ export default function ApplicationTracking() {
     setLocation(`/pedido/acompanhar?codigo=${encodeURIComponent(nextCode)}`);
   }
 
-  if (result && state === "approved") return <main className="access-page"><div className="access-card">
+  if (result && state === "approved") return <main className="access-page"><div className="w-full max-w-xl">
     <Link href="/" className="access-back">← Voltar para o Código Lucrativo</Link>
-    <div className="access-seal"><CheckCircle2 size={25} /></div>
-    <span className="office-eyebrow">Pedido aprovado</span>
     <section className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-5 text-center">
       <CheckCircle2 className="mx-auto size-9 text-emerald-200" />
       <h1 className="mt-4 text-2xl font-semibold text-white">Pagamento aprovado</h1>

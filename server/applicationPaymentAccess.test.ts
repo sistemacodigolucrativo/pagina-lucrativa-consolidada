@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { createPaymentAccessToken, verifyPaymentAccessToken } from "./db";
+import { createPaymentAccessToken, isSupportedReceiptBuffer, verifyPaymentAccessToken } from "./db";
 
 describe("application payment access token", () => {
   afterEach(() => vi.useRealTimers());
@@ -28,5 +28,13 @@ describe("application payment access token", () => {
     const token = createPaymentAccessToken(42, "PL-DEMO123");
     vi.setSystemTime(new Date(now.getTime() + 31 * 60 * 1000));
     expect(verifyPaymentAccessToken(token, "PL-DEMO123")).toBeNull();
+  });
+
+  it("valida a assinatura real dos arquivos aceitos como comprovante", () => {
+    expect(isSupportedReceiptBuffer(Buffer.from("hello"), "image/png")).toBe(false);
+    expect(isSupportedReceiptBuffer(Buffer.from([0xff, 0xd8, 0xff, 0x00]), "image/jpeg")).toBe(true);
+    expect(isSupportedReceiptBuffer(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), "image/png")).toBe(true);
+    expect(isSupportedReceiptBuffer(Buffer.from("RIFF0000WEBP"), "image/webp")).toBe(true);
+    expect(isSupportedReceiptBuffer(Buffer.from("%PDF-1.7"), "application/pdf")).toBe(true);
   });
 });
