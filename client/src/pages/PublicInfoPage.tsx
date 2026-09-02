@@ -1,7 +1,8 @@
 import { withAppBase } from "@/lib/devPath";
 import { ArrowLeft } from "lucide-react";
+import { PUBLIC_SALES_OBJECTIONS } from "@shared/publicSalesObjections";
 
-type PublicPageKey = "institutional" | "terms" | "privacy" | "commercialRules" | "contact";
+type PublicPageKey = "institutional" | "terms" | "privacy" | "commercialRules" | "faq" | "contact";
 
 const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: string; sections: Array<[string, string]> }> = {
   institutional: {
@@ -49,6 +50,12 @@ const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: stri
       ["Sem garantia de ganhos", "A aquisição da estrutura não representa garantia de venda, conversão, lucro ou qualquer resultado financeiro."],
     ],
   },
+  faq: {
+    eyebrow: "Dúvidas antes da ativação",
+    title: "Respostas para decidir com segurança",
+    intro: "As dúvidas foram organizadas como objeções reais, com respostas diretas sobre a estrutura, a ativação, o pagamento, a divulgação e o que depende da sua execução.",
+    sections: PUBLIC_SALES_OBJECTIONS.map(({ question, answer }) => [question, answer] as [string, string]),
+  },
   contact: {
     eyebrow: "Suporte",
     title: "Contato e suporte",
@@ -75,6 +82,10 @@ export function PrivacyPage() {
 
 export function CommercialRulesPage() {
   return <PublicInfoPage pageKey="commercialRules" />;
+}
+
+export function FaqPage() {
+  return <PublicInfoPage pageKey="faq" />;
 }
 
 export function ContactPage() {
