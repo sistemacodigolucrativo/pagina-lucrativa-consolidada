@@ -139,11 +139,28 @@ jobs:
               fi
               KEPT=$((KEPT + 1))
               if [ "$KEPT" -gt 2 ]; then
-                rm -rf -- "$RELEASE"
+                if find "$RELEASE" -type d ! -writable -print -quit 2>/dev/null | grep -q .; then
+                  echo "Aviso: release legado sem permissão de escrita foi preservado: $(basename "$RELEASE")" >&2
+                  continue
+                fi
+                if ! rm -rf -- "$RELEASE"; then
+                  echo "Aviso: a limpeza não removeu o release antigo: $(basename "$RELEASE")" >&2
+                fi
               fi
             done
           fi
 
+          AVAILABLE_KB="$(df -Pk "$DEPLOY_ROOT" | awk 'NR == 2 { print $4 }')"
+          MIN_AVAILABLE_KB=1048576
+          if ! [[ "$AVAILABLE_KB" =~ ^[0-9]+$ ]]; then
+            echo 'Não foi possível medir o espaço livre da VPS.' >&2
+            exit 1
+          fi
+          if [ "$AVAILABLE_KB" -lt "$MIN_AVAILABLE_KB" ]; then
+            echo "Espaço livre insuficiente para um deploy seguro: ${AVAILABLE_KB} KiB disponíveis; mínimo ${MIN_AVAILABLE_KB} KiB." >&2
+            exit 1
+          fi
+          echo "Espaço livre validado para o deploy: ${AVAILABLE_KB} KiB."
           df -h / /tmp
           REMOTE
 
