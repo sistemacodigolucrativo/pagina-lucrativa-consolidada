@@ -5,7 +5,7 @@ import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
 import PublicMobileCompactHeaderRuntime from "./components/PublicMobileCompactHeaderRuntime";
-import PublicSalesCopyRuntime from "./components/PublicSalesCopyRuntime";
+import PublicSalesCopyRuntime, { PublicSalesCopyProvider } from "./components/PublicSalesCopyRuntime";
 import { withAppBase } from "./lib/devPath";
 import "./index.css";
 import "./dashboard-premium.css";
@@ -33,9 +33,11 @@ const trpcClient = trpc.createClient({
 createRoot(document.getElementById("root")!).render(
   <trpc.Provider client={trpcClient} queryClient={queryClient}>
     <QueryClientProvider client={queryClient}>
-      <App />
-      <PublicSalesCopyRuntime />
-      <PublicMobileCompactHeaderRuntime />
+        <PublicSalesCopyProvider>
+          <App />
+          <PublicSalesCopyRuntime />
+          <PublicMobileCompactHeaderRuntime />
+        </PublicSalesCopyProvider>
     </QueryClientProvider>
   </trpc.Provider>
 );

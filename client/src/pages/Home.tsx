@@ -8,6 +8,7 @@ import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
+import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
@@ -80,6 +81,10 @@ const utilityNavigation = [
   ["Entrar", "/acesso"],
 ] as const;
 
+function publicCopy(overrides: Record<string, Record<string, string>>, sectionId: string, key: string, fallback: string) {
+  return overrides[sectionId]?.[key] ?? fallback;
+}
+
 function resolveNavigationHref(path: string) {
   return path.startsWith("#") ? path : withAppBase(path);
 }
@@ -123,10 +128,11 @@ const virtualOfficeSlides = [
   { title: "Perfil", caption: "Configure sua presença pública com dados próprios." },
 ];
 
-function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; imageAlt: string }) {
+function StructureDigitalShowcase({ image, imageAlt, overrides }: { image: string | null; imageAlt: string; overrides: Record<string, Record<string, string>> }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const currentSlide = virtualOfficeSlides[activeSlide] ?? virtualOfficeSlides[0];
+  const sectionCopy = (key: string, fallback: string) => publicCopy(overrides, "structure_showcase", key, fallback);
   const previousSlide = () => setActiveSlide(current => current === 0 ? virtualOfficeSlides.length - 1 : current - 1);
   const nextSlide = () => setActiveSlide(current => current === virtualOfficeSlides.length - 1 ? 0 : current + 1);
   const handleCarouselKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -151,9 +157,9 @@ function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; i
   return <section className="sales-section structure-showcase" id="estrutura-digital" aria-labelledby="structure-showcase-title">
     <div className="shell">
       <div className="structure-showcase-heading">
-        <Eyebrow>Estrutura digital</Eyebrow>
-        <h2 id="structure-showcase-title">Pronta para <span>operar.</span></h2>
-        <p>Uma composição visual da base que você personaliza, divulga e acompanha no Escritório Virtual.</p>
+        <Eyebrow>{sectionCopy("eyebrow", "Estrutura digital")}</Eyebrow>
+        <h2 id="structure-showcase-title">{sectionCopy("title", "Pronta para operar.")}</h2>
+        <p>{sectionCopy("description", "Uma composição visual da base que você personaliza, divulga e acompanha no Escritório Virtual.")}</p>
       </div>
       <div className="structure-showcase-stage">
         <div className="hero-photo-wrap virtual-office-carousel" role="region" aria-roledescription="carrossel" aria-label="Demonstração visual do Escritório Virtual" tabIndex={0} onKeyDown={handleCarouselKeyDown} onTouchStart={event => { touchStartX.current = event.touches[0]?.clientX ?? null; }} onTouchEnd={handleTouchEnd}>
@@ -181,6 +187,7 @@ export default function Home() {
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
   const sectionImages = trpc.public.salesSectionImages.useQuery();
   const socialProof = trpc.public.salesSocialProof.useQuery();
+  const { overrides } = usePublicSalesCopy();
   const imageBySection = useMemo(() => new Map((sectionImages.data ?? []).map(image => [image.sectionId, image])), [sectionImages.data]);
   const resolveSectionImage = (sectionId: string, fallback: string | null) => {
     const saved = imageBySection.get(sectionId);
@@ -292,36 +299,36 @@ export default function Home() {
       </section>
     </div> : null}
 
-    <main>
+     <main>
       <section className="sales-hero" id="inicio">
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
             <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
-            <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
-            <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</h1>
+             <div className="sales-kicker">{overrides.hero?.kicker ?? <><span>Para quem quer começar no digital sem </span><span className="sales-kicker-tail">começar do zero</span></>}</div>
+             <h1>{overrides.hero?.title ?? <><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</>}</h1>
             <TopPromoBanner />
-            <p>Tenha seu Código Lucrativo personalizado, Escritório Virtual, ferramentas de divulgação, materiais e recursos para aprender, divulgar e acompanhar sua operação em um único ambiente.</p>
+             <p>{publicCopy(overrides, "hero", "description", "Tenha seu Código Lucrativo personalizado, Escritório Virtual, ferramentas de divulgação, materiais e recursos para aprender, divulgar e acompanhar sua operação em um único ambiente.")}</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
-            <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">Você personaliza sua página, começa a divulgar<br className="sales-trust-break" />e acompanha o que acontece em um só lugar.</span></div>
+             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">{publicCopy(overrides, "hero", "trust", "Você personaliza sua página, começa a divulgar e acompanha o que acontece em um só lugar.")}</span></div>
           </div>
         </div>
       </section>
 
-      <StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} />
+       <StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} overrides={overrides} />
 
       <section className="sales-proof" aria-label="O que a estrutura reúne">
         <div className="shell sales-proof-grid">
-          <div className="sales-proof-group"><strong>Estrutura digital</strong><div className="sales-proof-items"><span>Página</span><span>Perfil</span><span>Escritório</span></div></div>
-          <div className="sales-proof-group"><strong>Operação organizada</strong><div className="sales-proof-items"><span>Campanhas</span><span>Pedidos</span><span>Conteúdos</span></div></div>
+          <div className="sales-proof-group"><strong>{publicCopy(overrides, "structure_summary", "group1", "Estrutura digital")}</strong><div className="sales-proof-items">{publicCopy(overrides, "structure_summary", "group1items", "Página · Perfil · Escritório").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
+          <div className="sales-proof-group"><strong>{publicCopy(overrides, "structure_summary", "group2", "Operação organizada")}</strong><div className="sales-proof-items">{publicCopy(overrides, "structure_summary", "group2items", "Campanhas · Pedidos · Conteúdos").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
         </div>
       </section>
 
       <section className="sales-section sales-social-proof" id="depoimentos">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Quem já faz parte</Eyebrow><h2>Veja experiências de quem já utiliza a estrutura.</h2></div>
-            <p>Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.</p>
+            <div><Eyebrow>{publicCopy(overrides, "social_proof", "eyebrow", "Quem já faz parte")}</Eyebrow><h2>{publicCopy(overrides, "social_proof", "title", "Veja experiências de quem já utiliza a estrutura.")}</h2></div>
+            <p>{publicCopy(overrides, "social_proof", "description", "Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.")}</p>
           </div>
           <div className="social-proof-stats">
             <article><span>Total de membros</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.memberCount ?? 0}</strong></article>
@@ -332,60 +339,61 @@ export default function Home() {
             <div className="testimonial-rating" aria-label={`Avaliação ${item.rating} de 5`}>{Array.from({ length: 5 }).map((_, index) => <Star key={index} size={14} fill={index < item.rating ? "currentColor" : "none"} />)}</div>
             <p>{item.content}</p>
             <footer><strong>{item.memberName}</strong><span>{item.location}</span></footer>
-          </article>)}</div> : <p className="social-proof-empty">Depoimentos aprovados com avaliação aparecerão aqui assim que estiverem disponíveis.</p>}
+          </article>)}</div> : null}
         </div>
       </section>
 
       <section className="sales-section sales-package" id="o-que-recebe">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Tudo o que você recebe</Eyebrow><h2>Você não recebe apenas uma página. Recebe uma estrutura de operação.</h2></div>
-            <p>Página personalizada, Escritório Virtual, campanhas, pedidos, materiais e aprendizado reunidos para você começar sem montar cada peça separadamente.</p>
+            <div><Eyebrow>{publicCopy(overrides, "package", "eyebrow", "Tudo o que você recebe")}</Eyebrow><h2>{publicCopy(overrides, "package", "title", "Você não recebe apenas uma página. Recebe uma estrutura de operação.")}</h2></div>
+            <p>{publicCopy(overrides, "package", "description", "Página personalizada, Escritório Virtual, campanhas, pedidos, materiais e aprendizado reunidos para você começar sem montar cada peça separadamente.")}</p>
           </div>
-          <div className="package-grid">{packageItems.map(([title, description]) => <article key={title}><strong>{title}</strong><p>{description}</p></article>)}</div>
+          <div className="package-grid">{packageItems.map(([title, description], index) => <article key={title}><strong>{publicCopy(overrides, "package", `item${index + 1}Title`, title)}</strong><p>{publicCopy(overrides, "package", `item${index + 1}Text`, description)}</p></article>)}</div>
         </div>
       </section>
 
       {contentBlocks.map((block, index) => {
         const sectionImage = resolveSectionImage(block.id, block.defaultImage);
+         const sectionCopy = (key: string, fallback: string) => publicCopy(overrides, block.id, key, fallback);
         return <section id={block.id === "problem_start" ? "como-funciona" : block.id === "product_real" ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.id}>
           <div className="shell reference-copy-grid">
             <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
-            <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2>
+             <div className="reference-copy-content"><Eyebrow>{sectionCopy("eyebrow", block.eyebrow)}</Eyebrow><h2>{sectionCopy("title", block.title)}</h2>
               {sectionImage ? <div className={`reference-image-frame inline-reference-image ${block.id === "comparison" ? "comparison-image-fill" : ""}`}><img src={sectionImage} alt={block.defaultAlt} loading="lazy" /></div> : null}
-              <div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
+               <div className="copy-stack">{block.body.map((paragraph, paragraphIndex) => <p key={paragraph}>{sectionCopy(`paragraph${paragraphIndex + 1}`, paragraph)}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
           </div>
         </section>;
       })}
 
       <section className="sales-section reference-videos" id="videos">
-        <div className="shell"><div className="sales-section-heading"><div><Eyebrow>Contexto e apresentação</Eyebrow><h2>Veja a ideia por trás da <span>estrutura.</span></h2></div><p>Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
+         <div className="shell"><div className="sales-section-heading"><div><Eyebrow>{publicCopy(overrides, "videos", "eyebrow", "Contexto e apresentação")}</Eyebrow><h2>{overrides.videos?.title ?? <>Veja a ideia por trás da <span>estrutura.</span></>}</h2></div><p>{publicCopy(overrides, "videos", "description", "Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.")}</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
       </section>
 
       <section className="sales-section sprint-fit" id="perfil-ideal">
         <div className="shell sprint-fit-grid">
-          <div><Eyebrow>Para quem é</Eyebrow><h2>Para quem quer construir com execução.</h2><ul>{fitItems.map(item => <li key={item}>{item}</li>)}</ul></div>
-          <div className="sprint-not-fit"><Eyebrow>Para quem não é</Eyebrow><h2>Não é promessa de <span>resultado automático.</span></h2><ul>{notFitItems.map(item => <li key={item}>{item}</li>)}</ul></div>
+           <div><Eyebrow>{publicCopy(overrides, "fit", "fitEyebrow", "Para quem é")}</Eyebrow><h2>{publicCopy(overrides, "fit", "fitTitle", "Para quem quer construir com execução.")}</h2><ul>{fitItems.map((item, index) => <li key={item}>{publicCopy(overrides, "fit", `fit${index + 1}`, item)}</li>)}</ul></div>
+           <div className="sprint-not-fit"><Eyebrow>{publicCopy(overrides, "fit", "notEyebrow", "Para quem não é")}</Eyebrow><h2>{overrides.fit?.notTitle ?? <>Não é promessa de <span>resultado automático.</span></>}</h2><ul>{notFitItems.map((item, index) => <li key={item}>{publicCopy(overrides, "fit", `not${index + 1}`, item)}</li>)}</ul></div>
         </div>
       </section>
 
       <section className="sales-section sales-faq" id="faq">
-        <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div className="reference-copy-content"><Eyebrow>Antes de começar</Eyebrow><h2>Clareza para decidir com segurança.</h2><div className="copy-stack"><p>Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.</p>{faqItems.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></div>
+         <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div className="reference-copy-content"><Eyebrow>{publicCopy(overrides, "faq", "eyebrow", "Antes de começar")}</Eyebrow><h2>{publicCopy(overrides, "faq", "title", "Clareza para decidir com segurança.")}</h2><div className="copy-stack"><p>{publicCopy(overrides, "faq", "intro", "Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.")}</p>{faqItems.map(([question, answer], index) => <details key={question}><summary>{publicCopy(overrides, "faq", `q${index + 1}`, question)}</summary><p>{publicCopy(overrides, "faq", `a${index + 1}`, answer)}</p></details>)}</div></div></div>
       </section>
 
       <section className="sales-section sales-objections" id="duvidas-decisao">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Antes da oferta</Eyebrow><h2>O que costuma travar a decisão.</h2></div>
-            <p>Respostas curtas para dúvidas comuns antes de solicitar a ativação.</p>
+             <div><Eyebrow>{publicCopy(overrides, "objections", "eyebrow", "Antes da oferta")}</Eyebrow><h2>{publicCopy(overrides, "objections", "title", "O que costuma travar a decisão.")}</h2></div>
+             <p>{publicCopy(overrides, "objections", "description", "Respostas curtas para dúvidas comuns antes de solicitar a ativação.")}</p>
           </div>
-          <div className="objection-grid">{objectionItems.map(([question, answer]) => <article key={question}><strong>{question}</strong><p>{answer}</p></article>)}</div>
+           <div className="objection-grid">{objectionItems.map(([question, answer], index) => <article key={question}><strong>{publicCopy(overrides, "objections", `q${index + 1}`, question)}</strong><p>{publicCopy(overrides, "objections", `a${index + 1}`, answer)}</p></article>)}</div>
         </div>
       </section>
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com sua <span>estrutura digital pronta para operar.</span></h2><p>Sua solicitação de acesso reúne Código Lucrativo personalizado, Escritório Virtual, link pessoal, campanhas, acompanhamento de pedidos, materiais e Academia.</p><div className="sales-notes"><span>Valor da solicitação: R$ 50,00</span><span>Solicitação → Pagamento → Análise → Acesso liberado</span></div><p className="offer-closing">A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.</p></div>
+           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Comece com sua <span>estrutura digital pronta para operar.</span></>}</h2><p>{publicCopy(overrides, "offer", "description", "Sua solicitação de acesso reúne Código Lucrativo personalizado, Escritório Virtual, link pessoal, campanhas, acompanhamento de pedidos, materiais e Academia.")}</p><div className="sales-notes"><span>{publicCopy(overrides, "offer", "price", "Valor da solicitação: R$ 50,00")}</span><span>{publicCopy(overrides, "offer", "condition", "Solicitação → Pagamento → Análise → Acesso liberado")}</span></div><p className="offer-closing">{publicCopy(overrides, "offer", "closing", "A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.")}</p></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}
