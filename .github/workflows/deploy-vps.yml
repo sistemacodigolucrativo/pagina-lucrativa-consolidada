@@ -139,7 +139,9 @@ jobs:
               fi
               KEPT=$((KEPT + 1))
               if [ "$KEPT" -gt 2 ]; then
-                rm -rf -- "$RELEASE"
+                if ! rm -rf -- "$RELEASE"; then
+                  echo "Aviso: release antigo não pôde ser removido por permissão: $(basename "$RELEASE")" >&2
+                fi
               fi
             done
           fi
