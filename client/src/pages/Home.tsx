@@ -9,6 +9,7 @@ import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
 import { PUBLIC_SALES_OBJECTIONS } from "@shared/publicSalesObjections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
+import PublicSocialProofToast from "@/components/PublicSocialProofToast";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
@@ -280,7 +281,7 @@ export default function Home() {
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
+            <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite"><PublicSocialProofToast /></div>
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
             <h1><span>Comece no digital com uma estrutura própria</span>, pronta para configurar, divulgar e acompanhar — sem construir toda a tecnologia do zero.</h1>
             <TopPromoBanner />
@@ -300,7 +301,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="sales-section sales-social-proof" id="depoimentos">
+      <section className="sales-section sales-social-proof" id="depoimentos" translate="no">
         <div className="shell">
           <div className="sales-section-heading">
             <div><Eyebrow>Quem já faz parte</Eyebrow><h2>Veja experiências de quem já utiliza a estrutura.</h2></div>

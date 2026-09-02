@@ -113,18 +113,19 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain(".social-proof-rating-summary");
   });
 
-  it("mounts the social proof toast once at router scope and gates private routes", () => {
-    expect((appSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
+  it("mounts the social proof toast inside the stable Home slot", () => {
+    expect((homeSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
+    expect(appSource).not.toContain("<PublicSocialProofToast />");
     expect((appSource.match(/<PublicConversionCta \/>/g) ?? []).length).toBe(1);
-    expect(appSource).toContain('<WouterRouter base={base}><PublicSocialProofToast /><PublicConversionCta /><AppRoutes /></WouterRouter>');
+    expect(appSource).toContain('<WouterRouter base={base}><PublicConversionCta /><AppRoutes /></WouterRouter>');
     expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
     expect(socialProofSource).toContain('if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0)');
     expect(socialProofSource).toContain('fetch(withAppBase("/api/public-toast-config")');
     expect(socialProofSource).toContain('setNotice(null)');
     expect(socialProofSource).toContain('Math.min(settings.initialDelaySeconds * 1000, 4_000)');
-    expect(socialProofSource).toContain('!toastSlot && window.matchMedia(MOBILE_TABLET_QUERY).matches');
-    expect(socialProofSource).toContain('createPortal(toast, toastSlot)');
-    expect(socialProofSource).toContain('document.getElementById("public-social-proof-toast-slot")');
+    expect(socialProofSource).not.toContain('toastSlot');
+    expect(socialProofSource).not.toContain('createPortal');
+    expect(socialProofSource).toContain('translate="no"');
     expect(socialProofSource).toContain('settings.showSimulationNotice');
     expect(socialProofSource).toContain('role="status"');
     expect(homeSource).toContain('id="public-social-proof-toast-slot"');
@@ -135,6 +136,7 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).not.toContain('.public-social-proof-toast-slot:not(:empty)');
     expect(cssSource).toContain('.public-social-proof-toast { position: fixed;');
     expect(socialProofSource).toContain('public-social-proof-toast-inline');
+    expect(homeSource).toContain('id="depoimentos" translate="no"');
     expect(socialProofSource).not.toContain('top: 92px');
     expect(cssSource).toContain('pointer-events: none;');
   });
