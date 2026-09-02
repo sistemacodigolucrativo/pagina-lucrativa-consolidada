@@ -2,7 +2,7 @@ name: Validar e publicar na VPS
 
 on:
   push:
-    branches: [main, layout-paineis-demo, copyright]
+    branches: [copyright]
   workflow_dispatch:
 
 concurrency:
