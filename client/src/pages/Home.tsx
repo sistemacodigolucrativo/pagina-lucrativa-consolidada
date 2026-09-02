@@ -128,9 +128,10 @@ const virtualOfficeSlides = [
   { title: "Perfil", caption: "Configure sua presença pública com dados próprios." },
 ];
 
-function StructureDigitalShowcase({ image, imageAlt, overrides }: { image: string | null; imageAlt: string; overrides: Record<string, Record<string, string>> }) {
+function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; imageAlt: string }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const touchStartX = useRef<number | null>(null);
+  const { overrides } = usePublicSalesCopy();
   const currentSlide = virtualOfficeSlides[activeSlide] ?? virtualOfficeSlides[0];
   const sectionCopy = (key: string, fallback: string) => publicCopy(overrides, "structure_showcase", key, fallback);
   const previousSlide = () => setActiveSlide(current => current === 0 ? virtualOfficeSlides.length - 1 : current - 1);
@@ -305,17 +306,17 @@ export default function Home() {
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
             <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
-             <div className="sales-kicker">{overrides.hero?.kicker ?? <><span>Para quem quer começar no digital sem </span><span className="sales-kicker-tail">começar do zero</span></>}</div>
-             <h1>{overrides.hero?.title ?? <><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</>}</h1>
+             {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>}
+             {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</h1>}
             <TopPromoBanner />
              <p>{publicCopy(overrides, "hero", "description", "Tenha seu Código Lucrativo personalizado, Escritório Virtual, ferramentas de divulgação, materiais e recursos para aprender, divulgar e acompanhar sua operação em um único ambiente.")}</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
-             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">{publicCopy(overrides, "hero", "trust", "Você personaliza sua página, começa a divulgar e acompanha o que acontece em um só lugar.")}</span></div>
+             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" />{overrides.hero?.trust ? <span className="sales-trust-copy">{overrides.hero.trust}</span> : <span className="sales-trust-copy">Você personaliza sua página, começa a divulgar<br className="sales-trust-break" />e acompanha o que acontece em um só lugar.</span>}</div>
           </div>
         </div>
       </section>
 
-       <StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} overrides={overrides} />
+       <StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} />
 
       <section className="sales-proof" aria-label="O que a estrutura reúne">
         <div className="shell sales-proof-grid">
@@ -327,7 +328,7 @@ export default function Home() {
       <section className="sales-section sales-social-proof" id="depoimentos">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>{publicCopy(overrides, "social_proof", "eyebrow", "Quem já faz parte")}</Eyebrow><h2>{publicCopy(overrides, "social_proof", "title", "Veja experiências de quem já utiliza a estrutura.")}</h2></div>
+            <div>{overrides.social_proof?.eyebrow ? <Eyebrow>{overrides.social_proof.eyebrow}</Eyebrow> : <Eyebrow>Quem já faz parte</Eyebrow>}{overrides.social_proof?.title ? <h2>{overrides.social_proof.title}</h2> : <h2>Veja experiências de quem já utiliza a estrutura.</h2>}</div>
             <p>{publicCopy(overrides, "social_proof", "description", "Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.")}</p>
           </div>
           <div className="social-proof-stats">
