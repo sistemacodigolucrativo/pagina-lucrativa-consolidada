@@ -409,15 +409,28 @@ export default function Home() {
     </main>
 
     <footer className="footer">
-      <div className="shell flex flex-col items-center justify-center gap-4 py-2 text-center">
-        <div className="flex flex-col items-center gap-1.5">
-          <strong className="text-sm font-semibold tracking-[0.04em] text-[#f5f0e7]">Código Lucrativo® · Desde 2020</strong>
-          <span className="text-xs text-[#a9a79f]">Designed &amp; Developed by Marcelo R. Souza</span>
-          <span className="text-[11px] text-[#7d817d]">© 2026 · Todos os direitos reservados. · <span className="text-[#03d660]">⭐ v2.0</span></span>
-        </div>
-        <nav className="footer-links justify-center" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}</a>)}</nav>
-        {effectiveAffiliate?.whatsapp ? <a className="footer-whatsapp" href={`https://wa.me/${effectiveAffiliate.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">Ficou alguma dúvida? Solicite contato pelo WhatsApp.</a> : null}
+      <div className="shell footer-shell">
+        <section className="footer-panel footer-brand-block" aria-label="Código Lucrativo">
+          <div className="footer-brand-lockup">
+            <span className="footer-brand-mark" aria-hidden="true">CL</span>
+            <div><strong>Código Lucrativo®</strong><span>Desde 2020</span></div>
+          </div>
+          <p>Designed &amp; Developed by Marcelo R. Souza</p>
+        </section>
+
+        <section className="footer-panel footer-navigation">
+          <span className="footer-section-label">Informações</span>
+          <nav className="footer-links" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}<ArrowUpRight size={13} aria-hidden="true" /></a>)}</nav>
+        </section>
+
+        {effectiveAffiliate?.whatsapp ? <section className="footer-panel footer-support-card">
+          <span className="footer-section-label">Atendimento</span>
+          <strong>Ficou alguma dúvida?</strong>
+          <p>Solicite contato direto pelo WhatsApp.</p>
+          <a className="footer-whatsapp" href={`https://wa.me/${effectiveAffiliate.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle size={18} aria-hidden="true" /><span>Falar pelo WhatsApp</span><ArrowUpRight size={15} aria-hidden="true" /></a>
+        </section> : null}
       </div>
+      <div className="shell footer-bottom"><span>© 2026 · Todos os direitos reservados.</span><span className="footer-version">⭐ v2.0</span></div>
     </footer>
     <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={30} strokeWidth={2.2} /></button></div>
   </div>;
