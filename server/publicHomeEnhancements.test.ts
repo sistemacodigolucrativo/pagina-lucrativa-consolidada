@@ -13,7 +13,8 @@ describe("melhorias da página pública", () => {
     expect(home).toContain("Tudo o que você recebe");
     expect(home).toContain("Para quem é");
     expect(home).toContain("Para quem não é");
-    expect(home).toContain("O que costuma travar a decisão");
+    expect(home).toContain("O que pode travar sua decisão");
+    expect(home).toContain("featuredObjections");
     expect(home).not.toContain("plataforma por dentro");
   });
 
@@ -25,11 +26,13 @@ describe("melhorias da página pública", () => {
     expect(app).toContain('path="/termos-de-uso" component={TermsPage}');
     expect(app).toContain('path="/politica-de-privacidade" component={PrivacyPage}');
     expect(app).toContain('path="/regras-comerciais" component={CommercialRulesPage}');
+    expect(app).toContain('path="/perguntas-frequentes" component={FaqPage}');
     expect(app).toContain('path="/contato" component={ContactPage}');
     expect(home).toContain("footerLinks");
     expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
     expect(publicInfo).toContain("História do projeto");
     expect(publicInfo).toContain("Origem da ideia");
     expect(publicInfo).toContain("Tempo de atuação");
+    expect(publicInfo).toContain("Respostas para decidir com segurança");
   });
 });
