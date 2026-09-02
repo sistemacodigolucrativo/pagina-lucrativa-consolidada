@@ -6,36 +6,27 @@ import { withAppBase } from "@/lib/devPath";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
+import { PUBLIC_SALES_OBJECTIONS } from "@shared/publicSalesObjections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
-const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "hero_operation");
-
-const faqItems = [
-  ["O que exatamente estou comprando?", "Você está solicitando acesso ao método Código Lucrativo: um sistema pronto, validado, consolidado e bem aceito, com Escritório Virtual, perfil, ferramentas e recursos para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
-  ["É somente uma página?", "Não. O Código Lucrativo é um método com estrutura digital pronta para operar. O conjunto inclui perfil, Escritório Virtual, links, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os recursos disponíveis."],
-  ["Preciso criar um produto?", "O método e o Escritório Virtual oferecem uma base pronta para configuração, divulgação e acompanhamento. Sua divulgação, relacionamento com interessados e execução comercial continuam sendo responsabilidade do membro."],
-  ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
-  ["Como funciona o recebimento?", "O Escritório Virtual permite organizar preferências como PIX, PayPal, PagSeguro e dados bancários, além de acompanhar pedidos, pagamentos confirmados e histórico de adesões. Essas áreas armazenam informações e registros; não processam pagamentos automaticamente."],
-  ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e um ponto de partida. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
-  ["O que acontece depois que eu faço a solicitação?", "Depois do envio, você recebe um código para acompanhar sua solicitação. A partir daí, consegue acompanhar as etapas de pagamento, análise e liberação do acesso."],
-  ["Existe mensalidade ou garantia?", "O acesso segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
-  ["Posso acessar pelo celular?", "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta."],
-  ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar as respostas do suporte."],
-];
+const HOME_SALES_SECTION_IDS = new Set(["problem_start", "opportunity_indication", "comparison"]);
+const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => HOME_SALES_SECTION_IDS.has(section.id));
 
 const packageItems = [
-  ["Método Código Lucrativo", "Um sistema pronto, validado e organizado para você configurar e colocar em operação."],
-  ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
+  ["Método Código Lucrativo", "Uma orientação organizada para você configurar e colocar sua estrutura em movimento."],
+  ["Escritório Virtual", "Um painel para concentrar perfil, campanhas, pedidos, recebimentos e acompanhamento."],
   ["Link principal de divulgação", "Um endereço próprio para direcionar interessados à sua estrutura de apresentação."],
-  ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
-  ["Meus pedidos", "Área para acompanhar solicitações atribuídas e confirmações de pagamento."],
-  ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
-  ["Biblioteca de Recursos", "Ferramentas e materiais publicados pela administração para apoiar sua divulgação."],
-  ["Academia", "Conteúdos de aprendizado para orientar a execução."],
+  ["Campanhas de divulgação", "Links organizados por canal para identificar a origem das visitas."],
+  ["Meus pedidos", "Área para acompanhar solicitações atribuídas e pagamentos confirmados."],
+  ["Dados de recebimento", "Cadastro dos meios que você utiliza para receber diretamente dos compradores."],
+  ["Biblioteca de Recursos", "Ferramentas e materiais publicados para apoiar sua divulgação."],
+  ["Academia", "Conteúdos de aprendizado para orientar sua execução."],
 ];
+
+const featuredObjections = PUBLIC_SALES_OBJECTIONS.filter(item => item.featured);
 
 const fitItems = [
   "Pessoas dispostas a aprender a operar uma estrutura digital.",
@@ -51,19 +42,11 @@ const notFitItems = [
   "Quem busca uma promessa de resultado fixo em vez de uma ferramenta de trabalho.",
 ];
 
-const objectionItems = [
-  ["Nunca trabalhei com internet.", "A jornada foi organizada para começar pelo básico: configurar, divulgar e acompanhar."],
-  ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
-  ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
-  ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
-  ["Tenho medo de começar errado.", "A estrutura reduz a tela em branco: você configura seus dados, usa os materiais disponíveis e acompanha os próximos passos."],
-  ["E se eu ainda não tiver público?", "Você pode começar organizando sua presença, criando campanhas e testando canais de divulgação com clareza."],
-];
-
 const footerLinks = [
   ["Termos de Uso", "/termos-de-uso"],
   ["Política de Privacidade", "/politica-de-privacidade"],
   ["Regras comerciais", "/regras-comerciais"],
+  ["Perguntas frequentes", "/perguntas-frequentes"],
   ["Contato / suporte", "/contato"],
   ["Institucional", "/institucional"],
 ];
@@ -72,7 +55,7 @@ const publicNavigation = [
   ["Como funciona", "#como-funciona"],
   ["O que você recebe", "#o-que-recebe"],
   ["Resultados", "#depoimentos"],
-  ["Dúvidas", "#faq"],
+  ["Dúvidas", "/perguntas-frequentes"],
 ] as const;
 
 const utilityNavigation = [
@@ -299,9 +282,9 @@ export default function Home() {
           <div className="sales-hero-copy reveal-item">
             <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
             <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>
-            <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</h1>
+            <h1><span>Comece no digital com uma estrutura própria</span>, pronta para configurar, divulgar e acompanhar — sem construir toda a tecnologia do zero.</h1>
             <TopPromoBanner />
-            <p>Tenha acesso a um método digital pronto, validado, consolidado e bem aceito, com Escritório Virtual, ferramentas de divulgação, materiais e recursos para aprender, operar e acompanhar sua estrutura em um único ambiente.</p>
+            <p>O Código Lucrativo reúne método, Escritório Virtual, ferramentas de divulgação, materiais e acompanhamento em um único ambiente para você personalizar e colocar sua operação em movimento.</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" /><span className="sales-trust-copy">Você configura sua estrutura, começa a divulgar<br className="sales-trust-break" />e acompanha o que acontece em um só lugar.</span></div>
           </div>
@@ -353,7 +336,7 @@ export default function Home() {
             <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
             <div className="reference-copy-content"><Eyebrow>{block.eyebrow}</Eyebrow><h2>{block.title}</h2>
               {sectionImage ? <div className={`reference-image-frame inline-reference-image ${block.id === "comparison" ? "comparison-image-fill" : ""}`}><img src={sectionImage} alt={block.defaultAlt} loading="lazy" /></div> : null}
-              <div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
+              <div className="copy-stack">{block.body.map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div>{index === 1 ? <div className="sales-actions"><JoinButton /><a href={withAppBase("/perguntas-frequentes")} className="btn btn-ghost">Tirar dúvidas antes de ativar <ArrowUpRight size={16} /></a></div> : null}</div>
           </div>
         </section>;
       })}
@@ -369,23 +352,20 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="sales-section sales-faq" id="faq">
-        <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div className="reference-copy-content"><Eyebrow>Antes de começar</Eyebrow><h2>Clareza para decidir com segurança.</h2><div className="copy-stack"><p>Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.</p>{faqItems.map(([question, answer]) => <details key={question}><summary>{question}</summary><p>{answer}</p></details>)}</div></div></div>
-      </section>
-
       <section className="sales-section sales-objections" id="duvidas-decisao">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>Antes da oferta</Eyebrow><h2>O que costuma travar a decisão.</h2></div>
-            <p>Respostas curtas para dúvidas comuns antes de solicitar a ativação.</p>
+            <div><Eyebrow>Antes da ativação</Eyebrow><h2>O que pode travar sua decisão.</h2></div>
+            <p>Respostas diretas para as objeções mais comuns. A lista completa está disponível em uma página própria.</p>
           </div>
-          <div className="objection-grid">{objectionItems.map(([question, answer]) => <article key={question}><strong>{question}</strong><p>{answer}</p></article>)}</div>
+          <div className="objection-grid">{featuredObjections.map(item => <article key={item.question}><strong>{item.question}</strong><p>{item.answer}</p></article>)}</div>
+          <div className="sales-actions"><a href={withAppBase("/perguntas-frequentes")} className="btn btn-ghost">Ver todas as perguntas frequentes <ArrowUpRight size={16} /></a></div>
         </div>
       </section>
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com sua <span>estrutura digital pronta para operar.</span></h2><p>Sua solicitação de acesso reúne o método Código Lucrativo, uma estrutura digital pronta e validada, Escritório Virtual, ferramentas de divulgação, acompanhamento de pedidos, materiais e Academia.</p><div className="sales-notes"><span>Valor da solicitação: R$ 50,00</span><span>Solicitação → Pagamento → Análise → Acesso liberado</span></div><p className="offer-closing">A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.</p></div>
+          <div className="offer-copy"><Eyebrow>Próximo passo</Eyebrow><h2>Comece com sua <span>estrutura digital pronta para operar.</span></h2><p>A ativação reúne o método Código Lucrativo, uma estrutura digital própria, Escritório Virtual, ferramentas de divulgação, acompanhamento de pedidos, materiais e Academia.</p><div className="sales-notes"><span>Valor da ativação: R$ 50,00 · Sem mensalidade</span><span>Cadastro → Pagamento → Envio do comprovante → Liberação do acesso</span></div><p className="offer-closing">Você recebe a base, as ferramentas e a orientação para colocar sua operação em movimento. A execução e os resultados dependem da sua utilização e divulgação; não há garantia de vendas ou ganhos.</p><a href={withAppBase("/perguntas-frequentes")} className="preview-back-link">Consulte as perguntas frequentes antes de ativar</a></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}
