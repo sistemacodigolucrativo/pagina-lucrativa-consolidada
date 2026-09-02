@@ -32,11 +32,11 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("places the promo banner immediately after the hero headline", () => {
-    const headline = 'sem precisar montar toda a tecnologia sozinho.</h1>';
+    const headline = 'sem construir toda a tecnologia do zero.</h1>';
     const banner = '<TopPromoBanner />';
     expect(homeSource.indexOf(headline)).toBeGreaterThan(-1);
     expect(homeSource.indexOf(banner)).toBeGreaterThan(homeSource.indexOf(headline));
-    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Tenha acesso a um método digital pronto'));
+    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('O Código Lucrativo reúne método'));
     expect(cssSource).toContain('.sales-hero-copy > .top-promo-banner {');
   });
 
@@ -213,7 +213,7 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('comparison-image-fill');
     expect(cssSource).toContain('.reference-copy-content > .comparison-image-fill { width: 100%; }');
     expect(cssSource).toContain('.comparison-image-fill img { object-fit: cover; }');
-    expect(homeSource).toContain('section.id !== "hero_operation"');
+    expect(homeSource).toContain('new Set(["problem_start", "opportunity_indication", "comparison"])');
   });
 
   it("keeps the promo banner permanent and removes its close control", () => {
@@ -247,7 +247,7 @@ describe("public responsive header and hero layout", () => {
       '["Como funciona", "#como-funciona"]',
       '["O que você recebe", "#o-que-recebe"]',
       '["Resultados", "#depoimentos"]',
-      '["Dúvidas", "#faq"]',
+      '["Dúvidas", "/perguntas-frequentes"]',
     ];
     let previousIndex = publicNavigationStart;
     for (const item of publicItems) {
@@ -286,7 +286,7 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("keeps every landing target and mobile overflow protection", () => {
-    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "faq", "f"]) {
+    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "duvidas-decisao", "f"]) {
       expect(homeSource).toContain(`id="${id}"`);
     }
     expect(homeSource).toContain('block.id === "problem_start" ? "como-funciona"');
