@@ -1,6 +1,6 @@
 import { withAppBase } from "@/lib/devPath";
 import { PUBLIC_SALES_FAQ } from "@shared/publicSalesFaq";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowUpRight } from "lucide-react";
 
 type PublicPageKey = "institutional" | "terms" | "privacy" | "commercialRules" | "faq" | "contact";
 
@@ -116,6 +116,7 @@ function PublicInfoPage({ pageKey }: { pageKey: PublicPageKey }) {
           <article key={title}><h2>{title}</h2><p>{description}</p></article>
         ))}
       </div>
+      {isFaqPage ? <div className="shell public-info-cta"><a className="btn btn-primary" href={withAppBase("/#f")}>Quero ativar minha estrutura <ArrowUpRight size={16} /></a><a className="btn btn-ghost" href={withAppBase("/")}>Voltar para a página pública</a></div> : null}
     </section>
   </main>;
 }
