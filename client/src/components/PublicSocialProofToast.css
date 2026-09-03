@@ -1,16 +1,21 @@
 .public-social-proof-toast {
   position: fixed !important;
-  top: 92px !important;
-  right: 24px !important;
+  top: calc(env(safe-area-inset-top, 0px) + 92px) !important;
+  right: auto !important;
   bottom: auto !important;
+  left: 50% !important;
   z-index: 55;
   grid-template-columns: 26px minmax(0, 1fr) !important;
   gap: 9px !important;
-  width: min(340px, calc(100vw - 48px)) !important;
+  width: min(340px, calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))) !important;
+  max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important;
   min-height: 0 !important;
+  max-height: calc(100dvh - 120px) !important;
+  overflow: hidden !important;
   padding: 9px 11px !important;
   border-radius: 12px !important;
   box-shadow: 0 12px 30px rgba(0, 0, 0, .32), 0 0 20px rgba(3, 214, 96, .06) !important;
+  transform: translateX(-50%) !important;
   animation: public-social-proof-toast-top-in .22s var(--ease-out) both !important;
 }
 
@@ -23,6 +28,8 @@
   left: auto !important;
   width: 100% !important;
   max-width: 360px !important;
+  transform: none !important;
+  animation: public-social-proof-toast-inline-in .22s var(--ease-out) both !important;
 }
 
 .public-social-proof-toast .public-social-proof-toast-mark {
@@ -34,6 +41,7 @@
 
 .public-social-proof-toast .public-social-proof-toast-copy { gap: 1px !important; }
 .public-social-proof-toast .public-social-proof-toast-kicker {
+  overflow-wrap: anywhere;
   color: var(--toast-header-color, #FACC15) !important;
   font-size: 7px !important;
   font-weight: 800 !important;
@@ -41,30 +49,37 @@
   line-height: 1.15 !important;
 }
 .public-social-proof-toast .public-social-proof-toast-copy strong {
+  overflow-wrap: anywhere;
   color: var(--toast-message-color, #FFFFFF) !important;
   font-size: 10px !important;
   line-height: 1.25 !important;
 }
 .public-social-proof-toast .public-social-proof-toast-name { font-weight: 800; }
 .public-social-proof-toast .public-social-proof-toast-copy small {
+  overflow-wrap: anywhere;
   color: var(--toast-footer-color, #F9A8D4) !important;
   font-size: 7px !important;
   line-height: 1.2 !important;
 }
 
 @keyframes public-social-proof-toast-top-in {
+  from { opacity: 0; transform: translate(-50%, -8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+@keyframes public-social-proof-toast-inline-in {
   from { opacity: 0; transform: translateY(-8px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 900px) {
   .public-social-proof-toast-slot { width: min(340px, 100%); min-height: 60px; margin-bottom: 24px; }
-  .public-social-proof-toast { top: 82px !important; right: 16px !important; left: 16px !important; width: auto !important; max-width: none !important; }
+  .public-social-proof-toast { top: calc(env(safe-area-inset-top, 0px) + 82px) !important; width: min(340px, calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))) !important; max-width: calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important; }
   .public-social-proof-toast-inline { position: static !important; inset: auto !important; width: 100% !important; max-width: 340px !important; }
 }
 @media (max-width: 650px) {
   .public-social-proof-toast-slot { width: 100%; min-height: 58px; margin-bottom: 22px; }
-  .public-social-proof-toast { top: 80px !important; right: 8px !important; left: 8px !important; width: auto !important; padding: 8px 10px !important; border-radius: 10px !important; }
+  .public-social-proof-toast { top: calc(env(safe-area-inset-top, 0px) + 80px) !important; width: min(100%, calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))) !important; max-width: calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)) !important; padding: 8px 10px !important; border-radius: 10px !important; }
   .public-social-proof-toast-inline { position: static !important; inset: auto !important; width: 100% !important; max-width: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { .public-social-proof-toast { animation: none !important; } }

@@ -1,5 +1,5 @@
 import { withAppBase } from "@/lib/devPath";
-import { PUBLIC_SALES_OBJECTIONS } from "@shared/publicSalesObjections";
+import { PUBLIC_SALES_FAQ } from "@shared/publicSalesFaq";
 import { ArrowLeft } from "lucide-react";
 
 type PublicPageKey = "institutional" | "terms" | "privacy" | "commercialRules" | "faq" | "contact";
@@ -53,8 +53,8 @@ const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: stri
   faq: {
     eyebrow: "Dúvidas antes da ativação",
     title: "Respostas para decidir com segurança",
-    intro: "As dúvidas foram organizadas como objeções reais, com respostas diretas sobre a estrutura, a ativação, o pagamento, a divulgação e o que depende da sua execução.",
-    sections: PUBLIC_SALES_OBJECTIONS.map(({ question, answer }) => [question, answer] as [string, string]),
+    intro: "Reunimos as perguntas mais comuns sobre a estrutura, a ativação, o pagamento, a divulgação e o que depende da sua execução.",
+    sections: PUBLIC_SALES_FAQ.map(({ question, answer }) => [question, answer] as [string, string]),
   },
   contact: {
     eyebrow: "Suporte",
@@ -94,6 +94,8 @@ export function ContactPage() {
 
 function PublicInfoPage({ pageKey }: { pageKey: PublicPageKey }) {
   const page = pages[pageKey];
+  const isFaqPage = pageKey === "faq";
+
   return <main className="sales-page public-info-page">
     <section className="public-info-hero">
       <div className="shell">
@@ -103,8 +105,17 @@ function PublicInfoPage({ pageKey }: { pageKey: PublicPageKey }) {
         <p>{page.intro}</p>
       </div>
     </section>
-    <section className="public-info-content">
-      <div className="shell public-info-grid">{page.sections.map(([title, description]) => <article key={title}><h2>{title}</h2><p>{description}</p></article>)}</div>
+    <section className={isFaqPage ? "public-info-content public-info-faq-content" : "public-info-content"}>
+      <div className={isFaqPage ? "shell public-info-faq-list" : "shell public-info-grid"}>
+        {page.sections.map(([title, description]) => isFaqPage ? (
+          <details className="public-info-faq-item" key={title}>
+            <summary><span>{title}</span></summary>
+            <p>{description}</p>
+          </details>
+        ) : (
+          <article key={title}><h2>{title}</h2><p>{description}</p></article>
+        ))}
+      </div>
     </section>
   </main>;
 }
