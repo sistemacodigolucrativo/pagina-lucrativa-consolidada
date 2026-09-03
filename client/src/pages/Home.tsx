@@ -6,22 +6,31 @@ import { withAppBase } from "@/lib/devPath";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
+import { PUBLIC_SALES_DECISION_OBJECTIONS } from "@shared/publicSalesObjections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
+import PublicSocialProofToast from "@/components/PublicSocialProofToast";
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
-const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "hero_operation");
+const coreSalesSectionIds = new Set([
+  "problem_start",
+  "activation_journey",
+  "comparison",
+  "not_just_course",
+  "ease_real",
+]);
+const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => coreSalesSectionIds.has(section.id));
 
 
 
 const packageItems = [
-  ["Código Lucrativo personalizado", "Uma página pública para apresentar sua estrutura e receber solicitações."],
-  ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
-  ["Link principal de indicação", "Um endereço próprio para divulgar seu Código Lucrativo."],
+  ["Estrutura personalizada", "Página pública, perfil e dados iniciais organizados para apresentar sua operação e receber solicitações."],
+  ["Escritório Virtual", "Painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
+  ["Link principal de indicação", "Endereço próprio para divulgar sua estrutura com mais clareza."],
   ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
-  ["Meus pedidos", "Área para acompanhar solicitações atribuídas e confirmações de pagamento."],
+  ["Pedidos e comprovantes", "Área para acompanhar solicitações, pagamentos, envio de comprovantes e andamento da análise."],
   ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
   ["Biblioteca de Recursos", "Ferramentas e materiais publicados pela administração para apoiar sua divulgação."],
   ["Academia", "Conteúdos de aprendizado para orientar a execução."],
@@ -41,14 +50,7 @@ const notFitItems = [
   "Quem busca uma promessa de resultado fixo em vez de uma ferramenta de trabalho.",
 ];
 
-const objectionItems = [
-  ["Nunca trabalhei com internet.", "A jornada foi organizada para começar pelo básico: configurar, divulgar e acompanhar."],
-  ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
-  ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
-  ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
-  ["Tenho medo de começar errado.", "A estrutura reduz a tela em branco: você configura sua página, usa os materiais disponíveis e acompanha os próximos passos."],
-  ["E se eu ainda não tiver público?", "Você pode começar organizando sua presença, criando campanhas e testando canais de divulgação com clareza."],
-];
+const objectionItems = PUBLIC_SALES_DECISION_OBJECTIONS.map(({ question, answer }) => [question, answer] as const);
 
 
 
@@ -112,12 +114,12 @@ function RatingStars({ rating }: { rating: number }) {
 }
 
 const virtualOfficeSlides = [
-  { title: "Dashboard", caption: "Acompanhe suas informações em um só lugar." },
-  { title: "Campanhas", caption: "Organize seus links e materiais de divulgação." },
-  { title: "Meus pedidos", caption: "Visualize solicitações e acompanhe cada etapa." },
-  { title: "Biblioteca", caption: "Tenha seus materiais disponíveis no Escritório Virtual." },
-  { title: "Academia", caption: "Acesse conteúdos de aprendizado em uma área dedicada." },
-  { title: "Perfil", caption: "Configure sua presença pública com dados próprios." },
+  { title: "Estrutura personalizada", caption: "Página pública e dados iniciais preparados para apresentar sua operação." },
+  { title: "Escritório Virtual", caption: "Painel para centralizar perfil, pedidos, campanhas e acompanhamento." },
+  { title: "Campanhas de divulgação", caption: "Links e canais organizados para divulgar com mais clareza." },
+  { title: "Pedidos e acompanhamento", caption: "Solicitações, pagamento, comprovante e status reunidos no fluxo existente." },
+  { title: "Biblioteca e Academia", caption: "Materiais e conteúdos de apoio para aprender e executar." },
+  { title: "Dados de recebimento", caption: "Área para organizar os meios de recebimento usados na operação." },
 ];
 
 function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; imageAlt: string }) {
@@ -297,7 +299,7 @@ export default function Home() {
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite" />
+            <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite"><PublicSocialProofToast /></div>
              {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>}
              {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Sua estrutura digital pronta</span> para começar — sem precisar montar toda a tecnologia sozinho.</h1>}
             <TopPromoBanner />
@@ -314,6 +316,16 @@ export default function Home() {
         <div className="shell sales-proof-grid">
           <div className="sales-proof-group"><strong>{publicCopy(overrides, "structure_summary", "group1", "Estrutura digital")}</strong><div className="sales-proof-items">{publicCopy(overrides, "structure_summary", "group1items", "Página · Perfil · Escritório").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
           <div className="sales-proof-group"><strong>{publicCopy(overrides, "structure_summary", "group2", "Operação organizada")}</strong><div className="sales-proof-items">{publicCopy(overrides, "structure_summary", "group2items", "Campanhas · Pedidos · Conteúdos").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
+        </div>
+      </section>
+
+      <section className="sales-section sales-package" id="o-que-recebe">
+        <div className="shell">
+          <div className="sales-section-heading">
+            <div><Eyebrow>{publicCopy(overrides, "package", "eyebrow", "O que você recebe")}</Eyebrow><h2>{publicCopy(overrides, "package", "title", "Você recebe uma estrutura de operação, não uma explicação solta.")}</h2></div>
+            <p>{publicCopy(overrides, "package", "description", "Estrutura personalizada, Escritório Virtual, campanhas, recebimentos, pedidos, histórico, biblioteca, academia e suporte reunidos no mesmo fluxo.")}</p>
+          </div>
+          <div className="package-grid">{packageItems.map(([title, description], index) => <article key={title}><strong>{publicCopy(overrides, "package", `item${index + 1}Title`, title)}</strong><p>{publicCopy(overrides, "package", `item${index + 1}Text`, description)}</p></article>)}</div>
         </div>
       </section>
 
@@ -336,20 +348,10 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="sales-section sales-package" id="o-que-recebe">
-        <div className="shell">
-          <div className="sales-section-heading">
-            <div><Eyebrow>{publicCopy(overrides, "package", "eyebrow", "Tudo o que você recebe")}</Eyebrow><h2>{publicCopy(overrides, "package", "title", "Você não recebe apenas uma página. Recebe uma estrutura de operação.")}</h2></div>
-            <p>{publicCopy(overrides, "package", "description", "Página personalizada, Escritório Virtual, campanhas, pedidos, materiais e aprendizado reunidos para você começar sem montar cada peça separadamente.")}</p>
-          </div>
-          <div className="package-grid">{packageItems.map(([title, description], index) => <article key={title}><strong>{publicCopy(overrides, "package", `item${index + 1}Title`, title)}</strong><p>{publicCopy(overrides, "package", `item${index + 1}Text`, description)}</p></article>)}</div>
-        </div>
-      </section>
-
       {contentBlocks.map((block, index) => {
         const sectionImage = resolveSectionImage(block.id, block.defaultImage);
          const sectionCopy = (key: string, fallback: string) => publicCopy(overrides, block.id, key, fallback);
-        return <section id={block.id === "problem_start" ? "como-funciona" : block.id === "product_real" ? "estrutura" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.id}>
+        return <section id={block.id === "problem_start" ? "como-funciona" : block.id === "comparison" ? "comparacao" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.id}>
           <div className="shell reference-copy-grid">
             <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
              <div className="reference-copy-content"><Eyebrow>{sectionCopy("eyebrow", block.eyebrow)}</Eyebrow><h2>{sectionCopy("title", block.title)}</h2>
@@ -379,12 +381,13 @@ export default function Home() {
              <p>{publicCopy(overrides, "objections", "description", "Respostas curtas para dúvidas comuns antes de solicitar a ativação.")}</p>
           </div>
            <div className="objection-grid">{objectionItems.map(([question, answer], index) => <article key={question}><strong>{publicCopy(overrides, "objections", `q${index + 1}`, question)}</strong><p>{publicCopy(overrides, "objections", `a${index + 1}`, answer)}</p></article>)}</div>
+          <p className="offer-closing">Ainda quer consultar tudo com calma? <a href={withAppBase("/perguntas-frequentes")}>Ver perguntas frequentes completas</a>.</p>
         </div>
       </section>
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Comece com sua <span>estrutura digital pronta para operar.</span></>}</h2><p>{publicCopy(overrides, "offer", "description", "Sua solicitação de acesso reúne Código Lucrativo personalizado, Escritório Virtual, link pessoal, campanhas, acompanhamento de pedidos, materiais e Academia.")}</p><div className="sales-notes"><span>{publicCopy(overrides, "offer", "price", "Valor da solicitação: R$ 50,00")}</span><span>{publicCopy(overrides, "offer", "condition", "Solicitação → Pagamento → Análise → Acesso liberado")}</span></div><p className="offer-closing">{publicCopy(overrides, "offer", "closing", "A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.")}</p></div>
+           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Comece com sua <span>estrutura digital pronta para operar.</span></>}</h2><p>{publicCopy(overrides, "offer", "description", "Sua solicitação de ativação cria o registro necessário para cadastro, pagamento, envio do comprovante e análise da estrutura inicial.")}</p><div className="sales-notes"><span>{publicCopy(overrides, "offer", "price", "Valor da solicitação de ativação: R$ 50,00")}</span><span>{publicCopy(overrides, "offer", "condition", "Sem mensalidade. Solicitação → pagamento → comprovante → análise → acesso liberado")}</span></div><p className="offer-closing">{publicCopy(overrides, "offer", "closing", "O formulário registra o cadastro; o pagamento acontece na etapa seguinte e o comprovante dá continuidade ao fluxo já existente. Resultados dependem da sua execução e divulgação.")}</p><p className="offer-closing">Antes de seguir, você também pode consultar as <a href={withAppBase("/perguntas-frequentes")}>perguntas frequentes completas</a>.</p></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}
