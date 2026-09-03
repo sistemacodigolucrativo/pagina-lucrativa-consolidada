@@ -14,6 +14,19 @@ const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
 const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "hero_operation");
 
+const faqItems = [
+  ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital do Código Lucrativo: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
+  ["É somente uma página?", "Não. A página é a porta de entrada. O conjunto inclui perfil público, link pessoal, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os recursos disponíveis."],
+  ["Preciso criar um produto?", "A página e o Escritório Virtual já oferecem uma base pronta para apresentação e acompanhamento. Sua divulgação, relacionamento com interessados e execução comercial continuam sendo responsabilidade do membro."],
+  ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
+  ["Como funciona o recebimento?", "O Escritório Virtual permite organizar preferências como PIX, PayPal, PagSeguro e dados bancários, além de acompanhar pedidos, pagamentos confirmados e histórico de adesões. Essas áreas armazenam informações e registros; não processam pagamentos automaticamente."],
+  ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e um ponto de partida. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
+  ["O que acontece depois que eu faço a solicitação?", "Depois do envio, você recebe um código para acompanhar sua solicitação. A partir daí, consegue acompanhar as etapas de pagamento, análise e liberação do acesso."],
+  ["Existe mensalidade ou garantia?", "A página segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
+  ["Posso acessar pelo celular?", "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta."],
+  ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar as respostas do suporte."],
+];
+
 const packageItems = [
   ["Código Lucrativo personalizado", "Uma página pública para apresentar sua estrutura e receber solicitações."],
   ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
@@ -364,6 +377,10 @@ export default function Home() {
            <div><Eyebrow>{publicCopy(overrides, "fit", "fitEyebrow", "Para quem é")}</Eyebrow><h2>{publicCopy(overrides, "fit", "fitTitle", "Para quem quer construir com execução.")}</h2><ul>{fitItems.map((item, index) => <li key={item}>{publicCopy(overrides, "fit", `fit${index + 1}`, item)}</li>)}</ul></div>
            <div className="sprint-not-fit"><Eyebrow>{publicCopy(overrides, "fit", "notEyebrow", "Para quem não é")}</Eyebrow><h2>{overrides.fit?.notTitle ?? <>Não é promessa de <span>resultado automático.</span></>}</h2><ul>{notFitItems.map((item, index) => <li key={item}>{publicCopy(overrides, "fit", `not${index + 1}`, item)}</li>)}</ul></div>
         </div>
+      </section>
+
+      <section className="sales-section sales-faq" id="faq">
+         <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div className="reference-copy-content"><Eyebrow>{publicCopy(overrides, "faq", "eyebrow", "Antes de começar")}</Eyebrow><h2>{publicCopy(overrides, "faq", "title", "Clareza para decidir com segurança.")}</h2><div className="copy-stack"><p>{publicCopy(overrides, "faq", "intro", "Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.")}</p>{faqItems.map(([question, answer], index) => <details key={question}><summary>{publicCopy(overrides, "faq", `q${index + 1}`, question)}</summary><p>{publicCopy(overrides, "faq", `a${index + 1}`, answer)}</p></details>)}</div></div></div>
       </section>
 
       <section className="sales-section sales-objections" id="duvidas-decisao">

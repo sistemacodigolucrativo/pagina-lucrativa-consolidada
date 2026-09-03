@@ -23,11 +23,20 @@ export default function PublicConversionCta() {
   return (
     <a
       className="public-conversion-cta"
+      style={{
+        borderRadius: "10px",
+        minWidth: "auto",
+        minHeight: "44px",
+        padding: "10px 14px",
+        gap: "7px",
+      }}
       href={withAppBase("/#f")}
       aria-label="Quero ativar minha estrutura"
       title="Quero ativar minha estrutura"
     >
-      <span className="public-conversion-cta-label">Quero ativar minha estrutura</span>
+      <span style={{ fontSize: "11px", lineHeight: 1, fontWeight: 800, whiteSpace: "nowrap" }}>
+        Quero ativar minha estrutura
+      </span>
       <ArrowUpRight size={16} aria-hidden="true" />
     </a>
   );
