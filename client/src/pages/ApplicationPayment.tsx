@@ -149,9 +149,9 @@ export default function ApplicationPayment() {
       <a href={withAppBase("/")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-emerald-200"><ArrowLeft size={15} /> Voltar para o Código Lucrativo</a>
 
       <header className="rounded-3xl border border-emerald-300/20 bg-zinc-950/80 p-5 shadow-2xl sm:p-7">
-        <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Pagamento do pedido</span>
-        <h1 className="mt-3 text-3xl font-semibold text-white">Finalize seu pagamento</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Escolha a melhor forma de pagamento para concluir seu pedido.</p>
+        <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Pagamento da solicitação de ativação</span>
+        <h1 className="mt-3 text-3xl font-semibold text-white">Finalize o pagamento da sua ativação</h1>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Depois de pagar, envie o comprovante quando solicitado e acompanhe a análise pelo código do pedido.</p>
       </header>
 
       <section className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
@@ -179,7 +179,7 @@ export default function ApplicationPayment() {
                 <p className="mt-2 text-sm leading-6 text-zinc-400">O pagamento é realizado diretamente ao responsável indicado abaixo.</p>
               </div>
               <div className="rounded-2xl border border-emerald-300/25 bg-black/35 p-4 lg:min-w-56">
-                <span className="text-xs uppercase tracking-wider text-zinc-500">Valor da adesão</span>
+                <span className="text-xs uppercase tracking-wider text-zinc-500">Valor da solicitação de ativação</span>
                 <strong className="mt-1 block text-3xl text-emerald-200">{formatCurrency(application.offerAmountCents)}</strong>
               </div>
             </div>
@@ -219,7 +219,7 @@ export default function ApplicationPayment() {
 
           {showReceiptUpload && !hasSubmittedReceipt ? <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
               <div className="flex items-center gap-2 text-white"><UploadCloud className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">Já pagou? Envie seu comprovante</h2></div>
-              <p className="mt-2 text-sm leading-6 text-zinc-400">Envie o comprovante para que o responsável confira seu pagamento.</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">Envie o comprovante para que o responsável confira o pagamento e dê continuidade à análise.</p>
               <label className="mt-4 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] sm:w-auto">
                 <UploadCloud className="size-4" />{uploadReceipt.isPending ? "Enviando..." : "Enviar comprovante"}
                 <input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" disabled={uploadReceipt.isPending} onChange={handleReceipt} />
@@ -235,7 +235,7 @@ export default function ApplicationPayment() {
             <button type="button" onClick={handleTrackOrder} className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 font-semibold hover:bg-emerald-300/10">Acompanhar pedido <ArrowRight className="size-4" /></button>
           </article> : <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-white">{showReceiptUpload ? "4" : "3"}. Acompanhe seu pedido</h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">Após o pagamento, acompanhe o status do seu pedido.</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">Após pagar e enviar o comprovante, acompanhe análise e liberação do acesso.</p>
             <button type="button" onClick={handleTrackOrder} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 sm:w-auto">Acompanhar pedido <ArrowRight className="size-4" /></button>
           </article>}
         </div>
