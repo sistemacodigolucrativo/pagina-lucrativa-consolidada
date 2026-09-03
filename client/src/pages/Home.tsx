@@ -65,6 +65,7 @@ const footerLinks = [
   ["Termos de Uso", "/termos-de-uso"],
   ["Política de Privacidade", "/politica-de-privacidade"],
   ["Regras comerciais", "/regras-comerciais"],
+  ["Perguntas frequentes", "/perguntas-frequentes"],
   ["Contato / suporte", "/contato"],
   ["Institucional", "/institucional"],
 ];
@@ -73,7 +74,7 @@ const publicNavigation = [
   ["Como funciona", "#como-funciona"],
   ["O que você recebe", "#o-que-recebe"],
   ["Resultados", "#depoimentos"],
-  ["Dúvidas", "#faq"],
+  ["Dúvidas", "/perguntas-frequentes"],
 ] as const;
 
 const utilityNavigation = [
