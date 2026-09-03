@@ -12,12 +12,12 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   },
   {
     question: "Tenho medo de ser apenas uma página.",
-    answer: "Não é apenas uma página. A página é a porta de entrada. O Código Lucrativo reúne método, estrutura digital, Escritório Virtual e recursos para você entender, personalizar, divulgar e acompanhar sua operação em um único ambiente.",
+    answer: "Não é apenas uma página. A página é a porta de entrada. O Método Código Lucrativo reúne estrutura digital, Escritório Virtual e recursos para você receber, conhecer, personalizar, operar e evoluir sua execução em um único ambiente.",
     featured: true,
   },
   {
     question: "Nunca trabalhei com internet.",
-    answer: "A jornada começa pelo básico: solicitar a ativação, receber acesso, conhecer a estrutura, personalizar seus dados essenciais, aprender a utilizar os recursos, divulgar e acompanhar. Você não precisa começar como especialista.",
+    answer: "A jornada começa pelo básico: solicitar a ativação, receber acesso, conhecer a estrutura, personalizar seus dados essenciais, operar os recursos e evoluir com acompanhamento. Você não precisa começar como especialista.",
     featured: true,
   },
   {
@@ -37,7 +37,7 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   },
   {
     question: "Tenho medo de pagar e não saber o que acontece depois.",
-    answer: "Após o cadastro, você conclui o pagamento, envia o comprovante pelo fluxo de acompanhamento e dá continuidade à liberação do acesso. O código do pedido permite acompanhar cada etapa.",
+    answer: "Após o cadastro, você conclui o pagamento, envia o comprovante pelo fluxo de acompanhamento e dá continuidade à liberação do acesso. O número do pedido permite acompanhar cada etapa.",
   },
   {
     question: "Não tenho um produto próprio.",
@@ -57,7 +57,7 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   },
   {
     question: "Tenho pouco tempo.",
-    answer: "Você pode avançar no seu ritmo. A estrutura reduz o trabalho de montar a tecnologia do zero, mas aprender, divulgar e acompanhar ainda exige constância.",
+    answer: "Você pode avançar no seu ritmo. A estrutura reduz o trabalho de preparar a base técnica, mas aprender, divulgar e acompanhar ainda exige constância.",
   },
   {
     question: "Não entendo de marketing digital nem programação.",
@@ -65,7 +65,7 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   },
   {
     question: "Tenho medo de começar errado.",
-    answer: "A jornada indica os próximos passos: ativar, receber acesso, conhecer a estrutura, personalizar, aprender, divulgar e acompanhar. Isso reduz a sensação de tela em branco e ajuda a organizar a execução.",
+    answer: "A jornada indica os próximos passos: receber acesso, conhecer a estrutura, personalizar seus dados essenciais, operar os recursos e evoluir com acompanhamento. Isso reduz a sensação de tela em branco e ajuda a organizar a execução.",
   },
   {
     question: "Tenho receio de não conseguir usar pelo celular.",
