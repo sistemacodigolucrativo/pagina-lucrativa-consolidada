@@ -247,7 +247,7 @@ describe("public responsive header and hero layout", () => {
       '["Como funciona", "#como-funciona"]',
       '["O que você recebe", "#o-que-recebe"]',
       '["Resultados", "#depoimentos"]',
-      '["Dúvidas", "#faq"]',
+      '["Dúvidas", "/perguntas-frequentes"]',
     ];
     let previousIndex = publicNavigationStart;
     for (const item of publicItems) {

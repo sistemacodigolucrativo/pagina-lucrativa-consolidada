@@ -25,9 +25,16 @@ describe("melhorias da página pública", () => {
     expect(app).toContain('path="/termos-de-uso" component={TermsPage}');
     expect(app).toContain('path="/politica-de-privacidade" component={PrivacyPage}');
     expect(app).toContain('path="/regras-comerciais" component={CommercialRulesPage}');
+    expect(app).toContain('path="/perguntas-frequentes" component={FaqPage}');
     expect(app).toContain('path="/contato" component={ContactPage}');
+    expect(home).toContain('["Dúvidas", "/perguntas-frequentes"]');
+    expect(home).toContain('["Perguntas frequentes", "/perguntas-frequentes"]');
     expect(home).toContain("footerLinks");
     expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
+    expect(publicInfo).toContain("Respostas para decidir com segurança");
+    const objections = read("shared/publicSalesObjections.ts");
+    expect((objections.match(/question:/g) ?? []).length).toBe(16);
+    expect(objections).toContain("Não existe mensalidade.");
     expect(publicInfo).toContain("História do projeto");
     expect(publicInfo).toContain("Origem da ideia");
     expect(publicInfo).toContain("Tempo de atuação");
