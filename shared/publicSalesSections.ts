@@ -14,10 +14,10 @@ export const PUBLIC_SALES_SECTIONS = [
     body: [
       "Antes do Código Lucrativo, a busca era a mesma de quem chega até esta página: encontrar um caminho confiável para começar no digital sem cair em promessa vazia.",
       "Depois de investir tempo e dinheiro em cursos, métodos e materiais que ensinavam muita teoria, ficou claro que o problema não era falta de informação. O que faltava era uma estrutura pronta para colocar em prática.",
-      "Foi dessa necessidade que nasceu o Método Código Lucrativo: uma base consolidada para receber, entender, personalizar, divulgar e acompanhar uma operação digital com mais clareza.",
+      "Foi dessa necessidade que nasceu o Método Código Lucrativo: uma base consolidada para receber, conhecer, personalizar, operar e evoluir uma operação digital com mais clareza.",
     ],
     defaultImage: "/problem-start.png",
-    defaultAlt: "Jornada simples mostrando entrada, personalização, aprendizado, divulgação e acompanhamento",
+    defaultAlt: "Jornada mostrando receber, conhecer, personalizar, operar e evoluir com acompanhamento",
   },
   {
     id: "state_desired",
@@ -33,10 +33,10 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "mechanism",
     eyebrow: "O mecanismo",
-    title: "Um método proprietário que não precisa ser reconstruído a cada novo membro.",
+    title: "Um método proprietário que mantém a base pronta para cada novo membro.",
     body: [
-      "O Código Lucrativo organiza uma estrutura que já existe, já foi refinada e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
-      "A jornada é simples de entender: solicite a ativação, receba acesso, conheça a estrutura, personalize seus dados, aprenda a utilizar os recursos, divulgue e acompanhe.",
+      "O Método Código Lucrativo organiza uma estrutura que já existe, já foi refinada e pode ser disponibilizada para novos membros sem que cada pessoa precise refazer toda a base operacional.",
+      "A jornada é simples de entender: receber acesso, conhecer a estrutura, personalizar os dados essenciais, operar os recursos e evoluir a execução com acompanhamento.",
       "A estrutura reduz a parte técnica do início. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas.",
     ],
     defaultImage: "/mechanism.png",
@@ -48,7 +48,7 @@ export const PUBLIC_SALES_SECTIONS = [
     title: "Código Lucrativo não é apenas uma página. É um método com estrutura pronta por trás.",
     body: [
       "A página pública é apenas a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria conta.",
-      "Você recebe acesso a uma estrutura digital desenvolvida para ser entendida, personalizada e colocada em operação — sem precisar começar pela construção da tecnologia.",
+      "Você recebe acesso a uma estrutura digital preparada para ser entendida, personalizada e colocada em operação — sem precisar começar pela parte técnica inicial.",
     ],
     defaultImage: "/product-real.png",
     defaultAlt: "Estrutura digital conectando página pública, Escritório Virtual, campanhas, aprendizado, pedidos e acompanhamento",
@@ -67,10 +67,10 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "activation_journey",
     eyebrow: "A jornada",
-    title: "Da ativação à operação do seu Método Código Lucrativo.",
+    title: "Receber, conhecer, personalizar, operar e evoluir com o Método Código Lucrativo.",
     body: [
       "Depois do pedido, você acompanha a solicitação, recebe as orientações de acesso, completa seu perfil, informa seus dados essenciais e entende como sua estrutura foi organizada.",
-      "Em seguida, conhece os materiais disponíveis, aprende a utilizar o método, ativa seus primeiros caminhos de divulgação e acompanha os registros gerados pela sua própria operação.",
+      "Em seguida, conhece os materiais disponíveis, personaliza os pontos essenciais, opera os recursos do método e evolui sua execução acompanhando os registros gerados pela própria operação.",
     ],
     defaultImage: "/activation-journey.png",
     defaultAlt: "Jornada de ativação e primeiros passos",
@@ -92,7 +92,7 @@ export const PUBLIC_SALES_SECTIONS = [
     eyebrow: "O diferencial",
     title: "Não é mais um curso prometendo teoria. É um método pronto com estrutura para usar.",
     body: [
-      "Um curso comum pode ensinar conceitos e deixar o aluno sozinho para montar tudo depois. Aqui, o aprendizado está conectado a uma estrutura digital que você recebe pronta para conhecer, personalizar e operar.",
+      "Um curso comum pode ensinar conceitos e deixar o aluno sozinho para resolver a parte técnica depois. Aqui, o aprendizado está conectado a uma estrutura digital que você recebe pronta para conhecer, personalizar e operar.",
       "A proposta combina Método Código Lucrativo, Escritório Virtual, materiais, conteúdos de aprendizado e recursos de divulgação para que o processo seja compreendido dentro do próprio ambiente de execução.",
       "O diferencial é começar com a parte técnica já estruturada, para concentrar seu esforço em aprender, divulgar e operar com consistência.",
     ],
@@ -102,24 +102,24 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "comparison",
     eyebrow: "A comparação",
-    title: "O que você teria de montar se continuasse tentando sozinho?",
+    title: "O que você teria de organizar se continuasse tentando sozinho?",
     body: [
       "Produto ou oferta, site, página de apresentação, área do usuário, acesso seguro, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
-      "Foi justamente para reduzir essa etapa pesada de construção que o Método Código Lucrativo foi consolidado: você começa a partir de uma estrutura existente e dedica sua energia a entender, personalizar, divulgar e operar.",
+      "Foi justamente para reduzir essa etapa pesada de preparação técnica que o Método Código Lucrativo foi consolidado: você começa a partir de uma estrutura existente e dedica sua energia a entender, personalizar, divulgar, operar e evoluir.",
     ],
     defaultImage: "/comparison.png",
-    defaultAlt: "Comparação entre construir componentes desconectados sozinho e operar uma estrutura digital organizada",
+    defaultAlt: "Comparação entre preparar componentes desconectados sozinho e operar uma estrutura digital organizada",
   },
   {
     id: "ease_real",
     eyebrow: "A facilidade real",
     title: "Você não precisa saber programar para utilizar o método.",
     body: [
-      "A parte técnica já foi desenvolvida e organizada. O Escritório Virtual apresenta os caminhos disponíveis e concentra as áreas que pertencem à sua conta.",
-      "Isso não elimina o aprendizado nem a execução comercial. Significa que você não precisa criar sistemas do zero antes de aprender a operar um projeto digital.",
+      "A parte técnica já foi preparada e organizada. O Escritório Virtual apresenta os caminhos disponíveis e concentra as áreas que pertencem à sua conta.",
+      "Isso não elimina o aprendizado nem a execução comercial. Significa que você não precisa resolver sistemas antes de aprender a operar um projeto digital.",
     ],
     defaultImage: "/structure-value-stack.png",
-    defaultAlt: "Comparação visual entre construir componentes desconectados sozinho e operar uma estrutura digital organizada",
+    defaultAlt: "Comparação visual entre preparar componentes desconectados sozinho e operar uma estrutura digital organizada",
   },
   {
     id: "digital_asset",
@@ -138,7 +138,7 @@ export const PUBLIC_SALES_SECTIONS = [
     title: "A proposta é baseada em uma estrutura real, consolidada e em atualização constante.",
     body: [
       "Existe uma página, um perfil, um Escritório Virtual, recursos de campanha, pedidos que você consegue acompanhar, biblioteca de execução e áreas para acompanhar seus registros.",
-      "O valor da proposta está em reunir método, conhecimento e ferramentas para quem quer começar um projeto digital com uma base já desenvolvida e buscar resultados por meio de utilização, divulgação e vendas reais.",
+      "O valor da proposta está em reunir método, conhecimento e ferramentas para quem quer começar um projeto digital com uma base já preparada e buscar resultados por meio de utilização, divulgação e vendas reais.",
     ],
     defaultImage: "/proof-matters.png",
     defaultAlt: "Elementos concretos de uma estrutura digital organizada",
