@@ -64,17 +64,6 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     ],
   },
   {
-    id: "social_proof",
-    adminLabel: "Prova social",
-    publicOrder: 5,
-    sectionSelector: ".sales-social-proof",
-    fields: [
-      f("eyebrow", "Identificação", "Quem já faz parte", "text", ".eyebrow"),
-      f("title", "Título", "Veja experiências de quem já utiliza a estrutura.", "textarea", "h2"),
-      f("description", "Texto", "Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.", "textarea", ".sales-section-heading > p"),
-    ],
-  },
-  {
     id: "package",
     adminLabel: "Tudo o que você recebe",
     publicOrder: 4,
@@ -96,6 +85,17 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
         f(`item${index + 1}Title`, `Item ${index + 1} — título`, item[0], "text", `.package-grid article:nth-child(${index + 1}) strong`),
         f(`item${index + 1}Text`, `Item ${index + 1} — texto`, item[1], "textarea", `.package-grid article:nth-child(${index + 1}) p`),
       ]),
+    ],
+  },
+  {
+    id: "social_proof",
+    adminLabel: "Prova social",
+    publicOrder: 5,
+    sectionSelector: ".sales-social-proof",
+    fields: [
+      f("eyebrow", "Identificação", "Quem já faz parte", "text", ".eyebrow"),
+      f("title", "Título", "Veja experiências de quem já utiliza a estrutura.", "textarea", "h2"),
+      f("description", "Texto", "Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.", "textarea", ".sales-section-heading > p"),
     ],
   },
   ...[
@@ -205,7 +205,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   {
     id: "faq",
     adminLabel: "FAQ completa (página separada)",
-    publicOrder: 90,
+    publicOrder: 20,
     sectionSelector: ".public-info-faq-content",
     fields: [
       f("eyebrow", "Identificação", "Antes de começar", "text", ".eyebrow"),
