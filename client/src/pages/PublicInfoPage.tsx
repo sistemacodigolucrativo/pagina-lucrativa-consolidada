@@ -94,6 +94,8 @@ export function ContactPage() {
 
 function PublicInfoPage({ pageKey }: { pageKey: PublicPageKey }) {
   const page = pages[pageKey];
+  const isFaqPage = pageKey === "faq";
+
   return <main className="sales-page public-info-page">
     <section className="public-info-hero">
       <div className="shell">
@@ -103,8 +105,17 @@ function PublicInfoPage({ pageKey }: { pageKey: PublicPageKey }) {
         <p>{page.intro}</p>
       </div>
     </section>
-    <section className="public-info-content">
-      <div className="shell public-info-grid">{page.sections.map(([title, description]) => <article key={title}><h2>{title}</h2><p>{description}</p></article>)}</div>
+    <section className={isFaqPage ? "public-info-content public-info-faq-content" : "public-info-content"}>
+      <div className={isFaqPage ? "shell public-info-faq-list" : "shell public-info-grid"}>
+        {page.sections.map(([title, description]) => isFaqPage ? (
+          <details className="public-info-faq-item" key={title}>
+            <summary><span>{title}</span></summary>
+            <p>{description}</p>
+          </details>
+        ) : (
+          <article key={title}><h2>{title}</h2><p>{description}</p></article>
+        ))}
+      </div>
     </section>
   </main>;
 }
