@@ -27,8 +27,8 @@ export const PUBLIC_TOAST_SETTINGS_TYPE = "social-proof-settings";
 export const publicToastDefaultSettings: PublicToastSettings = {
   enabled: true,
   showSimulationNotice: true,
-  headerMessage: "Conheça sua estrutura",
-  footerMessage: "Recursos disponíveis para apoiar sua operação.",
+  headerMessage: "Dica rápida",
+  footerMessage: "Mensagem educativa sobre a estrutura. Não representa compra, vaga ou ganho real.",
   headerColor: "#FACC15",
   nameColor: "#38BDF8",
   messageColor: "#FFFFFF",
@@ -40,12 +40,10 @@ export const publicToastDefaultSettings: PublicToastSettings = {
 };
 
 export const publicToastDefaultTemplates: readonly PublicToastTemplate[] = [
-  { id: "default-register", title: "Cadastro", message: "Personalize seus dados e organize sua presença digital.", disclaimer: "Informação sobre os recursos da plataforma." },
-  { id: "default-purchase", title: "Aquisição", message: "Acompanhe sua solicitação e as etapas de ativação.", disclaimer: "Informação sobre os recursos da plataforma." },
-  { id: "default-group", title: "Entrada no grupo", message: "Use o Escritório Virtual para acessar os recursos da sua estrutura.", disclaimer: "Informação sobre os recursos da plataforma." },
-  { id: "default-viewing", title: "Visualização", message: "Conheça os recursos disponíveis antes de solicitar seu acesso.", disclaimer: "Informação sobre os recursos da plataforma." },
-  { id: "default-start", title: "Início", message: "Comece configurando sua estrutura e entendendo os primeiros passos.", disclaimer: "Informação sobre os recursos da plataforma." },
-  { id: "default-slot", title: "Vaga garantida", message: "Acompanhe solicitações, campanhas e pedidos em um único ambiente.", disclaimer: "Informação sobre os recursos da plataforma." },
+  { id: "default-structure", title: "Orientação", message: "Veja como a estrutura é organizada antes de ativar.", disclaimer: "Dica sobre recursos da plataforma." },
+  { id: "default-flow", title: "Fluxo oficial", message: "Cadastro, pagamento, comprovante e análise acontecem em etapas separadas.", disclaimer: "O pagamento não acontece na primeira tela." },
+  { id: "default-no-monthly", title: "Sem mensalidade", message: "O modelo atual não cobra mensalidade para manter a solicitação ativa.", disclaimer: "Confira a condição vigente antes de avançar." },
+  { id: "default-proof", title: "Decisão consciente", message: "Leia as objeções e perguntas frequentes antes de solicitar sua ativação.", disclaimer: "Resultados dependem de execução e divulgação." },
 ];
 
 export const publicToastNames = [
