@@ -98,17 +98,17 @@ export default function ApplicationPaymentMethods() {
 
   const application = payment.data;
   const { paymentLinks } = payment.data;
-  const sponsorName = payment.data.sponsor?.name || "responsável pelo Método Código Lucrativo";
+  const sponsorName = payment.data.sponsor?.name || "responsável pelo Código Lucrativo";
   const instructionsUrl = withAppBase(`/pedido/${encodeURIComponent(application.trackingCode || trackingCode)}/pagamento/instrucoes`);
   const trackingUrl = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(application.trackingCode || trackingCode)}`);
 
   return <main className="min-h-screen bg-[#050505] px-4 py-6 text-zinc-100 sm:px-6 lg:px-8">
     <section className="mx-auto w-full max-w-4xl space-y-6">
-      <a href={withAppBase("/")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-emerald-200"><ArrowLeft size={15} /> Voltar para o Método Código Lucrativo</a>
+      <a href={withAppBase("/")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-emerald-200"><ArrowLeft size={15} /> Voltar para o Código Lucrativo</a>
       <header className="rounded-3xl border border-emerald-300/20 bg-zinc-950/80 p-5 shadow-2xl sm:p-7">
         <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Meios de pagamento</span>
         <h1 className="mt-3 text-3xl font-semibold text-white">Escolha como deseja pagar.</h1>
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Seu pedido foi criado. Agora escolha um dos meios habilitados pelo responsável pelo Método Código Lucrativo.</p>
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Seu pedido foi criado. Agora escolha um dos meios habilitados pelo responsável pelo Código Lucrativo.</p>
       </header>
 
       <section className="grid gap-5 lg:grid-cols-[1fr_18rem]">

@@ -47,17 +47,17 @@ export default function ApplicationTracking() {
   }
 
   if (result && state === "approved") return <main className="access-page"><div className="w-full max-w-xl">
-    <Link href="/" className="access-back">← Voltar para o Método Código Lucrativo</Link>
+    <Link href="/" className="access-back">← Voltar para o Código Lucrativo</Link>
     <section className="mt-5 rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-5 text-center">
       <CheckCircle2 className="mx-auto size-9 text-emerald-200" />
       <h1 className="mt-4 text-2xl font-semibold text-white">Pagamento aprovado</h1>
-      <p className="mt-3 text-sm leading-6 text-emerald-50">Seu acesso ao Método Código Lucrativo foi liberado para personalização.</p>
-      {result.access ? <a className="btn btn-primary mt-5 w-full justify-center sm:w-auto" href={withAppBase(result.access.personalizationUrl)}>Personalizar estrutura do Método Código Lucrativo <ArrowRight size={16} /></a> : null}
+      <p className="mt-3 text-sm leading-6 text-emerald-50">Seu Código Lucrativo foi liberado para personalização.</p>
+      {result.access ? <a className="btn btn-primary mt-5 w-full justify-center sm:w-auto" href={withAppBase(result.access.personalizationUrl)}>Personalizar meu Código Lucrativo <ArrowRight size={16} /></a> : null}
     </section>
   </div></main>;
 
   if (result && state) return <main className="access-page"><div className="access-card">
-    <Link href="/" className="access-back">← Voltar para o Método Código Lucrativo</Link>
+    <Link href="/" className="access-back">← Voltar para o Código Lucrativo</Link>
     <div className="access-seal">{state === "approved" ? <CheckCircle2 size={25} /> : state === "rejected" ? <XCircle size={25} /> : <ClipboardCheck size={25} />}</div>
     <span className="office-eyebrow">Acompanhamento do pedido</span>
     <section className="access-steps">
@@ -65,7 +65,7 @@ export default function ApplicationTracking() {
       {state === "awaiting" ? <div><b>01</b><span><strong>Aguardando pagamento</strong><br />Conclua o pagamento na tela indicada. Se usar PIX, envie o comprovante para que a análise continue.</span></div> : null}
       {state === "receipt" ? <div><b>02</b><span><strong>Comprovante recebido</strong><br />Seu comprovante foi recebido e está em análise. A liberação segue após conferência do responsável.</span></div> : null}
       {state === "rejected" ? <div><b><XCircle size={18} /></b><span><strong>Pagamento não aprovado</strong><br />Não foi possível confirmar seu pagamento. Se necessário, volte para a tela de pagamento e envie novo comprovante.</span></div> : null}
-      {state === "approved" ? <div><b><CheckCircle2 size={18} /></b><span><strong>Pagamento aprovado</strong><br />Seu acesso ao Método Código Lucrativo foi liberado para personalização.</span></div> : null}
+      {state === "approved" ? <div><b><CheckCircle2 size={18} /></b><span><strong>Pagamento aprovado</strong><br />Seu Código Lucrativo foi liberado para personalização.</span></div> : null}
       <div><b>→</b><span><strong>Pagamento:</strong> {applicationPaymentStatusLabel[result.paymentStatus]}<br /><strong>Acesso:</strong> {applicationActivationStatusLabel[result.activationStatus]}</span></div>
     </section>
 
@@ -84,7 +84,7 @@ export default function ApplicationTracking() {
       <h2 className="mt-2 text-xl font-semibold text-white">Crie sua senha de acesso</h2>
       <p className="mt-3 text-sm leading-6 text-emerald-50">Seu pagamento foi aprovado. Agora escolha a senha que será usada com o e-mail do pedido para acessar o Escritório Virtual e finalizar sua estrutura.</p>
       <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-        <a className="btn btn-primary" href={withAppBase(result.access.personalizationUrl)}>Personalizar estrutura do Método Código Lucrativo <ArrowRight size={16} /></a>
+        <a className="btn btn-primary" href={withAppBase(result.access.personalizationUrl)}>Personalizar meu Código Lucrativo <ArrowRight size={16} /></a>
       </div>
     </section> : null}
 
@@ -95,7 +95,7 @@ export default function ApplicationTracking() {
   </div></main>;
 
   return <main className="access-page"><div className="access-card">
-    <Link href="/" className="access-back">← Voltar para o Método Código Lucrativo</Link>
+    <Link href="/" className="access-back">← Voltar para o Código Lucrativo</Link>
     <div className="access-seal"><ClipboardCheck size={25} /></div>
     <span className="office-eyebrow">Acompanhamento do pedido</span>
     <h1>Acompanhe sua ativação.</h1>
