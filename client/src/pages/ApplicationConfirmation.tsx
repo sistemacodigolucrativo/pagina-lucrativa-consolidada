@@ -30,9 +30,9 @@ export default function ApplicationConfirmation() {
   }
 
   if (code && receiptSent) {
-    const sponsorName = payment.data?.sponsor?.name || "responsável pelo Código Lucrativo";
+    const sponsorName = payment.data?.sponsor?.name || "responsável pelo Método Código Lucrativo";
     return <main className="access-page"><div className="access-card">
-      <a href={withAppBase("/")} className="access-back"><ChevronLeft size={15} /> Voltar para o Código Lucrativo</a>
+      <a href={withAppBase("/")} className="access-back"><ChevronLeft size={15} /> Voltar para o Método Código Lucrativo</a>
       <div className="access-seal"><CheckCircle2 size={25} /></div>
       <span className="office-eyebrow">Comprovante recebido</span>
       <h1>Seu comprovante foi enviado.</h1>
@@ -53,5 +53,5 @@ export default function ApplicationConfirmation() {
   }
 
   if (code) return <ApplicationPayment />;
-  return <main className="access-page"><div className="access-card"><a href={withAppBase("/")} className="access-back"><ChevronLeft size={15} /> Voltar para o Código Lucrativo</a><div className="access-seal"><BadgeCheck size={25} /></div><span className="office-eyebrow">Solicitação registrada</span><h1>Seu pedido de ativação foi registrado.</h1><p>O próximo passo é realizar o pagamento indicado, enviar o comprovante quando solicitado e acompanhar a análise até a liberação do acesso.</p>{code && <p className="access-note">Código para acompanhamento: <strong>{code}</strong></p>}<div className="access-steps"><div><b>01</b><span>Solicitação registrada para acompanhamento.</span></div><div><b>02</b><span>Pagamento e envio do comprovante pelo fluxo indicado.</span></div><div><b>03</b><span>Análise e liberação das instruções de acesso e personalização.</span></div></div><div className="access-actions"><a className="btn btn-primary" href={withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(code ?? "")}`)}>Acompanhar solicitação <ArrowRight size={16} /></a></div></div></main>;
+  return <main className="access-page"><div className="access-card"><a href={withAppBase("/")} className="access-back"><ChevronLeft size={15} /> Voltar para o Método Código Lucrativo</a><div className="access-seal"><BadgeCheck size={25} /></div><span className="office-eyebrow">Solicitação registrada</span><h1>Seu pedido de ativação foi registrado.</h1><p>O próximo passo é realizar o pagamento indicado, enviar o comprovante quando solicitado e acompanhar a análise até a liberação do acesso.</p>{code && <p className="access-note">Código para acompanhamento: <strong>{code}</strong></p>}<div className="access-steps"><div><b>01</b><span>Solicitação registrada para acompanhamento.</span></div><div><b>02</b><span>Pagamento e envio do comprovante pelo fluxo indicado.</span></div><div><b>03</b><span>Análise e liberação das instruções de acesso e personalização.</span></div></div><div className="access-actions"><a className="btn btn-primary" href={withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(code ?? "")}`)}>Acompanhar solicitação <ArrowRight size={16} /></a></div></div></main>;
 }

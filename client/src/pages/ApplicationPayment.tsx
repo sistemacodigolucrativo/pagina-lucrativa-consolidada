@@ -51,7 +51,7 @@ export default function ApplicationPayment() {
 
   const pixKey = payment.data?.pix?.key ?? null;
   const pixType = payment.data?.pix?.type || (pixKey ? "PIX" : null);
-  const sponsorName = payment.data?.sponsor?.name || "responsável pelo Código Lucrativo";
+  const sponsorName = payment.data?.sponsor?.name || "responsável pelo Método Código Lucrativo";
   const availableMethods = useMemo<PaymentMethod[]>(() => {
     const methods: PaymentMethod[] = [];
     if (pixKey) methods.push("pix");
@@ -146,7 +146,7 @@ export default function ApplicationPayment() {
 
   return <main className="min-h-screen bg-[#050505] px-4 py-6 text-zinc-100 sm:px-6 lg:px-8">
     <section className="mx-auto w-full max-w-5xl space-y-6">
-      <a href={withAppBase("/")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-emerald-200"><ArrowLeft size={15} /> Voltar para o Código Lucrativo</a>
+      <a href={withAppBase("/")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-emerald-200"><ArrowLeft size={15} /> Voltar para o Método Código Lucrativo</a>
 
       <header className="rounded-3xl border border-emerald-300/20 bg-zinc-950/80 p-5 shadow-2xl sm:p-7">
         <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Pagamento da solicitação de ativação</span>
@@ -209,7 +209,7 @@ export default function ApplicationPayment() {
 
           {selectedMethod === "checkout" && paymentLinks.length ? <article className="rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
             <div className="flex items-center gap-2 text-white"><CreditCard className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">2. Pague pelo checkout</h2></div>
-            <p className="mt-2 text-sm leading-6 text-zinc-400">Você será encaminhado para o checkout configurado pelo responsável. O Código Lucrativo não processa cartão diretamente.</p>
+            <p className="mt-2 text-sm leading-6 text-zinc-400">Você será encaminhado para o checkout disponibilizado pelo responsável. O Método Código Lucrativo não processa cartão diretamente.</p>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">{paymentLinks.map((link, index) => <a key={`${link.label}-${index}`} href={link.paymentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center justify-center rounded-lg bg-emerald-300 px-4 py-3 text-center text-sm font-semibold text-black transition hover:bg-emerald-200">Pagar com {link.label}</a>)}</div>
           </article> : null}
 

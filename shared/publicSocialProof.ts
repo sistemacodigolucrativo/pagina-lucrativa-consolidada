@@ -52,7 +52,7 @@ export function choosePublicSocialProofIndex(
 }
 
 export function formatPublicSocialProof(entry: PublicSocialProofEntry): string {
-  return `${entry.name}, de ${entry.city}, está conhecendo o Código Lucrativo.`;
+  return `${entry.name}, de ${entry.city}, está conhecendo o Método Código Lucrativo.`;
 }
 
 export const publicSocialProofDisclaimer = "Demonstração ilustrativa — não representa uma compra real.";

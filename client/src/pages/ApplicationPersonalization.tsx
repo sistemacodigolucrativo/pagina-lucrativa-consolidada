@@ -32,7 +32,7 @@ export default function ApplicationPersonalization() {
   const complete = trpc.public.completePersonalization.useMutation({
     onSuccess: data => {
       setDoneEmail(data.email);
-      toast.success("Código Lucrativo configurado.");
+      toast.success("Estrutura do Método Código Lucrativo ativada.");
     },
     onError: error => toast.error(error.message),
   });
@@ -93,7 +93,7 @@ export default function ApplicationPersonalization() {
   if (access.error || !access.data) return <main className="grid min-h-screen place-items-center bg-[#050505] p-6"><section className="max-w-md rounded-2xl border border-white/10 bg-zinc-950 p-7 text-center"><ShieldCheck className="mx-auto size-7 text-emerald-300" /><h1 className="mt-4 text-xl font-semibold text-white">Acesso indisponível</h1><p className="mt-2 text-sm leading-6 text-zinc-400">O pedido ainda não foi aprovado, o link expirou ou a senha já foi cadastrada.</p><a className="btn btn-ghost mt-5" href={withAppBase("/pedido/acompanhar")}>Acompanhar pedido</a></section></main>;
 
   return <main className="min-h-screen bg-[#050505] p-5 text-zinc-100"><form onSubmit={submit} className="mx-auto w-full max-w-xl space-y-5 rounded-3xl border border-emerald-300/20 bg-zinc-950 p-5 shadow-2xl sm:p-8">
-    <header><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Personalização liberada</span><h1 className="mt-3 text-3xl font-semibold text-white">Configure seu Código Lucrativo.</h1><p className="mt-2 text-sm leading-6 text-zinc-400">Informe os dados públicos iniciais da sua estrutura e crie a senha usada com o e-mail do pedido para entrar no Escritório Virtual.</p></header>
+    <header><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Personalização liberada</span><h1 className="mt-3 text-3xl font-semibold text-white">Personalize sua estrutura do Método Código Lucrativo.</h1><p className="mt-2 text-sm leading-6 text-zinc-400">Informe os dados públicos iniciais da sua estrutura e crie a senha usada com o e-mail do pedido para entrar no Escritório Virtual.</p></header>
     <section className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-300">
       <strong className="block text-white">{access.data.fullName}</strong>
       <span>E-mail de login: {access.data.email}</span>
@@ -135,6 +135,6 @@ export default function ApplicationPersonalization() {
       </div>
       <p className="text-xs leading-5 text-zinc-500">A resposta não será exibida depois de salva e será armazenada em formato protegido.</p>
     </section>
-    <button disabled={complete.isPending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-3 text-sm font-semibold text-black disabled:opacity-60">{complete.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}Configurar e cadastrar senha</button>
+    <button disabled={complete.isPending} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-3 text-sm font-semibold text-black disabled:opacity-60">{complete.isPending ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />}Ativar e cadastrar senha</button>
   </form></main>;
 }

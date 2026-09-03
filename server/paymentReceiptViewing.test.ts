@@ -19,8 +19,8 @@ describe("visualização e acompanhamento de comprovantes", () => {
     expect(approvedState).toContain('className="w-full max-w-xl"');
     expect(approvedState).not.toContain('className="access-card"');
     expect(approvedState).toContain("Pagamento aprovado");
-    expect(approvedState).toContain("Seu Código Lucrativo foi liberado para personalização.");
-    expect(approvedState).toContain("← Voltar para o Código Lucrativo");
+    expect(approvedState).toContain("Seu acesso ao Método Código Lucrativo foi liberado para personalização.");
+    expect(approvedState).toContain("← Voltar para o Método Código Lucrativo");
     expect(approvedState).not.toContain("Voltar à estrutura");
   });
 });
