@@ -2,8 +2,13 @@ name: Validar e publicar na VPS
 
 on:
   push:
-    branches: [main, layout-paineis-demo]
+    branches: [copyright]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: "Branch ou commit para publicar"
+        required: false
+        default: "copyright"
 
 concurrency:
   group: pagina-lucrativa-production
@@ -21,7 +26,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
       - name: Bloquear alterações automáticas de banco
         shell: bash
         run: |
