@@ -15,6 +15,13 @@ describe("melhorias da página pública", () => {
     expect(home).toContain("Para quem é");
     expect(home).toContain("Para quem não é");
     expect(home).toContain("O que costuma travar a decisão");
+    expect(home).toContain("PUBLIC_SALES_DECISION_OBJECTIONS");
+    expect(home).toContain("coreSalesSectionIds");
+    expect(home).toContain('"activation_journey"');
+    expect(home).toContain("Sem mensalidade");
+    expect(home).not.toContain("const objectionItems = [");
+    expect(home).not.toContain('"state_desired"');
+    expect(home.indexOf('className="sales-section sales-package"')).toBeLessThan(home.indexOf('className="sales-section sales-social-proof"'));
     expect(home).not.toContain('className="sales-section sales-faq"');
     expect(home).not.toContain('id="faq"');
     expect(home).not.toContain("plataforma por dentro");
