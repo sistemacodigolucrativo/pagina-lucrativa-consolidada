@@ -39,7 +39,7 @@ describe("melhorias da página pública", () => {
     expect(home).toContain('["Dúvidas", "/perguntas-frequentes"]');
     expect(home).toContain('["Perguntas frequentes", "/perguntas-frequentes"]');
     expect(home).toContain("footerLinks");
-    expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
+    expect(publicInfo).toContain("Quem está por trás do Método Código Lucrativo");
     expect(publicInfo).toContain("Respostas para decidir com segurança");
     expect(publicInfo).toContain("PUBLIC_SALES_FAQ");
     expect(publicInfo).toContain("public-info-faq-list");

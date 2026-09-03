@@ -32,11 +32,11 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("places the promo banner immediately after the hero headline", () => {
-    const headline = 'sem precisar montar toda a tecnologia sozinho.</h1>';
+    const headline = 'com estrutura consolidada para ativar e operar.</h1>';
     const banner = '<TopPromoBanner />';
     expect(homeSource.indexOf(headline)).toBeGreaterThan(-1);
     expect(homeSource.indexOf(banner)).toBeGreaterThan(homeSource.indexOf(headline));
-    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Tenha seu Código Lucrativo'));
+    expect(homeSource.indexOf(banner)).toBeLessThan(homeSource.indexOf('Tenha acesso ao Método Código Lucrativo'));
     expect(cssSource).toContain('.sales-hero-copy > .top-promo-banner {');
   });
 
@@ -68,7 +68,7 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('aria-label="Ver próxima tela do Escritório Virtual"');
     expect(homeSource).toContain('role="tablist"');
     expect(homeSource).not.toContain("Screenshot reservado");
-    expect(homeSource).toContain("Estrutura personalizada");
+    expect(homeSource).toContain("Método e estrutura");
     expect(homeSource).toContain("Escritório Virtual");
     expect(homeSource).toContain("Campanhas de divulgação");
     expect(homeSource).toContain("Pedidos e acompanhamento");
@@ -93,8 +93,8 @@ describe("public responsive header and hero layout", () => {
   it("uses natural social proof heading and copy", () => {
     expect(homeSource).toContain("<Eyebrow>Quem já faz parte</Eyebrow>");
     expect(homeSource).not.toContain("<Eyebrow>Prova social</Eyebrow>");
-    expect(homeSource).toContain("<h2>Veja experiências de quem já utiliza a estrutura.</h2>");
-    expect(homeSource).toContain("Conheça experiências de quem utiliza o Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.");
+    expect(homeSource).toContain("<h2>Veja experiências de quem já utiliza o método.</h2>");
+    expect(homeSource).toContain("Conheça experiências de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.");
     expect(homeSource).not.toContain("Membros reais, dados reais da plataforma.");
     expect(homeSource).not.toContain("Os indicadores abaixo são carregados dos registros existentes.");
     expect(homeSource).not.toContain("Depoimentos aparecem somente depois de enviados pelo membro e aprovados pela administração.");
@@ -197,7 +197,7 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("keeps the commercial mechanism copy transparent and non-guaranteed", () => {
-    expect(homeSource).toContain("Você personaliza sua página, começa a divulgar");
+    expect(homeSource).toContain("Você recebe uma estrutura pronta, entende o método,");
     const mechanismSource = readFileSync(resolve(process.cwd(), "shared/publicSalesSections.ts"), "utf8");
     expect(mechanismSource).toContain("A estrutura reduz a parte técnica do início.");
     expect(mechanismSource).toContain("Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas.");
