@@ -6,7 +6,6 @@ import { withAppBase } from "@/lib/devPath";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
-import { PUBLIC_SALES_OBJECTIONS } from "@shared/publicSalesObjections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
@@ -42,7 +41,14 @@ const notFitItems = [
   "Quem busca uma promessa de resultado fixo em vez de uma ferramenta de trabalho.",
 ];
 
-const objectionItems = PUBLIC_SALES_OBJECTIONS.filter(({ featured }) => featured).map(({ question, answer }) => [question, answer] as const);
+const objectionItems = [
+  ["Nunca trabalhei com internet.", "A jornada foi organizada para começar pelo básico: configurar, divulgar e acompanhar."],
+  ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
+  ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
+  ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
+  ["Tenho medo de começar errado.", "A estrutura reduz a tela em branco: você configura sua página, usa os materiais disponíveis e acompanha os próximos passos."],
+  ["E se eu ainda não tiver público?", "Você pode começar organizando sua presença, criando campanhas e testando canais de divulgação com clareza."],
+];
 
 
 
