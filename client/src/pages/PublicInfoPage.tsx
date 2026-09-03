@@ -51,9 +51,9 @@ const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: stri
     ],
   },
   faq: {
-    eyebrow: "FAQ · Antes de começar",
-    title: "Clareza para decidir com segurança.",
-    intro: "Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.",
+    eyebrow: "Dúvidas antes da ativação",
+    title: "Respostas para decidir com segurança",
+    intro: "As dúvidas foram organizadas como objeções reais, com respostas diretas sobre a estrutura, a ativação, o pagamento, a divulgação e o que depende da sua execução.",
     sections: PUBLIC_SALES_OBJECTIONS.map(({ question, answer }) => [question, answer] as [string, string]),
   },
   contact: {
@@ -94,8 +94,7 @@ export function ContactPage() {
 
 function PublicInfoPage({ pageKey }: { pageKey: PublicPageKey }) {
   const page = pages[pageKey];
-  const isFaqPage = pageKey === "faq";
-  return <main className={`sales-page public-info-page ${isFaqPage ? "public-faq-page" : ""}`.trim()}>
+  return <main className="sales-page public-info-page">
     <section className="public-info-hero">
       <div className="shell">
         <a className="preview-back-link" href={withAppBase("/")}><ArrowLeft size={16} /> Voltar para a página pública</a>
@@ -105,9 +104,7 @@ function PublicInfoPage({ pageKey }: { pageKey: PublicPageKey }) {
       </div>
     </section>
     <section className="public-info-content">
-      <div className={isFaqPage ? "shell public-faq-list" : "shell public-info-grid"}>{page.sections.map(([title, description]) => isFaqPage
-        ? <details key={title}><summary>{title}</summary><p>{description}</p></details>
-        : <article key={title}><h2>{title}</h2><p>{description}</p></article>)}</div>
+      <div className="shell public-info-grid">{page.sections.map(([title, description]) => <article key={title}><h2>{title}</h2><p>{description}</p></article>)}</div>
     </section>
   </main>;
 }
