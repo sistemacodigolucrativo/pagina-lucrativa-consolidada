@@ -35,12 +35,12 @@ describe("melhorias da página pública", () => {
     expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
     expect(publicInfo).toContain("Respostas para decidir com segurança");
     expect(publicInfo).toContain("PUBLIC_SALES_FAQ");
-    expect(publicInfo).toContain("O que exatamente estou comprando?");
-    expect(publicInfo).toContain("Existe suporte?");
     expect(publicInfo).toContain("public-info-faq-list");
     expect(publicInfo).toContain("public-info-faq-item");
     expect(publicInfo).toContain("<summary><span>{title}</span></summary>");
     const publicFaq = read("shared/publicSalesFaq.ts");
+    expect(publicFaq).toContain("O que exatamente estou comprando?");
+    expect(publicFaq).toContain("Existe suporte?");
     expect((publicFaq.match(/question: "/g) ?? []).length).toBe(10);
     const objections = read("shared/publicSalesObjections.ts");
     expect((objections.match(/question: "/g) ?? []).length).toBe(16);
