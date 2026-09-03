@@ -15,6 +15,8 @@ describe("melhorias da página pública", () => {
     expect(home).toContain("Para quem é");
     expect(home).toContain("Para quem não é");
     expect(home).toContain("O que costuma travar a decisão");
+    expect(home).not.toContain('className="sales-section sales-faq"');
+    expect(home).not.toContain('id="faq"');
     expect(home).not.toContain("plataforma por dentro");
   });
 
@@ -32,6 +34,9 @@ describe("melhorias da página pública", () => {
     expect(home).toContain("footerLinks");
     expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
     expect(publicInfo).toContain("Respostas para decidir com segurança");
+    expect(publicInfo).toContain("public-info-faq-list");
+    expect(publicInfo).toContain("public-info-faq-item");
+    expect(publicInfo).toContain("<summary><span>{title}</span></summary>");
     const objections = read("shared/publicSalesObjections.ts");
     expect((objections.match(/question: "/g) ?? []).length).toBe(16);
     expect(objections).toContain("Não existe mensalidade.");
