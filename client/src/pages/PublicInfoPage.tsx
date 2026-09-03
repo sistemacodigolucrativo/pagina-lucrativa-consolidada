@@ -1,5 +1,5 @@
 import { withAppBase } from "@/lib/devPath";
-import { PUBLIC_SALES_OBJECTIONS } from "@shared/publicSalesObjections";
+import { PUBLIC_SALES_FAQ } from "@shared/publicSalesFaq";
 import { ArrowLeft } from "lucide-react";
 
 type PublicPageKey = "institutional" | "terms" | "privacy" | "commercialRules" | "faq" | "contact";
@@ -53,8 +53,8 @@ const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: stri
   faq: {
     eyebrow: "Dúvidas antes da ativação",
     title: "Respostas para decidir com segurança",
-    intro: "As dúvidas foram organizadas como objeções reais, com respostas diretas sobre a estrutura, a ativação, o pagamento, a divulgação e o que depende da sua execução.",
-    sections: PUBLIC_SALES_OBJECTIONS.map(({ question, answer }) => [question, answer] as [string, string]),
+    intro: "Reunimos as perguntas mais comuns sobre a estrutura, a ativação, o pagamento, a divulgação e o que depende da sua execução.",
+    sections: PUBLIC_SALES_FAQ.map(({ question, answer }) => [question, answer] as [string, string]),
   },
   contact: {
     eyebrow: "Suporte",
