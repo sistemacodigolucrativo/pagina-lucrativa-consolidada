@@ -12,9 +12,9 @@ export const PUBLIC_SALES_SECTIONS = [
     eyebrow: "Como tudo começou",
     title: "O fundador começou procurando uma forma séria de entrar no digital — assim como muita gente.",
     body: [
-      "Antes do Código Lucrativo, a busca era a mesma de quem chega até esta página: encontrar um caminho confiável para começar no digital sem cair em promessa vazia.",
-      "Depois de investir tempo e dinheiro em cursos, métodos e materiais que ensinavam muita teoria, ficou claro que o problema não era falta de informação. O que faltava era uma estrutura pronta para colocar em prática.",
-      "Foi dessa necessidade que nasceu o Método Código Lucrativo: uma base consolidada para receber, conhecer, personalizar, operar e evoluir uma operação digital com mais clareza.",
+      "Antes de consolidar o Método Código Lucrativo, a busca era a mesma de quem chega até esta página: encontrar um caminho confiável para entrar no digital sem cair em promessa vazia.",
+      "Depois de investir tempo e dinheiro em cursos, métodos e materiais que ensinavam muita teoria, ficou claro que o problema não era falta de informação. O que faltava era uma estrutura pronta para colocar em prática, testada em evolução contínua e aprovada antes de ser oferecida.",
+      "Depois de sucessivas evoluções e validações, essa base foi consolidada e aprovada, dando origem ao Método Código Lucrativo: uma forma pronta de receber, conhecer, personalizar, operar e evoluir uma operação digital com mais clareza.",
     ],
     defaultImage: "/problem-start.png",
     defaultAlt: "Jornada mostrando receber, conhecer, personalizar, operar e evoluir com acompanhamento",
@@ -45,7 +45,7 @@ export const PUBLIC_SALES_SECTIONS = [
   {
     id: "product_real",
     eyebrow: "O produto real",
-    title: "Código Lucrativo não é apenas uma página. É um método com estrutura pronta por trás.",
+    title: "Método Código Lucrativo não é apenas uma página. É um método com estrutura pronta por trás.",
     body: [
       "A página pública é apenas a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria conta.",
       "Você recebe acesso a uma estrutura digital preparada para ser entendida, personalizada e colocada em operação — sem precisar começar pela parte técnica inicial.",

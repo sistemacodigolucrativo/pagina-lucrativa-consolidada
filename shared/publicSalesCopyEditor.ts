@@ -32,7 +32,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     staticImage: "/codigo-lucrativo-banner.png",
     imageAfterField: 1,
     fields: [
-      f("kicker", "Chamada superior", "Para quem quer começar no digital sem começar do zero", "text", ".sales-kicker"),
+      f("kicker", "Chamada superior", "Para quem quer entrar no digital com método pronto", "text", ".sales-kicker"),
       f("title", "Título", "Receba o Método Código Lucrativo pronto para começar — com estrutura consolidada para ativar e operar.", "textarea", "h1"),
       f("description", "Texto", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.", "textarea", ".sales-hero-copy > p"),
       f("trust", "Mensagem de apoio", "Você recebe uma estrutura pronta, entende o método, ativa sua operação e acompanha tudo em um só lugar.", "textarea", ".sales-trust-copy"),
@@ -94,15 +94,15 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     sectionSelector: ".sales-social-proof",
     fields: [
       f("eyebrow", "Identificação", "Quem já faz parte", "text", ".eyebrow"),
-      f("title", "Título", "Veja experiências de quem já utiliza a estrutura.", "textarea", "h2"),
-      f("description", "Texto", "Conheça experiências de quem utiliza o Método Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.", "textarea", ".sales-section-heading > p"),
+      f("title", "Título", "Veja experiências de quem já utiliza o método.", "textarea", "h2"),
+      f("description", "Texto", "Conheça experiências de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.", "textarea", ".sales-section-heading > p"),
     ],
   },
   ...[
     ["problem_start", "Como tudo começou", "Como tudo começou", "O fundador começou procurando uma forma séria de entrar no digital — assim como muita gente.", [
-      "Antes do Código Lucrativo, a busca era a mesma de quem chega até esta página: encontrar um caminho confiável para começar no digital sem cair em promessa vazia.",
-      "Depois de investir tempo e dinheiro em cursos, métodos e materiais que ensinavam muita teoria, ficou claro que o problema não era falta de informação. O que faltava era uma estrutura pronta para colocar em prática.",
-      "Foi dessa necessidade que nasceu o Método Código Lucrativo: uma base consolidada para receber, conhecer, personalizar, operar e evoluir uma operação digital com mais clareza.",
+      "Antes de consolidar o Método Código Lucrativo, a busca era a mesma de quem chega até esta página: encontrar um caminho confiável para entrar no digital sem cair em promessa vazia.",
+      "Depois de investir tempo e dinheiro em cursos, métodos e materiais que ensinavam muita teoria, ficou claro que o problema não era falta de informação. O que faltava era uma estrutura pronta para colocar em prática, testada em evolução contínua e aprovada antes de ser oferecida.",
+      "Depois de sucessivas evoluções e validações, essa base foi consolidada e aprovada, dando origem ao Método Código Lucrativo: uma forma pronta de receber, conhecer, personalizar, operar e evoluir uma operação digital com mais clareza.",
     ]],
     ["state_desired", "O estado desejado", "O estado desejado", "Começar com um método pronto muda completamente o ponto de partida.", [
       "Em vez de começar diante de uma tela em branco, você recebe uma estrutura digital que já reúne método, página pública, Escritório Virtual, recursos de divulgação e caminhos de acompanhamento.",
@@ -113,7 +113,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
       "A jornada é simples de entender: receber acesso, conhecer a estrutura, personalizar os dados essenciais, operar os recursos e evoluir a execução com acompanhamento.",
       "A estrutura reduz a parte técnica do início. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas.",
     ]],
-    ["product_real", "O produto real", "O produto real", "Código Lucrativo não é apenas uma página. É um método com estrutura pronta por trás.", [
+    ["product_real", "O produto real", "O produto real", "Método Código Lucrativo não é apenas uma página. É um método com estrutura pronta por trás.", [
       "A página pública é a porta de entrada. Por trás dela existe um Escritório Virtual para organizar dados, perfil, campanhas, pedidos, conteúdos, cursos, contatos e registros da sua própria conta.",
       "Você recebe acesso a uma estrutura digital preparada para ser entendida, personalizada e colocada em operação — sem precisar começar pela parte técnica inicial.",
     ]],
@@ -174,8 +174,8 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     sectionSelector: "#videos",
     fields: [
       f("eyebrow", "Identificação", "Contexto e apresentação", "text", ".eyebrow"),
-      f("title", "Título", "Veja a ideia por trás da estrutura.", "textarea", "h2"),
-      f("description", "Texto", "Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.", "textarea", ".sales-section-heading > p"),
+      f("title", "Título", "Veja a ideia por trás do método.", "textarea", "h2"),
+      f("description", "Texto", "Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, as evoluções do método e a entrega atual do Escritório Virtual com os recursos organizados para operação.", "textarea", ".sales-section-heading > p"),
     ],
   },
   {
@@ -259,7 +259,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     sectionSelector: "#f",
     fields: [
       f("eyebrow", "Identificação", "Próximo passo", "text", ".offer-copy .eyebrow"),
-      f("title", "Título", "Comece com sua estrutura digital pronta para operar.", "textarea", ".offer-copy h2"),
+      f("title", "Título", "Ative o Método Código Lucrativo com estrutura pronta para operar.", "textarea", ".offer-copy h2"),
       f("description", "Texto", "Sua solicitação de ativação cria o registro necessário para cadastro, pagamento, envio do comprovante e análise da estrutura inicial.", "textarea", ".offer-copy > p:not(.offer-closing)"),
       f("price", "Informação comercial", "Valor da solicitação de ativação: R$ 50,00", "text", ".sales-notes span:nth-child(1)"),
       f("condition", "Condição", "Sem mensalidade. Solicitação → pagamento → comprovante → análise → acesso liberado", "textarea", ".sales-notes span:nth-child(2)"),

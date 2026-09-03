@@ -16,6 +16,7 @@ const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
 const coreSalesSectionIds = new Set([
   "problem_start",
+  "behind_structure",
   "activation_journey",
   "comparison",
   "not_just_course",
@@ -84,7 +85,7 @@ function resolveNavigationHref(path: string) {
 }
 
 function Brand({ compact = false }: { compact?: boolean }) {
-  return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">CL</span><span>Código Lucrativo</span></span>;
+  return <span className={`brand ${compact ? "brand-compact" : ""}`}><span className="brand-mark" aria-hidden="true">CL</span><span>Método Código Lucrativo</span></span>;
 }
 
 function Eyebrow({ children }: { children: string }) {
@@ -96,7 +97,7 @@ function JoinButton({ className = "" }: { className?: string }) {
 }
 
 function TopPromoBanner() {
-  return <section className="top-promo-banner" aria-label="Apresentação do Código Lucrativo">
+  return <section className="top-promo-banner" aria-label="Apresentação do Método Código Lucrativo">
     <img src={promoBannerImage} alt="Método Código Lucrativo pronto para começar, com estrutura consolidada, Escritório Virtual, ferramentas e treinamentos." />
   </section>;
 }
@@ -246,7 +247,7 @@ export default function Home() {
   return <div className="sales-page reference-page">
     <header className="site-header">
       <div className="shell nav">
-        <a href="#inicio" aria-label="Código Lucrativo — início" onClick={closeMenu}><Brand /></a>
+        <a href="#inicio" aria-label="Método Código Lucrativo — início" onClick={closeMenu}><Brand /></a>
         <nav className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
           <div className="nav-links-group nav-links-public" aria-label="Navegação da página">
             {publicNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} onClick={closeMenu}>{label}</a>)}
@@ -267,7 +268,7 @@ export default function Home() {
             <div className="affiliate-profile-summary">
               {effectiveAffiliate.photoUrl ? <img src={withAppBase(effectiveAffiliate.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
               <div className="affiliate-profile-summary-main">
-                <strong className="affiliate-profile-presenter">Apresentador(a) do Código Lucrativo</strong>
+                <strong className="affiliate-profile-presenter">Apresentador(a) do Método Código Lucrativo</strong>
                 <strong className="affiliate-profile-name">{publicProfileName}</strong>
                 {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
               </div>
@@ -300,7 +301,7 @@ export default function Home() {
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
             <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite"><PublicSocialProofToast /></div>
-             {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer começar no digital sem <span className="sales-kicker-tail">começar do zero</span></div>}
+             {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer entrar no digital com <span className="sales-kicker-tail">método pronto</span></div>}
              {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
             <TopPromoBanner />
              <p>{publicCopy(overrides, "hero", "description", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.")}</p>
@@ -332,8 +333,8 @@ export default function Home() {
       <section className="sales-section sales-social-proof" id="depoimentos">
         <div className="shell">
           <div className="sales-section-heading">
-            <div>{overrides.social_proof?.eyebrow ? <Eyebrow>{overrides.social_proof.eyebrow}</Eyebrow> : <Eyebrow>Quem já faz parte</Eyebrow>}{overrides.social_proof?.title ? <h2>{overrides.social_proof.title}</h2> : <h2>Veja experiências de quem já utiliza a estrutura.</h2>}</div>
-            <p>{publicCopy(overrides, "social_proof", "description", "Conheça experiências de quem utiliza o Método Código Lucrativo para organizar, divulgar e acompanhar sua presença digital.")}</p>
+            <div>{overrides.social_proof?.eyebrow ? <Eyebrow>{overrides.social_proof.eyebrow}</Eyebrow> : <Eyebrow>Quem já faz parte</Eyebrow>}{overrides.social_proof?.title ? <h2>{overrides.social_proof.title}</h2> : <h2>Veja experiências de quem já utiliza o método.</h2>}</div>
+            <p>{publicCopy(overrides, "social_proof", "description", "Conheça experiências de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
           </div>
           <div className="social-proof-stats">
             <article><span>Total de membros</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.memberCount ?? 0}</strong></article>
@@ -362,7 +363,7 @@ export default function Home() {
       })}
 
       <section className="sales-section reference-videos" id="videos">
-         <div className="shell"><div className="sales-section-heading"><div><Eyebrow>{publicCopy(overrides, "videos", "eyebrow", "Contexto e apresentação")}</Eyebrow><h2>{overrides.videos?.title ?? <>Veja a ideia por trás da <span>estrutura.</span></>}</h2></div><p>{publicCopy(overrides, "videos", "description", "Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.")}</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos do Código Lucrativo" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
+         <div className="shell"><div className="sales-section-heading"><div><Eyebrow>{publicCopy(overrides, "videos", "eyebrow", "Contexto e apresentação")}</Eyebrow><h2>{overrides.videos?.title ?? <>Veja a ideia por trás do <span>método.</span></>}</h2></div><p>{publicCopy(overrides, "videos", "description", "Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.")}</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica do Método Código Lucrativo" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos do Método Código Lucrativo" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
       </section>
 
       <section className="sales-section sprint-fit" id="perfil-ideal">
@@ -387,7 +388,7 @@ export default function Home() {
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Comece com sua <span>estrutura digital pronta para operar.</span></>}</h2><p>{publicCopy(overrides, "offer", "description", "Sua solicitação de ativação cria o registro necessário para cadastro, pagamento, envio do comprovante e análise da estrutura inicial.")}</p><div className="sales-notes"><span>{publicCopy(overrides, "offer", "price", "Valor da solicitação de ativação: R$ 50,00")}</span><span>{publicCopy(overrides, "offer", "condition", "Sem mensalidade. Solicitação → pagamento → comprovante → análise → acesso liberado")}</span></div><p className="offer-closing">{publicCopy(overrides, "offer", "closing", "O formulário registra o cadastro; o pagamento acontece na etapa seguinte e o comprovante dá continuidade ao fluxo já existente. Resultados dependem da sua execução e divulgação.")}</p><p className="offer-closing">Antes de seguir, você também pode consultar as <a href={withAppBase("/perguntas-frequentes")}>perguntas frequentes completas</a>.</p></div>
+           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Ative o <span>Método Código Lucrativo com estrutura pronta para operar.</span></>}</h2><p>{publicCopy(overrides, "offer", "description", "Sua solicitação de ativação cria o registro necessário para cadastro, pagamento, envio do comprovante e análise da estrutura inicial.")}</p><div className="sales-notes"><span>{publicCopy(overrides, "offer", "price", "Valor da solicitação de ativação: R$ 50,00")}</span><span>{publicCopy(overrides, "offer", "condition", "Sem mensalidade. Solicitação → pagamento → comprovante → análise → acesso liberado")}</span></div><p className="offer-closing">{publicCopy(overrides, "offer", "closing", "O formulário registra o cadastro; o pagamento acontece na etapa seguinte e o comprovante dá continuidade ao fluxo já existente. Resultados dependem da sua execução e divulgação.")}</p><p className="offer-closing">Antes de seguir, você também pode consultar as <a href={withAppBase("/perguntas-frequentes")}>perguntas frequentes completas</a>.</p></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}
@@ -403,10 +404,10 @@ export default function Home() {
 
     <footer className="footer">
       <div className="shell footer-shell">
-        <section className="footer-panel footer-brand-block" aria-label="Código Lucrativo">
+        <section className="footer-panel footer-brand-block" aria-label="Método Código Lucrativo">
           <div className="footer-brand-lockup">
             <span className="footer-brand-mark" aria-hidden="true">CL</span>
-            <div><strong>Código Lucrativo®</strong><span>Desde 2020</span></div>
+            <div><strong>Método Código Lucrativo®</strong><span>Desde 2020</span></div>
           </div>
           <p>Designed &amp; Developed by Marcelo R. Souza</p>
         </section>

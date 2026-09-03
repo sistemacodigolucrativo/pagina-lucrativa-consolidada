@@ -7,35 +7,35 @@ type PublicPageKey = "institutional" | "terms" | "privacy" | "commercialRules" |
 const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: string; sections: Array<[string, string]> }> = {
   institutional: {
     eyebrow: "Institucional",
-    title: "Quem está por trás do Código Lucrativo",
-    intro: "O Código Lucrativo é uma estrutura digital criada para organizar apresentação, divulgação, pedidos e acompanhamento em uma operação comercial simples e transparente.",
+    title: "Quem está por trás do Método Código Lucrativo",
+    intro: "O Método Código Lucrativo é uma metodologia proprietária, consolidada e validada, entregue com estrutura digital pronta para organizar apresentação, divulgação, pedidos e acompanhamento em uma operação comercial simples e transparente.",
     sections: [
-      ["História do projeto", "O projeto nasceu da necessidade de entregar uma base pronta para quem deseja começar no digital sem montar página, painel e jornada operacional do zero."],
+      ["História do método", "O método nasceu da necessidade de entregar uma base pronta para quem deseja entrar no digital com página, painel e jornada operacional já organizados. Após evoluções, validações, consolidação e aprovação da estrutura, ele passou a ser disponibilizado para novos usuários."],
       ["Origem da ideia", "A ideia central é reunir página pública, Escritório Virtual, campanhas, pedidos, conteúdos e recursos de apoio em uma experiência única."],
       ["Tempo de atuação", "A operação está em evolução contínua, com registros, módulos e fluxos organizados dentro da própria plataforma."],
-      ["Propósito", "O propósito é oferecer estrutura, clareza e ferramentas. Resultados dependem da execução do membro, da divulgação realizada e das regras comerciais vigentes."],
+      ["Propósito", "O propósito é entregar um método pronto acompanhado de estrutura, clareza e recursos operacionais. Resultados dependem da execução do membro, da divulgação realizada e das regras comerciais vigentes."],
       ["Transparência", "A plataforma não promete ganhos automáticos, não processa pagamentos como intermediadora financeira e não substitui o trabalho comercial de quem divulga."],
     ],
   },
   terms: {
     eyebrow: "Termos",
     title: "Termos de Uso",
-    intro: "Estes termos reúnem condições gerais de uso do Código Lucrativo e dos recursos disponibilizados aos visitantes, compradores e membros.",
+    intro: "Estes termos reúnem condições gerais de uso do Método Código Lucrativo e dos recursos disponibilizados aos visitantes, compradores e membros.",
     sections: [
-      ["Uso da estrutura", "O acesso à plataforma deve respeitar as regras comerciais vigentes, os dados reais cadastrados e a finalidade de divulgação e acompanhamento."],
+      ["Uso da estrutura", "O acesso ao método e à estrutura entregue deve respeitar as regras comerciais vigentes, os dados reais informados e a finalidade de divulgação e acompanhamento."],
       ["Responsabilidade do membro", "O membro é responsável por seus dados públicos, seus meios de recebimento, sua divulgação e sua comunicação com compradores."],
-      ["Resultados", "O Código Lucrativo não garante ganhos, vendas, pedidos ou aprovação automática. Qualquer resultado depende de execução, mercado e operação real."],
+      ["Resultados", "O Método Código Lucrativo não garante ganhos, vendas, pedidos ou aprovação automática. Qualquer resultado depende de execução, mercado e operação real."],
       ["Alterações", "Funcionalidades, conteúdos e regras podem ser ajustados para preservar segurança, clareza operacional e evolução do projeto."],
     ],
   },
   privacy: {
     eyebrow: "Privacidade",
     title: "Política de Privacidade",
-    intro: "Esta página resume como os dados são tratados dentro da operação do Código Lucrativo.",
+    intro: "Esta página resume como os dados são tratados dentro da operação do Método Código Lucrativo.",
     sections: [
       ["Dados coletados", "Podem ser coletados dados de cadastro, contato, pedidos, acompanhamento, perfil público e registros necessários ao funcionamento da plataforma."],
       ["Finalidade", "Os dados são utilizados para identificação, liberação de acesso, personalização da página, atribuição de pedidos, suporte e operação dos módulos contratados."],
-      ["Dados públicos", "Somente informações configuradas para exibição pública aparecem no Código Lucrativo do membro. Dados cadastrais internos permanecem separados."],
+      ["Dados públicos", "Somente informações liberadas para exibição pública aparecem na página pública do membro. Dados cadastrais internos permanecem separados."],
       ["Segurança", "Credenciais e informações sensíveis devem ser protegidas. O usuário deve manter seus dados de acesso em sigilo."],
     ],
   },
@@ -47,7 +47,7 @@ const pages: Record<PublicPageKey, { eyebrow: string; title: string; intro: stri
       ["Ativação", "A solicitação de ativação gera um pedido e um código de acompanhamento. A liberação depende das condições reais informadas no fluxo."],
       ["Pagamento direto", "Quando aplicável, o pagamento ocorre diretamente entre comprador e responsável pelo recebimento indicado no pedido."],
       ["Comprovação", "O comprovante pode ser solicitado para conferência manual antes da liberação de acesso."],
-      ["Sem garantia de ganhos", "A aquisição da estrutura não representa garantia de venda, conversão, lucro ou qualquer resultado financeiro."],
+      ["Sem garantia de ganhos", "A adesão ao método e à estrutura entregue não representa garantia de venda, conversão, lucro ou qualquer resultado financeiro."],
     ],
   },
   faq: {

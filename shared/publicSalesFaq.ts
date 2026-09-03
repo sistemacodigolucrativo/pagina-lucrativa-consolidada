@@ -6,7 +6,7 @@ export type PublicSalesFaqItem = {
 export const PUBLIC_SALES_FAQ: PublicSalesFaqItem[] = [
   {
     question: "O que exatamente estou comprando?",
-    answer: "Você está solicitando acesso à estrutura digital do Código Lucrativo: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta.",
+    answer: "Você está solicitando acesso ao Método Código Lucrativo: metodologia consolidada e validada, entregue com página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e dos recursos liberados para sua conta.",
   },
   {
     question: "É somente uma página?",
@@ -38,7 +38,7 @@ export const PUBLIC_SALES_FAQ: PublicSalesFaqItem[] = [
   },
   {
     question: "Posso acessar pelo celular?",
-    answer: "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta.",
+    answer: "A interface foi preparada para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta.",
   },
   {
     question: "Existe suporte?",
