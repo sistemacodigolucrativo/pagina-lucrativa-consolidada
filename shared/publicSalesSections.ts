@@ -37,7 +37,7 @@ export const PUBLIC_SALES_SECTIONS = [
     body: [
       "O Código Lucrativo organiza uma estrutura que já existe, já foi refinada e pode ser disponibilizada para novos membros sem que cada pessoa precise desenvolver tudo novamente.",
       "A jornada é simples de entender: solicite a ativação, receba acesso, conheça a estrutura, personalize seus dados, aprenda a utilizar os recursos, divulgue e acompanhe.",
-      "A estrutura reduz a parte técnica do início. Resultados comerciais continuam dependendo da utilização, da divulgação e das vendas efetivamente realizadas.",
+      "A estrutura reduz a parte técnica do início. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas.",
     ],
     defaultImage: "/mechanism.png",
     defaultAlt: "Estrutura digital pronta",
