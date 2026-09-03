@@ -97,7 +97,7 @@ function applyFloatingLayout(layout: FloatingLayout) {
     document.querySelectorAll<HTMLElement>(selectors[id]).forEach(element => {
       if (element.classList.contains("public-social-proof-toast-inline")) return;
       const point = positions[id];
-      if (typeof point?.x !== "number" || typeof point.y !== "number") {
+      if (typeof point?.x !== "number" || typeof point?.y !== "number") {
         resetFloatingPosition(element);
         return;
       }
