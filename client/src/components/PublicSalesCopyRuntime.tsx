@@ -11,32 +11,7 @@ type PublicSalesCopyState = {
 };
 
 const PUBLIC_SALES_COPY_ENDPOINT = "/api/public-sales-copy";
-const FORCED_PROMO_BANNER_IMAGE = "/codigo-lucrativo-banner-method.svg";
-const FORCED_HERO_COPY: Record<string, string> = {
-  title: "Receba o Método Código Lucrativo pronto para começar — com estrutura consolidada para ativar e operar.",
-  description: "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.",
-  trust: "Você recebe uma estrutura pronta, entende o método, ativa sua operação e acompanha tudo em um só lugar.",
-};
-const FORCED_STRUCTURE_SHOWCASE_COPY: Record<string, string> = {
-  description: "Uma composição visual da base pronta que você entende, ativa, divulga e acompanha no Escritório Virtual.",
-};
-
-function mergeForcedPublicSalesCopy(overrides?: PublicSalesCopyOverrides | null): PublicSalesCopyOverrides {
-  const safeOverrides = overrides ?? {};
-  return {
-    ...safeOverrides,
-    hero: {
-      ...(safeOverrides.hero ?? {}),
-      ...FORCED_HERO_COPY,
-    },
-    structure_showcase: {
-      ...(safeOverrides.structure_showcase ?? {}),
-      ...FORCED_STRUCTURE_SHOWCASE_COPY,
-    },
-  };
-}
-
-const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: mergeForcedPublicSalesCopy({}), floatingLayout: {} });
+const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: {}, floatingLayout: {} });
 const FLOATING_POSITION_PROPS = ["left", "top", "right", "bottom", "transform"] as const;
 
 export function usePublicSalesCopy() {
@@ -44,7 +19,7 @@ export function usePublicSalesCopy() {
 }
 
 export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PublicSalesCopyState>({ overrides: mergeForcedPublicSalesCopy({}), floatingLayout: {} });
+  const [state, setState] = useState<PublicSalesCopyState>({ overrides: {}, floatingLayout: {} });
 
   useEffect(() => {
     let active = true;
@@ -53,11 +28,11 @@ export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
       .then((payload: PublicSalesCopyState) => {
         if (!active) return;
         setState({
-          overrides: mergeForcedPublicSalesCopy(payload.overrides),
+          overrides: payload.overrides ?? {},
           floatingLayout: payload.floatingLayout ?? {},
         });
       })
-      .catch(error => console.warn("[PublicSalesCopy] configuração indisponível:", error));
+      .catch(error => console.warn("[PublicSalesCopy] copy pública indisponível:", error));
     return () => { active = false; };
   }, []);
 
@@ -109,20 +84,7 @@ function preventFloatingActionOverlap() {
   }
 }
 
-function applyForcedPromoBannerImage() {
-  const image = document.querySelector<HTMLImageElement>(".top-promo-banner img");
-  if (!image) return;
-
-  const nextSource = withAppBase(FORCED_PROMO_BANNER_IMAGE);
-  if (!image.src.endsWith(nextSource)) {
-    image.src = nextSource;
-  }
-  image.alt = "Método Código Lucrativo pronto para começar, com estrutura consolidada, Escritório Virtual, ferramentas e treinamentos.";
-}
-
 function applyFloatingLayout(layout: FloatingLayout) {
-  applyForcedPromoBannerImage();
-
   const breakpoint = breakpointForWidth(window.innerWidth);
   const positions = layout[breakpoint] ?? {};
   const selectors: Record<"fab" | "cta" | "toast", string> = {
