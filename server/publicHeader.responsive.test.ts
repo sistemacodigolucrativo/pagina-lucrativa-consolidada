@@ -133,7 +133,8 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('min-height: 62px; margin: 0 0 28px;');
     expect(cssSource).not.toContain('.public-social-proof-toast-slot:empty');
     expect(cssSource).not.toContain('.public-social-proof-toast-slot:not(:empty)');
-    expect(cssSource).toContain('.public-social-proof-toast { position: fixed;');
+    expect(cssSource).toContain('.public-social-proof-toast { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 92px); right: auto; bottom: auto; left: 50%;');
+    expect(cssSource).toContain('max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));');
     expect(socialProofSource).toContain('public-social-proof-toast-inline');
     expect(socialProofSource).not.toContain('top: 92px');
     expect(cssSource).toContain('pointer-events: none;');
@@ -155,13 +156,17 @@ describe("public responsive header and hero layout", () => {
     expect(violetaSource).toContain('onSubmit={onSubmit}');
   });
 
-  it("mounts the public conversion CTA once with a safe fixed position", () => {
+  it("mounts the public conversion CTA after social proof with safe fixed positioning", () => {
     expect(conversionCtaSource).toContain('isPublicConversionRoute(location)');
+    expect(conversionCtaSource).toContain('const SOCIAL_PROOF_SECTION_ID = "depoimentos";');
+    expect(conversionCtaSource).toContain("hasPassedSocialProof");
+    expect(conversionCtaSource).toContain("IntersectionObserver");
     expect(conversionCtaSource).toContain('href={withAppBase("/#f")}');
-    expect(cssSource).toContain('.public-conversion-cta { position: fixed;');
-    expect(cssSource).toContain('z-index: 54;');
-    expect(cssSource).toContain('  .public-conversion-cta { right: 16px;');
-    expect(cssSource).toContain('min-height: 52px; min-width: 52px;');
+    expect(cssSource).toContain(".public-conversion-cta { position: fixed;");
+    expect(cssSource).toContain("right: calc(env(safe-area-inset-right, 0px) + 112px);");
+    expect(cssSource).toContain("bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);");
+    expect(cssSource).toContain(".public-conversion-cta-label");
+    expect(cssSource).toContain("  .public-conversion-cta { left: calc(env(safe-area-inset-left, 0px) + 14px); right: calc(env(safe-area-inset-right, 0px) + 84px);");
   });
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {
@@ -231,7 +236,7 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('className="member-chat-fab-wrap"');
     expect(homeSource).toContain('<MessageCircle size={30} strokeWidth={2.2} />');
     expect(homeSource).not.toContain('member-chat-fab-label');
-    expect(cssSource).toContain('.member-chat-fab-wrap { position: fixed;');
+    expect(cssSource).toContain('.member-chat-fab-wrap { position: fixed; right: calc(env(safe-area-inset-right, 0px) + 24px); bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);');
     expect(cssSource).toContain('width: 64px; height: 64px; min-height: 64px;');
     expect(cssSource).toContain('border-radius: 50%;');
     expect(cssSource).not.toContain('.member-chat-fab::after');
@@ -286,9 +291,10 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("keeps every landing target and mobile overflow protection", () => {
-    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "faq", "f"]) {
+    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "duvidas-decisao", "f"]) {
       expect(homeSource).toContain(`id="${id}"`);
     }
+    expect(homeSource).not.toContain('id="faq"');
     expect(homeSource).toContain('block.id === "problem_start" ? "como-funciona"');
     expect(homeSource).toContain('block.id === "product_real" ? "estrutura"');
     expect(homeSource).toContain('path.startsWith("#") ? path : withAppBase(path)');
