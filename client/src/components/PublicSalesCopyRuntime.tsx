@@ -12,6 +12,7 @@ type PublicSalesCopyState = {
 
 const PUBLIC_SALES_COPY_ENDPOINT = "/api/public-sales-copy";
 const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: {}, floatingLayout: {} });
+const FLOATING_POSITION_PROPS = ["left", "top", "right", "bottom", "transform"] as const;
 
 export function usePublicSalesCopy() {
   return useContext(PublicSalesCopyContext);
@@ -44,25 +45,72 @@ function breakpointForWidth(width: number): "desktop" | "tablet" | "mobile" {
   return "desktop";
 }
 
+function clamp(min: number, value: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function resetFloatingPosition(element: HTMLElement) {
+  FLOATING_POSITION_PROPS.forEach(property => element.style.removeProperty(property));
+}
+
+function clampPointToViewport(element: HTMLElement, point: Required<Point>) {
+  const rect = element.getBoundingClientRect();
+  const viewportWidth = Math.max(window.innerWidth, 1);
+  const viewportHeight = Math.max(window.innerHeight, 1);
+  const elementWidth = rect.width || element.offsetWidth || 0;
+  const elementHeight = rect.height || element.offsetHeight || 0;
+  const minX = Math.min(50, ((elementWidth / 2 + 8) / viewportWidth) * 100);
+  const maxX = Math.max(50, 100 - minX);
+  const minY = Math.min(50, ((elementHeight / 2 + 8) / viewportHeight) * 100);
+  const maxY = Math.max(50, 100 - minY);
+  return {
+    x: clamp(minX, clamp(0, point.x, 100), maxX),
+    y: clamp(minY, clamp(0, point.y, 100), maxY),
+  };
+}
+
+function rectanglesOverlap(first: DOMRect, second: DOMRect) {
+  return first.left < second.right && first.right > second.left && first.top < second.bottom && first.bottom > second.top;
+}
+
+function preventFloatingActionOverlap() {
+  const cta = document.querySelector<HTMLElement>(".public-conversion-cta");
+  const fab = document.querySelector<HTMLElement>(".member-chat-fab-wrap");
+  if (!cta || !fab) return;
+
+  if (rectanglesOverlap(cta.getBoundingClientRect(), fab.getBoundingClientRect())) {
+    resetFloatingPosition(cta);
+    resetFloatingPosition(fab);
+  }
+}
+
 function applyFloatingLayout(layout: FloatingLayout) {
   const breakpoint = breakpointForWidth(window.innerWidth);
-  const positions = layout[breakpoint];
-  if (!positions) return;
+  const positions = layout[breakpoint] ?? {};
   const selectors: Record<"fab" | "cta" | "toast", string> = {
     fab: ".member-chat-fab-wrap",
     cta: ".public-conversion-cta",
     toast: ".public-social-proof-toast",
   };
+
   (Object.keys(selectors) as Array<keyof typeof selectors>).forEach(id => {
-    const point = positions[id];
-    const element = document.querySelector<HTMLElement>(selectors[id]);
-    if (!element || typeof point?.x !== "number" || typeof point?.y !== "number") return;
-    element.style.left = `${Math.max(2, Math.min(98, point.x))}%`;
-    element.style.top = `${Math.max(2, Math.min(98, point.y))}%`;
-    element.style.right = "auto";
-    element.style.bottom = "auto";
-    element.style.transform = "translate(-50%, -50%)";
+    document.querySelectorAll<HTMLElement>(selectors[id]).forEach(element => {
+      if (element.classList.contains("public-social-proof-toast-inline")) return;
+      const point = positions[id];
+      if (typeof point?.x !== "number" || typeof point.y !== "number") {
+        resetFloatingPosition(element);
+        return;
+      }
+
+      const nextPoint = clampPointToViewport(element, { x: point.x, y: point.y });
+      element.style.left = nextPoint.x + "%";
+      element.style.top = nextPoint.y + "%";
+      element.style.right = "auto";
+      element.style.bottom = "auto";
+      element.style.transform = "translate(-50%, -50%)";
+    });
   });
+  preventFloatingActionOverlap();
 }
 
 export default function PublicSalesCopyRuntime() {
