@@ -40,7 +40,7 @@ import MemberAccount from "./pages/MemberAccount";
 import MemberGettingStarted from "./pages/MemberGettingStarted";
 import MemberSupport from "./pages/MemberSupport";
 import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
-import { CommercialRulesPage, ContactPage, InstitutionalPage, PrivacyPage, TermsPage } from "./pages/PublicInfoPage";
+import { CommercialRulesPage, ContactPage, FaqPage, InstitutionalPage, PrivacyPage, TermsPage } from "./pages/PublicInfoPage";
 import { DEV_PREFIX } from "./lib/devPath";
 import PublicSocialProofToast from "./components/PublicSocialProofToast";
 import PublicConversionCta from "./components/PublicConversionCta";
@@ -59,6 +59,7 @@ function AppRoutes() {
     <Route path="/termos-de-uso" component={TermsPage} />
     <Route path="/politica-de-privacidade" component={PrivacyPage} />
     <Route path="/regras-comerciais" component={CommercialRulesPage} />
+    <Route path="/perguntas-frequentes" component={FaqPage} />
     <Route path="/contato" component={ContactPage} />
     <Route path="/membros/operacao" component={MemberOperationCenter} />
     <Route path="/membros/operacao/campanhas" component={MemberOperationCenter} />
