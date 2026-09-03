@@ -76,3 +76,18 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
     answer: "O Escritório Virtual possui um canal para abrir solicitações e acompanhar as respostas do suporte.",
   },
 ];
+
+export const PUBLIC_SALES_DECISION_OBJECTION_QUESTIONS = [
+  "Não sei exatamente o que vou receber.",
+  "Tenho medo de ser apenas uma página.",
+  "Não entendo de marketing digital nem programação.",
+  "Não sei divulgar.",
+  "Tenho pouco tempo.",
+  "Tenho receio de assumir uma mensalidade.",
+  "Tenho medo de criar uma expectativa de ganho automático.",
+  "Tenho medo de pagar e não saber o que acontece depois.",
+] as const;
+
+export const PUBLIC_SALES_DECISION_OBJECTIONS = PUBLIC_SALES_DECISION_OBJECTION_QUESTIONS
+  .map(question => PUBLIC_SALES_OBJECTIONS.find(item => item.question === question))
+  .filter((item): item is PublicSalesObjection => Boolean(item));
