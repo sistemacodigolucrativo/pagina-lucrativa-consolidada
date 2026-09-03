@@ -11,7 +11,31 @@ type PublicSalesCopyState = {
 };
 
 const PUBLIC_SALES_COPY_ENDPOINT = "/api/public-sales-copy";
-const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: {}, floatingLayout: {} });
+const FORCED_HERO_COPY: Record<string, string> = {
+  title: "Receba o Método Código Lucrativo pronto para começar — com estrutura consolidada para ativar e operar.",
+  description: "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.",
+  trust: "Você recebe uma estrutura pronta, entende o método, ativa sua operação e acompanha tudo em um só lugar.",
+};
+const FORCED_STRUCTURE_SHOWCASE_COPY: Record<string, string> = {
+  description: "Uma composição visual da base pronta que você entende, ativa, divulga e acompanha no Escritório Virtual.",
+};
+
+function mergeForcedPublicSalesCopy(overrides?: PublicSalesCopyOverrides | null): PublicSalesCopyOverrides {
+  const safeOverrides = overrides ?? {};
+  return {
+    ...safeOverrides,
+    hero: {
+      ...(safeOverrides.hero ?? {}),
+      ...FORCED_HERO_COPY,
+    },
+    structure_showcase: {
+      ...(safeOverrides.structure_showcase ?? {}),
+      ...FORCED_STRUCTURE_SHOWCASE_COPY,
+    },
+  };
+}
+
+const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: mergeForcedPublicSalesCopy({}), floatingLayout: {} });
 const FLOATING_POSITION_PROPS = ["left", "top", "right", "bottom", "transform"] as const;
 
 export function usePublicSalesCopy() {
@@ -19,7 +43,7 @@ export function usePublicSalesCopy() {
 }
 
 export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PublicSalesCopyState>({ overrides: {}, floatingLayout: {} });
+  const [state, setState] = useState<PublicSalesCopyState>({ overrides: mergeForcedPublicSalesCopy({}), floatingLayout: {} });
 
   useEffect(() => {
     let active = true;
@@ -28,7 +52,7 @@ export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
       .then((payload: PublicSalesCopyState) => {
         if (!active) return;
         setState({
-          overrides: payload.overrides ?? {},
+          overrides: mergeForcedPublicSalesCopy(payload.overrides),
           floatingLayout: payload.floatingLayout ?? {},
         });
       })
