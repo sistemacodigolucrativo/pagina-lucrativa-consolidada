@@ -101,6 +101,27 @@ export default function PublicSocialProofToast() {
 
   useEffect(() => {
     let cancelled = false;
+    fetch(withAppBase("/api/public-toast-config"))
+      .then(async response => {
+        if (!response.ok) throw new Error("Não foi possível carregar os avisos públicos.");
+        return response.json() as Promise<PublicToastResponse>;
+      })
+      .then(data => {
+        if (cancelled) return;
+        const nextTemplates = Array.isArray(data.templates) && data.templates.length ? data.templates : [...publicToastDefaultTemplates];
+        setTemplates(nextTemplates);
+        setSettings(normalizePublicToastSettings(data.settings));
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setTemplates([...publicToastDefaultTemplates]);
+        setSettings(publicToastDefaultSettings);
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
     let nextTimer: number | undefined;
     let dismissTimer: number | undefined;
     const clearTimers = () => { if (nextTimer !== undefined) window.clearTimeout(nextTimer); if (dismissTimer !== undefined) window.clearTimeout(dismissTimer); };
