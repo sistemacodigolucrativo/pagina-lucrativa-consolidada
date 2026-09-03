@@ -150,7 +150,7 @@ export default function ApplicationPayment() {
 
       <header className="rounded-3xl border border-emerald-300/20 bg-zinc-950/80 p-5 shadow-2xl sm:p-7">
         <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Pagamento da solicitação de ativação</span>
-        <h1 className="mt-3 text-3xl font-semibold text-white">Finalize o pagamento da sua ativação</h1>
+        <h1 className="mt-3 text-3xl font-semibold text-white">Finalize seu pagamento de ativação</h1>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Depois de pagar, envie o comprovante quando solicitado e acompanhe a análise pelo código do pedido.</p>
       </header>
 
