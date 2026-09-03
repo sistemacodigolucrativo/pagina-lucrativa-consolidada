@@ -11,6 +11,7 @@ describe("public conversion routes", () => {
       "/termos-de-uso",
       "/politica-de-privacidade",
       "/regras-comerciais",
+      "/perguntas-frequentes",
       "/contato?source=footer",
     ]) expect(isPublicConversionRoute(path)).toBe(true);
   });
