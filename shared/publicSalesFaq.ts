@@ -30,11 +30,11 @@ export const PUBLIC_SALES_FAQ: PublicSalesFaqItem[] = [
   },
   {
     question: "O que acontece depois que eu faço a solicitação?",
-    answer: "Depois do envio, você recebe um código para acompanhar sua solicitação. A partir daí, consegue acompanhar as etapas de pagamento, análise e liberação do acesso.",
+    answer: "Depois do cadastro, você segue para pagamento. Após pagar, envia o comprovante pelo fluxo de acompanhamento e a solicitação entra em análise para liberação do acesso e personalização.",
   },
   {
     question: "Existe mensalidade ou garantia?",
-    answer: "A página segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta.",
+    answer: "Não existe mensalidade neste modelo atual. O valor informado corresponde à solicitação de ativação; garantia de ganhos não existe, porque o desempenho depende de divulgação, constância e execução. Qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta.",
   },
   {
     question: "Posso acessar pelo celular?",
