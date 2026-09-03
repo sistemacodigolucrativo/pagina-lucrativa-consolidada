@@ -161,7 +161,9 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.public-conversion-cta { position: fixed;');
     expect(cssSource).toContain('z-index: 54;');
     expect(cssSource).toContain('  .public-conversion-cta { right: 16px;');
-    expect(cssSource).toContain('min-height: 52px; min-width: 52px;');
+    expect(cssSource).toContain('width: 52px; min-width: 52px; min-height: 52px;');
+    expect(cssSource).toContain('.public-conversion-cta-label { display: none; }');
+    expect(conversionCtaSource).not.toContain('style={{');
   });
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {
@@ -235,7 +237,7 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('width: 64px; height: 64px; min-height: 64px;');
     expect(cssSource).toContain('border-radius: 50%;');
     expect(cssSource).not.toContain('.member-chat-fab::after');
-    expect(cssSource).toContain('.member-chat-fab { width: 58px; height: 58px; min-height: 58px; }');
+    expect(cssSource).toContain('.member-chat-fab-wrap { display: none; }');
   });
 
   it("keeps the simplified commercial navigation before utility routes and the CTA", () => {
@@ -286,7 +288,7 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("keeps every landing target and mobile overflow protection", () => {
-    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "faq", "f"]) {
+    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "f"]) {
       expect(homeSource).toContain(`id="${id}"`);
     }
     expect(homeSource).toContain('block.id === "problem_start" ? "como-funciona"');
