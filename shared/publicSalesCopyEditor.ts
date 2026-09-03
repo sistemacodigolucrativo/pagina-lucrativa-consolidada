@@ -66,7 +66,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   {
     id: "social_proof",
     adminLabel: "Prova social",
-    publicOrder: 4,
+    publicOrder: 5,
     sectionSelector: ".sales-social-proof",
     fields: [
       f("eyebrow", "Identificação", "Quem já faz parte", "text", ".eyebrow"),
@@ -77,18 +77,18 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   {
     id: "package",
     adminLabel: "Tudo o que você recebe",
-    publicOrder: 5,
+    publicOrder: 4,
     sectionSelector: ".sales-package",
     fields: [
       f("eyebrow", "Identificação", "Tudo o que você recebe", "text", ".eyebrow"),
-      f("title", "Título", "Você não recebe apenas uma página. Recebe uma estrutura de operação.", "textarea", "h2"),
-      f("description", "Texto", "Página personalizada, Escritório Virtual, campanhas, pedidos, materiais e aprendizado reunidos para você começar sem montar cada peça separadamente.", "textarea", ".sales-section-heading > p"),
+      f("title", "Título", "Você recebe uma estrutura de operação, não uma explicação solta.", "textarea", "h2"),
+      f("description", "Texto", "Estrutura personalizada, Escritório Virtual, campanhas, recebimentos, pedidos, histórico, biblioteca, academia e suporte reunidos no mesmo fluxo.", "textarea", ".sales-section-heading > p"),
       ...[
-        ["Código Lucrativo personalizado", "Uma página pública para apresentar sua estrutura e receber solicitações."],
-        ["Escritório Virtual", "Um painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
-        ["Link principal de indicação", "Um endereço próprio para divulgar seu Código Lucrativo."],
+        ["Estrutura personalizada", "Página pública, perfil e dados iniciais organizados para apresentar sua operação e receber solicitações."],
+        ["Escritório Virtual", "Painel para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
+        ["Link principal de indicação", "Endereço próprio para divulgar sua estrutura com mais clareza."],
         ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
-        ["Meus pedidos", "Área para acompanhar solicitações atribuídas e confirmações de pagamento."],
+        ["Pedidos e comprovantes", "Área para acompanhar solicitações, pagamentos, envio de comprovantes e andamento da análise."],
         ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
         ["Biblioteca de Recursos", "Ferramentas e materiais publicados pela administração para apoiar sua divulgação."],
         ["Academia", "Conteúdos de aprendizado para orientar a execução."],
@@ -204,9 +204,9 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   },
   {
     id: "faq",
-    adminLabel: "FAQ",
-    publicOrder: 20,
-    sectionSelector: "#faq",
+    adminLabel: "FAQ completa (página separada)",
+    publicOrder: 90,
+    sectionSelector: ".public-info-faq-content",
     fields: [
       f("eyebrow", "Identificação", "Antes de começar", "text", ".eyebrow"),
       f("title", "Título", "Clareza para decidir com segurança.", "textarea", "h2"),
@@ -238,12 +238,14 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
       f("title", "Título", "O que costuma travar a decisão.", "textarea", "h2"),
       f("description", "Texto", "Respostas curtas para dúvidas comuns antes de solicitar a ativação.", "textarea", ".sales-section-heading > p"),
       ...[
-        ["Não sei programação.", "Você não precisa programar. A estrutura já existe e você personaliza os dados principais."],
-        ["Nunca trabalhei com internet.", "A jornada foi organizada para começar pelo básico: configurar, divulgar e acompanhar."],
-        ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
-        ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
-        ["Consigo utilizar pelo celular?", "Sim. As principais áreas foram pensadas para funcionar em navegador mobile."],
-        ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
+        ["Não sei exatamente o que vou receber.", "Você recebe estrutura personalizada, Escritório Virtual, campanhas, pedidos, histórico, biblioteca, academia e suporte em um fluxo organizado."],
+        ["Tenho medo de ser apenas uma página.", "A página é a porta de entrada; a estrutura inclui também painel, acompanhamento, recursos e organização da operação."],
+        ["Não entendo de marketing digital nem programação.", "A proposta é entregar a base pronta para uso. Seu foco fica em entender o fluxo, divulgar com constância e acompanhar pedidos."],
+        ["Não sei divulgar.", "A estrutura centraliza links, campanhas e materiais de apoio para facilitar a divulgação sem improviso."],
+        ["Tenho pouco tempo.", "O fluxo foi pensado para uso direto, com cadastro, pagamento, comprovante e acompanhamento em etapas claras."],
+        ["Tenho receio de assumir uma mensalidade.", "Não existe mensalidade neste modelo atual. O valor informado corresponde à solicitação de ativação."],
+        ["Tenho medo de criar uma expectativa de ganho automático.", "Não existe promessa de ganho. Resultado depende da sua execução, divulgação, constância e contexto."],
+        ["Tenho medo de pagar e não saber o que acontece depois.", "Após o cadastro, você segue para pagamento, envia o comprovante e acompanha a análise até a liberação pelo fluxo oficial."],
       ].flatMap((item, index) => [
         f(`q${index + 1}`, `Objeção ${index + 1}`, item[0], "textarea", `.objection-grid article:nth-child(${index + 1}) strong`),
         f(`a${index + 1}`, `Resposta ${index + 1}`, item[1], "textarea", `.objection-grid article:nth-child(${index + 1}) p`),
@@ -258,10 +260,10 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     fields: [
       f("eyebrow", "Identificação", "Próximo passo", "text", ".offer-copy .eyebrow"),
       f("title", "Título", "Comece com sua estrutura digital pronta para operar.", "textarea", ".offer-copy h2"),
-      f("description", "Texto", "Sua solicitação de acesso reúne Código Lucrativo personalizado, Escritório Virtual, link pessoal, campanhas, acompanhamento de pedidos, materiais e Academia.", "textarea", ".offer-copy > p:not(.offer-closing)"),
-      f("price", "Informação comercial", "Acesso inicial: R$ 50,00", "text", ".sales-notes span:nth-child(1)"),
-      f("condition", "Condição", "Condição informada no processo de ativação", "textarea", ".sales-notes span:nth-child(2)"),
-      f("closing", "Fechamento", "A estrutura fornece ferramentas e recursos para operação e divulgação. Resultados comerciais dependem da sua utilização, divulgação e das vendas efetivamente realizadas. Não há garantia de ganhos ou vendas.", "textarea", ".offer-closing"),
+      f("description", "Texto", "Sua solicitação de ativação cria o registro necessário para cadastro, pagamento, envio do comprovante e análise da estrutura inicial.", "textarea", ".offer-copy > p:not(.offer-closing)"),
+      f("price", "Informação comercial", "Valor da solicitação de ativação: R$ 50,00", "text", ".sales-notes span:nth-child(1)"),
+      f("condition", "Condição", "Sem mensalidade. Solicitação → pagamento → comprovante → análise → acesso liberado", "textarea", ".sales-notes span:nth-child(2)"),
+      f("closing", "Fechamento", "O formulário registra o cadastro; o pagamento acontece na etapa seguinte e o comprovante dá continuidade ao fluxo já existente. Resultados dependem da sua execução e divulgação.", "textarea", ".offer-closing"),
     ],
   },
 ];
