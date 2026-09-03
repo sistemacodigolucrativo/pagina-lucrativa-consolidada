@@ -6,6 +6,7 @@ const publicConversionPaths = new Set([
   "/termos-de-uso",
   "/politica-de-privacidade",
   "/regras-comerciais",
+  "/perguntas-frequentes",
   "/contato",
 ]);
 
