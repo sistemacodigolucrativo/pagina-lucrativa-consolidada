@@ -6,6 +6,7 @@ import { withAppBase } from "@/lib/devPath";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
+import { PUBLIC_SALES_OBJECTIONS } from "@shared/publicSalesObjections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
@@ -14,18 +15,7 @@ const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
 const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => section.id !== "hero_operation");
 
-const faqItems = [
-  ["O que exatamente estou comprando?", "Você está solicitando acesso à estrutura digital do Código Lucrativo: página pública, perfil, Escritório Virtual e recursos disponíveis para personalização, divulgação, acompanhamento e aprendizado. A disponibilidade de alguns conteúdos depende de publicação e da configuração da sua conta."],
-  ["É somente uma página?", "Não. A página é a porta de entrada. O conjunto inclui perfil público, link pessoal, campanhas, pedidos, contatos, cursos, e-books, materiais, suporte e histórico de adesões, conforme os recursos disponíveis."],
-  ["Preciso criar um produto?", "A página e o Escritório Virtual já oferecem uma base pronta para apresentação e acompanhamento. Sua divulgação, relacionamento com interessados e execução comercial continuam sendo responsabilidade do membro."],
-  ["Como funciona a indicação e o pedido?", "Seu perfil pode ter um link próprio. Quando uma pessoa envia uma solicitação por esse endereço, o sistema pode atribuir o pedido à sua conta e exibi-lo em Meus pedidos. Pedido atribuído não é sinônimo de venda, pagamento ou ganho confirmado."],
-  ["Como funciona o recebimento?", "O Escritório Virtual permite organizar preferências como PIX, PayPal, PagSeguro e dados bancários, além de acompanhar pedidos, pagamentos confirmados e histórico de adesões. Essas áreas armazenam informações e registros; não processam pagamentos automaticamente."],
-  ["Vou ganhar dinheiro automaticamente?", "Não. A estrutura fornece ferramentas e um ponto de partida. Qualquer resultado depende da sua execução, divulgação, pedidos, vendas reais, conferência e outros fatores do negócio. Não existe garantia de ganhos."],
-  ["O que acontece depois que eu faço a solicitação?", "Depois do envio, você recebe um código para acompanhar sua solicitação. A partir daí, consegue acompanhar as etapas de pagamento, análise e liberação do acesso."],
-  ["Existe mensalidade ou garantia?", "A página segue a condição comercial vigente informada antes da ativação. Garantia de ganhos não existe; qualquer política comercial ou de cancelamento deve ser consultada nas regras oficiais da oferta."],
-  ["Posso acessar pelo celular?", "A interface foi construída para uso responsivo em telas menores, e os módulos principais podem ser acessados por navegador. A experiência pode variar conforme a tela, o navegador e os dados disponíveis na conta."],
-  ["Existe suporte?", "Sim. O Escritório Virtual possui um canal para abrir solicitações e acompanhar as respostas do suporte."],
-];
+
 
 const packageItems = [
   ["Código Lucrativo personalizado", "Uma página pública para apresentar sua estrutura e receber solicitações."],
@@ -52,14 +42,9 @@ const notFitItems = [
   "Quem busca uma promessa de resultado fixo em vez de uma ferramenta de trabalho.",
 ];
 
-const objectionItems = [
-  ["Nunca trabalhei com internet.", "A jornada foi organizada para começar pelo básico: configurar, divulgar e acompanhar."],
-  ["Não sei divulgar.", "Você recebe links, campanhas, materiais e conteúdos para orientar a divulgação."],
-  ["Tenho pouco tempo.", "Você pode operar em ritmo próprio, mas os resultados exigem constância."],
-  ["Preciso entender de marketing digital?", "Não precisa começar especialista. Você aprende e aplica conforme avança."],
-  ["Tenho medo de começar errado.", "A estrutura reduz a tela em branco: você configura sua página, usa os materiais disponíveis e acompanha os próximos passos."],
-  ["E se eu ainda não tiver público?", "Você pode começar organizando sua presença, criando campanhas e testando canais de divulgação com clareza."],
-];
+const objectionItems = PUBLIC_SALES_OBJECTIONS.filter(({ featured }) => featured).map(({ question, answer }) => [question, answer] as const);
+
+
 
 const footerLinks = [
   ["Termos de Uso", "/termos-de-uso"],
@@ -379,9 +364,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="sales-section sales-faq" id="faq">
-         <div className="shell reference-copy-grid"><div className="reference-copy-index"><span>FAQ</span><i /></div><div className="reference-copy-content"><Eyebrow>{publicCopy(overrides, "faq", "eyebrow", "Antes de começar")}</Eyebrow><h2>{publicCopy(overrides, "faq", "title", "Clareza para decidir com segurança.")}</h2><div className="copy-stack"><p>{publicCopy(overrides, "faq", "intro", "Uma estrutura pronta só faz sentido quando você entende o que recebe, como utiliza e o que depende da sua execução. Consulte as respostas mais importantes antes de solicitar a ativação.")}</p>{faqItems.map(([question, answer], index) => <details key={question}><summary>{publicCopy(overrides, "faq", `q${index + 1}`, question)}</summary><p>{publicCopy(overrides, "faq", `a${index + 1}`, answer)}</p></details>)}</div></div></div>
-      </section>
+
 
       <section className="sales-section sales-objections" id="duvidas-decisao">
         <div className="shell">
