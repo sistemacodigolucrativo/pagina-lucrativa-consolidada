@@ -68,12 +68,12 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('aria-label="Ver próxima tela do Escritório Virtual"');
     expect(homeSource).toContain('role="tablist"');
     expect(homeSource).not.toContain("Screenshot reservado");
-    expect(homeSource).toContain("Dashboard");
-    expect(homeSource).toContain("Campanhas");
-    expect(homeSource).toContain("Meus pedidos");
-    expect(homeSource).toContain("Biblioteca");
-    expect(homeSource).toContain("Academia");
-    expect(homeSource).toContain("Perfil");
+    expect(homeSource).toContain("Estrutura personalizada");
+    expect(homeSource).toContain("Escritório Virtual");
+    expect(homeSource).toContain("Campanhas de divulgação");
+    expect(homeSource).toContain("Pedidos e acompanhamento");
+    expect(homeSource).toContain("Biblioteca e Academia");
+    expect(homeSource).toContain("Dados de recebimento");
     expect(homeSource).toContain('className="sales-author-badge"');
     expect(homeSource).toContain('className="sprint-stamp"');
     expect(homeSource).toContain('className="sprint-paper-card"');
@@ -113,30 +113,24 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain(".social-proof-rating-summary");
   });
 
-  it("mounts the social proof toast once at router scope and gates private routes", () => {
-    expect((appSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
+  it("mounts the social proof toast inside the Home flow and avoids fragile portals", () => {
+    expect((homeSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
+    expect((appSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(0);
     expect((appSource.match(/<PublicConversionCta \/>/g) ?? []).length).toBe(1);
-    expect(appSource).toContain('<WouterRouter base={base}><PublicSocialProofToast /><PublicConversionCta /><AppRoutes /></WouterRouter>');
+    expect(appSource).toContain('<WouterRouter base={base}><PublicConversionCta /><AppRoutes /></WouterRouter>');
     expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
     expect(socialProofSource).toContain('if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0)');
     expect(socialProofSource).toContain('fetch(withAppBase("/api/public-toast-config")');
     expect(socialProofSource).toContain('setNotice(null)');
     expect(socialProofSource).toContain('Math.min(settings.initialDelaySeconds * 1000, 4_000)');
-    expect(socialProofSource).toContain('!toastSlot && window.matchMedia(MOBILE_TABLET_QUERY).matches');
-    expect(socialProofSource).toContain('createPortal(toast, toastSlot)');
-    expect(socialProofSource).toContain('document.getElementById("public-social-proof-toast-slot")');
-    expect(socialProofSource).toContain('settings.showSimulationNotice');
-    expect(socialProofSource).toContain('role="status"');
+    expect(socialProofSource).not.toContain('createPortal');
+    expect(socialProofSource).not.toContain('document.getElementById("public-social-proof-toast-slot")');
+    expect(socialProofSource).not.toContain('toastSlot');
+    expect(socialProofSource).toContain('public-social-proof-toast-inline');
     expect(homeSource).toContain('id="public-social-proof-toast-slot"');
     expect(homeSource.indexOf('id="public-social-proof-toast-slot"')).toBeLessThan(homeSource.indexOf('className="sales-kicker"'));
     expect(cssSource).toContain('.public-social-proof-toast-slot { display: flex; align-items: center;');
     expect(cssSource).toContain('min-height: 62px; margin: 0 0 28px;');
-    expect(cssSource).not.toContain('.public-social-proof-toast-slot:empty');
-    expect(cssSource).not.toContain('.public-social-proof-toast-slot:not(:empty)');
-    expect(cssSource).toContain('.public-social-proof-toast { position: fixed; top: calc(env(safe-area-inset-top, 0px) + 92px); right: auto; bottom: auto; left: 50%;');
-    expect(cssSource).toContain('max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));');
-    expect(socialProofSource).toContain('public-social-proof-toast-inline');
-    expect(socialProofSource).not.toContain('top: 92px');
     expect(cssSource).toContain('pointer-events: none;');
   });
 
@@ -218,7 +212,11 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('comparison-image-fill');
     expect(cssSource).toContain('.reference-copy-content > .comparison-image-fill { width: 100%; }');
     expect(cssSource).toContain('.comparison-image-fill img { object-fit: cover; }');
-    expect(homeSource).toContain('section.id !== "hero_operation"');
+    expect(homeSource).toContain("const coreSalesSectionIds = new Set");
+    expect(homeSource).toContain('"problem_start"');
+    expect(homeSource).toContain('"activation_journey"');
+    expect(homeSource).toContain('"comparison"');
+    expect(homeSource).not.toContain('"state_desired",');
   });
 
   it("keeps the promo banner permanent and removes its close control", () => {
@@ -296,7 +294,7 @@ describe("public responsive header and hero layout", () => {
     }
     expect(homeSource).not.toContain('id="faq"');
     expect(homeSource).toContain('block.id === "problem_start" ? "como-funciona"');
-    expect(homeSource).toContain('block.id === "product_real" ? "estrutura"');
+    expect(homeSource).toContain('block.id === "comparison" ? "comparacao"');
     expect(homeSource).toContain('path.startsWith("#") ? path : withAppBase(path)');
     expect(homeSource).toContain('["Institucional", "/institucional"]');
     expect(homeSource).toContain('href={withAppBase(path)}');
