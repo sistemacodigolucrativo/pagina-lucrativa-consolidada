@@ -31,7 +31,11 @@ describe("melhorias da página pública", () => {
     expect(home).toContain('["Perguntas frequentes", "/perguntas-frequentes"]');
     expect(home).toContain("footerLinks");
     expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
-    expect(publicInfo).toContain("Respostas para decidir com segurança");
+    expect(publicInfo).toContain("Clareza para decidir com segurança.");
+    expect(publicInfo).toContain('className={isFaqPage ? "shell public-faq-list" : "shell public-info-grid"}');
+    expect(publicInfo).toContain("<details key={title}>");
+    expect(home).not.toContain('className="sales-section sales-faq"');
+    expect(home).not.toContain("const faqItems = [");
     const objections = read("shared/publicSalesObjections.ts");
     expect((objections.match(/question: "/g) ?? []).length).toBe(16);
     expect(objections).toContain("Não existe mensalidade.");
