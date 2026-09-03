@@ -52,7 +52,7 @@ describe("melhorias da página pública", () => {
     const objections = read("shared/publicSalesObjections.ts");
     expect((objections.match(/question: "/g) ?? []).length).toBe(16);
     expect(objections).toContain("Não existe mensalidade.");
-    expect(publicInfo).toContain("História do projeto");
+    expect(publicInfo).toContain("História do método");
     expect(publicInfo).toContain("Origem da ideia");
     expect(publicInfo).toContain("Tempo de atuação");
   });
