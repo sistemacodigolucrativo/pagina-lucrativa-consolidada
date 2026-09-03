@@ -33,7 +33,7 @@ describe("melhorias da página pública", () => {
     expect(publicInfo).toContain("Quem está por trás do Código Lucrativo");
     expect(publicInfo).toContain("Respostas para decidir com segurança");
     const objections = read("shared/publicSalesObjections.ts");
-    expect((objections.match(/question:/g) ?? []).length).toBe(16);
+    expect((objections.match(/question: "/g) ?? []).length).toBe(16);
     expect(objections).toContain("Não existe mensalidade.");
     expect(publicInfo).toContain("História do projeto");
     expect(publicInfo).toContain("Origem da ideia");
