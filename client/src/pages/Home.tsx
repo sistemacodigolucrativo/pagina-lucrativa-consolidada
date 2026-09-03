@@ -322,7 +322,7 @@ export default function Home() {
       <section className="sales-section sales-package" id="o-que-recebe">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>{publicCopy(overrides, "package", "eyebrow", "O que você recebe")}</Eyebrow><h2>{publicCopy(overrides, "package", "title", "Você recebe uma estrutura de operação, não uma explicação solta.")}</h2></div>
+            <div><Eyebrow>{publicCopy(overrides, "package", "eyebrow", "Tudo o que você recebe")}</Eyebrow><h2>{publicCopy(overrides, "package", "title", "Você recebe uma estrutura de operação, não uma explicação solta.")}</h2></div>
             <p>{publicCopy(overrides, "package", "description", "Estrutura personalizada, Escritório Virtual, campanhas, recebimentos, pedidos, histórico, biblioteca, academia e suporte reunidos no mesmo fluxo.")}</p>
           </div>
           <div className="package-grid">{packageItems.map(([title, description], index) => <article key={title}><strong>{publicCopy(overrides, "package", `item${index + 1}Title`, title)}</strong><p>{publicCopy(overrides, "package", `item${index + 1}Text`, description)}</p></article>)}</div>
