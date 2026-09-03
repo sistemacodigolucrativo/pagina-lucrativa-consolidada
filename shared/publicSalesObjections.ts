@@ -7,27 +7,27 @@ export type PublicSalesObjection = {
 export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   {
     question: "Não sei exatamente o que vou receber.",
-    answer: "A ativação reúne o método Código Lucrativo, uma estrutura digital própria e personalizável, Escritório Virtual, perfil, ferramentas de divulgação, campanhas, acompanhamento de pedidos, materiais, conteúdos de aprendizado e suporte, conforme os recursos disponíveis para sua conta.",
+    answer: "A ativação reúne o Método Código Lucrativo, uma estrutura digital pronta e personalizável, Escritório Virtual, perfil, recursos de divulgação, campanhas, acompanhamento de pedidos, materiais, conteúdos de aprendizado e suporte, conforme os recursos disponíveis para sua conta.",
     featured: true,
   },
   {
     question: "Tenho medo de ser apenas uma página.",
-    answer: "Não é apenas uma página. O Código Lucrativo reúne método, estrutura digital, Escritório Virtual e recursos para você configurar, divulgar e acompanhar sua operação em um único ambiente.",
+    answer: "Não é apenas uma página. A página é a porta de entrada. O Código Lucrativo reúne método, estrutura digital, Escritório Virtual e recursos para você entender, personalizar, divulgar e acompanhar sua operação em um único ambiente.",
     featured: true,
   },
   {
     question: "Nunca trabalhei com internet.",
-    answer: "A jornada começa pelo básico: fazer a ativação, personalizar seus dados, conhecer as ferramentas, aprender, divulgar e acompanhar. Você não precisa começar como especialista.",
+    answer: "A jornada começa pelo básico: solicitar a ativação, receber acesso, conhecer a estrutura, personalizar seus dados essenciais, aprender a utilizar os recursos, divulgar e acompanhar. Você não precisa começar como especialista.",
     featured: true,
   },
   {
     question: "Não sei divulgar.",
-    answer: "Você encontra links, campanhas, materiais e conteúdos que ajudam a organizar a divulgação. A estrutura reduz a parte técnica, mas a constância e a execução continuam dependendo de você.",
+    answer: "Você encontra links, campanhas, materiais e conteúdos que ajudam a organizar a divulgação. A estrutura reduz a parte técnica, mas constância, relacionamento e execução continuam dependendo de você.",
     featured: true,
   },
   {
     question: "Ainda não tenho público.",
-    answer: "Você pode começar organizando sua presença, criando campanhas e testando canais de divulgação. Ter uma base pronta ajuda a começar com clareza, sem prometer vendas automáticas.",
+    answer: "Você pode começar organizando sua presença, ativando campanhas e testando canais de divulgação. Ter uma base pronta ajuda a começar com clareza, sem prometer vendas automáticas.",
     featured: true,
   },
   {
@@ -41,7 +41,7 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   },
   {
     question: "Não tenho um produto próprio.",
-    answer: "O Código Lucrativo oferece uma base pronta para configuração, divulgação e acompanhamento. Seu trabalho é conhecer a estrutura, utilizar os recursos e conduzir sua divulgação e seu relacionamento com os interessados.",
+    answer: "O Método Código Lucrativo oferece uma base pronta para apresentação, divulgação e acompanhamento. Seu trabalho é conhecer a estrutura, utilizar os recursos e conduzir sua divulgação e seu relacionamento com os interessados.",
   },
   {
     question: "Não entendo como funcionam indicação e pedido.",
@@ -53,7 +53,7 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   },
   {
     question: "Tenho medo de criar uma expectativa de ganho automático.",
-    answer: "A estrutura oferece método, ferramentas e um ponto de partida. Resultados dependem da utilização, divulgação, vendas reais e outros fatores da operação. Não existe garantia de vendas ou ganhos.",
+    answer: "A entrega é uma estrutura automatizada de operação, não uma promessa de renda automática. Resultados dependem da utilização, divulgação, vendas reais e outros fatores da operação. Não existe garantia de vendas ou ganhos.",
   },
   {
     question: "Tenho pouco tempo.",
@@ -61,11 +61,11 @@ export const PUBLIC_SALES_OBJECTIONS: PublicSalesObjection[] = [
   },
   {
     question: "Não entendo de marketing digital nem programação.",
-    answer: "Você não precisa saber programar nem começar como especialista em marketing. A parte técnica já está estruturada e os conteúdos ajudam a orientar a utilização.",
+    answer: "Você não precisa saber programar nem começar como especialista em marketing. A parte técnica já está estruturada e os conteúdos ajudam a orientar a utilização do método.",
   },
   {
     question: "Tenho medo de começar errado.",
-    answer: "A jornada indica os próximos passos: ativar, personalizar, aprender, divulgar e acompanhar. Isso reduz a sensação de tela em branco e ajuda a organizar a execução.",
+    answer: "A jornada indica os próximos passos: ativar, receber acesso, conhecer a estrutura, personalizar, aprender, divulgar e acompanhar. Isso reduz a sensação de tela em branco e ajuda a organizar a execução.",
   },
   {
     question: "Tenho receio de não conseguir usar pelo celular.",
