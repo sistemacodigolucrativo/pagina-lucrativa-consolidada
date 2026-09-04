@@ -107,8 +107,8 @@ export const PUBLIC_SALES_SECTIONS = [
       "Produto ou oferta, site, página de apresentação, área do usuário, acesso seguro, sistema de pedidos, links, campanhas, materiais, treinamento, painel e acompanhamento.",
       "Foi justamente para reduzir essa etapa pesada de preparação técnica que o Método Código Lucrativo foi consolidado: você começa a partir de uma estrutura existente e dedica sua energia a entender, personalizar, divulgar, operar e evoluir.",
     ],
-    defaultImage: "/comparison.png",
-    defaultAlt: "Comparação entre preparar componentes desconectados sozinho e operar uma estrutura digital organizada",
+    defaultImage: "/comparison-puzzle.jpg",
+    defaultAlt: "Comparação entre peças desconectadas e uma estrutura digital organizada para ativar",
   },
   {
     id: "ease_real",

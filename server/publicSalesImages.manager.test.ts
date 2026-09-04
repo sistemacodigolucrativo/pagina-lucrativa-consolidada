@@ -31,7 +31,7 @@ describe("public sales section image manager", () => {
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "product_real")?.defaultImage).toBe("/product-real.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "activation_journey")?.defaultImage).toBe("/activation-journey.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "behind_structure")?.defaultImage).toBe("/behind-structure.png");
-    expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "comparison")?.defaultImage).toBe("/comparison.png");
+    expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "comparison")?.defaultImage).toBe("/comparison-puzzle.jpg");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "digital_asset")?.defaultImage).toBe("/digital-asset.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "proof_matters")?.defaultImage).toBe("/proof-matters.png");
   });
