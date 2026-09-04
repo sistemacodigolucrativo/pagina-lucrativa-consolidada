@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 const read = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
 const home = read("client/src/pages/Home.tsx");
 const css = read("client/src/index.css");
+const activationCard = read("client/src/components/VioletaNeonActivationCard.tsx");
 
 describe("melhorias da página pública", () => {
   it("mantém as novas seções comerciais na Home sem criar preview interno do produto", () => {
@@ -14,11 +15,11 @@ describe("melhorias da página pública", () => {
     expect(home).toContain("Tudo o que você recebe");
     expect(home).toContain("Para quem é");
     expect(home).toContain("Para quem não é");
-    expect(home).toContain("O que costuma travar a decisão");
+    expect(home).toContain("DÚVIDAS COMUNS");
     expect(home).toContain("PUBLIC_SALES_DECISION_OBJECTIONS");
     expect(home).toContain("coreSalesSectionIds");
     expect(home).toContain('"activation_journey"');
-    expect(home).toContain("Sem mensalidade");
+    expect(activationCard).toContain("pagamento único");
     expect(home).not.toContain("const objectionItems = [");
     expect(home).not.toContain('"state_desired"');
     expect(home.indexOf('className="sales-section sales-package"')).toBeLessThan(home.indexOf('className="sales-section sales-social-proof"'));

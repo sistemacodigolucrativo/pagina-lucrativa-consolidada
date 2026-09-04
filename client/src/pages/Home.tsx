@@ -378,8 +378,8 @@ export default function Home() {
       <section className="sales-section sales-objections" id="duvidas-decisao">
         <div className="shell">
           <div className="sales-section-heading">
-             <div><Eyebrow>{publicCopy(overrides, "objections", "eyebrow", "Antes da oferta")}</Eyebrow><h2>{publicCopy(overrides, "objections", "title", "O que costuma travar a decisão.")}</h2></div>
-             <p>{publicCopy(overrides, "objections", "description", "Respostas curtas para dúvidas comuns antes de solicitar a ativação.")}</p>
+             <div><Eyebrow>{publicCopy(overrides, "objections", "eyebrow", "DÚVIDAS COMUNS")}</Eyebrow><h2>{publicCopy(overrides, "objections", "title", "Tudo o que você precisa saber antes de ativar sua estrutura.")}</h2></div>
+             <p>{publicCopy(overrides, "objections", "description", "Confira as respostas para as principais dúvidas sobre o Método Código Lucrativo, a estrutura e o processo de ativação.")}</p>
           </div>
            <div className="objection-grid">{objectionItems.map(([question, answer], index) => <article key={question}><strong>{publicCopy(overrides, "objections", `q${index + 1}`, question)}</strong><p>{publicCopy(overrides, "objections", `a${index + 1}`, answer)}</p></article>)}</div>
           <p className="offer-closing">Ainda quer consultar tudo com calma? <a href={withAppBase("/perguntas-frequentes")}>Ver perguntas frequentes completas</a>.</p>
@@ -388,7 +388,7 @@ export default function Home() {
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Ative o <span>Método Código Lucrativo com estrutura pronta para operar.</span></>}</h2><p>{publicCopy(overrides, "offer", "description", "Sua solicitação de ativação cria o registro necessário para cadastro, pagamento, envio do comprovante e análise da estrutura inicial.")}</p><div className="sales-notes"><span>{publicCopy(overrides, "offer", "price", "Valor da solicitação de ativação: R$ 50,00")}</span><span>{publicCopy(overrides, "offer", "condition", "Sem mensalidade. Solicitação → pagamento → comprovante → análise → acesso liberado")}</span></div><p className="offer-closing">{publicCopy(overrides, "offer", "closing", "O formulário registra o cadastro; o pagamento acontece na etapa seguinte e o comprovante dá continuidade ao fluxo já existente. Resultados dependem da sua execução e divulgação.")}</p><p className="offer-closing">Antes de seguir, você também pode consultar as <a href={withAppBase("/perguntas-frequentes")}>perguntas frequentes completas</a>.</p></div>
+           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Ative o <span>Método Código Lucrativo com estrutura pronta para operar.</span></>}</h2></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}

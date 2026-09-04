@@ -230,13 +230,13 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   },
   {
     id: "objections",
-    adminLabel: "Antes da oferta",
+    adminLabel: "Dúvidas comuns",
     publicOrder: 21,
     sectionSelector: "#duvidas-decisao",
     fields: [
-      f("eyebrow", "Identificação", "Antes da oferta", "text", ".eyebrow"),
-      f("title", "Título", "O que costuma travar a decisão.", "textarea", "h2"),
-      f("description", "Texto", "Respostas curtas para dúvidas comuns antes de solicitar a ativação.", "textarea", ".sales-section-heading > p"),
+      f("eyebrow", "Identificação", "DÚVIDAS COMUNS", "text", ".eyebrow"),
+      f("title", "Título", "Tudo o que você precisa saber antes de ativar sua estrutura.", "textarea", "h2"),
+      f("description", "Texto", "Confira as respostas para as principais dúvidas sobre o Método Código Lucrativo, a estrutura e o processo de ativação.", "textarea", ".sales-section-heading > p"),
       ...[
         ["Não sei exatamente o que vou receber.", "Você recebe o Método Código Lucrativo, uma estrutura digital pronta, Escritório Virtual, campanhas, pedidos, histórico, biblioteca, academia e suporte em um fluxo organizado."],
         ["Tenho medo de ser apenas uma página.", "A página é a porta de entrada; o Método Código Lucrativo inclui também ambiente operacional, acompanhamento, recursos e organização da operação."],
@@ -260,10 +260,6 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     fields: [
       f("eyebrow", "Identificação", "Próximo passo", "text", ".offer-copy .eyebrow"),
       f("title", "Título", "Ative o Método Código Lucrativo com estrutura pronta para operar.", "textarea", ".offer-copy h2"),
-      f("description", "Texto", "Sua solicitação de ativação cria o registro necessário para cadastro, pagamento, envio do comprovante e análise da estrutura inicial.", "textarea", ".offer-copy > p:not(.offer-closing)"),
-      f("price", "Informação comercial", "Valor da solicitação de ativação: R$ 50,00", "text", ".sales-notes span:nth-child(1)"),
-      f("condition", "Condição", "Sem mensalidade. Solicitação → pagamento → comprovante → análise → acesso liberado", "textarea", ".sales-notes span:nth-child(2)"),
-      f("closing", "Fechamento", "O formulário registra o cadastro; o pagamento acontece na etapa seguinte e o comprovante dá continuidade ao fluxo já existente. Resultados dependem da sua execução e divulgação.", "textarea", ".offer-closing"),
     ],
   },
 ];
