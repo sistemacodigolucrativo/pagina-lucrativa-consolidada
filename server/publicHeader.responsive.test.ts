@@ -7,7 +7,6 @@ const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "
 const publicMobileCssSource = readFileSync(resolve(process.cwd(), "client/src/public-mobile-compact-header.css"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 const socialProofSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicSocialProofToast.tsx"), "utf8");
-const conversionCtaSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicConversionCta.tsx"), "utf8");
 const violetaSource = readFileSync(resolve(process.cwd(), "client/src/components/VioletaNeonActivationCard.tsx"), "utf8");
 const previewSource = readFileSync(resolve(process.cwd(), "client/src/pages/Preview.tsx"), "utf8");
 const operationsSource = readFileSync(resolve(process.cwd(), "client/src/pages/MemberOperations.tsx"), "utf8");
@@ -116,8 +115,8 @@ describe("public responsive header and hero layout", () => {
   it("mounts the social proof toast as a floating public element and avoids fragile portals", () => {
     expect((homeSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
     expect((appSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(0);
-    expect((appSource.match(/<PublicConversionCta \/>/g) ?? []).length).toBe(1);
-    expect(appSource).toContain('<WouterRouter base={base}><PublicConversionCta /><AppRoutes /></WouterRouter>');
+    expect(appSource).not.toContain("PublicConversionCta");
+    expect(appSource).toContain("<WouterRouter base={base}><AppRoutes /></WouterRouter>");
     expect(socialProofSource).toContain('isPublicSocialProofRoute(location)');
     expect(socialProofSource).toContain('if (!settings.enabled || !isPublicSocialProofRoute(location) || templates.length === 0)');
     expect(socialProofSource).toContain('fetch(withAppBase("/api/public-toast-config")');
@@ -150,17 +149,12 @@ describe("public responsive header and hero layout", () => {
     expect(violetaSource).toContain('onSubmit={onSubmit}');
   });
 
-  it("mounts the public conversion CTA after social proof with safe fixed positioning", () => {
-    expect(conversionCtaSource).toContain('isPublicConversionRoute(location)');
-    expect(conversionCtaSource).toContain('const SOCIAL_PROOF_SECTION_ID = "depoimentos";');
-    expect(conversionCtaSource).toContain("hasPassedSocialProof");
-    expect(conversionCtaSource).toContain("IntersectionObserver");
-    expect(conversionCtaSource).toContain('href={withAppBase("/#f")}');
-    expect(cssSource).toContain(".public-conversion-cta { position: fixed;");
-    expect(cssSource).toContain("right: calc(env(safe-area-inset-right, 0px) + 124px);");
-    expect(cssSource).toContain("bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);");
-    expect(cssSource).toContain(".public-conversion-cta-label");
-    expect(cssSource).toContain("  .public-conversion-cta { left: calc(env(safe-area-inset-left, 0px) + 14px); right: calc(env(safe-area-inset-right, 0px) + 104px);");
+  it("keeps the floating public conversion CTA removed while preserving conversion paths", () => {
+    expect(appSource).not.toContain("PublicConversionCta");
+    expect(homeSource).toContain('href="#f" className="nav-cta"');
+    expect(homeSource).toContain('<div className="sales-actions"><JoinButton />');
+    expect(homeSource).toContain('className="member-chat-fab"');
+    expect(homeSource).toContain('id="f"');
   });
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {

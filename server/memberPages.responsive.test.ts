@@ -35,4 +35,12 @@ describe("member operational pages responsive hierarchy", () => {
     expect(layout).toContain("storeSidebarScroll(event.currentTarget.scrollTop)");
     expect(layout).toContain('scrollIntoView({ block: "center" })');
   });
+
+  it("exibe o Modo Administrativo somente para administradores", () => {
+    const layout = readFileSync(path.join(process.cwd(), "client/src/components/DashboardLayout.tsx"), "utf8");
+    expect(layout).toContain('{user?.role === "admin" ? (');
+    expect(layout).toContain("Modo Administrativo");
+    expect(layout).toContain("Modo Membro");
+    expect(layout).not.toContain('disabled={user?.role !== "admin"}');
+  });
 });

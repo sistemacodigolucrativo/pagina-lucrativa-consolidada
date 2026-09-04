@@ -349,18 +349,19 @@ function DashboardLayoutContent({
 
           <SidebarFooter className="dashboard-sidebar-footer border-t border-border/60 bg-sidebar p-3">
             <div className="dashboard-mode-switch group-data-[collapsible=icon]:hidden">
-              <button
-                type="button"
-                onClick={() => {
-                  rememberSidebarScroll();
-                  if (user?.role === "admin") setLocation("/admin");
-                }}
-                disabled={user?.role !== "admin"}
-                className={`dashboard-mode-button${location.startsWith("/admin") ? " is-active" : ""}`}
-              >
-                <Shield className="size-4" />
-                Modo Administrativo
-              </button>
+              {user?.role === "admin" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    rememberSidebarScroll();
+                    setLocation("/admin");
+                  }}
+                  className={`dashboard-mode-button${location.startsWith("/admin") ? " is-active" : ""}`}
+                >
+                  <Shield className="size-4" />
+                  Modo Administrativo
+                </button>
+              ) : null}
               <button
                 type="button"
                 onClick={() => {
