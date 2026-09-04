@@ -6,12 +6,14 @@ type ResponsiveEbookFrameProps = {
   title: string;
   htmlContent: string;
   className?: string;
+  displayMode?: "embedded" | "modal";
 };
 
-export default function ResponsiveEbookFrame({ title, htmlContent, className = "" }: ResponsiveEbookFrameProps) {
+export default function ResponsiveEbookFrame({ title, htmlContent, className = "", displayMode = "embedded" }: ResponsiveEbookFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const isModal = displayMode === "modal";
 
   const fitDocument = useCallback(() => {
     const frame = frameRef.current;
@@ -87,7 +89,8 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
       ref={containerRef}
       data-ebook-reader="responsive"
       data-reader-mode={isFullscreen ? "fullscreen" : "embedded"}
-      className={`min-w-0 max-w-full overflow-hidden rounded-xl border border-white/10 bg-white ${isFullscreen ? "flex h-dvh w-screen flex-col rounded-none border-0" : ""} ${className}`}
+      data-reader-display={displayMode}
+      className={`min-w-0 max-w-full overflow-hidden rounded-xl border border-white/10 bg-white ${isFullscreen ? "flex h-dvh w-screen flex-col rounded-none border-0" : isModal ? "flex h-full min-h-0 max-h-full flex-col" : ""} ${className}`}
     >
       <div className="flex min-h-12 items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2">
         <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
@@ -110,7 +113,7 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
         sandbox="allow-same-origin"
         srcDoc={htmlContent}
         onLoad={handleLoad}
-        className={`block w-full max-w-full border-0 bg-white ${isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}`}
+        className={`block w-full max-w-full border-0 bg-white ${isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}`}
       />
     </div>
   );
