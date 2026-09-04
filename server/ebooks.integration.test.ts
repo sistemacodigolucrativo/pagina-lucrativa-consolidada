@@ -24,6 +24,7 @@ describe("módulo de e-books", () => {
 
   it("mantém o HTML em um iframe isolado, responsivo e expansível no leitor e na prévia administrativa", async () => {
     const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
+    const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
     expect(reader).toContain("sandbox=\"allow-same-origin\"");
     expect(reader).toContain("srcDoc={htmlContent}");
@@ -32,8 +33,16 @@ describe("módulo de e-books", () => {
     expect(reader).toContain('"fullscreenchange"');
     expect(reader).toContain('event.key !== "Escape"');
     expect(reader).toContain('data-ebook-reader="responsive"');
+    expect(reader).toContain('displayMode?: "embedded" | "modal"');
+    expect(reader).toContain("data-reader-display={displayMode}");
+    expect(reader).toContain('displayMode === "modal"');
     expect(reader).toContain('"Ampliar"');
     expect(reader).toContain('"Sair da tela cheia"');
+    expect(memberReader).toContain("<Dialog open={readerOpen}");
+    expect(memberReader).toContain("setReaderOpen(true)");
+    expect(memberReader).toContain("onEscapeKeyDown={handleDialogEscape}");
+    expect(memberReader).toContain('displayMode="modal"');
+    expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
     expect(admin).toContain("sandbox=\"\"");
     expect(admin).toContain("srcDoc={form.htmlContent}");
   });
