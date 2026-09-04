@@ -412,13 +412,6 @@ export default function Home() {
           <span className="footer-section-label">Informações</span>
           <nav className="footer-links" aria-label="Links institucionais">{footerLinks.map(([label, path]) => <a key={path} href={withAppBase(path)}>{label}<ArrowUpRight size={13} aria-hidden="true" /></a>)}</nav>
         </section>
-
-        {effectiveAffiliate?.whatsapp ? <section className="footer-panel footer-support-card">
-          <span className="footer-section-label">Atendimento</span>
-          <strong>Ficou alguma dúvida?</strong>
-          <p>Solicite contato direto pelo WhatsApp.</p>
-          <a className="footer-whatsapp" href={`https://wa.me/${effectiveAffiliate.whatsapp.replace(/\D/g, "")}`} target="_blank" rel="noreferrer"><MessageCircle size={18} aria-hidden="true" /><span>Falar pelo WhatsApp</span><ArrowUpRight size={15} aria-hidden="true" /></a>
-        </section> : null}
       </div>
       <div className="shell footer-bottom"><span>© 2026 · Todos os direitos reservados.</span><span className="footer-version">⭐ v2.0</span></div>
     </footer>

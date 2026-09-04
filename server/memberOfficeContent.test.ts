@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { memberOfficeModuleCount, memberOfficeNavigation } from "../shared/memberOfficeContent";
 
@@ -60,5 +62,13 @@ describe("memberOfficeNavigation", () => {
     expect(serializedNavigation).not.toContain("@live.com");
     expect(serializedNavigation).not.toContain("depoimento de cliente");
     expect(serializedNavigation).not.toContain("r$ 100,00");
+  });
+
+  it("não exibe placeholders crus de curso no painel de membros", () => {
+    const source = readFileSync(path.join(process.cwd(), "client/src/pages/MemberOffice.tsx"), "utf8");
+    expect(source).not.toMatch(/\{\{COURSE\./i);
+    expect(source).not.toMatch(/\{\{course\./i);
+    expect(source).toContain("Curso em preparação");
+    expect(source).toContain("Módulos e progresso aparecerão quando houver conteúdo publicado.");
   });
 });

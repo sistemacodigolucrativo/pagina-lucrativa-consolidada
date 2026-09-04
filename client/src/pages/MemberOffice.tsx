@@ -199,11 +199,11 @@ export default function MemberOffice() {
           action={<a className="obsidian-button is-primary" href={withAppBase("/membros/academia")}><BookOpenCheck aria-hidden="true" />Abrir Academia</a>}
         >
           <div className="obsidian-learning-card">
-            <span className="obsidian-learning-thumbnail" aria-hidden="true">{nextCourse ? "Aula" : "{{course.thumbnail}}"}</span>
+            <span className="obsidian-learning-thumbnail" aria-hidden="true">{nextCourse ? "Aula" : "Academia"}</span>
             <div>
-              <ObsidianBadge variant={nextCourse ? "success" : "neutral"}>{nextCourse ? "Publicado" : "Placeholder"}</ObsidianBadge>
-              <h3>{nextCourse?.title ?? "{{course.title}}"}</h3>
-              <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level}` : "{{course.modules}} módulos · {{course.progress}}% de progresso"}</p>
+              <ObsidianBadge variant={nextCourse ? "success" : "neutral"}>{nextCourse ? "Publicado" : "Em preparação"}</ObsidianBadge>
+              <h3>{nextCourse?.title ?? "Curso em preparação"}</h3>
+              <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level}` : "Módulos e progresso aparecerão quando houver conteúdo publicado."}</p>
               <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: nextCourse ? "12%" : "45%" }} /></div>
             </div>
           </div>

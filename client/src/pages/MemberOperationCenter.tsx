@@ -213,10 +213,12 @@ export default function MemberOperationCenter() {
   return (
     <DashboardLayout menuItems={menu} title="Escritório Virtual">
       <main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8">
-        <header className="space-y-2">
-          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Central de Divulgação</span>
-          {activeTab === "detail" ? <a href={withAppBase("/membros/operacao/campanhas")} className="inline-flex items-center gap-2 text-sm text-zinc-400 hover:text-white"><ArrowLeft className="size-4" />Voltar para campanhas</a> : null}
-          <h1 className="text-3xl font-semibold text-white">{title}</h1>
+        <header className="space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Central de Divulgação</span>
+            {activeTab === "detail" ? <a href={withAppBase("/membros/operacao/campanhas")} className="inline-flex min-h-10 w-fit items-center justify-center gap-2 rounded-lg border border-white/10 bg-zinc-950/70 px-3 py-2 text-sm text-zinc-300 transition hover:border-emerald-300/35 hover:text-white"><ArrowLeft className="size-4" />Voltar para campanhas</a> : null}
+          </div>
+          <h1 className="break-words text-2xl font-semibold text-white sm:text-3xl">{title}</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">{description}</p>
         </header>
 

@@ -141,7 +141,7 @@ function DashboardLayoutContent({
     await logout();
     setLocation("/");
   };
-  const { state, setOpen, isMobile, setOpenMobile } = useSidebar();
+  const { state, setOpen, isMobile, openMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
   const isCompact = !isMobile && isCollapsed;
   const [isResizing, setIsResizing] = useState(false);
@@ -155,6 +155,24 @@ function DashboardLayoutContent({
   const visibleMenuItems = memberOfficeNavigation && user?.role === "user" && gettingStartedProgress.isComplete
     ? menuItems.filter(item => item.path !== "/membros/como-divulgar")
     : menuItems;
+  const adminNavigation = isAdminNavigation(menuItems);
+  const menuScrollStorageKey = `pagina-lucrativa.dashboard-menu-scroll.${memberOfficeNavigation ? "member" : adminNavigation ? "admin" : "custom"}`;
+
+  const storeSidebarScroll = (scrollTop: number) => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(menuScrollStorageKey, String(scrollTop));
+    } catch {
+      // sessionStorage can be unavailable in restrictive browser modes.
+    }
+  };
+
+  const rememberSidebarScroll = () => {
+    if (typeof document === "undefined") return;
+    const content = document.querySelector<HTMLElement>('[data-dashboard-sidebar-content="true"]');
+    storeSidebarScroll(content?.scrollTop ?? 0);
+  };
+
   const groupedMenuItems = visibleMenuItems.reduce<Record<string, DashboardMenuItem[]>>((groups, item) => {
     const group = item.group ?? "Navegação";
     groups[group] = [...(groups[group] ?? []), item];
@@ -177,6 +195,42 @@ function DashboardLayoutContent({
       setIsResizing(false);
     }
   }, [isCompact]);
+
+  useEffect(() => {
+    if (!isMobile || !openMobile) return;
+
+    let secondFrame = 0;
+    const restore = () => {
+      const content = document.querySelector<HTMLElement>('[data-dashboard-sidebar-content="true"]');
+      if (!content) return;
+
+      let storedValue: string | null = null;
+      try {
+        storedValue = sessionStorage.getItem(menuScrollStorageKey);
+      } catch {
+        storedValue = null;
+      }
+
+      const storedScrollTop = storedValue === null ? Number.NaN : Number(storedValue);
+      if (Number.isFinite(storedScrollTop)) {
+        content.scrollTop = storedScrollTop;
+        return;
+      }
+
+      const activeItem = content.querySelector<HTMLElement>('[data-sidebar="menu-button"][data-active="true"]');
+      activeItem?.scrollIntoView({ block: "center" });
+    };
+
+    const firstFrame = window.requestAnimationFrame(() => {
+      restore();
+      secondFrame = window.requestAnimationFrame(restore);
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [activePath, isMobile, menuScrollStorageKey, openMobile]);
 
   useEffect(() => {
     if (!notificationsOpen) return;
@@ -253,7 +307,13 @@ function DashboardLayoutContent({
             </div>
           </SidebarHeader>
 
-          <SidebarContent className="dashboard-sidebar-content gap-0 overflow-y-auto overscroll-contain pb-4">
+          <SidebarContent
+            data-dashboard-sidebar-content="true"
+            className="dashboard-sidebar-content gap-0 overflow-y-auto overscroll-contain pb-4"
+            onScroll={event => {
+              if (isMobile) storeSidebarScroll(event.currentTarget.scrollTop);
+            }}
+          >
             {Object.entries(groupedMenuItems).map(([group, items]) => (
               <SidebarGroup key={group} className="dashboard-menu-category px-4 py-2">
                 <SidebarGroupLabel className="dashboard-category-label px-3 text-xs font-bold uppercase tracking-wider text-zinc-500 group-data-[collapsible=icon]:sr-only">
@@ -267,6 +327,7 @@ function DashboardLayoutContent({
                         <SidebarMenuButton
                           isActive={isActive}
                           onClick={() => {
+                            rememberSidebarScroll();
                             setLocation(item.path);
                             if (isMobile) setOpenMobile(false);
                           }}
@@ -290,7 +351,10 @@ function DashboardLayoutContent({
             <div className="dashboard-mode-switch group-data-[collapsible=icon]:hidden">
               <button
                 type="button"
-                onClick={() => user?.role === "admin" ? setLocation("/admin") : undefined}
+                onClick={() => {
+                  rememberSidebarScroll();
+                  if (user?.role === "admin") setLocation("/admin");
+                }}
                 disabled={user?.role !== "admin"}
                 className={`dashboard-mode-button${location.startsWith("/admin") ? " is-active" : ""}`}
               >
@@ -299,7 +363,10 @@ function DashboardLayoutContent({
               </button>
               <button
                 type="button"
-                onClick={() => setLocation("/membros")}
+                onClick={() => {
+                  rememberSidebarScroll();
+                  setLocation("/membros");
+                }}
                 className={`dashboard-mode-button${!location.startsWith("/admin") ? " is-active" : ""}`}
               >
                 <User className="size-4" />

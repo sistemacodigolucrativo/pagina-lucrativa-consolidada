@@ -65,7 +65,9 @@ describe("melhorias da página pública", () => {
     expect(home).toContain('className="shell footer-shell"');
     expect(home).toContain('className="footer-panel footer-brand-block"');
     expect(home).toContain('className="footer-panel footer-navigation"');
-    expect(home).toContain('className="footer-panel footer-support-card"');
+    expect(home).not.toContain('className="footer-panel footer-support-card"');
+    expect(home).not.toContain("Falar pelo WhatsApp");
+    expect(home).not.toContain(">Atendimento<");
     expect(home).toContain('className="shell footer-bottom"');
     expect(css).toContain("grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));");
     expect(css).toContain("env(safe-area-inset-bottom, 0px)");
