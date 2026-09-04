@@ -6,11 +6,11 @@ import { PUBLIC_SALES_COPY_SECTIONS } from "../shared/publicSalesCopyEditor";
 const read = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
 
 describe("gerenciador da página pública", () => {
-  it("mantém as 22 seções na ordem pública", () => {
-    expect(PUBLIC_SALES_COPY_SECTIONS).toHaveLength(22);
-    expect(PUBLIC_SALES_COPY_SECTIONS.map(section => section.publicOrder)).toEqual(Array.from({ length: 22 }, (_, index) => index + 1));
+  it("mantém as 21 seções na ordem pública", () => {
+    expect(PUBLIC_SALES_COPY_SECTIONS).toHaveLength(21);
+    expect(PUBLIC_SALES_COPY_SECTIONS.map(section => section.publicOrder)).toEqual(Array.from({ length: 21 }, (_, index) => index + 1));
     expect(PUBLIC_SALES_COPY_SECTIONS[0]?.id).toBe("hero");
-    expect(PUBLIC_SALES_COPY_SECTIONS[21]?.id).toBe("offer");
+    expect(PUBLIC_SALES_COPY_SECTIONS[20]?.id).toBe("offer");
   });
 
   it("usa a própria página pública como editor visual responsivo", () => {

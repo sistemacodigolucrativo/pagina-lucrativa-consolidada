@@ -170,7 +170,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   {
     id: "fit",
     adminLabel: "Para quem é / Para quem não é",
-    publicOrder: 19,
+    publicOrder: 18,
     sectionSelector: "#perfil-ideal",
     fields: [
       f("fitEyebrow", "Identificação — Para quem é", "Para quem é", "text", "> .shell > div:first-child .eyebrow"),
@@ -194,7 +194,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   {
     id: "faq",
     adminLabel: "FAQ completa (página separada)",
-    publicOrder: 20,
+    publicOrder: 19,
     sectionSelector: ".public-info-faq-content",
     fields: [
       f("eyebrow", "Identificação", "Antes de começar", "text", ".eyebrow"),
@@ -220,7 +220,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   {
     id: "objections",
     adminLabel: "Dúvidas comuns",
-    publicOrder: 21,
+    publicOrder: 20,
     sectionSelector: "#duvidas-decisao",
     fields: [
       f("eyebrow", "Identificação", "DÚVIDAS COMUNS", "text", ".eyebrow"),
@@ -244,7 +244,7 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
   {
     id: "offer",
     adminLabel: "Próximo passo",
-    publicOrder: 22,
+    publicOrder: 21,
     sectionSelector: "#f",
     fields: [
       f("eyebrow", "Identificação", "Próximo passo", "text", ".offer-copy .eyebrow"),

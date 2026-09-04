@@ -24,7 +24,7 @@ describe("public sales section image manager", () => {
     expect(ids).toContain("comparison");
     expect(ids).toContain("opportunity_indication");
     expect(ids).toContain("not_just_course");
-    expect(PUBLIC_SALES_COPY_SECTIONS).toHaveLength(22);
+    expect(PUBLIC_SALES_COPY_SECTIONS).toHaveLength(21);
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "problem_start")?.defaultImage).toBe("/problem-start.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "state_desired")?.defaultImage).toBe("/state-desired.png");
     expect(PUBLIC_SALES_SECTIONS.find(section => section.id === "mechanism")?.defaultImage).toBe("/mechanism.png");
