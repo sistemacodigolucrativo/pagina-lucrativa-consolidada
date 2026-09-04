@@ -1,5 +1,5 @@
 import { calculateResponsiveEbookScale } from "@shared/ebookReader";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Bookmark, CheckCircle2, Layers, Maximize2, Minimize2, Monitor, Moon, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type ResponsiveEbookFrameProps = {
@@ -7,15 +7,103 @@ type ResponsiveEbookFrameProps = {
   htmlContent: string;
   className?: string;
   displayMode?: "embedded" | "modal";
+  readerVariant?: "default" | "tech-futuristic";
 };
 
-const scaleRootId = "codigo-lucrativo-ebook-scale-root";
+type DeviceView = "responsive" | "tablet" | "mobile";
 
-export default function ResponsiveEbookFrame({ title, htmlContent, className = "", displayMode = "embedded" }: ResponsiveEbookFrameProps) {
+const scaleRootId = "codigo-lucrativo-ebook-scale-root";
+const studioLayoutBodyClass = "codigo-lucrativo-tech-shell";
+
+const techJumpSections = [
+  { label: "Capa", target: "#capa" },
+  { label: "Introdução", target: "#introducao" },
+  { label: "Sumário", target: "#sumario" },
+  { label: "Protocolo", target: "#protocolo" },
+  { label: "Leitura", target: "#leitura" },
+  { label: "Execução", target: "#execucao" },
+  { label: "Conclusão", target: "#conclusao" },
+  { label: "CTA Final", target: "#cta-final" },
+];
+
+function getElementWidth(element: HTMLElement) {
+  const rect = element.getBoundingClientRect();
+  return Math.ceil(Math.max(element.offsetWidth, element.scrollWidth, rect.width));
+}
+
+function getElementHeight(element: HTMLElement) {
+  const rect = element.getBoundingClientRect();
+  return Math.ceil(Math.max(element.offsetHeight, element.scrollHeight, rect.height));
+}
+
+function getNumericStyle(style: CSSStyleDeclaration, property: string) {
+  const value = Number.parseFloat(style.getPropertyValue(property));
+  return Number.isFinite(value) ? value : 0;
+}
+
+export default function ResponsiveEbookFrame({
+  title,
+  htmlContent,
+  className = "",
+  displayMode = "embedded",
+  readerVariant = "default",
+}: ResponsiveEbookFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [deviceView, setDeviceView] = useState<DeviceView>("responsive");
+  const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
   const isModal = displayMode === "modal";
+  const isTechFuturistic = readerVariant === "tech-futuristic";
+
+  const fitStudioOriginalContent = useCallback((document: Document) => {
+    const viewports = Array.from(document.querySelectorAll<HTMLElement>(".cl-original-viewport"));
+    viewports.forEach(viewport => {
+      const original = viewport.querySelector<HTMLElement>(".cl-original-content");
+      if (!original) return;
+
+      original.style.removeProperty("transform");
+      original.style.removeProperty("width");
+      original.style.removeProperty("max-width");
+      original.style.removeProperty("margin");
+      viewport.style.removeProperty("height");
+      viewport.style.removeProperty("min-height");
+      viewport.style.removeProperty("overflow-x");
+      viewport.style.removeProperty("overflow-y");
+
+      const pages = Array.from(original.querySelectorAll<HTMLElement>("[id^='page'][id$='-div'], .page"));
+      const pageWidth = Math.max(0, ...pages.map(getElementWidth));
+      const naturalWidth = Math.max(1, pageWidth, getElementWidth(original));
+      const pageHeight = Math.max(0, ...pages.map(page => page.offsetTop + getElementHeight(page)));
+      const naturalHeight = Math.max(1, pageHeight, getElementHeight(original));
+      const viewportStyle = document.defaultView?.getComputedStyle(viewport);
+      const horizontalPadding = viewportStyle
+        ? getNumericStyle(viewportStyle, "padding-left") + getNumericStyle(viewportStyle, "padding-right")
+        : 0;
+      const verticalPadding = viewportStyle
+        ? getNumericStyle(viewportStyle, "padding-top") + getNumericStyle(viewportStyle, "padding-bottom")
+        : 0;
+      const availableWidth = Math.max(1, Math.floor(viewport.clientWidth - horizontalPadding));
+      const scale = calculateResponsiveEbookScale(availableWidth, naturalWidth);
+      const scaledHeight = Math.ceil(naturalHeight * scale + verticalPadding);
+
+      viewport.style.setProperty("height", `${scaledHeight}px`, "important");
+      viewport.style.setProperty("min-height", `${Math.min(scaledHeight, 360)}px`, "important");
+      viewport.style.setProperty("overflow-x", "hidden", "important");
+      viewport.style.setProperty("overflow-y", "hidden", "important");
+      original.style.setProperty("width", `${naturalWidth}px`, "important");
+      original.style.setProperty("max-width", `${naturalWidth}px`, "important");
+      original.style.setProperty("transform-origin", "top left", "important");
+
+      if (scale < 1) {
+        original.style.setProperty("margin", "0", "important");
+        original.style.setProperty("transform", `scale(${scale})`, "important");
+        return;
+      }
+
+      original.style.setProperty("margin", "0 auto", "important");
+    });
+  }, []);
 
   const fitDocument = useCallback(() => {
     const frame = frameRef.current;
@@ -24,6 +112,7 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
 
     const body = document.body;
     const html = document.documentElement;
+    const hasStudioLayout = body.classList.contains(studioLayoutBodyClass);
 
     let scaleRoot = document.getElementById(scaleRootId) as HTMLDivElement | null;
     if (!scaleRoot) {
@@ -67,7 +156,7 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
         width: 100% !important;
         max-width: 100% !important;
         overflow-x: hidden !important;
-        background: #ffffff !important;
+        ${hasStudioLayout ? "" : "background: #ffffff !important;"}
       }
 
       *, *::before, *::after {
@@ -81,24 +170,15 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
         transform-origin: top left !important;
       }
 
+      body.${studioLayoutBodyClass} #${scaleRootId} {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
       img, svg, canvas, video, object, embed {
         max-width: 100% !important;
       }
     `;
-
-    const pages = Array.from(scaleRoot.querySelectorAll<HTMLElement>("[id^='page'][id$='-div'], .page"));
-    const pageWidth = Math.max(
-      0,
-      ...pages.map(page => Math.ceil(Math.max(page.offsetWidth, page.scrollWidth, page.getBoundingClientRect().width)))
-    );
-    const rootRect = scaleRoot.getBoundingClientRect();
-    const contentWidth = Math.ceil(
-      Math.max(pageWidth, scaleRoot.scrollWidth, scaleRoot.offsetWidth, rootRect.width, body.scrollWidth, html.scrollWidth)
-    );
-    const availableWidth = Math.max(1, Math.floor((frame.clientWidth || frame.getBoundingClientRect().width) - 2));
-    const scale = calculateResponsiveEbookScale(availableWidth, contentWidth);
-    const contentHeight = Math.ceil(Math.max(scaleRoot.scrollHeight, scaleRoot.offsetHeight, rootRect.height, body.scrollHeight, html.scrollHeight));
-    const scaledHeight = Math.ceil(contentHeight * scale);
 
     html.style.setProperty("overflow-x", "hidden", "important");
     body.style.setProperty("margin", "0", "important");
@@ -107,6 +187,28 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
     body.style.setProperty("max-width", "100%", "important");
     body.style.setProperty("overflow-x", "hidden", "important");
     scaleRoot.style.setProperty("transform-origin", "top left", "important");
+
+    if (hasStudioLayout) {
+      body.style.setProperty("min-height", "100%", "important");
+      html.style.setProperty("min-height", "100%", "important");
+      scaleRoot.style.setProperty("position", "static", "important");
+      scaleRoot.style.setProperty("width", "100%", "important");
+      scaleRoot.style.setProperty("max-width", "100%", "important");
+      scaleRoot.style.setProperty("transform", "none", "important");
+      fitStudioOriginalContent(document);
+      return;
+    }
+
+    const pages = Array.from(scaleRoot.querySelectorAll<HTMLElement>("[id^='page'][id$='-div'], .page"));
+    const pageWidth = Math.max(0, ...pages.map(getElementWidth));
+    const rootRect = scaleRoot.getBoundingClientRect();
+    const contentWidth = Math.ceil(
+      Math.max(pageWidth, scaleRoot.scrollWidth, scaleRoot.offsetWidth, rootRect.width, body.scrollWidth, html.scrollWidth)
+    );
+    const availableWidth = Math.max(1, Math.floor((frame.clientWidth || frame.getBoundingClientRect().width) - 2));
+    const scale = calculateResponsiveEbookScale(availableWidth, contentWidth);
+    const contentHeight = Math.ceil(Math.max(scaleRoot.scrollHeight, scaleRoot.offsetHeight, rootRect.height, body.scrollHeight, html.scrollHeight));
+    const scaledHeight = Math.ceil(contentHeight * scale);
 
     if (scale < 1) {
       body.style.setProperty("position", "relative", "important");
@@ -125,7 +227,7 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
     html.style.setProperty("min-height", "100%", "important");
     scaleRoot.style.setProperty("width", "100%", "important");
     scaleRoot.style.setProperty("max-width", "100%", "important");
-  }, []);
+  }, [fitStudioOriginalContent]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -170,12 +272,16 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
     const container = containerRef.current;
     if (!container) return;
 
-    if (document.fullscreenElement === container) {
-      await document.exitFullscreen();
-      return;
-    }
+    try {
+      if (document.fullscreenElement === container) {
+        await document.exitFullscreen();
+        return;
+      }
 
-    await container.requestFullscreen();
+      await container.requestFullscreen();
+    } catch {
+      setIsFullscreen(current => !current);
+    }
   };
 
   const handleLoad = () => {
@@ -199,12 +305,220 @@ export default function ResponsiveEbookFrame({ title, htmlContent, className = "
     });
   };
 
+  const jumpToSection = (target: string) => {
+    frameRef.current?.contentDocument?.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    window.setTimeout(fitDocument, 220);
+  };
+
+  const deviceFrameClass =
+    deviceView === "tablet"
+      ? "flex w-[768px] max-w-full flex-col overflow-hidden rounded-2xl border-8 border-neutral-800 shadow-2xl"
+      : deviceView === "mobile"
+        ? "flex w-[412px] max-w-full flex-col overflow-hidden rounded-3xl border-8 border-neutral-800 shadow-2xl"
+        : "flex w-full max-w-5xl flex-col overflow-hidden shadow-2xl";
+  const techContainerStateClass = isFullscreen
+    ? "flex h-dvh w-[100dvw] flex-col rounded-none border-0"
+    : isModal
+      ? "flex h-full min-h-0 max-h-full flex-col"
+      : "flex min-h-[76dvh] flex-col";
+  const techFrameHeightClass = isFullscreen
+    ? "h-full min-h-0"
+    : isModal
+      ? "h-full min-h-[520px]"
+      : "h-[72vh] min-h-[560px]";
+
+  if (isTechFuturistic) {
+    return (
+      <div
+        ref={containerRef}
+        data-ebook-reader="responsive"
+        data-reader-mode={isFullscreen ? "fullscreen" : "embedded"}
+        data-reader-display={displayMode}
+        data-reader-variant="tech-futuristic"
+        className={`relative min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-cyan-300/20 bg-neutral-950 text-neutral-100 ${techContainerStateClass} ${className}`}
+      >
+        <header className="shrink-0 border-b border-neutral-800 bg-neutral-950/95 shadow-xl backdrop-blur-md">
+          <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
+            <div className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 flex-col items-start border-x border-neutral-800 px-2 py-0.5">
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="text-[11px] font-bold text-amber-400">1 / 1</span>
+                  <span className="inline-flex items-center gap-1 rounded border border-indigo-700/50 bg-indigo-950 px-1.5 py-0.5 text-[10px] font-semibold text-indigo-300">
+                    <Moon className="size-2.5" aria-hidden="true" /> DARK
+                  </span>
+                  <span className="hidden rounded bg-neutral-800 px-1.5 py-0.5 text-[10px] text-neutral-300 sm:inline">
+                    Cyber / HUD
+                  </span>
+                </div>
+                <span className="max-w-[15rem] truncate text-sm font-bold tracking-tight text-white">TECH FUTURISTIC</span>
+              </div>
+              <span className="hidden border border-emerald-500/30 px-2 py-1 text-[10px] tracking-[0.18em] text-emerald-400 md:inline">
+                TEMPLATE INTEGRAL
+              </span>
+            </div>
+
+            <div className="hidden items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1 text-[11px] xl:flex">
+              <span className="flex items-center gap-1 px-1.5 font-semibold text-neutral-500">
+                <Bookmark className="size-3 text-neutral-400" aria-hidden="true" /> Ir para:
+              </span>
+              {techJumpSections.map(section => (
+                <button
+                  key={section.target}
+                  type="button"
+                  onClick={() => jumpToSection(section.target)}
+                  className="rounded px-2 py-1 text-neutral-300 transition hover:bg-neutral-800 hover:text-white"
+                >
+                  {section.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <div className="flex items-center rounded-lg border border-neutral-800 bg-neutral-900 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => setDeviceView("responsive")}
+                  className={`rounded p-1.5 text-xs transition-colors ${deviceView === "responsive" ? "bg-neutral-700 text-white" : "text-neutral-400 hover:text-white"}`}
+                  title="Largura completa / responsivo"
+                  aria-pressed={deviceView === "responsive"}
+                >
+                  <Monitor className="size-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeviceView("tablet")}
+                  className={`rounded p-1.5 text-xs transition-colors ${deviceView === "tablet" ? "bg-neutral-700 text-white" : "text-neutral-400 hover:text-white"}`}
+                  title="Simular tablet"
+                  aria-pressed={deviceView === "tablet"}
+                >
+                  <Tablet className="size-4" aria-hidden="true" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDeviceView("mobile")}
+                  className={`rounded p-1.5 text-xs transition-colors ${deviceView === "mobile" ? "bg-neutral-700 text-white" : "text-neutral-400 hover:text-white"}`}
+                  title="Simular smartphone"
+                  aria-pressed={deviceView === "mobile"}
+                >
+                  <Smartphone className="size-4" aria-hidden="true" />
+                </button>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void toggleFullscreen()}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-2 text-xs font-semibold transition-colors ${
+                  isFullscreen
+                    ? "border-amber-400 bg-amber-400 text-neutral-950"
+                    : "border-neutral-800 bg-neutral-900 text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                }`}
+                title={isFullscreen ? "Sair da tela cheia" : "Tela cheia"}
+                aria-pressed={isFullscreen}
+              >
+                {isFullscreen ? <Minimize2 className="size-4" aria-hidden="true" /> : <Maximize2 className="size-4" aria-hidden="true" />}
+                <span className="hidden text-[11px] md:inline">{isFullscreen ? "SAIR" : "FULL SCREEN"}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsTemplateMenuOpen(open => !open)}
+                className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-bold transition-colors ${
+                  isTemplateMenuOpen
+                    ? "border-amber-400 bg-amber-400 text-neutral-950"
+                    : "border-neutral-700 bg-neutral-800 text-white hover:bg-neutral-700"
+                }`}
+                aria-expanded={isTemplateMenuOpen}
+                title="Ver template ativo"
+              >
+                <Layers className="size-4" aria-hidden="true" />
+                <span className="hidden sm:inline">TEMPLATE ATIVO</span>
+              </button>
+            </div>
+          </div>
+
+          {isTemplateMenuOpen ? (
+            <div className="border-t border-neutral-800 bg-neutral-950 p-4 shadow-2xl sm:p-6">
+              <div className="mx-auto flex max-w-7xl flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                <div>
+                  <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider text-white">
+                    <CheckCircle2 className="size-4 text-emerald-400" aria-hidden="true" />
+                    Template ativo
+                  </h3>
+                  <p className="mt-1 max-w-2xl text-xs leading-5 text-neutral-400">
+                    O leitor está renderizando o design TECH FUTURISTIC integral: HUD, capa, sumário, capítulos, leitura principal, execução, conclusão e CTA final.
+                  </p>
+                </div>
+                <div className="max-w-sm rounded-xl border border-amber-400 bg-neutral-900 p-3.5 shadow-lg ring-2 ring-amber-400/40">
+                  <div className="mb-2 flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-amber-400">#01 (Ex-05)</span>
+                    <span className="inline-flex items-center gap-1 rounded border border-indigo-700/50 bg-indigo-950 px-1.5 py-0.5 text-[10px] font-bold text-indigo-300">
+                      <Moon className="size-2.5" aria-hidden="true" /> DARK
+                    </span>
+                  </div>
+                  <h4 className="mb-1 text-xs font-bold text-white">TECH FUTURISTIC</h4>
+                  <p className="mb-2 text-[11px] leading-relaxed text-neutral-400">
+                    Aparência de interface HUD, tipografia técnica, preto fosco, ciano e verde neon.
+                  </p>
+                  <div className="flex items-center justify-between border-t border-neutral-800/80 pt-2 text-[10px] text-neutral-400">
+                    <span className="truncate">Preto Fosco & Verde Neon</span>
+                    <span className="font-semibold text-amber-400">ATIVO</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+        </header>
+
+        <main className="flex min-h-0 flex-1 justify-center overflow-auto bg-neutral-900 px-2 py-3 sm:px-4 sm:py-5">
+          <div className={`${deviceFrameClass} ${techFrameHeightClass} transition-all duration-300`}>
+            {deviceView !== "responsive" ? (
+              <div className="border-b border-neutral-700 bg-neutral-800 py-1.5 text-center text-[11px] text-neutral-400">
+                {deviceView === "tablet" ? "SIMULAÇÃO TABLET - 768px" : "SIMULAÇÃO SMARTPHONE - 412px"}
+              </div>
+            ) : null}
+            <iframe
+              ref={frameRef}
+              title={title}
+              sandbox="allow-same-origin"
+              srcDoc={htmlContent}
+              onLoad={handleLoad}
+              className="block min-h-0 w-full max-w-full min-w-0 flex-1 border-0 bg-[#050811]"
+            />
+          </div>
+        </main>
+
+        <button
+          type="button"
+          onClick={() => void toggleFullscreen()}
+          className="absolute bottom-16 right-4 z-40 inline-flex items-center justify-center gap-1.5 rounded-full border border-neutral-700 bg-neutral-900/90 p-3 text-xs text-white shadow-2xl backdrop-blur-md transition hover:scale-105 hover:bg-neutral-800"
+          title={isFullscreen ? "Sair da tela cheia" : "Entrar em tela cheia"}
+          aria-pressed={isFullscreen}
+        >
+          {isFullscreen ? <Minimize2 className="size-4 text-amber-400" aria-hidden="true" /> : <Maximize2 className="size-4 text-amber-400" aria-hidden="true" />}
+          <span className="hidden text-[10px] sm:inline">{isFullscreen ? "ESC" : "FULL SCREEN"}</span>
+        </button>
+
+        <footer className="flex shrink-0 flex-col items-center justify-between gap-2 border-t border-neutral-800 bg-neutral-950 px-4 py-3 text-center text-xs text-neutral-400 sm:flex-row sm:px-6">
+          <div className="flex items-center gap-2 text-[11px]">
+            <span className="font-bold text-amber-400">TEMPLATE ATIVO:</span>
+            <span>TECH FUTURISTIC (Cyber / HUD)</span>
+          </div>
+          <span className="text-[11px] text-neutral-400">
+            Paleta: <strong className="text-neutral-200">Preto Fosco & Verde Neon</strong> | Tipografia:{" "}
+            <strong className="text-neutral-200">Space Grotesk + Mono</strong>
+          </span>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div
       ref={containerRef}
       data-ebook-reader="responsive"
       data-reader-mode={isFullscreen ? "fullscreen" : "embedded"}
       data-reader-display={displayMode}
+      data-reader-variant="default"
       className={`min-w-0 w-full max-w-full overflow-hidden rounded-xl border border-white/10 bg-white ${isFullscreen ? "flex h-dvh w-[100dvw] flex-col rounded-none border-0" : isModal ? "flex h-full min-h-0 max-h-full flex-col" : ""} ${className}`}
     >
       <div className="flex min-h-12 min-w-0 items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-3 py-2">
