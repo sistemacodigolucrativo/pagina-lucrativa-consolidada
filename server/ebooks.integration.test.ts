@@ -77,4 +77,25 @@ describe("módulo de e-books", () => {
     expect(admin).toContain("sandbox=\"\"");
     expect(admin).toContain("srcDoc={form.htmlContent}");
   });
+
+  it("ativa o leitor Tech Futuristic integral para e-books de copy e vendas", async () => {
+    const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
+    const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
+    const studioLayout = await readFile(path.join(root, "server/ebookStudioLayout.ts"), "utf8");
+
+    expect(reader).toContain('readerVariant?: "default" | "tech-futuristic"');
+    expect(reader).toContain('data-reader-variant="tech-futuristic"');
+    expect(reader).toContain("techJumpSections");
+    expect(reader).toContain("fitStudioOriginalContent");
+    expect(reader).toContain("TEMPLATE INTEGRAL");
+    expect(reader).toContain("SIMULAÇÃO SMARTPHONE - 412px");
+    expect(memberReader).toContain('selectedCatalog?.shelf.id === "copy"');
+    expect(memberReader).toContain('selectedCatalog?.shelf.id === "vendas"');
+    expect(memberReader).toContain('readerVariant={usesTechFuturisticReader ? "tech-futuristic" : "default"}');
+    expect(studioLayout).toContain("CHAPTER_01 // PART_I");
+    expect(studioLayout).toContain("CHAPTER_02 // PART_II");
+    expect(studioLayout).toContain("CHAPTER_03 // PART_III");
+    expect(studioLayout).toContain("COPYWRITING_E_VENDAS");
+    expect(studioLayout).toContain("VENDAS_E_OFERTA");
+  });
 });
