@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
+import { getStudioEbookTitle, isGoodStudioEbook, rewriteEbookInStudioLayout } from "./ebookStudioLayout";
 
 type PackagedEbook = {
   id: number;
@@ -53,15 +54,25 @@ async function loadPackagedEbooks() {
     });
   const publishedAt = new Date(0);
   return Promise.all(rows.map(async (row, index) => {
-    const htmlContent = await readFile(path.join(root, "html-output", row.htmlFile), "utf8");
-    const title = displayTitle(row.title, row.sourceFile);
+    const originalHtmlContent = await readFile(path.join(root, "html-output", row.htmlFile), "utf8");
+    const title = getStudioEbookTitle(row.sourceId, displayTitle(row.title, row.sourceFile));
+    const hasStudioLayout = isGoodStudioEbook(row.sourceId);
+    const htmlContent = rewriteEbookInStudioLayout({
+      sourceId: row.sourceId,
+      sourceFile: row.sourceFile,
+      sourcePath: row.sourcePath,
+      title,
+      htmlContent: originalHtmlContent,
+    });
     return {
       id: index + 1,
       sourceId: row.sourceId,
       sourceFile: row.sourceFile,
       sourcePath: row.sourcePath,
       title,
-      summary: `Material de estudo publicado e empacotado no projeto: ${title}.`,
+      summary: hasStudioLayout
+        ? `Material de estudo reformulado no layout Tech Futuristic do Código Lucrativo: ${title}.`
+        : `Material de estudo publicado e empacotado no projeto: ${title}.`,
       htmlContent,
       status: "published" as const,
       createdBy: null,
