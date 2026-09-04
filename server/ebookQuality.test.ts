@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { auditPackagedEbook, normalizeImportedEbookTitle, sanitizeEbookHtml } from "./ebookQuality";
 
-const longHtml = `<html><body>${"conteúdo útil para leitura ".repeat(40)}</body></html>`;
+const publishableText = "conteúdo útil para leitura, revisão e estudo aplicado ".repeat(180);
+const publishableHtml = (body: string) => `<html><body>${body}${publishableText}</body></html>`;
 
 describe("auditoria de qualidade dos e-books", () => {
   it("normaliza títulos importados com caracteres quebrados", () => {
@@ -25,7 +26,7 @@ describe("auditoria de qualidade dos e-books", () => {
       sourceFile: "Script_Ptc.zip",
       sourcePath: "Site PTC/sitenoar.html",
       htmlFile: "05c521555a7e5e3c.html",
-      htmlContent: longHtml,
+      htmlContent: publishableHtml("manual auxiliar do pacote "),
     });
 
     expect(quality.isPublishable).toBe(false);
@@ -47,12 +48,11 @@ describe("auditoria de qualidade dos e-books", () => {
   });
 
   it("neutraliza links quebrados ou inseguros e preserva links externos válidos", () => {
-    const html = `<html><body>
+    const html = publishableHtml(`
       <a href="file:///tmp/planilha.xls">arquivo local</a>
       <a href="./missing.html">relativo quebrado</a>
       <a href="https://example.com">externo</a>
-      ${"texto de estudo ".repeat(80)}
-    </body></html>`;
+    `);
 
     const quality = auditPackagedEbook({
       sourceId: "def456",
@@ -78,7 +78,7 @@ describe("auditoria de qualidade dos e-books", () => {
       sourceFile: "Google_+_Exposto.pdf",
       sourcePath: "source.pdf",
       htmlFile: "google-plus.html",
-      htmlContent: `<html><body>Copyright 2017. ${"conteúdo sobre campanhas e comunidade ".repeat(80)}</body></html>`,
+      htmlContent: publishableHtml("Copyright 2017. conteúdo sobre campanhas e comunidade "),
     });
 
     expect(quality.isPublishable).toBe(true);
