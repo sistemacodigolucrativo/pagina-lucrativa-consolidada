@@ -90,8 +90,8 @@ export default function EbookReader() {
                       <div className="flex min-w-0 gap-3">
                         <BookOpenText className="mt-0.5 size-5 shrink-0 text-emerald-300" />
                         <div className="min-w-0">
-                          <h3 className="break-words text-sm font-medium leading-snug text-white">{ebook.title}</h3>
-                          <p className="mt-1 line-clamp-3 break-words text-xs leading-5 text-zinc-400">{ebook.summary || "Material de estudo publicado."}</p>
+                          <h3 className="break-words text-sm font-medium leading-snug text-white [overflow-wrap:anywhere]">{ebook.title}</h3>
+                          <p className="mt-1 line-clamp-3 break-words text-xs leading-5 text-zinc-400 [overflow-wrap:anywhere]">{ebook.summary || "Material de estudo publicado."}</p>
                           <span className="mt-3 inline-flex text-xs font-semibold text-emerald-200">Abrir leitura</span>
                         </div>
                       </div>
@@ -105,14 +105,14 @@ export default function EbookReader() {
               <DialogContent
                 showCloseButton={false}
                 onEscapeKeyDown={handleDialogEscape}
-                className="fixed inset-0 left-0 top-0 grid h-[100dvh] max-h-[100dvh] w-[100dvw] max-w-[100dvw] translate-x-0 translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden rounded-none border-white/10 bg-zinc-950 p-0 text-white shadow-2xl sm:inset-auto sm:left-1/2 sm:top-1/2 sm:h-[min(92dvh,920px)] sm:max-h-[92dvh] sm:w-[min(1120px,calc(100dvw-2rem))] sm:max-w-[min(1120px,calc(100dvw-2rem))] sm:translate-x-[-50%] sm:translate-y-[-50%] sm:rounded-2xl"
+                className="!fixed !inset-0 !left-0 !top-0 grid !h-auto !max-h-none !w-auto !max-w-none !translate-x-0 !translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden overscroll-contain rounded-none border-white/10 bg-zinc-950 p-0 text-white shadow-2xl sm:!inset-auto sm:!left-1/2 sm:!top-1/2 sm:!h-[min(92dvh,920px)] sm:!max-h-[92dvh] sm:!w-[min(1120px,calc(100vw-2rem))] sm:!max-w-[min(1120px,calc(100vw-2rem))] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:rounded-2xl"
               >
                 <DialogHeader className="min-w-0 border-b border-white/10 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)] text-left sm:px-5 sm:pt-5">
                   <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4">
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <span className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">Leitura selecionada</span>
-                      <DialogTitle className="mt-1 break-words text-base font-semibold leading-snug text-white sm:text-xl">{readerTitle}</DialogTitle>
-                      <DialogDescription className="mt-1 line-clamp-2 break-words text-xs leading-5 text-zinc-400 sm:text-sm">
+                      <DialogTitle className="mt-1 line-clamp-2 max-w-full break-words text-base font-semibold leading-snug text-white [overflow-wrap:anywhere] sm:text-xl">{readerTitle}</DialogTitle>
+                      <DialogDescription className="mt-1 line-clamp-2 max-w-full break-words text-xs leading-5 text-zinc-400 [overflow-wrap:anywhere] sm:text-sm">
                         {readerSummary}
                       </DialogDescription>
                     </div>
@@ -143,7 +143,7 @@ export default function EbookReader() {
                       title={`Leitor de ${selected.data.title}`}
                       htmlContent={selected.data.htmlContent}
                       displayMode="modal"
-                      className="h-full w-full"
+                      className="h-full w-full min-w-0"
                     />
                   ) : (
                     <div className="flex h-full min-h-[55dvh] min-w-0 items-center justify-center rounded-xl border border-white/10 bg-black/25 p-6 text-center text-sm text-zinc-400">
