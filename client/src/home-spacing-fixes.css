@@ -1,5 +1,5 @@
 /* Ajuste cirúrgico do topo da Home pública.
- * Mantém apenas o espaço necessário para o toast entre o apresentador e o primeiro texto.
+ * Mantém o toast independente do fluxo do Hero.
  */
 .reference-page .sales-hero {
   padding-top: 14px;
@@ -9,20 +9,15 @@
   padding-top: 0;
 }
 
-.reference-page .public-social-proof-toast-slot {
+.reference-page .public-social-proof-toast-slot,
+.reference-page .public-social-proof-toast-slot:not(:empty) {
   min-height: 0;
-  margin: 0 0 10px;
+  margin: 0;
 }
 
 .reference-page .public-social-proof-toast-slot:empty {
   display: none;
   margin: 0;
-}
-
-.reference-page .public-social-proof-toast-slot:not(:empty) {
-  display: flex;
-  min-height: 0;
-  margin-bottom: 10px;
 }
 
 .reference-page .sales-kicker {
@@ -34,19 +29,11 @@
   .reference-page .sales-hero {
     padding-top: 12px;
   }
-
-  .reference-page .public-social-proof-toast-slot:not(:empty) {
-    margin-bottom: 8px;
-  }
 }
 
 @media (max-width: 560px) {
   .reference-page .sales-hero {
     padding-top: 10px;
-  }
-
-  .reference-page .public-social-proof-toast-slot:not(:empty) {
-    margin-bottom: 7px;
   }
 
   .reference-page .sales-kicker {
