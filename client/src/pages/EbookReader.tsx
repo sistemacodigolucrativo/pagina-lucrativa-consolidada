@@ -224,11 +224,19 @@ export default function EbookReader() {
       .slice(0, 4),
     [catalogedEbooks, recentIds]
   );
+  const selectedCatalog = useMemo(
+    () => catalogedEbooks.find(item => item.ebook.id === selectedId) ?? null,
+    [catalogedEbooks, selectedId]
+  );
 
   const selected = trpc.member.ebook.useQuery({ id: selectedId ?? 0 }, { enabled: selectedId !== null });
   const selectedSummary = ebooks.data?.find(ebook => ebook.id === selectedId);
   const readerTitle = selected.data?.title ?? selectedSummary?.title ?? "Abrindo e-book";
   const readerSummary = selected.data?.summary ?? selectedSummary?.summary ?? "Aguarde enquanto o material é carregado.";
+  const usesTechFuturisticReader =
+    selected.data?.htmlContent.includes("codigo-lucrativo-tech-shell") ||
+    selectedCatalog?.shelf.id === "copy" ||
+    selectedCatalog?.shelf.id === "vendas";
 
   const rememberEbook = (ebookId: number) => {
     setRecentIds(previous => {
@@ -421,6 +429,7 @@ export default function EbookReader() {
                       title={`Leitor de ${selected.data.title}`}
                       htmlContent={selected.data.htmlContent}
                       displayMode="modal"
+                      readerVariant={usesTechFuturisticReader ? "tech-futuristic" : "default"}
                       className="h-full w-full min-w-0"
                     />
                   ) : (
