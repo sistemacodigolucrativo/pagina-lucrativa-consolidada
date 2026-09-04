@@ -168,17 +168,6 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     } satisfies PublicSalesCopySection;
   }),
   {
-    id: "videos",
-    adminLabel: "Contexto e apresentação",
-    publicOrder: 18,
-    sectionSelector: "#videos",
-    fields: [
-      f("eyebrow", "Identificação", "Contexto e apresentação", "text", ".eyebrow"),
-      f("title", "Título", "Veja a ideia por trás do método.", "textarea", "h2"),
-      f("description", "Texto", "Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, as evoluções do método e a entrega atual do Escritório Virtual com os recursos organizados para operação.", "textarea", ".sales-section-heading > p"),
-    ],
-  },
-  {
     id: "fit",
     adminLabel: "Para quem é / Para quem não é",
     publicOrder: 19,

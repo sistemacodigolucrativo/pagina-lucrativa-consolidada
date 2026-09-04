@@ -362,10 +362,6 @@ export default function Home() {
         </section>;
       })}
 
-      <section className="sales-section reference-videos" id="videos">
-         <div className="shell"><div className="sales-section-heading"><div><Eyebrow>{publicCopy(overrides, "videos", "eyebrow", "Contexto e apresentação")}</Eyebrow><h2>{overrides.videos?.title ?? <>Veja a ideia por trás do <span>método.</span></>}</h2></div><p>{publicCopy(overrides, "videos", "description", "Os vídeos abaixo são materiais históricos de apresentação. Eles ajudam a entender a origem da proposta, mas estão em revisão para refletir o Escritório Virtual e os recursos atuais com a mesma clareza desta nova página.")}</p></div><div className="reference-video-grid"><iframe title="Apresentação histórica do Método Código Lucrativo" src="https://www.youtube-nocookie.com/embed/xbi-ZYQYJAE" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /><iframe title="Depoimentos históricos do Método Código Lucrativo" src="https://www.youtube-nocookie.com/embed/p2gEqGmKHkw" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></div>
-      </section>
-
       <section className="sales-section sprint-fit" id="perfil-ideal">
         <div className="shell sprint-fit-grid">
            <div><Eyebrow>{publicCopy(overrides, "fit", "fitEyebrow", "Para quem é")}</Eyebrow><h2>{publicCopy(overrides, "fit", "fitTitle", "Para quem quer operar com execução.")}</h2><ul>{fitItems.map((item, index) => <li key={item}>{publicCopy(overrides, "fit", `fit${index + 1}`, item)}</li>)}</ul></div>

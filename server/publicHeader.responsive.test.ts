@@ -289,7 +289,7 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("keeps every landing target and mobile overflow protection", () => {
-    for (const id of ["inicio", "depoimentos", "o-que-recebe", "videos", "perfil-ideal", "duvidas-decisao", "f"]) {
+    for (const id of ["inicio", "depoimentos", "o-que-recebe", "perfil-ideal", "duvidas-decisao", "f"]) {
       expect(homeSource).toContain(`id="${id}"`);
     }
     expect(homeSource).not.toContain('id="faq"');
