@@ -1,6 +1,6 @@
 /* Topo público compacto em mobile/tablet.
- * Mantém apenas a navegação compacta. O toast público permanece no fluxo da Home,
- * abaixo do banner do apresentador.
+ * Mantém apenas a navegação compacta. O toast público permanece flutuante,
+ * independente do Hero.
  */
 
 @media (max-width: 900px) {

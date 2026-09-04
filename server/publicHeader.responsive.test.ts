@@ -113,7 +113,7 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain(".social-proof-rating-summary");
   });
 
-  it("mounts the social proof toast inside the Home flow and avoids fragile portals", () => {
+  it("mounts the social proof toast as a floating public element and avoids fragile portals", () => {
     expect((homeSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(1);
     expect((appSource.match(/<PublicSocialProofToast \/>/g) ?? []).length).toBe(0);
     expect((appSource.match(/<PublicConversionCta \/>/g) ?? []).length).toBe(1);
@@ -128,14 +128,14 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).not.toContain('toastSlot');
     expect(socialProofSource).toContain('public-social-proof-toast-inline');
     expect(homeSource).toContain('id="public-social-proof-toast-slot"');
-    expect(homeSource.indexOf('id="public-social-proof-toast-slot"')).toBeLessThan(homeSource.indexOf('className="sales-kicker"'));
-    expect(cssSource).toContain('.public-social-proof-toast-slot { display: flex; align-items: center;');
-    expect(cssSource).toContain('min-height: 62px; margin: 0 0 28px;');
+    expect(cssSource).toContain('.public-social-proof-toast-slot { position: fixed;');
+    expect(cssSource).toContain('top: calc(env(safe-area-inset-top, 0px) + 92px);');
     expect(cssSource).toContain('pointer-events: none;');
+    expect(cssSource).toContain('.public-social-proof-toast { position: static;');
   });
 
-  it("keeps the public social proof toast in the Home flow on mobile", () => {
-    expect(publicMobileCssSource).toContain("O toast público permanece no fluxo da Home");
+  it("keeps the public social proof toast floating on mobile", () => {
+    expect(publicMobileCssSource).toContain("O toast público permanece flutuante");
     expect(publicMobileCssSource).not.toContain("html:not(.public-mobile-scrolled) .reference-page .public-social-proof-toast-slot");
     expect(publicMobileCssSource).not.toContain("html.public-mobile-scrolled .reference-page .public-social-proof-toast-slot");
     expect(publicMobileCssSource).not.toContain("public-mobile-toast-in");
@@ -157,10 +157,10 @@ describe("public responsive header and hero layout", () => {
     expect(conversionCtaSource).toContain("IntersectionObserver");
     expect(conversionCtaSource).toContain('href={withAppBase("/#f")}');
     expect(cssSource).toContain(".public-conversion-cta { position: fixed;");
-    expect(cssSource).toContain("right: calc(env(safe-area-inset-right, 0px) + 112px);");
+    expect(cssSource).toContain("right: calc(env(safe-area-inset-right, 0px) + 124px);");
     expect(cssSource).toContain("bottom: calc(env(safe-area-inset-bottom, 0px) + 24px);");
     expect(cssSource).toContain(".public-conversion-cta-label");
-    expect(cssSource).toContain("  .public-conversion-cta { left: calc(env(safe-area-inset-left, 0px) + 14px); right: calc(env(safe-area-inset-right, 0px) + 84px);");
+    expect(cssSource).toContain("  .public-conversion-cta { left: calc(env(safe-area-inset-left, 0px) + 14px); right: calc(env(safe-area-inset-right, 0px) + 104px);");
   });
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {
