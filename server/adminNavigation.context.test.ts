@@ -72,4 +72,14 @@ describe("navegação administrativa contextual", () => {
     expect(adminOffice).not.toContain("capturedContacts");
     expect(adminOffice).not.toContain("/admin/divulgacao");
   });
+  it("registra a especificação de produto digital personalizado em Futuras Implementações", () => {
+    const futureImplementations = read("client/src/pages/AdminFutureImplementations.tsx");
+    expect(futureImplementations).toContain("Produto digital personalizado a partir do conhecimento do membro");
+    expect(futureImplementations).toContain("TRANSFORMAÇÃO DO CONHECIMENTO DO MEMBRO EM PRODUTO DIGITAL");
+    expect(futureImplementations).toContain("CONHECIMENTO → PRODUTO DIGITAL");
+    expect(futureImplementations).toContain("diagnóstico guiado");
+    expect(futureImplementations).toContain("auditar a branch real do projeto");
+    expect(futureImplementations).toContain("Não recriar autenticação");
+  });
+
 });
