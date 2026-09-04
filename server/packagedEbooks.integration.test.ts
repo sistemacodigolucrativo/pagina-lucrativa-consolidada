@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { GOOD_STUDIO_EBOOK_SOURCE_IDS } from "./ebookStudioLayout";
+import { GOOD_STUDIO_EBOOK_SOURCE_IDS, STUDIO_READER_MARKER } from "./ebookStudioLayout";
 import { getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
 
 describe("biblioteca de e-books empacotada", () => {
@@ -19,13 +19,20 @@ describe("biblioteca de e-books empacotada", () => {
     expect(await getPackagedEbook(0)).toBeNull();
   });
 
-  it("reescreve somente os e-books aproveitáveis no layout Tech Futuristic", async () => {
+  it("reescreve somente os e-books aproveitáveis no layout Tech Futuristic integral", async () => {
     const ebooks = await getPackagedEbooks();
-    const rewritten = ebooks.filter(ebook => ebook.htmlContent.includes("codigo-lucrativo-tech-shell"));
+    const rewritten = ebooks.filter(ebook => ebook.htmlContent.includes(STUDIO_READER_MARKER));
 
     expect(rewritten).toHaveLength(GOOD_STUDIO_EBOOK_SOURCE_IDS.size);
     expect(rewritten).toHaveLength(36);
     expect(rewritten.every(ebook => GOOD_STUDIO_EBOOK_SOURCE_IDS.has(ebook.sourceId))).toBe(true);
     expect(rewritten[0]?.summary).toContain("Tech Futuristic");
+    expect(rewritten[0]?.htmlContent).toContain("TECH FUTURISTIC");
+    expect(rewritten[0]?.htmlContent).toContain("INDEX_MANIFEST");
+    expect(rewritten[0]?.htmlContent).toContain("CHAPTER_01 // PART_I");
+    expect(rewritten[0]?.htmlContent).toContain("CHAPTER_02 // PART_II");
+    expect(rewritten[0]?.htmlContent).toContain("CHAPTER_03 // PART_III");
+    expect(rewritten[0]?.htmlContent).toContain("cl-original-viewport");
+    expect(rewritten[0]?.htmlContent).toContain("cta-final");
   });
 });
