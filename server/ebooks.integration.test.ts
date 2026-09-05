@@ -45,17 +45,21 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("Prateleiras da biblioteca");
   });
 
-  it("renderiza PDF em visualizador embutido e mantém HTML isolado como fallback", async () => {
+  it("renderiza PDF no leitor interno e mantém HTML isolado como fallback", async () => {
     const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
     const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
     expect(reader).toContain("pdfUrl?: string | null");
-    expect(reader).toContain("function getEmbeddedPdfFrameSource");
-    expect(reader).toContain("docs.google.com/gview?embedded=1");
-    expect(reader).toContain('sandbox={hasPdfSource ? undefined : "allow-same-origin"}');
-    expect(reader).toContain("src={pdfFrameSource}");
-    expect(reader).toContain("href={pdfFrameSource}");
-    expect(reader).toContain("srcDoc={hasPdfSource ? undefined : htmlContent}");
+    expect(reader).toContain('from "pdfjs-dist"');
+    expect(reader).toContain('pdf.worker.min.mjs?url');
+    expect(reader).toContain("function PdfCanvasReader");
+    expect(reader).toContain("getDocument({ url: pdfUrl, withCredentials: true })");
+    expect(reader).toContain("page.render({ canvasContext, viewport, transform })");
+    expect(reader).toContain('sandbox="allow-same-origin"');
+    expect(reader).toContain("srcDoc={htmlContent}");
+    expect(reader).not.toContain("docs.google.com/gview");
+    expect(reader).not.toContain("src={pdfUrl ?? undefined}");
+    expect(reader).not.toContain("href={pdfUrl ?? undefined}");
     expect(reader).toContain("Abrir PDF");
     expect(reader).toContain("calculateResponsiveEbookScale");
     expect(reader).toContain("requestFullscreen");
