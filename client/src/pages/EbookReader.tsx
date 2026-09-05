@@ -187,7 +187,7 @@ function EbookCard({ item, isActive, onOpen, compact = false }: { item: Cataloge
       type="button"
       onClick={() => onOpen(item.ebook.id)}
       aria-pressed={isActive}
-      className={`group min-w-0 rounded-xl border text-left transition hover:border-emerald-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-300/60 ${compact ? "p-3" : "p-4"} ${isActive ? "border-emerald-300/70 bg-emerald-300/10" : "border-white/10 bg-black/25"}`}
+      className={`group h-full w-full min-w-0 rounded-xl border text-left transition hover:border-emerald-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-300/60 ${compact ? "p-3" : "p-4"} ${isActive ? "border-emerald-300/70 bg-emerald-300/10" : "border-white/10 bg-black/25"}`}
     >
       <div className="flex min-w-0 items-start gap-3">
         <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-emerald-300/20 bg-emerald-300/10 text-emerald-200">
@@ -322,7 +322,7 @@ export default function EbookReader() {
         ) : ebooks.data?.length ? (
           <>
             {recentEbooks.length ? (
-              <section className="min-w-0 rounded-2xl border border-emerald-300/15 bg-emerald-300/5 p-3 sm:p-5">
+              <section className="min-w-0 rounded-2xl border border-emerald-300/15 bg-emerald-300/5 p-3 sm:p-4">
                 <div className="mb-3 flex min-w-0 flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                   <div className="min-w-0">
                     <p className="break-words text-xs font-medium uppercase tracking-wider text-emerald-200">Continuar lendo</p>
@@ -330,10 +330,17 @@ export default function EbookReader() {
                   </div>
                   <p className="break-words text-xs leading-5 text-zinc-400">Atalho salvo neste dispositivo.</p>
                 </div>
-                <div className="grid min-w-0 gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {recentEbooks.map(item => (
-                    <EbookCard key={`recent-${item.ebook.id}`} item={item} isActive={selectedId === item.ebook.id && readerOpen} onOpen={openEbook} compact />
-                  ))}
+                <div
+                  aria-label="Carrossel de e-books recentes"
+                  className="-mx-3 min-w-0 overflow-x-auto px-3 pb-2 [scrollbar-width:thin] [scrollbar-color:rgba(110,231,183,0.45)_transparent] sm:-mx-4 sm:px-4"
+                >
+                  <div className="flex min-w-max snap-x snap-mandatory gap-3">
+                    {recentEbooks.map(item => (
+                      <div key={`recent-${item.ebook.id}`} className="w-[min(82vw,20rem)] shrink-0 snap-start sm:w-80 lg:w-[22rem]">
+                        <EbookCard item={item} isActive={selectedId === item.ebook.id && readerOpen} onOpen={openEbook} compact />
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </section>
             ) : null}

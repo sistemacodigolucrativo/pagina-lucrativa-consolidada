@@ -42,6 +42,10 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("recentEbooksStorageKey");
     expect(memberReader).toContain("window.localStorage.setItem(recentEbooksStorageKey");
     expect(memberReader).toContain("Continuar lendo");
+    expect(memberReader).toContain('aria-label="Carrossel de e-books recentes"');
+    expect(memberReader).toContain("overflow-x-auto");
+    expect(memberReader).toContain("snap-x snap-mandatory");
+    expect(memberReader).toContain("snap-start");
     expect(memberReader).toContain("Prateleiras da biblioteca");
   });
 
