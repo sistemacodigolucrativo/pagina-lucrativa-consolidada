@@ -45,13 +45,15 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("Prateleiras da biblioteca");
   });
 
-  it("mantém PDF como fonte principal no leitor e HTML isolado como fallback", async () => {
+  it("renderiza PDF em visualizador embutido e mantém HTML isolado como fallback", async () => {
     const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
     const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
     expect(reader).toContain("pdfUrl?: string | null");
+    expect(reader).toContain("function getEmbeddedPdfFrameSource");
+    expect(reader).toContain("docs.google.com/gview?embedded=1");
     expect(reader).toContain('sandbox={hasPdfSource ? undefined : "allow-same-origin"}');
-    expect(reader).toContain("src={pdfUrl ?? undefined}");
+    expect(reader).toContain("src={pdfFrameSource}");
     expect(reader).toContain("srcDoc={hasPdfSource ? undefined : htmlContent}");
     expect(reader).toContain("Abrir PDF");
     expect(reader).toContain("calculateResponsiveEbookScale");
