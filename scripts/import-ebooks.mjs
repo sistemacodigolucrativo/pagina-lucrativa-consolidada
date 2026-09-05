@@ -7,11 +7,10 @@ const mysqlSocket = process.env.MYSQL_SOCKET || "/run/mysqld/mysqld.sock";
 const mysqlUser = process.env.MYSQL_USER || "ubuntu";
 const mysqlDatabase = process.env.MYSQL_DATABASE || "pagina_lucrativa";
 const manifestPath = path.join(importRoot, "ebook-manifest.tsv");
-const outputRoot = path.join(importRoot, "html-output");
 const manifest = await readFile(manifestPath, "utf8");
 const rows = manifest.split(/\r?\n/).slice(1).filter(Boolean).map(line => {
-  const [sourceId, title, sourceFile, sourcePath, htmlFile] = line.split("\t");
-  return { sourceId, title, sourceFile, sourcePath, htmlFile };
+  const [sourceId, title, sourceFile, sourcePath] = line.split("\t");
+  return { sourceId, title, sourceFile, sourcePath };
 });
 function displayTitle(title, sourceFile) {
   if (title && title.toLowerCase() !== "source") return title;
@@ -24,17 +23,16 @@ function displayTitle(title, sourceFile) {
 const connection = await mysql.createConnection({ socketPath: mysqlSocket, user: mysqlUser, database: mysqlDatabase });
 try {
   for (const row of rows) {
-    const htmlContent = await readFile(path.join(outputRoot, row.htmlFile), "utf8");
     const title = displayTitle(row.title, row.sourceFile);
-    const summary = `Conteúdo em HTML convertido a partir do material autorizado: ${title}.`;
+    const summary = `PDF atualizado no layout Tech Futuristic do Código Lucrativo: ${title}.`;
     await connection.execute(
       `INSERT INTO ebooks (sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, createdBy, publishedAt)
-       VALUES (?, ?, ?, ?, ?, ?, 'published', 1, NOW())
-       ON DUPLICATE KEY UPDATE sourceFile = VALUES(sourceFile), sourcePath = VALUES(sourcePath), title = VALUES(title), summary = VALUES(summary), htmlContent = VALUES(htmlContent), status = 'published', publishedAt = COALESCE(publishedAt, NOW())`,
-      [row.sourceId, row.sourceFile, row.sourcePath, title, summary, htmlContent],
+       VALUES (?, ?, ?, ?, ?, '', 'published', 1, NOW())
+       ON DUPLICATE KEY UPDATE sourceFile = VALUES(sourceFile), sourcePath = VALUES(sourcePath), title = VALUES(title), summary = VALUES(summary), htmlContent = '', status = 'published', publishedAt = COALESCE(publishedAt, NOW())`,
+      [row.sourceId, row.sourceFile, row.sourcePath, title, summary],
     );
   }
-  console.log(`Importados ou atualizados ${rows.length} e-books autorizados.`);
+  console.log(`Importados ou atualizados ${rows.length} e-books em PDF.`);
 } finally {
   await connection.end();
 }

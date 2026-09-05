@@ -84,13 +84,14 @@ describe("módulo de e-books", () => {
     expect(admin).toContain("srcDoc={form.htmlContent}");
   });
 
-  it("expõe os PDFs importados por rota estática e mantém fallback HTML para compatibilidade", async () => {
+  it("expõe os PDFs importados por rota estática e remove a dependência dos HTMLs empacotados", async () => {
     const server = await readFile(path.join(root, "server/_core/index.ts"), "utf8");
     const staticEbooks = await readFile(path.join(root, "server/staticEbooks.ts"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
 
     expect(staticEbooks).toContain('PACKAGED_EBOOK_FILE_ROUTE = "/ebook-files"');
-    expect(staticEbooks).toContain('contentType: pdfSource ? "application/pdf" as const : "text/html" as const');
+    expect(staticEbooks).toContain('contentType: "application/pdf" as const');
+    expect(staticEbooks).not.toContain('html-output');
     expect(staticEbooks).toContain("await stat(resolvedPath)");
     expect(server).toContain("registerPackagedEbookFiles(app, appPrefix)");
     expect(server).toContain("express.static(pdfRoot");

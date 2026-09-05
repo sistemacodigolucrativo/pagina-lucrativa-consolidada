@@ -1,10 +1,7 @@
 import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
-import { getStudioEbookTitle, isGoodStudioEbook, rewriteEbookInStudioLayout } from "./ebookStudioLayout";
 
 export const PACKAGED_EBOOK_FILE_ROUTE = "/ebook-files";
-
-type EbookContentType = "application/pdf" | "text/html";
 
 type PackagedEbook = {
   id: number;
@@ -14,9 +11,9 @@ type PackagedEbook = {
   title: string;
   summary: string;
   htmlContent: string;
-  contentType: EbookContentType;
-  pdfPath: string | null;
-  pdfUrl: string | null;
+  contentType: "application/pdf";
+  pdfPath: string;
+  pdfUrl: string;
   status: "published";
   createdBy: null;
   publishedAt: Date;
@@ -29,7 +26,7 @@ type ManifestRow = {
   title: string;
   sourceFile: string;
   sourcePath: string;
-  htmlFile: string;
+  htmlFile?: string;
 };
 
 type SourceManifestRow = {
@@ -181,37 +178,26 @@ async function loadPackagedEbooks() {
     .filter(Boolean)
     .map(line => {
       const [sourceId, title, sourceFile, sourcePath, htmlFile] = line.split("\t");
-      if (!sourceId || !sourceFile || !sourcePath || !htmlFile) throw new Error(`Linha inválida no manifesto de e-books: ${line}`);
+      if (!sourceId || !sourceFile || !sourcePath) throw new Error(`Linha inválida no manifesto de e-books: ${line}`);
       return { sourceId, title, sourceFile, sourcePath, htmlFile };
     });
   const publishedAt = new Date(0);
   return Promise.all(rows.map(async (row, index) => {
-    const originalHtmlContent = await readFile(path.join(root, "html-output", row.htmlFile), "utf8");
-    const title = getStudioEbookTitle(row.sourceId, displayTitle(row.title, row.sourceFile));
-    const hasStudioLayout = isGoodStudioEbook(row.sourceId);
+    const title = displayTitle(row.title, row.sourceFile);
     const pdfSource = await resolvePdfSource(root, row, pdfLookup);
-    const htmlContent = rewriteEbookInStudioLayout({
-      sourceId: row.sourceId,
-      sourceFile: row.sourceFile,
-      sourcePath: row.sourcePath,
-      title,
-      htmlContent: originalHtmlContent,
-    });
+    if (!pdfSource) throw new Error(`PDF empacotado não encontrado para o e-book: ${title}`);
+
     return {
       id: index + 1,
       sourceId: row.sourceId,
       sourceFile: row.sourceFile,
       sourcePath: row.sourcePath,
       title,
-      summary: pdfSource
-        ? `PDF original disponível para leitura no painel: ${title}.`
-        : hasStudioLayout
-          ? `Material de estudo reformulado no layout Tech Futuristic do Código Lucrativo: ${title}.`
-          : `Material de estudo publicado e empacotado no projeto: ${title}.`,
-      htmlContent,
-      contentType: pdfSource ? "application/pdf" as const : "text/html" as const,
-      pdfPath: pdfSource?.pdfPath ?? null,
-      pdfUrl: pdfSource?.pdfUrl ?? null,
+      summary: `PDF atualizado no layout Tech Futuristic do Código Lucrativo: ${title}.`,
+      htmlContent: "",
+      contentType: "application/pdf" as const,
+      pdfPath: pdfSource.pdfPath,
+      pdfUrl: pdfSource.pdfUrl,
       status: "published" as const,
       createdBy: null,
       publishedAt,
