@@ -438,19 +438,19 @@ export default function EbookReader() {
                 onEscapeKeyDown={handleDialogEscape}
                 className="!fixed !inset-0 !left-0 !top-0 grid !h-auto !max-h-none !w-auto !max-w-none !translate-x-0 !translate-y-0 grid-rows-[auto_minmax(0,1fr)] gap-0 overflow-hidden overscroll-contain rounded-none border-white/10 bg-zinc-950 p-0 text-white shadow-2xl sm:!inset-auto sm:!left-1/2 sm:!top-1/2 sm:!h-[min(92dvh,920px)] sm:!max-h-[92dvh] sm:!w-[min(1120px,calc(100vw-2rem))] sm:!max-w-[min(1120px,calc(100vw-2rem))] sm:!translate-x-[-50%] sm:!translate-y-[-50%] sm:rounded-2xl"
               >
-                <DialogHeader className="min-w-0 border-b border-white/10 px-4 pb-3 pt-[calc(env(safe-area-inset-top)+1rem)] text-left sm:px-5 sm:pt-5">
+                <DialogHeader className="min-w-0 border-b border-white/10 px-3 pb-2 pt-[calc(env(safe-area-inset-top)+0.5rem)] text-left sm:px-4 sm:pt-3">
                   <div className="flex min-w-0 items-start justify-between gap-3 sm:gap-4">
                     <div className="min-w-0 flex-1 overflow-hidden">
-                      <span className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-300">Leitura selecionada</span>
-                      <DialogTitle className="mt-1 line-clamp-2 max-w-full break-words text-base font-semibold leading-snug text-white [overflow-wrap:anywhere] sm:text-xl">{readerTitle}</DialogTitle>
-                      <DialogDescription className="mt-1 line-clamp-2 max-w-full break-words text-xs leading-5 text-zinc-400 [overflow-wrap:anywhere] sm:text-sm">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-emerald-300">Leitura selecionada</span>
+                      <DialogTitle className="mt-0.5 line-clamp-1 max-w-full break-words text-sm font-semibold leading-snug text-white [overflow-wrap:anywhere] sm:text-base">{readerTitle}</DialogTitle>
+                      <DialogDescription className="sr-only">
                         {readerSummary}
                       </DialogDescription>
                     </div>
                     <DialogClose asChild>
                       <button
                         type="button"
-                        className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/30 text-zinc-300 transition hover:border-emerald-300/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300/60"
+                        className="inline-flex size-9 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/30 text-zinc-300 transition hover:border-emerald-300/50 hover:text-white focus:outline-none focus:ring-2 focus:ring-emerald-300/60"
                         aria-label="Fechar leitor"
                       >
                         <X className="size-4" aria-hidden="true" />
@@ -459,7 +459,7 @@ export default function EbookReader() {
                   </div>
                 </DialogHeader>
 
-                <div className="min-h-0 min-w-0 overflow-hidden px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 sm:p-4">
+                <div className="min-h-0 min-w-0 overflow-hidden p-1 pb-[calc(env(safe-area-inset-bottom)+0.25rem)] sm:p-2">
                   {selected.isLoading ? (
                     <div className="flex h-full min-h-[55dvh] min-w-0 items-center justify-center gap-2 rounded-xl border border-white/10 bg-black/25 text-sm text-zinc-400">
                       <LoaderCircle className="size-4 animate-spin text-emerald-300" />

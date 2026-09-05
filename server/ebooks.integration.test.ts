@@ -64,6 +64,10 @@ describe("módulo de e-books", () => {
     expect(reader).not.toContain("docs.google.com/gview");
     expect(reader).not.toContain("src={pdfUrl ?? undefined}");
     expect(reader).not.toContain("href={pdfUrl ?? undefined}");
+    expect(reader).toContain('data-reader-variant="pdf-focused"');
+    expect(reader).toContain("containerWidth - 4");
+    expect(reader).toContain("px-0.5 py-1");
+    expect(reader).toContain("gap-2");
     expect(reader).toContain("Abrir PDF");
     expect(reader).toContain("calculateResponsiveEbookScale");
     expect(reader).toContain("requestFullscreen");
@@ -87,6 +91,8 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("!inset-0");
     expect(memberReader).toContain("!w-auto");
     expect(memberReader).toContain("[overflow-wrap:anywhere]");
+    expect(memberReader).toContain('DialogDescription className="sr-only"');
+    expect(memberReader).toContain("pb-[calc(env(safe-area-inset-bottom)+0.25rem)]");
     expect(memberReader).toContain('className="h-full w-full min-w-0"');
     expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
     expect(admin).toContain("E-books PDF e HTML");

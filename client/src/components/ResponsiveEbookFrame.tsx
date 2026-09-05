@@ -53,7 +53,7 @@ function PdfCanvasPage({ pdfDoc, pageNumber, containerWidth, zoom }: PdfCanvasPa
       if (!canvas || !canvasContext) return;
 
       const baseViewport = page.getViewport({ scale: 1 });
-      const availableWidth = Math.max(240, containerWidth - 32);
+      const availableWidth = Math.max(240, containerWidth - 4);
       const fitScale = Math.min(1.8, Math.max(0.25, availableWidth / baseViewport.width));
       const viewport = page.getViewport({ scale: fitScale * zoom });
       const outputScale = Math.min(window.devicePixelRatio || 1, 2);
@@ -81,16 +81,16 @@ function PdfCanvasPage({ pdfDoc, pageNumber, containerWidth, zoom }: PdfCanvasPa
   }, [containerWidth, pageNumber, pdfDoc, zoom]);
 
   return (
-    <div className="relative flex w-full justify-center rounded-lg">
+    <div className="relative flex w-full justify-center">
       {status !== "ready" ? (
-        <div className="absolute inset-x-4 top-4 z-10 rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-center text-xs font-semibold text-slate-600 shadow-sm">
+        <div className="absolute inset-x-2 top-2 z-10 rounded-md border border-slate-200 bg-white/90 px-3 py-2 text-center text-xs font-semibold text-slate-600 shadow-sm">
           {status === "error" ? "Não foi possível renderizar esta página." : "Carregando página..."}
         </div>
       ) : null}
       <canvas
         ref={canvasRef}
         aria-label={`Página ${pageNumber} do PDF`}
-        className="max-w-full rounded-lg bg-white shadow-[0_20px_50px_rgba(0,0,0,0.24)]"
+        className="max-w-full bg-white shadow-[0_10px_28px_rgba(0,0,0,0.22)]"
       />
     </div>
   );
@@ -153,8 +153,8 @@ function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; ti
   const pageNumbers = Array.from({ length: pageCount }, (_, index) => index + 1);
 
   return (
-    <section className={`flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-100 text-slate-900 ${className}`} aria-label={title}>
-      <div className="sticky top-0 z-20 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 text-xs shadow-sm backdrop-blur">
+    <section className={`flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-200 text-slate-900 ${className}`} aria-label={title}>
+      <div className="sticky top-0 z-20 flex min-h-9 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-300 bg-white/95 px-2 py-1 text-xs shadow-sm backdrop-blur">
         <span className="font-semibold text-slate-700">
           {status === "ready" ? `${pageCount} página${pageCount === 1 ? "" : "s"}` : status === "error" ? "Erro ao carregar PDF" : "Carregando PDF..."}
         </span>
@@ -162,7 +162,7 @@ function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; ti
           <button
             type="button"
             onClick={() => setZoom(value => Math.max(0.8, Number((value - 0.1).toFixed(2))))}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="rounded-md border border-slate-300 bg-white px-2 py-0.5 font-semibold text-slate-700 transition hover:bg-slate-100"
           >
             -
           </button>
@@ -170,14 +170,14 @@ function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; ti
           <button
             type="button"
             onClick={() => setZoom(value => Math.min(1.8, Number((value + 0.1).toFixed(2))))}
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="rounded-md border border-slate-300 bg-white px-2 py-0.5 font-semibold text-slate-700 transition hover:bg-slate-100"
           >
             +
           </button>
         </div>
       </div>
 
-      <div ref={viewportRef} className="min-h-0 flex-1 overflow-auto px-2 py-4 sm:px-4">
+      <div ref={viewportRef} className="min-h-0 flex-1 overflow-auto px-0.5 py-1 sm:px-1">
         {status === "error" ? (
           <div className="mx-auto max-w-md rounded-xl border border-red-200 bg-white p-5 text-center text-sm text-red-700 shadow-sm">
             Não foi possível carregar este PDF dentro do leitor.
@@ -191,7 +191,7 @@ function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; ti
         ) : null}
 
         {pdfDoc ? (
-          <div className="mx-auto flex w-full max-w-full flex-col items-center gap-4">
+          <div className="mx-auto flex w-full max-w-full flex-col items-center gap-2">
             {pageNumbers.map(pageNumber => (
               <PdfCanvasPage key={pageNumber} pdfDoc={pdfDoc} pageNumber={pageNumber} containerWidth={containerWidth} zoom={zoom} />
             ))}
@@ -521,6 +521,39 @@ export default function ResponsiveEbookFrame({
     : isModal
       ? "h-full min-h-[520px]"
       : "h-[72vh] min-h-[560px]";
+
+  if (hasPdfSource && pdfUrl) {
+    return (
+      <div
+        ref={containerRef}
+        data-ebook-reader="responsive"
+        data-reader-mode={isFullscreen ? "fullscreen" : "embedded"}
+        data-reader-display={displayMode}
+        data-reader-variant="pdf-focused"
+        className={`flex min-w-0 w-full max-w-full overflow-hidden rounded-lg border border-white/10 bg-slate-200 ${
+          isFullscreen ? "h-dvh w-[100dvw] rounded-none border-0" : isModal ? "h-full min-h-0 max-h-full" : "h-[72dvh] min-h-[520px]"
+        } ${className}`}
+      >
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="flex min-h-9 shrink-0 items-center justify-between gap-2 border-b border-slate-300 bg-slate-50 px-2 py-1">
+            <p className="min-w-0 truncate text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-600">Leitor PDF</p>
+            <button
+              type="button"
+              onClick={() => void toggleFullscreen()}
+              aria-label={isFullscreen ? "Sair da tela cheia" : "Ampliar leitor PDF"}
+              aria-pressed={isFullscreen}
+              className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 transition hover:border-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+              title={isFullscreen ? "Sair da tela cheia" : "Abrir PDF no leitor ampliado"}
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" /> : <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />}
+              {isFullscreen ? "Sair" : "Abrir PDF"}
+            </button>
+          </div>
+          <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1" />
+        </div>
+      </div>
+    );
+  }
 
   if (isTechFuturistic) {
     return (
