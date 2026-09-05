@@ -77,6 +77,7 @@ type SortMode = "recentes" | "az" | "za";
 
 type EbookSummary = {
   id: number;
+  sourceId?: string | null;
   title: string;
   summary?: string | null;
   contentType?: "application/pdf" | "text/html";
@@ -95,6 +96,38 @@ type CatalogedEbook = {
 
 const fallbackLibraryShelf = libraryShelves.find(shelf => shelf.id === "estrategia") ?? libraryShelves[0];
 
+const ebookShelfOverrides: Partial<Record<string, LibraryShelf["id"]>> = {
+  "1d8e16d1223794d3": "copy",
+  "c28dfb3c8d27a480": "produto",
+  "0c33c80d2a934efd": "copy",
+  df81699c12bfe98e: "copy",
+  f067a4112766fae7: "estrategia",
+  dcf68a15df77ef91: "estrategia",
+  f79108bef356d541: "produto",
+  d1d019b7cf8e87b3: "produtividade",
+  "9feb44600eef4e36": "produtividade",
+  "596d489e8ed40772": "estrategia",
+  "24ac8ef8864544ce": "vendas",
+  c301b3c54dadbd5b: "estrategia",
+  b5c5a22eee55b975: "trafego",
+  "00b5922dcfe4353f": "produtividade",
+  e1600e5778de91a9: "copy",
+  ec512a3f43bad092: "estrategia",
+  "4e760750248bd051": "copy",
+  "0dbeba2f97747491": "copy",
+  "8c9257e37e7f63fc": "trafego",
+  f47922b4f9f1ecdc: "produtividade",
+  ead8842d82b7517b: "trafego",
+  "5d55c45e0283fd5f": "vendas",
+  "2b2b7cfa601efeda": "produto",
+  a077a241d4707e86: "trafego",
+  f789f728a458e82b: "copy",
+  d89d22aac15c4251: "estrategia",
+  "2a3a6b18f7381053": "estrategia",
+  "3cdfa382690e0965": "estrategia",
+  "73b4d52872c84c1d": "trafego",
+};
+
 const filterOptions: Array<{ id: FilterId; label: string; shortLabel: string }> = [
   { id: "todos", label: "Todos", shortLabel: "Todos" },
   ...libraryShelves.map(shelf => ({ id: shelf.id, label: shelf.label, shortLabel: shelf.shortLabel })),
@@ -110,7 +143,9 @@ function buildSearchableEbookText(ebook: EbookSummary) {
 
 function classifyEbook(ebook: EbookSummary) {
   const searchableText = buildSearchableEbookText(ebook);
-  const shelf = libraryShelves.find(item => item.keywords.some(keyword => searchableText.includes(keyword))) ?? fallbackLibraryShelf;
+  const overrideShelfId = ebook.sourceId ? ebookShelfOverrides[ebook.sourceId] : undefined;
+  const overrideShelf = overrideShelfId ? libraryShelves.find(item => item.id === overrideShelfId) : null;
+  const shelf = overrideShelf ?? libraryShelves.find(item => item.keywords.some(keyword => searchableText.includes(keyword))) ?? fallbackLibraryShelf;
   return { ebook, shelf, searchableText };
 }
 
