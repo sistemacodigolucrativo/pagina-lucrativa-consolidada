@@ -1180,34 +1180,83 @@ const ebookContentDefaults = {
   pdfPath: null as string | null,
   pdfUrl: null as string | null,
 };
+type EbookContentMetadata = typeof ebookContentDefaults;
+type EbookContentLookupSource = {
+  sourceId?: string | null;
+  sourcePath?: string | null;
+};
 
 function withEbookContentDefaults<T extends object>(ebook: T) {
   return { ...ebook, ...ebookContentDefaults };
+}
+
+function ebookContentLookupKey(ebook: EbookContentLookupSource) {
+  const sourceId = ebook.sourceId?.trim();
+  const sourcePath = ebook.sourcePath?.trim();
+  return sourceId && sourcePath ? `${sourceId}::${sourcePath}` : null;
+}
+
+async function getPackagedEbookContentMetadataBySource() {
+  try {
+    const packagedEbooks = await getPackagedEbooks();
+    const metadataBySource = new Map<string, EbookContentMetadata>();
+    for (const ebook of packagedEbooks) {
+      const key = ebookContentLookupKey(ebook);
+      if (!key) continue;
+      metadataBySource.set(key, {
+        contentType: ebook.contentType,
+        pdfPath: ebook.pdfPath,
+        pdfUrl: ebook.pdfUrl,
+      });
+    }
+    return metadataBySource;
+  } catch (error) {
+    console.warn("[Ebooks] Failed to enrich database ebooks with packaged PDF metadata:", error);
+    return new Map<string, EbookContentMetadata>();
+  }
+}
+
+function withEbookContentMetadata<T extends object & EbookContentLookupSource>(
+  ebook: T,
+  packagedMetadataBySource?: Map<string, EbookContentMetadata>,
+) {
+  const key = ebookContentLookupKey(ebook);
+  const metadata = key ? packagedMetadataBySource?.get(key) : null;
+  return metadata ? { ...ebook, ...metadata } : withEbookContentDefaults(ebook);
+}
+
+async function withPackagedEbookContentMetadata<T extends object & EbookContentLookupSource>(ebookRows: T[]) {
+  const packagedMetadataBySource = await getPackagedEbookContentMetadataBySource();
+  return ebookRows.map(ebook => withEbookContentMetadata(ebook, packagedMetadataBySource));
 }
 
 export async function getPublishedEbooks() {
   const db = await getDb();
   if (!db) return getPackagedEbooks();
   const result = await db.select(ebookListFields).from(ebooks).where(eq(ebooks.status, "published")).orderBy(desc(ebooks.publishedAt), desc(ebooks.updatedAt));
-  return result.length ? result.map(withEbookContentDefaults) : getPackagedEbooks();
+  return result.length ? withPackagedEbookContentMetadata(result) : getPackagedEbooks();
 }
 export async function getPublishedEbook(ebookId: number) {
   const db = await getDb();
   if (!db) return getPackagedEbook(ebookId);
   const result = await db.select().from(ebooks).where(and(eq(ebooks.id, ebookId), eq(ebooks.status, "published"))).limit(1);
-  return result[0] ? withEbookContentDefaults(result[0]) : getPackagedEbook(ebookId);
+  if (!result[0]) return getPackagedEbook(ebookId);
+  const [ebook] = await withPackagedEbookContentMetadata([result[0]]);
+  return ebook;
 }
 export async function getAdminEbooks() {
   const db = await getDb();
   if (!db) return [];
   const result = await db.select(ebookListFields).from(ebooks).orderBy(desc(ebooks.updatedAt));
-  return result.map(withEbookContentDefaults);
+  return withPackagedEbookContentMetadata(result);
 }
 export async function getAdminEbook(ebookId: number) {
   const db = await getDb();
   if (!db) return null;
   const result = await db.select().from(ebooks).where(eq(ebooks.id, ebookId)).limit(1);
-  return result[0] ? withEbookContentDefaults(result[0]) : null;
+  if (!result[0]) return null;
+  const [ebook] = await withPackagedEbookContentMetadata([result[0]]);
+  return ebook;
 }
 export async function createAdminEbook(input: EbookInput) {
   const db = await getDb();

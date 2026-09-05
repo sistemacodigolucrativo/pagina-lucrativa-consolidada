@@ -95,6 +95,9 @@ describe("módulo de e-books", () => {
     expect(server).toContain("registerPackagedEbookFiles(app, appPrefix)");
     expect(server).toContain("express.static(pdfRoot");
     expect(db).toContain("withEbookContentDefaults");
+    expect(db).toContain("getPackagedEbookContentMetadataBySource");
+    expect(db).toContain("withPackagedEbookContentMetadata");
+    expect(db).toContain("return result.length ? withPackagedEbookContentMetadata(result) : getPackagedEbooks()");
   });
 
   it("ativa o leitor Tech Futuristic integral para e-books de copy e vendas", async () => {
