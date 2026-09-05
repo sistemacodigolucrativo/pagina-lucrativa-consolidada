@@ -16,7 +16,7 @@ describe("Academia com leitor integrado", () => {
     expect(router).toContain("course: protectedProcedure.input");
   });
 
-  it("abre a formação no leitor HTML isolado e responsivo, preservando rotas já divulgadas", async () => {
+  it("abre a formação no leitor isolado e responsivo, preservando rotas já divulgadas", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const memberCourses = await readFile(path.join(root, "client/src/pages/MemberCourses.tsx"), "utf8");
     const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
@@ -24,8 +24,8 @@ describe("Academia com leitor integrado", () => {
     expect(app).toContain('path="/membros/curso/:courseKey" component={MemberCourses}');
     expect(memberCourses).toContain("ResponsiveEbookFrame");
     expect(memberCourses).toContain("htmlContent={course.ebook.htmlContent}");
-    expect(reader).toContain("srcDoc={htmlContent}");
-    expect(reader).toContain('sandbox="allow-same-origin"');
+    expect(reader).toContain("srcDoc={hasPdfSource ? undefined : htmlContent}");
+    expect(reader).toContain('sandbox={hasPdfSource ? undefined : "allow-same-origin"}');
     expect(reader).toContain('data-reader-mode={isFullscreen ? "fullscreen" : "embedded"}');
     expect(memberCourses).toContain("Abrir material");
   });

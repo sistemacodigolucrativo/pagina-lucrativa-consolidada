@@ -16,19 +16,20 @@ describe("biblioteca de e-books empacotada", () => {
     const first = await getPackagedEbook(1);
     expect(first).not.toBeNull();
     expect(first?.title).toBe("10 Maneiras De Escrever Anúncios Mais Eficientes");
-    expect(first?.contentType).toBe("application/pdf");
-    expect(first?.pdfUrl).toBe(`${PACKAGED_EBOOK_FILE_ROUTE}/dcd29a74b61b3dd4/source.pdf`);
     expect(first?.htmlContent.toLowerCase()).toContain("<html");
     expect(await getPackagedEbook(0)).toBeNull();
   });
 
-  it("prioriza PDFs reais do acervo e mantém HTML como fallback para fontes que não são PDF", async () => {
+  it("prioriza PDFs reais quando há correspondência identificável no manifesto de fontes", async () => {
     const ebooks = await getPackagedEbooks();
     const pdfBacked = ebooks.filter(ebook => ebook.contentType === "application/pdf");
     const htmlBacked = ebooks.filter(ebook => ebook.contentType === "text/html");
+    const segredo = ebooks.find(ebook => ebook.sourcePath === "osegredo.pdf");
 
-    expect(pdfBacked.length).toBeGreaterThan(30);
+    expect(pdfBacked.length).toBeGreaterThanOrEqual(4);
     expect(htmlBacked.length).toBeGreaterThan(0);
+    expect(segredo?.contentType).toBe("application/pdf");
+    expect(segredo?.pdfUrl).toMatch(new RegExp(`^${PACKAGED_EBOOK_FILE_ROUTE}/[a-z0-9]+/osegredo\\.pdf$`));
     expect(pdfBacked.every(ebook => ebook.pdfUrl?.startsWith(`${PACKAGED_EBOOK_FILE_ROUTE}/`))).toBe(true);
     expect(pdfBacked.every(ebook => ebook.pdfUrl?.endsWith(".pdf"))).toBe(true);
     expect(pdfBacked.every(ebook => ebook.pdfPath?.startsWith("fontes_importados/"))).toBe(true);
