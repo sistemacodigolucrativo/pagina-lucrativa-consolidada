@@ -24,8 +24,9 @@ describe("Academia com leitor integrado", () => {
     expect(app).toContain('path="/membros/curso/:courseKey" component={MemberCourses}');
     expect(memberCourses).toContain("ResponsiveEbookFrame");
     expect(memberCourses).toContain("htmlContent={course.ebook.htmlContent}");
-    expect(reader).toContain("srcDoc={hasPdfSource ? undefined : htmlContent}");
-    expect(reader).toContain('sandbox={hasPdfSource ? undefined : "allow-same-origin"}');
+    expect(reader).toContain("function PdfCanvasReader");
+    expect(reader).toContain("srcDoc={htmlContent}");
+    expect(reader).toContain('sandbox="allow-same-origin"');
     expect(reader).toContain('data-reader-mode={isFullscreen ? "fullscreen" : "embedded"}');
     expect(memberCourses).toContain("Abrir material");
   });
