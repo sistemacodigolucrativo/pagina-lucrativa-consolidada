@@ -1174,28 +1174,40 @@ type EbookInput = {
   status: EbookStatus;
   createdBy: number;
 };
+
+const ebookContentDefaults = {
+  contentType: "text/html" as const,
+  pdfPath: null as string | null,
+  pdfUrl: null as string | null,
+};
+
+function withEbookContentDefaults<T extends object>(ebook: T) {
+  return { ...ebook, ...ebookContentDefaults };
+}
+
 export async function getPublishedEbooks() {
   const db = await getDb();
   if (!db) return getPackagedEbooks();
   const result = await db.select(ebookListFields).from(ebooks).where(eq(ebooks.status, "published")).orderBy(desc(ebooks.publishedAt), desc(ebooks.updatedAt));
-  return result.length ? result : getPackagedEbooks();
+  return result.length ? result.map(withEbookContentDefaults) : getPackagedEbooks();
 }
 export async function getPublishedEbook(ebookId: number) {
   const db = await getDb();
   if (!db) return getPackagedEbook(ebookId);
   const result = await db.select().from(ebooks).where(and(eq(ebooks.id, ebookId), eq(ebooks.status, "published"))).limit(1);
-  return result[0] ?? getPackagedEbook(ebookId);
+  return result[0] ? withEbookContentDefaults(result[0]) : getPackagedEbook(ebookId);
 }
 export async function getAdminEbooks() {
   const db = await getDb();
   if (!db) return [];
-  return db.select(ebookListFields).from(ebooks).orderBy(desc(ebooks.updatedAt));
+  const result = await db.select(ebookListFields).from(ebooks).orderBy(desc(ebooks.updatedAt));
+  return result.map(withEbookContentDefaults);
 }
 export async function getAdminEbook(ebookId: number) {
   const db = await getDb();
   if (!db) return null;
   const result = await db.select().from(ebooks).where(eq(ebooks.id, ebookId)).limit(1);
-  return result[0] ?? null;
+  return result[0] ? withEbookContentDefaults(result[0]) : null;
 }
 export async function createAdminEbook(input: EbookInput) {
   const db = await getDb();

@@ -45,12 +45,15 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("Prateleiras da biblioteca");
   });
 
-  it("mantém o HTML em um iframe isolado, responsivo e expansível no leitor e na prévia administrativa", async () => {
+  it("mantém PDF como fonte principal no leitor e HTML isolado como fallback", async () => {
     const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
     const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
-    expect(reader).toContain("sandbox=\"allow-same-origin\"");
-    expect(reader).toContain("srcDoc={htmlContent}");
+    expect(reader).toContain("pdfUrl?: string | null");
+    expect(reader).toContain('sandbox={hasPdfSource ? undefined : "allow-same-origin"}');
+    expect(reader).toContain("src={pdfUrl ?? undefined}");
+    expect(reader).toContain("srcDoc={hasPdfSource ? undefined : htmlContent}");
+    expect(reader).toContain("Abrir PDF");
     expect(reader).toContain("calculateResponsiveEbookScale");
     expect(reader).toContain("requestFullscreen");
     expect(reader).toContain('"fullscreenchange"');
@@ -68,14 +71,30 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("<Dialog open={readerOpen}");
     expect(memberReader).toContain("setReaderOpen(true)");
     expect(memberReader).toContain("onEscapeKeyDown={handleDialogEscape}");
+    expect(memberReader).toContain("pdfUrl={selected.data.pdfUrl ?? null}");
     expect(memberReader).toContain('displayMode="modal"');
     expect(memberReader).toContain("!inset-0");
     expect(memberReader).toContain("!w-auto");
     expect(memberReader).toContain("[overflow-wrap:anywhere]");
     expect(memberReader).toContain('className="h-full w-full min-w-0"');
     expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
-    expect(admin).toContain("sandbox=\"\"");
+    expect(admin).toContain("E-books PDF e HTML");
+    expect(admin).toContain("HTML do e-book (fallback)");
+    expect(admin).toContain('sandbox=""');
     expect(admin).toContain("srcDoc={form.htmlContent}");
+  });
+
+  it("expõe os PDFs importados por rota estática e mantém fallback HTML para compatibilidade", async () => {
+    const server = await readFile(path.join(root, "server/_core/index.ts"), "utf8");
+    const staticEbooks = await readFile(path.join(root, "server/staticEbooks.ts"), "utf8");
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+
+    expect(staticEbooks).toContain('PACKAGED_EBOOK_FILE_ROUTE = "/ebook-files"');
+    expect(staticEbooks).toContain('contentType: pdfSource ? "application/pdf" as const : "text/html" as const');
+    expect(staticEbooks).toContain("await stat(resolvedPath)");
+    expect(server).toContain("registerPackagedEbookFiles(app, appPrefix)");
+    expect(server).toContain("express.static(pdfRoot");
+    expect(db).toContain("withEbookContentDefaults");
   });
 
   it("ativa o leitor Tech Futuristic integral para e-books de copy e vendas", async () => {

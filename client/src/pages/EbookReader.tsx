@@ -79,6 +79,9 @@ type EbookSummary = {
   id: number;
   title: string;
   summary?: string | null;
+  contentType?: "application/pdf" | "text/html";
+  pdfPath?: string | null;
+  pdfUrl?: string | null;
   publishedAt?: string | Date | null;
   createdAt?: string | Date | null;
   updatedAt?: string | Date | null;
@@ -428,6 +431,7 @@ export default function EbookReader() {
                     <ResponsiveEbookFrame
                       title={`Leitor de ${selected.data.title}`}
                       htmlContent={selected.data.htmlContent}
+                      pdfUrl={selected.data.pdfUrl ?? null}
                       displayMode="modal"
                       readerVariant={usesTechFuturisticReader ? "tech-futuristic" : "default"}
                       className="h-full w-full min-w-0"

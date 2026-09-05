@@ -1,7 +1,8 @@
 import "dotenv/config";
-import express from "express";
-import { createServer } from "http";
+import express, { type RequestHandler } from "express";
+import { createServer, type ServerResponse } from "http";
 import net from "net";
+import path from "node:path";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerStorageProxy } from "./storageProxy";
 import { appRouter } from "../routers";
@@ -15,6 +16,7 @@ import { registerAdminMemberManagement } from "./adminMemberManagement";
 import { registerAdminContentManagement } from "./adminContentManagement";
 import { registerAdminRelationshipMaintenance } from "./adminRelationshipMaintenance";
 import { serveStatic, setupVite } from "./vite";
+import { PACKAGED_EBOOK_FILE_ROUTE } from "../staticEbooks";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -35,6 +37,36 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
   throw new Error(`No available port found starting from ${startPort}`);
 }
 
+function createPackagedEbookFilesMiddleware(): RequestHandler {
+  const importRoot = process.env.EBOOK_IMPORT_ROOT || path.resolve(process.cwd(), "ebook-import");
+  const pdfRoot = path.join(importRoot, "fontes_importados");
+  const staticPdfFiles = express.static(pdfRoot, {
+    fallthrough: false,
+    setHeaders(response: ServerResponse, filePath: string) {
+      if (!filePath.toLowerCase().endsWith(".pdf")) return;
+      response.setHeader("Cache-Control", "public, max-age=86400");
+      response.setHeader("Content-Disposition", "inline");
+      response.setHeader("Content-Type", "application/pdf");
+      response.setHeader("X-Content-Type-Options", "nosniff");
+    },
+  });
+
+  return (request, response, next) => {
+    if (!request.path.toLowerCase().endsWith(".pdf")) {
+      response.status(404).send("E-book não encontrado.");
+      return;
+    }
+
+    staticPdfFiles(request, response, next);
+  };
+}
+
+function registerPackagedEbookFiles(app: express.Express, appPrefix: string) {
+  const filesMiddleware = createPackagedEbookFilesMiddleware();
+  app.use(PACKAGED_EBOOK_FILE_ROUTE, filesMiddleware);
+  if (appPrefix) app.use(`${appPrefix}${PACKAGED_EBOOK_FILE_ROUTE}`, filesMiddleware);
+}
+
 async function startServer() {
   const app = express();
   const server = createServer(app);
@@ -42,6 +74,7 @@ async function startServer() {
   const trpcPaths = Array.from(new Set(["/api/trpc", appPrefix ? `${appPrefix}/api/trpc` : null].filter((path): path is string => Boolean(path))));
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  registerPackagedEbookFiles(app, appPrefix);
   registerStorageProxy(app);
   registerAffiliateLinkTracking(app);
   registerPublicToastConfig(app, appPrefix);

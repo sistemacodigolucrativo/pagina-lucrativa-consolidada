@@ -1,10 +1,11 @@
 import { calculateResponsiveEbookScale } from "@shared/ebookReader";
-import { Bookmark, CheckCircle2, Layers, Maximize2, Minimize2, Monitor, Moon, Smartphone, Tablet } from "lucide-react";
+import { Bookmark, CheckCircle2, ExternalLink, Layers, Maximize2, Minimize2, Monitor, Moon, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 type ResponsiveEbookFrameProps = {
   title: string;
   htmlContent: string;
+  pdfUrl?: string | null;
   className?: string;
   displayMode?: "embedded" | "modal";
   readerVariant?: "default" | "tech-futuristic";
@@ -44,6 +45,7 @@ function getNumericStyle(style: CSSStyleDeclaration, property: string) {
 export default function ResponsiveEbookFrame({
   title,
   htmlContent,
+  pdfUrl = null,
   className = "",
   displayMode = "embedded",
   readerVariant = "default",
@@ -55,6 +57,7 @@ export default function ResponsiveEbookFrame({
   const [isTemplateMenuOpen, setIsTemplateMenuOpen] = useState(false);
   const isModal = displayMode === "modal";
   const isTechFuturistic = readerVariant === "tech-futuristic";
+  const hasPdfSource = Boolean(pdfUrl);
 
   const fitStudioOriginalContent = useCallback((document: Document) => {
     const viewports = Array.from(document.querySelectorAll<HTMLElement>(".cl-original-viewport"));
@@ -106,6 +109,8 @@ export default function ResponsiveEbookFrame({
   }, []);
 
   const fitDocument = useCallback(() => {
+    if (hasPdfSource) return;
+
     const frame = frameRef.current;
     const document = frame?.contentDocument;
     if (!frame || !document?.body) return;
@@ -227,7 +232,7 @@ export default function ResponsiveEbookFrame({
     html.style.setProperty("min-height", "100%", "important");
     scaleRoot.style.setProperty("width", "100%", "important");
     scaleRoot.style.setProperty("max-width", "100%", "important");
-  }, [fitStudioOriginalContent]);
+  }, [fitStudioOriginalContent, hasPdfSource]);
 
   useEffect(() => {
     const frame = frameRef.current;
@@ -285,6 +290,8 @@ export default function ResponsiveEbookFrame({
   };
 
   const handleLoad = () => {
+    if (hasPdfSource) return;
+
     const document = frameRef.current?.contentDocument;
     const images = Array.from(document?.images ?? []);
 
@@ -306,6 +313,8 @@ export default function ResponsiveEbookFrame({
   };
 
   const jumpToSection = (target: string) => {
+    if (hasPdfSource) return;
+
     frameRef.current?.contentDocument?.querySelector(target)?.scrollIntoView({ behavior: "smooth", block: "start" });
     window.setTimeout(fitDocument, 220);
   };
@@ -357,23 +366,37 @@ export default function ResponsiveEbookFrame({
               </span>
             </div>
 
-            <div className="hidden items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1 text-[11px] xl:flex">
-              <span className="flex items-center gap-1 px-1.5 font-semibold text-neutral-500">
-                <Bookmark className="size-3 text-neutral-400" aria-hidden="true" /> Ir para:
-              </span>
-              {techJumpSections.map(section => (
-                <button
-                  key={section.target}
-                  type="button"
-                  onClick={() => jumpToSection(section.target)}
-                  className="rounded px-2 py-1 text-neutral-300 transition hover:bg-neutral-800 hover:text-white"
-                >
-                  {section.label}
-                </button>
-              ))}
-            </div>
+            {!hasPdfSource ? (
+              <div className="hidden items-center gap-1 rounded-lg border border-neutral-800 bg-neutral-900 px-2 py-1 text-[11px] xl:flex">
+                <span className="flex items-center gap-1 px-1.5 font-semibold text-neutral-500">
+                  <Bookmark className="size-3 text-neutral-400" aria-hidden="true" /> Ir para:
+                </span>
+                {techJumpSections.map(section => (
+                  <button
+                    key={section.target}
+                    type="button"
+                    onClick={() => jumpToSection(section.target)}
+                    className="rounded px-2 py-1 text-neutral-300 transition hover:bg-neutral-800 hover:text-white"
+                  >
+                    {section.label}
+                  </button>
+                ))}
+              </div>
+            ) : null}
 
             <div className="flex items-center gap-2">
+              {hasPdfSource ? (
+                <a
+                  href={pdfUrl ?? undefined}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-2.5 py-2 text-xs font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/20 hover:text-white"
+                  title="Abrir PDF em nova aba"
+                >
+                  <ExternalLink className="size-4" aria-hidden="true" />
+                  <span className="hidden sm:inline">ABRIR PDF</span>
+                </a>
+              ) : null}
               <div className="flex items-center rounded-lg border border-neutral-800 bg-neutral-900 p-0.5">
                 <button
                   type="button"
@@ -479,8 +502,9 @@ export default function ResponsiveEbookFrame({
             <iframe
               ref={frameRef}
               title={title}
-              sandbox="allow-same-origin"
-              srcDoc={htmlContent}
+              sandbox={hasPdfSource ? undefined : "allow-same-origin"}
+              src={pdfUrl ?? undefined}
+              srcDoc={hasPdfSource ? undefined : htmlContent}
               onLoad={handleLoad}
               className="block min-h-0 w-full max-w-full min-w-0 flex-1 border-0 bg-[#050811]"
             />
@@ -525,6 +549,17 @@ export default function ResponsiveEbookFrame({
         <p className="min-w-0 truncate text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
           {isFullscreen ? "Leitura ampliada" : "Leitor integrado"}
         </p>
+        {hasPdfSource ? (
+          <a
+            href={pdfUrl ?? undefined}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+            Abrir PDF
+          </a>
+        ) : null}
         <button
           type="button"
           onClick={() => void toggleFullscreen()}
@@ -539,8 +574,9 @@ export default function ResponsiveEbookFrame({
       <iframe
         ref={frameRef}
         title={title}
-        sandbox="allow-same-origin"
-        srcDoc={htmlContent}
+        sandbox={hasPdfSource ? undefined : "allow-same-origin"}
+        src={pdfUrl ?? undefined}
+        srcDoc={hasPdfSource ? undefined : htmlContent}
         onLoad={handleLoad}
         className={`block w-full max-w-full min-w-0 border-0 bg-white ${isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}`}
       />
