@@ -16,6 +16,23 @@ type DeviceView = "responsive" | "tablet" | "mobile";
 const scaleRootId = "codigo-lucrativo-ebook-scale-root";
 const studioLayoutBodyClass = "codigo-lucrativo-tech-shell";
 
+function getEmbeddedPdfFrameSource(pdfUrl: string | null) {
+  if (!pdfUrl) return undefined;
+
+  if (typeof window === "undefined") return pdfUrl;
+
+  try {
+    const absolutePdfUrl = new URL(pdfUrl, window.location.href).toString();
+    const host = window.location.hostname.toLowerCase();
+    const isLocalHost = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
+    if (isLocalHost) return absolutePdfUrl;
+
+    return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(absolutePdfUrl)}`;
+  } catch {
+    return pdfUrl;
+  }
+}
+
 const techJumpSections = [
   { label: "Capa", target: "#capa" },
   { label: "Introdução", target: "#introducao" },
@@ -58,6 +75,7 @@ export default function ResponsiveEbookFrame({
   const isModal = displayMode === "modal";
   const isTechFuturistic = readerVariant === "tech-futuristic";
   const hasPdfSource = Boolean(pdfUrl);
+  const pdfFrameSource = hasPdfSource ? getEmbeddedPdfFrameSource(pdfUrl) : undefined;
 
   const fitStudioOriginalContent = useCallback((document: Document) => {
     const viewports = Array.from(document.querySelectorAll<HTMLElement>(".cl-original-viewport"));
@@ -503,7 +521,7 @@ export default function ResponsiveEbookFrame({
               ref={frameRef}
               title={title}
               sandbox={hasPdfSource ? undefined : "allow-same-origin"}
-              src={pdfUrl ?? undefined}
+              src={pdfFrameSource}
               srcDoc={hasPdfSource ? undefined : htmlContent}
               onLoad={handleLoad}
               className="block min-h-0 w-full max-w-full min-w-0 flex-1 border-0 bg-[#050811]"
@@ -575,7 +593,7 @@ export default function ResponsiveEbookFrame({
         ref={frameRef}
         title={title}
         sandbox={hasPdfSource ? undefined : "allow-same-origin"}
-        src={pdfUrl ?? undefined}
+        src={pdfFrameSource}
         srcDoc={hasPdfSource ? undefined : htmlContent}
         onLoad={handleLoad}
         className={`block w-full max-w-full min-w-0 border-0 bg-white ${isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}`}
