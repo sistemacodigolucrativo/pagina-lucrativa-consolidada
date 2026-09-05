@@ -54,6 +54,7 @@ describe("módulo de e-books", () => {
     expect(reader).toContain("docs.google.com/gview?embedded=1");
     expect(reader).toContain('sandbox={hasPdfSource ? undefined : "allow-same-origin"}');
     expect(reader).toContain("src={pdfFrameSource}");
+    expect(reader).toContain("href={pdfFrameSource}");
     expect(reader).toContain("srcDoc={hasPdfSource ? undefined : htmlContent}");
     expect(reader).toContain("Abrir PDF");
     expect(reader).toContain("calculateResponsiveEbookScale");
