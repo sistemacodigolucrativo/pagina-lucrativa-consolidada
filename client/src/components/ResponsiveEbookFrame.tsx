@@ -1,6 +1,10 @@
 import { calculateResponsiveEbookScale } from "@shared/ebookReader";
+import { getDocument, GlobalWorkerOptions, type PDFDocumentProxy } from "pdfjs-dist";
+import pdfWorkerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 import { Bookmark, CheckCircle2, ExternalLink, Layers, Maximize2, Minimize2, Monitor, Moon, Smartphone, Tablet } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+
+GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 type ResponsiveEbookFrameProps = {
   title: string;
@@ -16,21 +20,186 @@ type DeviceView = "responsive" | "tablet" | "mobile";
 const scaleRootId = "codigo-lucrativo-ebook-scale-root";
 const studioLayoutBodyClass = "codigo-lucrativo-tech-shell";
 
-function getEmbeddedPdfFrameSource(pdfUrl: string | null) {
-  if (!pdfUrl) return undefined;
+type PdfReaderStatus = "loading" | "ready" | "error";
 
-  if (typeof window === "undefined") return pdfUrl;
+type PdfCanvasPageProps = {
+  pdfDoc: PDFDocumentProxy;
+  pageNumber: number;
+  containerWidth: number;
+  zoom: number;
+};
 
-  try {
-    const absolutePdfUrl = new URL(pdfUrl, window.location.href).toString();
-    const host = window.location.hostname.toLowerCase();
-    const isLocalHost = host === "localhost" || host === "127.0.0.1" || host === "[::1]";
-    if (isLocalHost) return absolutePdfUrl;
+function isPdfCancelError(error: unknown) {
+  return error instanceof Error && error.name === "RenderingCancelledException";
+}
 
-    return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(absolutePdfUrl)}`;
-  } catch {
-    return pdfUrl;
-  }
+function PdfCanvasPage({ pdfDoc, pageNumber, containerWidth, zoom }: PdfCanvasPageProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [status, setStatus] = useState<PdfReaderStatus>("loading");
+
+  useEffect(() => {
+    if (!containerWidth) return;
+
+    let cancelled = false;
+    let renderTask: { cancel: () => void; promise: Promise<unknown> } | null = null;
+
+    const renderPage = async () => {
+      setStatus("loading");
+      const page = await pdfDoc.getPage(pageNumber);
+      if (cancelled) return;
+
+      const canvas = canvasRef.current;
+      const canvasContext = canvas?.getContext("2d");
+      if (!canvas || !canvasContext) return;
+
+      const baseViewport = page.getViewport({ scale: 1 });
+      const availableWidth = Math.max(240, containerWidth - 32);
+      const fitScale = Math.min(1.8, Math.max(0.25, availableWidth / baseViewport.width));
+      const viewport = page.getViewport({ scale: fitScale * zoom });
+      const outputScale = Math.min(window.devicePixelRatio || 1, 2);
+      const transform = outputScale === 1 ? undefined : [outputScale, 0, 0, outputScale, 0, 0];
+
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
+      canvasContext.clearRect(0, 0, canvas.width, canvas.height);
+
+      renderTask = page.render({ canvasContext, viewport, transform });
+      await renderTask.promise;
+      if (!cancelled) setStatus("ready");
+    };
+
+    void renderPage().catch(error => {
+      if (!cancelled && !isPdfCancelError(error)) setStatus("error");
+    });
+
+    return () => {
+      cancelled = true;
+      renderTask?.cancel();
+    };
+  }, [containerWidth, pageNumber, pdfDoc, zoom]);
+
+  return (
+    <div className="relative flex w-full justify-center rounded-lg">
+      {status !== "ready" ? (
+        <div className="absolute inset-x-4 top-4 z-10 rounded-lg border border-slate-200 bg-white/90 px-3 py-2 text-center text-xs font-semibold text-slate-600 shadow-sm">
+          {status === "error" ? "Não foi possível renderizar esta página." : "Carregando página..."}
+        </div>
+      ) : null}
+      <canvas
+        ref={canvasRef}
+        aria-label={`Página ${pageNumber} do PDF`}
+        className="max-w-full rounded-lg bg-white shadow-[0_20px_50px_rgba(0,0,0,0.24)]"
+      />
+    </div>
+  );
+}
+
+function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; title: string; className?: string }) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
+  const [pageCount, setPageCount] = useState(0);
+  const [containerWidth, setContainerWidth] = useState(0);
+  const [zoom, setZoom] = useState(1);
+  const [status, setStatus] = useState<PdfReaderStatus>("loading");
+
+  useEffect(() => {
+    let cancelled = false;
+    const loadingTask = getDocument({ url: pdfUrl, withCredentials: true });
+
+    setStatus("loading");
+    setPdfDoc(null);
+    setPageCount(0);
+
+    void loadingTask.promise
+      .then(document => {
+        if (cancelled) {
+          void document.destroy();
+          return;
+        }
+
+        setPdfDoc(document);
+        setPageCount(document.numPages);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (!cancelled) setStatus("error");
+      });
+
+    return () => {
+      cancelled = true;
+      void loadingTask.destroy().catch(() => undefined);
+    };
+  }, [pdfUrl]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+
+    const updateWidth = () => setContainerWidth(viewport.clientWidth);
+    updateWidth();
+
+    if (typeof ResizeObserver === "undefined") {
+      window.addEventListener("resize", updateWidth);
+      return () => window.removeEventListener("resize", updateWidth);
+    }
+
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(viewport);
+    return () => observer.disconnect();
+  }, []);
+
+  const pageNumbers = Array.from({ length: pageCount }, (_, index) => index + 1);
+
+  return (
+    <section className={`flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-100 text-slate-900 ${className}`} aria-label={title}>
+      <div className="sticky top-0 z-20 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-200 bg-white/95 px-3 py-2 text-xs shadow-sm backdrop-blur">
+        <span className="font-semibold text-slate-700">
+          {status === "ready" ? `${pageCount} página${pageCount === 1 ? "" : "s"}` : status === "error" ? "Erro ao carregar PDF" : "Carregando PDF..."}
+        </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setZoom(value => Math.max(0.8, Number((value - 0.1).toFixed(2))))}
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            -
+          </button>
+          <span className="min-w-12 text-center font-semibold text-slate-600">{Math.round(zoom * 100)}%</span>
+          <button
+            type="button"
+            onClick={() => setZoom(value => Math.min(1.8, Number((value + 0.1).toFixed(2))))}
+            className="rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 transition hover:bg-slate-100"
+          >
+            +
+          </button>
+        </div>
+      </div>
+
+      <div ref={viewportRef} className="min-h-0 flex-1 overflow-auto px-2 py-4 sm:px-4">
+        {status === "error" ? (
+          <div className="mx-auto max-w-md rounded-xl border border-red-200 bg-white p-5 text-center text-sm text-red-700 shadow-sm">
+            Não foi possível carregar este PDF dentro do leitor.
+          </div>
+        ) : null}
+
+        {status === "loading" ? (
+          <div className="mx-auto max-w-md rounded-xl border border-slate-200 bg-white p-5 text-center text-sm font-semibold text-slate-600 shadow-sm">
+            Preparando leitura...
+          </div>
+        ) : null}
+
+        {pdfDoc ? (
+          <div className="mx-auto flex w-full max-w-full flex-col items-center gap-4">
+            {pageNumbers.map(pageNumber => (
+              <PdfCanvasPage key={pageNumber} pdfDoc={pdfDoc} pageNumber={pageNumber} containerWidth={containerWidth} zoom={zoom} />
+            ))}
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
 }
 
 const techJumpSections = [
@@ -75,7 +244,6 @@ export default function ResponsiveEbookFrame({
   const isModal = displayMode === "modal";
   const isTechFuturistic = readerVariant === "tech-futuristic";
   const hasPdfSource = Boolean(pdfUrl);
-  const pdfFrameSource = hasPdfSource ? getEmbeddedPdfFrameSource(pdfUrl) : undefined;
 
   const fitStudioOriginalContent = useCallback((document: Document) => {
     const viewports = Array.from(document.querySelectorAll<HTMLElement>(".cl-original-viewport"));
@@ -404,16 +572,15 @@ export default function ResponsiveEbookFrame({
 
             <div className="flex items-center gap-2">
               {hasPdfSource ? (
-                <a
-                  href={pdfFrameSource}
-                  target="_blank"
-                  rel="noreferrer"
+                <button
+                  type="button"
+                  onClick={() => void toggleFullscreen()}
                   className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-2.5 py-2 text-xs font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/20 hover:text-white"
-                  title="Abrir PDF em nova aba"
+                  title="Abrir PDF no leitor ampliado"
                 >
                   <ExternalLink className="size-4" aria-hidden="true" />
                   <span className="hidden sm:inline">ABRIR PDF</span>
-                </a>
+                </button>
               ) : null}
               <div className="flex items-center rounded-lg border border-neutral-800 bg-neutral-900 p-0.5">
                 <button
@@ -517,15 +684,18 @@ export default function ResponsiveEbookFrame({
                 {deviceView === "tablet" ? "SIMULAÇÃO TABLET - 768px" : "SIMULAÇÃO SMARTPHONE - 412px"}
               </div>
             ) : null}
-            <iframe
-              ref={frameRef}
-              title={title}
-              sandbox={hasPdfSource ? undefined : "allow-same-origin"}
-              src={pdfFrameSource}
-              srcDoc={hasPdfSource ? undefined : htmlContent}
-              onLoad={handleLoad}
-              className="block min-h-0 w-full max-w-full min-w-0 flex-1 border-0 bg-[#050811]"
-            />
+            {hasPdfSource && pdfUrl ? (
+              <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1 bg-[#050811]" />
+            ) : (
+              <iframe
+                ref={frameRef}
+                title={title}
+                sandbox="allow-same-origin"
+                srcDoc={htmlContent}
+                onLoad={handleLoad}
+                className="block min-h-0 w-full max-w-full min-w-0 flex-1 border-0 bg-[#050811]"
+              />
+            )}
           </div>
         </main>
 
@@ -568,15 +738,15 @@ export default function ResponsiveEbookFrame({
           {isFullscreen ? "Leitura ampliada" : "Leitor integrado"}
         </p>
         {hasPdfSource ? (
-          <a
-            href={pdfFrameSource}
-            target="_blank"
-            rel="noreferrer"
+          <button
+            type="button"
+            onClick={() => void toggleFullscreen()}
             className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
+            title="Abrir PDF no leitor ampliado"
           >
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
             Abrir PDF
-          </a>
+          </button>
         ) : null}
         <button
           type="button"
@@ -589,15 +759,22 @@ export default function ResponsiveEbookFrame({
           {isFullscreen ? "Sair" : "Ampliar"}
         </button>
       </div>
-      <iframe
-        ref={frameRef}
-        title={title}
-        sandbox={hasPdfSource ? undefined : "allow-same-origin"}
-        src={pdfFrameSource}
-        srcDoc={hasPdfSource ? undefined : htmlContent}
-        onLoad={handleLoad}
-        className={`block w-full max-w-full min-w-0 border-0 bg-white ${isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}`}
-      />
+      {hasPdfSource && pdfUrl ? (
+        <PdfCanvasReader
+          pdfUrl={pdfUrl}
+          title={title}
+          className={isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}
+        />
+      ) : (
+        <iframe
+          ref={frameRef}
+          title={title}
+          sandbox="allow-same-origin"
+          srcDoc={htmlContent}
+          onLoad={handleLoad}
+          className={`block w-full max-w-full min-w-0 border-0 bg-white ${isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}`}
+        />
+      )}
     </div>
   );
 }
