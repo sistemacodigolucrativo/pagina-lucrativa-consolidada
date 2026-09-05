@@ -405,7 +405,7 @@ export default function ResponsiveEbookFrame({
             <div className="flex items-center gap-2">
               {hasPdfSource ? (
                 <a
-                  href={pdfUrl ?? undefined}
+                  href={pdfFrameSource}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1.5 rounded-lg border border-cyan-400/40 bg-cyan-400/10 px-2.5 py-2 text-xs font-semibold text-cyan-100 transition-colors hover:bg-cyan-400/20 hover:text-white"
@@ -569,7 +569,7 @@ export default function ResponsiveEbookFrame({
         </p>
         {hasPdfSource ? (
           <a
-            href={pdfUrl ?? undefined}
+            href={pdfFrameSource}
             target="_blank"
             rel="noreferrer"
             className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition hover:border-slate-500 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2"
