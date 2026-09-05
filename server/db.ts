@@ -1175,12 +1175,16 @@ type EbookInput = {
   createdBy: number;
 };
 
-const ebookContentDefaults = {
-  contentType: "text/html" as const,
-  pdfPath: null as string | null,
-  pdfUrl: null as string | null,
+type EbookContentMetadata = {
+  contentType: "application/pdf" | "text/html";
+  pdfPath: string | null;
+  pdfUrl: string | null;
 };
-type EbookContentMetadata = typeof ebookContentDefaults;
+const ebookContentDefaults: EbookContentMetadata = {
+  contentType: "text/html",
+  pdfPath: null,
+  pdfUrl: null,
+};
 type EbookContentLookupSource = {
   sourceId?: string | null;
   sourcePath?: string | null;
