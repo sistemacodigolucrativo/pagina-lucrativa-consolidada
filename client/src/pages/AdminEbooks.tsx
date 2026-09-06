@@ -110,7 +110,7 @@ const newForm = (): EbookForm => ({
   title: "",
   summary: "",
   htmlContent: createPdfFallbackHtml("Novo curso"),
-  status: "draft",
+  status: "published",
   pdfUpload: null,
   usage: "course",
   academyCourseTitle: "",
@@ -330,8 +330,8 @@ export default function AdminEbooks() {
           <aside className="order-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-3 lg:order-1">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
               <div>
-                <h2 className="text-sm font-semibold text-white">Cursos publicados</h2>
-                <p className="text-xs text-zinc-500">{courseMaterials.length} PDFs em cursos{pendingCourseMaterials.length ? ` · ${pendingCourseMaterials.length} pendentes` : ""}</p>
+                <h2 className="text-sm font-semibold text-white">Cursos cadastrados</h2>
+                <p className="text-xs text-zinc-500">{courseMaterials.length} PDFs cadastrados{pendingCourseMaterials.length ? ` · ${pendingCourseMaterials.length} pendentes` : ""}</p>
               </div>
               <button type="button" onClick={resetForm} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-emerald-200">
                 <PlusCircle className="size-4" />
@@ -421,7 +421,7 @@ export default function AdminEbooks() {
                 <div className="min-w-0">
                   <h2 className="text-lg font-medium text-white">{selectedId ? "Editar curso" : "Novo curso"}</h2>
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">
-                    Defina o curso primeiro, depois envie o PDF que fará parte da sequência.
+                    Defina o curso primeiro, depois envie o PDF que fará parte da sequência. Cursos em rascunho não aparecem para membros.
                   </p>
                 </div>
                 {selectedId && (
@@ -476,12 +476,22 @@ export default function AdminEbooks() {
                   <label className="text-sm text-zinc-200">
                     Status
                     <select value={form.status} onChange={event => setForm({ ...form, status: event.target.value as EbookStatus })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white">
-                      <option value="draft">Rascunho</option>
                       <option value="published">Publicado</option>
+                      <option value="draft">Rascunho</option>
                       <option value="archived">Arquivado</option>
                     </select>
                   </label>
                 </div>
+
+                {form.status !== "published" ? (
+                  <p className="rounded-lg border border-amber-300/25 bg-amber-300/5 px-3 py-2 text-xs leading-5 text-amber-100">
+                    Este curso está como {form.status === "draft" ? "rascunho" : "arquivado"} e não aparece na Academia do membro.
+                  </p>
+                ) : (
+                  <p className="rounded-lg border border-emerald-300/20 bg-emerald-300/5 px-3 py-2 text-xs leading-5 text-emerald-100">
+                    Publicado: este curso aparece para membros assim que tiver curso definido e PDF salvo.
+                  </p>
+                )}
 
                 <label className="block text-sm text-zinc-200">
                   Arquivo PDF
@@ -508,7 +518,7 @@ export default function AdminEbooks() {
 
               <button disabled={pending} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-emerald-200 disabled:opacity-60 sm:w-auto">
                 <Save className="size-4" />
-                {pending ? "Salvando..." : selectedId ? "Salvar curso" : "Criar curso"}
+                {pending ? "Salvando..." : selectedId ? "Salvar curso" : "Publicar curso"}
               </button>
             </form>
 
