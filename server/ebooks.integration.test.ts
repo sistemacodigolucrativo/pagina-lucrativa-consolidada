@@ -105,6 +105,7 @@ describe("módulo de e-books", () => {
     expect(memberCourses).toContain("courseEbooks");
     expect(memberCourses).toContain('aria-label="Materiais do curso"');
     expect(memberCourses).toContain("pdfUrl={activeEbook.pdfUrl ?? null}");
+    expect(memberCourses).toContain("courses.isError");
     expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
     expect(admin).toContain("Academia</h1>");
     expect(admin).toContain("readPdfFile");
@@ -113,6 +114,7 @@ describe("módulo de e-books", () => {
     expect(admin).toContain('accept=".pdf,application/pdf"');
     expect(admin).toContain("createPdfFallbackHtml");
     expect(admin).toContain("codigo-lucrativo-academy");
+    expect(admin).toContain("inferAcademyMetadataFromPath");
     expect(admin).toContain("Dados do curso");
     expect(admin).toContain("Publicados sem curso");
     expect(admin).toContain("Todo PDF publicado nesta tela entra como material de curso");
@@ -146,6 +148,8 @@ describe("módulo de e-books", () => {
     expect(db).toContain("ACADEMY_METADATA_NAME");
     expect(db).toContain("getAcademyEbookCourses");
     expect(db).toContain("buildAcademyCoursesFromEbooks");
+    expect(db).toContain("inferEbookAcademyMetadataFromPath");
+    expect(db).toContain("ebooks\\/cursos");
     expect(db).toContain('storagePut(`ebooks/${storageGroup}/${sourceId}/${filename}`');
     expect(db).toContain("return enriched.filter(isEbookVisibleInLibrary)");
     expect(storageProxy).toContain('key.toLowerCase().endsWith(".pdf")');
