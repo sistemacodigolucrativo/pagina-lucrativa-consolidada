@@ -264,7 +264,7 @@ export default function AdminEbooks() {
                 <input type="file" accept=".pdf,application/pdf" onChange={handlePdfChange} className="sr-only" />
               </label>
 
-              {hasExistingPdf ? (
+              {currentPdfUrl ? (
                 <a href={currentPdfUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300/50 hover:text-emerald-100">
                   <ExternalLink className="size-4" />
                   Ver PDF atual
