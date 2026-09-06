@@ -1281,6 +1281,39 @@ function slugifyAcademyCourseTitle(value: string) {
     .slice(0, 96) || "curso";
 }
 
+function titleFromAcademyCourseSlug(value: string) {
+  return value
+    .split("-")
+    .filter(Boolean)
+    .map(part => part.slice(0, 1).toUpperCase() + part.slice(1))
+    .join(" ") || "Curso";
+}
+
+function inferEbookAcademyMetadataFromPath(ebook: { sourcePath?: string | null }): EbookAcademyMetadata | null {
+  const sourcePath = ebook.sourcePath?.trim();
+  if (!sourcePath) return null;
+
+  let decodedPath = sourcePath;
+  try {
+    decodedPath = decodeURIComponent(sourcePath);
+  } catch {
+    decodedPath = sourcePath;
+  }
+
+  const courseSlug = decodedPath.match(/(?:^|\/)ebooks\/cursos\/([^\/?#]+)/i)?.[1];
+  if (!courseSlug) return null;
+
+  const normalizedSlug = slugifyAcademyCourseTitle(courseSlug);
+  return {
+    usage: "course",
+    courseTitle: titleFromAcademyCourseSlug(normalizedSlug),
+    courseSlug: normalizedSlug,
+    courseCategory: "Academia",
+    lessonOrder: 0,
+    level: "fundamentos",
+  };
+}
+
 function normalizeEbookAcademyMetadata(value: unknown): EbookAcademyMetadata | null {
   if (!value || typeof value !== "object") return null;
   const data = value as Partial<EbookAcademyMetadata>;
@@ -1301,22 +1334,24 @@ function normalizeEbookAcademyMetadata(value: unknown): EbookAcademyMetadata | n
   };
 }
 
-function extractEbookAcademyMetadata(ebook: { htmlContent?: string | null }): EbookAcademyMetadata | null {
+function extractEbookAcademyMetadata(ebook: { htmlContent?: string | null; sourcePath?: string | null }): EbookAcademyMetadata | null {
+  const inferredFromPath = inferEbookAcademyMetadataFromPath(ebook);
   const tag = ebook.htmlContent?.match(new RegExp(`<meta\\s+[^>]*name=["']${ACADEMY_METADATA_NAME}["'][^>]*>`, "i"))?.[0];
   const encoded = tag?.match(/\\scontent=["']([^"']+)["']/i)?.[1];
-  if (!encoded) return null;
+  if (!encoded) return inferredFromPath;
   try {
-    return normalizeEbookAcademyMetadata(JSON.parse(decodeURIComponent(encoded)));
+    const metadata = normalizeEbookAcademyMetadata(JSON.parse(decodeURIComponent(encoded)));
+    return metadata?.usage === "course" || metadata?.usage === "both" ? metadata : inferredFromPath ?? metadata;
   } catch {
-    return null;
+    return inferredFromPath;
   }
 }
 
-function withEbookAcademyMetadata<T extends object & { htmlContent?: string | null }>(ebook: T) {
+function withEbookAcademyMetadata<T extends object & { htmlContent?: string | null; sourcePath?: string | null }>(ebook: T) {
   return { ...ebook, academy: extractEbookAcademyMetadata(ebook) };
 }
 
-function isEbookVisibleInLibrary(ebook: { htmlContent?: string | null }) {
+function isEbookVisibleInLibrary(ebook: { htmlContent?: string | null; sourcePath?: string | null }) {
   return extractEbookAcademyMetadata(ebook)?.usage !== "course";
 }
 
