@@ -12,6 +12,9 @@ describe("módulo de e-books", () => {
     expect(router).toContain("ebooks: adminProcedure.query(() => getAdminEbooks())");
     expect(router).toContain("createEbook: adminProcedure.input(ebookInput)");
     expect(router).toContain("updateEbook: adminProcedure.input(ebookInput.extend");
+    expect(router).toContain("const ebookPdfUploadInput = z.object");
+    expect(router).toContain('contentType: z.literal("application/pdf")');
+    expect(router).toContain("pdfUpload: ebookPdfUploadInput.optional().nullable()");
   });
 
   it("registra as rotas e a biblioteca no menu do Escritório Virtual", async () => {
@@ -95,16 +98,21 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("pb-[calc(env(safe-area-inset-bottom)+0.25rem)]");
     expect(memberReader).toContain('className="h-full w-full min-w-0"');
     expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
-    expect(admin).toContain("E-books PDF e HTML");
-    expect(admin).toContain("HTML do e-book (fallback)");
-    expect(admin).toContain('sandbox=""');
-    expect(admin).toContain("srcDoc={form.htmlContent}");
+    expect(admin).toContain("E-books em PDF");
+    expect(admin).toContain("readPdfFile");
+    expect(admin).toContain("MAX_PDF_BYTES");
+    expect(admin).toContain('type="file"');
+    expect(admin).toContain('accept=".pdf,application/pdf"');
+    expect(admin).toContain("createPdfFallbackHtml");
+    expect(admin).not.toContain("HTML do e-book (fallback)");
+    expect(admin).not.toContain("srcDoc={form.htmlContent}");
   });
 
   it("expõe os PDFs importados por rota estática e remove a dependência dos HTMLs empacotados", async () => {
     const server = await readFile(path.join(root, "server/_core/index.ts"), "utf8");
     const staticEbooks = await readFile(path.join(root, "server/staticEbooks.ts"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const storageProxy = await readFile(path.join(root, "server/_core/storageProxy.ts"), "utf8");
 
     expect(staticEbooks).toContain('PACKAGED_EBOOK_FILE_ROUTE = "/ebook-files"');
     expect(staticEbooks).toContain('contentType: "application/pdf" as const');
@@ -115,7 +123,15 @@ describe("módulo de e-books", () => {
     expect(db).toContain("withEbookContentDefaults");
     expect(db).toContain("getPackagedEbookContentMetadataBySource");
     expect(db).toContain("withPackagedEbookContentMetadata");
+    expect(db).toContain("getUploadedPdfMetadata");
+    expect(db).toContain("parseEbookPdfUpload");
+    expect(db).toContain('buffer.subarray(0, 5).toString("ascii") !== "%PDF-"');
+    expect(db).toContain('storagePut(`ebooks/${sourceId}/${filename}`');
     expect(db).toContain("return result.length ? withPackagedEbookContentMetadata(result) : getPackagedEbooks()");
+    expect(storageProxy).toContain('key.toLowerCase().endsWith(".pdf")');
+    expect(storageProxy).toContain('res.set("Content-Disposition", "inline")');
+    expect(storageProxy).toContain('res.set("Content-Type", "application/pdf")');
+    expect(storageProxy).toContain('res.set("X-Content-Type-Options", "nosniff")');
   });
 
   it("ativa o leitor Tech Futuristic integral para e-books de copy e vendas", async () => {
