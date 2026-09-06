@@ -2,6 +2,7 @@ import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardL
 import ResponsiveEbookFrame from "@/components/ResponsiveEbookFrame";
 import { trpc } from "@/lib/trpc";
 import { ArrowLeft, BookOpenCheck, CheckCircle2, GraduationCap, LayoutDashboard, LoaderCircle, PlayCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -13,12 +14,21 @@ const menu: DashboardMenuItem[] = [
 
 const levelLabel = { fundamentos: "Fundamentos", pratica: "Prática", avancado: "Avançado" } as const;
 
+type CourseEbook = {
+  id: number;
+  title: string;
+  summary?: string | null;
+  htmlContent: string;
+  pdfUrl?: string | null;
+};
+
 export default function MemberCourses() {
   const [location, setLocation] = useLocation();
   const utils = trpc.useUtils();
   const courses = trpc.member.courses.useQuery();
   const routeKey = location === "/membros/academia" ? null : location.replace(/^\/membros\/curso\//, "").replace(/^\/membros\//, "");
   const currentCourse = trpc.member.course.useQuery({ routeKey: routeKey || "curso" }, { enabled: Boolean(routeKey) });
+  const [activeEbookId, setActiveEbookId] = useState<number | null>(null);
   const updateProgress = trpc.member.updateCourseProgress.useMutation({
     onSuccess: () => {
       void utils.member.courses.invalidate();
@@ -29,8 +39,23 @@ export default function MemberCourses() {
     onError: error => toast.error(error.message),
   });
 
+  const course = currentCourse.data as (typeof currentCourse.data & { ebooks?: CourseEbook[]; ebookCount?: number }) | null | undefined;
+  const courseEbooks = useMemo(() => {
+    if (!course) return [] as CourseEbook[];
+    if (Array.isArray(course.ebooks) && course.ebooks.length) return course.ebooks;
+    return course.ebook ? [course.ebook as CourseEbook] : [];
+  }, [course]);
+  const courseEbookKey = courseEbooks.map(ebook => ebook.id).join(",");
+  const activeEbook = courseEbooks.find(ebook => ebook.id === activeEbookId) ?? courseEbooks[0] ?? null;
+
+  useEffect(() => {
+    if (!routeKey || !courseEbooks.length) return;
+    if (!activeEbook || !courseEbooks.some(ebook => ebook.id === activeEbook.id)) {
+      setActiveEbookId(courseEbooks[0].id);
+    }
+  }, [activeEbook, courseEbookKey, courseEbooks, routeKey]);
+
   if (routeKey) {
-    const course = currentCourse.data;
     return (
       <DashboardLayout menuItems={menu} title="Escritório Virtual">
         <main className="mx-auto w-full max-w-7xl space-y-5 p-4 sm:p-8">
@@ -49,12 +74,32 @@ export default function MemberCourses() {
                 {course.summary && <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-300">{course.summary}</p>}
                 <div className="mt-4 flex flex-wrap items-center gap-3">
                   <span className="text-sm text-zinc-400">Progresso: <strong className="text-emerald-200">{course.progressPercent}%</strong></span>
+                  <span className="text-sm text-zinc-500">{courseEbooks.length} {courseEbooks.length === 1 ? "material" : "materiais"}</span>
                   <button type="button" disabled={updateProgress.isPending || course.progressPercent >= 100} onClick={() => updateProgress.mutate({ courseId: course.id, progressPercent: Math.min(100, course.progressPercent + 20) })} className="rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black disabled:opacity-50">{course.progressPercent >= 100 ? "Concluído" : "Registrar avanço"}</button>
                   <button type="button" disabled={updateProgress.isPending || course.progressPercent === 100} onClick={() => updateProgress.mutate({ courseId: course.id, progressPercent: 100 })} className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-100 disabled:opacity-50"><CheckCircle2 className="size-4" />Concluir leitura</button>
                 </div>
               </header>
+              {courseEbooks.length > 1 ? (
+                <nav className="flex gap-2 overflow-x-auto border-b border-white/10 bg-black/20 p-3" aria-label="Materiais do curso">
+                  {courseEbooks.map((ebook, index) => (
+                    <button
+                      key={ebook.id}
+                      type="button"
+                      onClick={() => setActiveEbookId(ebook.id)}
+                      className={`shrink-0 rounded-lg border px-3 py-2 text-left text-sm transition ${activeEbook?.id === ebook.id ? "border-emerald-300/70 bg-emerald-300/15 text-emerald-100" : "border-white/10 bg-white/5 text-zinc-300 hover:border-emerald-300/40"}`}
+                    >
+                      <span className="block text-xs text-zinc-500">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="block max-w-56 truncate">{ebook.title}</span>
+                    </button>
+                  ))}
+                </nav>
+              ) : null}
               <div className="min-w-0 bg-black/20 p-2 sm:p-4">
-                <ResponsiveEbookFrame title={`Leitor de ${course.ebook.title}`} htmlContent={course.ebook.htmlContent} />
+                {activeEbook ? (
+                  <ResponsiveEbookFrame title={`Leitor de ${activeEbook.title}`} htmlContent={activeEbook.htmlContent} pdfUrl={activeEbook.pdfUrl ?? null} />
+                ) : (
+                  <section className="rounded-xl border border-white/10 bg-black/30 p-5 text-sm text-zinc-300">Nenhum PDF publicado para este curso.</section>
+                )}
               </div>
             </section>
           ) : (
@@ -94,7 +139,7 @@ export default function MemberCourses() {
                   <div className="mt-4 flex flex-wrap items-center gap-2">
                     <button type="button" onClick={() => setLocation(`/membros/curso/${course.routeKey}`)} className="inline-flex items-center gap-1 rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black"><PlayCircle className="size-4" />Abrir material de execução</button>
                     <button type="button" disabled={updateProgress.isPending || course.progressPercent >= 100} onClick={() => updateProgress.mutate({ courseId: course.id, progressPercent: Math.min(100, course.progressPercent + 20) })} className="rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-100 disabled:opacity-50">{course.progressPercent >= 100 ? "Concluído" : "Avançar 20%"}</button>
-                    <span className="ml-auto text-xs text-zinc-500">{course.durationMinutes ? `${course.durationMinutes} min` : "Duração a definir"}</span>
+                    <span className="ml-auto text-xs text-zinc-500">{"ebookCount" in course && course.ebookCount ? `${course.ebookCount} materiais` : course.durationMinutes ? `${course.durationMinutes} min` : "Duração a definir"}</span>
                   </div>
                 </div>
               </article>
