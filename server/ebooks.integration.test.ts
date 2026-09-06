@@ -22,9 +22,10 @@ describe("módulo de e-books", () => {
     const navigation = await readFile(path.join(root, "shared/memberOfficeContent.ts"), "utf8");
     const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
     expect(app).toContain('path="/membros/ebooks" component={EbookReader}');
-    expect(app).toContain('path="/admin/ebooks" component={AdminEbooks}');
+    expect(app).toContain('path="/admin/academia" component={AdminEbooks}');
+    expect(app).toContain('path="/admin/ebooks" component={AdminEbooksRedirect}');
     expect(navigation).toContain('label: "Biblioteca de e-books", path: "/membros/ebooks"');
-    expect(adminNavigation).toContain('label: "Academia", path: "/admin/ebooks"');
+    expect(adminNavigation).toContain('label: "Academia", path: "/admin/academia"');
     expect(adminNavigation).not.toContain('label: "E-books", path: "/admin/ebooks"');
   });
 
@@ -113,6 +114,7 @@ describe("módulo de e-books", () => {
     expect(admin).toContain("createPdfFallbackHtml");
     expect(admin).toContain("codigo-lucrativo-academy");
     expect(admin).toContain("Dados do curso");
+    expect(admin).toContain("Publicados sem curso");
     expect(admin).toContain("Todo PDF publicado nesta tela entra como material de curso");
     expect(admin).not.toContain("E-book avulso");
     expect(admin).not.toContain("Curso e biblioteca");
