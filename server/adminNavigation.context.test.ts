@@ -29,10 +29,10 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('label: "Catálogo"');
   });
 
-  it("unifica Academia e E-books no fluxo de PDFs da Capacitação", () => {
+  it("usa a rota canônica da Academia no fluxo de PDFs da Capacitação", () => {
     const navigation = read("client/src/lib/adminNavigation.ts");
-    expect(navigation).toContain('label: "Academia", path: "/admin/ebooks", group: "Capacitação"');
-    expect(navigation).not.toContain('label: "Academia", path: "/admin/academia", group: "Capacitação"');
+    expect(navigation).toContain('label: "Academia", path: "/admin/academia", group: "Capacitação"');
+    expect(navigation).not.toContain('label: "Academia", path: "/admin/ebooks", group: "Capacitação"');
     expect(navigation).not.toContain('label: "E-books", path: "/admin/ebooks", group: "Capacitação"');
     expect(navigation).not.toContain('label: "Academia", path: "/admin/academia", group: "Conteúdo"');
     expect(navigation).not.toContain('label: "E-books", path: "/admin/ebooks", group: "Conteúdo"');
