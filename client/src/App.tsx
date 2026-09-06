@@ -15,7 +15,6 @@ import MemberReceiving from "./pages/MemberReceiving";
 import MemberAffiliateOrders from "./pages/MemberAffiliateOrders";
 import MemberPerformance from "./pages/MemberPerformance";
 import MemberCourses from "./pages/MemberCourses";
-import AdminCourses from "./pages/AdminCourses";
 import AdminPublications from "@/pages/AdminPublications";
 import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";
 import Preview from "@/pages/Preview";
@@ -135,7 +134,7 @@ function AppRoutes() {
     <Route path="/admin/pedidos" component={AdminOperations} />
     <Route path="/admin/financeiro" component={AdminOperations} />
     <Route path="/admin/relatos" component={AdminTestimonials} />
-    <Route path="/admin/academia" component={AdminCourses} />
+    <Route path="/admin/academia" component={AdminEbooks} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />
