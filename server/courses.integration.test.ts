@@ -12,6 +12,8 @@ describe("Academia com leitor integrado", () => {
     expect(schema).toContain('routeKey: varchar("routeKey", { length: 160 }).notNull()');
     expect(schema).toContain('ebookId: int("ebookId")');
     expect(data).toContain("getMemberCourseByRouteKey");
+    expect(data).toContain("getAcademyEbookCourses");
+    expect(data).toContain("ACADEMY_EBOOK_COURSE_ID_OFFSET");
     expect(data).toContain("Vincule um e-book publicado antes de disponibilizar este curso.");
     expect(router).toContain("course: protectedProcedure.input");
   });
@@ -23,7 +25,10 @@ describe("Academia com leitor integrado", () => {
     expect(app).toContain('path="/membros/curso-google-ads" component={MemberCourses}');
     expect(app).toContain('path="/membros/curso/:courseKey" component={MemberCourses}');
     expect(memberCourses).toContain("ResponsiveEbookFrame");
-    expect(memberCourses).toContain("htmlContent={course.ebook.htmlContent}");
+    expect(memberCourses).toContain("courseEbooks");
+    expect(memberCourses).toContain("activeEbook");
+    expect(memberCourses).toContain("htmlContent={activeEbook.htmlContent}");
+    expect(memberCourses).toContain("pdfUrl={activeEbook.pdfUrl ?? null}");
     expect(reader).toContain("function PdfCanvasReader");
     expect(reader).toContain("srcDoc={htmlContent}");
     expect(reader).toContain('sandbox="allow-same-origin"');
