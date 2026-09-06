@@ -162,6 +162,10 @@ export default function AdminEbooks() {
   }, [detail.data]);
 
   const courseMaterials = useMemo(() => (ebooks.data ?? []).filter(ebook => extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent).courseTitle), [ebooks.data]);
+  const pendingCourseMaterials = useMemo(
+    () => (ebooks.data ?? []).filter(ebook => ebook.status === "published" && !extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent).courseTitle),
+    [ebooks.data],
+  );
   const courseOptions = useMemo(() => {
     const names = new Set<string>();
     courseMaterials.forEach(ebook => {
@@ -327,7 +331,7 @@ export default function AdminEbooks() {
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
               <div>
                 <h2 className="text-sm font-semibold text-white">Cursos publicados</h2>
-                <p className="text-xs text-zinc-500">{courseMaterials.length} PDFs organizados</p>
+                <p className="text-xs text-zinc-500">{courseMaterials.length} PDFs em cursos{pendingCourseMaterials.length ? ` · ${pendingCourseMaterials.length} pendentes` : ""}</p>
               </div>
               <button type="button" onClick={resetForm} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-emerald-200">
                 <PlusCircle className="size-4" />
@@ -338,44 +342,71 @@ export default function AdminEbooks() {
             <div className="max-h-none space-y-3 overflow-visible lg:max-h-[72vh] lg:overflow-y-auto lg:pr-1">
               {ebooks.isLoading ? (
                 <p className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-zinc-400">Carregando cursos...</p>
-              ) : courseGroups.length ? (
-                courseGroups.map(course => (
-                  <section key={course.slug} className="rounded-xl border border-white/10 bg-black/25 p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold leading-5 text-white [overflow-wrap:anywhere]">{course.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-wider text-emerald-200">{course.category}</p>
+              ) : courseGroups.length || pendingCourseMaterials.length ? (
+                <>
+                  {courseGroups.map(course => (
+                    <section key={course.slug} className="rounded-xl border border-white/10 bg-black/25 p-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold leading-5 text-white [overflow-wrap:anywhere]">{course.title}</p>
+                          <p className="mt-1 text-xs uppercase tracking-wider text-emerald-200">{course.category}</p>
+                        </div>
+                        <span className="shrink-0 rounded-full border border-white/10 px-2 py-1 text-[11px] text-zinc-400">
+                          {course.items.length} {course.items.length === 1 ? "PDF" : "PDFs"}
+                        </span>
                       </div>
-                      <span className="shrink-0 rounded-full border border-white/10 px-2 py-1 text-[11px] text-zinc-400">
-                        {course.items.length} {course.items.length === 1 ? "PDF" : "PDFs"}
-                      </span>
-                    </div>
 
-                    <div className="mt-3 space-y-2">
-                      {course.items.map(({ ebook, academy }, index) => {
-                        const position = academy.lessonOrder || index + 1;
-                        return (
+                      <div className="mt-3 space-y-2">
+                        {course.items.map(({ ebook, academy }, index) => {
+                          const position = academy.lessonOrder || index + 1;
+                          return (
+                            <button
+                              type="button"
+                              key={ebook.id}
+                              onClick={() => setSelectedId(ebook.id)}
+                              className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition hover:border-emerald-300/50 ${selectedId === ebook.id ? "border-emerald-300/70 bg-emerald-300/10" : "border-white/10 bg-zinc-950/70"}`}
+                            >
+                              <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-emerald-300/25 bg-emerald-300/10 text-xs font-semibold text-emerald-200">
+                                {position}
+                              </span>
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium leading-5 text-white [overflow-wrap:anywhere]">{ebook.title}</p>
+                                <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
+                                  {ebook.status === "published" ? "Publicado" : ebook.status === "draft" ? "Rascunho" : "Arquivado"} · {academy.level ? levelLabel[academy.level] : "Fundamentos"}
+                                </p>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </section>
+                  ))}
+
+                  {pendingCourseMaterials.length ? (
+                    <section className="rounded-xl border border-amber-300/25 bg-amber-300/5 p-3">
+                      <div className="mb-3">
+                        <p className="text-sm font-semibold text-amber-100">Publicados sem curso</p>
+                        <p className="mt-1 text-xs leading-5 text-amber-100/70">Esses PDFs estão publicados, mas só aparecem para o membro depois que você definir o curso.</p>
+                      </div>
+                      <div className="space-y-2">
+                        {pendingCourseMaterials.map(ebook => (
                           <button
                             type="button"
                             key={ebook.id}
                             onClick={() => setSelectedId(ebook.id)}
-                            className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition hover:border-emerald-300/50 ${selectedId === ebook.id ? "border-emerald-300/70 bg-emerald-300/10" : "border-white/10 bg-zinc-950/70"}`}
+                            className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition hover:border-amber-300/50 ${selectedId === ebook.id ? "border-amber-300/70 bg-amber-300/10" : "border-white/10 bg-zinc-950/70"}`}
                           >
-                            <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-emerald-300/25 bg-emerald-300/10 text-xs font-semibold text-emerald-200">
-                              {position}
-                            </span>
+                            <FileText className="mt-0.5 size-4 shrink-0 text-amber-200" />
                             <div className="min-w-0">
                               <p className="text-sm font-medium leading-5 text-white [overflow-wrap:anywhere]">{ebook.title}</p>
-                              <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
-                                {ebook.status === "published" ? "Publicado" : ebook.status === "draft" ? "Rascunho" : "Arquivado"} · {academy.level ? levelLabel[academy.level] : "Fundamentos"}
-                              </p>
+                              <p className="mt-1 text-xs uppercase tracking-wider text-amber-100/70">Publicado · curso não definido</p>
                             </div>
                           </button>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ))
+                        ))}
+                      </div>
+                    </section>
+                  ) : null}
+                </>
               ) : (
                 <p className="rounded-xl border border-dashed border-white/15 bg-black/25 p-4 text-sm leading-6 text-zinc-400">
                   Nenhum curso publicado ainda. Comece criando o primeiro curso em PDF.
