@@ -1,8 +1,17 @@
-import { describe, expect, it } from "vitest";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import path from "node:path";
+import { describe, expect, it } from "vitest";
 
 const root = process.env.PROJECT_ROOT || process.cwd();
+
+async function fileExists(relativePath: string) {
+  try {
+    await access(path.join(root, relativePath));
+    return true;
+  } catch {
+    return false;
+  }
+}
 
 describe("Academia com leitor integrado", () => {
   it("mantém o vínculo persistente de curso, rota e e-book", async () => {
@@ -36,10 +45,22 @@ describe("Academia com leitor integrado", () => {
     expect(memberCourses).toContain("Abrir material");
   });
 
-  it("torna a associação editável na curadoria administrativa", async () => {
-    const adminCourses = await readFile(path.join(root, "client/src/pages/AdminCourses.tsx"), "utf8");
-    expect(adminCourses).toContain("E-book associado");
-    expect(adminCourses).toContain("ebookId");
-    expect(adminCourses).toContain("Vincule um e-book publicado antes de disponibilizar o curso.");
+  it("mantém a curadoria administrativa em um único fluxo canônico", async () => {
+    const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
+    const adminEbooks = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
+    const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
+
+    expect(await fileExists("client/src/pages/AdminCourses.tsx")).toBe(false);
+    expect(app).toContain("function AdminEbooksRedirect()");
+    expect(app).toContain('<Redirect to="/admin/academia" replace />');
+    expect(app).toContain('path="/admin/ebooks" component={AdminEbooksRedirect}');
+    expect(app).toContain('path="/admin/academia" component={AdminEbooks}');
+    expect(adminNavigation).toContain('label: "Academia", path: "/admin/academia"');
+    expect(adminNavigation).not.toContain('label: "E-books", path: "/admin/ebooks"');
+    expect(adminEbooks).toContain("Todo PDF publicado nesta tela entra como material de curso");
+    expect(adminEbooks).toContain("Publicados sem curso");
+    expect(adminEbooks).toContain("inferAcademyMetadataFromPath");
+    expect(adminEbooks).not.toContain("E-book avulso");
+    expect(adminEbooks).not.toContain("Curso e biblioteca");
   });
 });
