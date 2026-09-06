@@ -1,7 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Router as WouterRouter, Switch } from "wouter";
+import { Redirect, Route, Router as WouterRouter, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -42,6 +42,10 @@ import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
 import { CommercialRulesPage, ContactPage, FaqPage, InstitutionalPage, PrivacyPage, TermsPage } from "./pages/PublicInfoPage";
 import { DEV_PREFIX } from "./lib/devPath";
 import AdminDeployStatus from "./components/AdminDeployStatus";
+
+function AdminEbooksRedirect() {
+  return <Redirect to="/admin/academia" replace />;
+}
 
 function AppRoutes() {
   return <><AdminDeployStatus /><Switch>
@@ -118,7 +122,7 @@ function AppRoutes() {
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
-    <Route path="/admin/ebooks" component={AdminEbooks} />
+    <Route path="/admin/ebooks" component={AdminEbooksRedirect} />
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/material-divulgacao" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
