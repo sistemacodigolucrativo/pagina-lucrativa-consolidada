@@ -97,7 +97,7 @@ function buildAcademyMetadata(form: EbookForm): AcademyMetadata {
 }
 
 function createPdfFallbackHtml(title: string, filename = "ebook.pdf", academy: AcademyMetadata = { usage: "course" }) {
-  const safeTitle = escapeHtml(title.trim() || "E-book em PDF");
+  const safeTitle = escapeHtml(title.trim() || "Material em PDF");
   const safeFilename = escapeHtml(filename.trim() || "ebook.pdf");
   const encodedAcademy = encodeURIComponent(JSON.stringify(academy));
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="${ACADEMY_METADATA_NAME}" content="${encodedAcademy}"><title>${safeTitle}</title></head><body><main><h1>${safeTitle}</h1><p>Este material foi publicado em PDF: ${safeFilename}.</p></main></body></html>`;
@@ -109,7 +109,7 @@ const newForm = (): EbookForm => ({
   sourcePath: "",
   title: "",
   summary: "",
-  htmlContent: createPdfFallbackHtml("Novo e-book"),
+  htmlContent: createPdfFallbackHtml("Novo curso"),
   status: "draft",
   pdfUpload: null,
   usage: "course",
@@ -172,14 +172,14 @@ export default function AdminEbooks() {
   }, [courseMaterials]);
 
   const courseGroups = useMemo(() => {
-    const groups = new Map<string, { title: string; category: string; items: Array<{ ebook: (typeof courseMaterials)[number]; academy: AcademyMetadata }> }>();
+    const groups = new Map<string, { slug: string; title: string; category: string; level: AcademyLevel; items: Array<{ ebook: (typeof courseMaterials)[number]; academy: AcademyMetadata }> }>();
 
     courseMaterials.forEach(ebook => {
       const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent);
       const title = academy.courseTitle?.trim();
       if (!title) return;
       const key = academy.courseSlug || slugifyCourseTitle(title);
-      const current = groups.get(key) || { title, category: academy.courseCategory || "Curso", items: [] };
+      const current = groups.get(key) || { slug: key, title, category: academy.courseCategory || "Curso", level: academy.level || "fundamentos", items: [] };
       current.items.push({ ebook, academy });
       groups.set(key, current);
     });
@@ -191,6 +191,21 @@ export default function AdminEbooks() {
       }))
       .sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
   }, [courseMaterials]);
+
+  function handleCourseTitleChange(value: string) {
+    const normalized = value.trim().toLocaleLowerCase("pt-BR");
+    const selectedCourse = courseGroups.find(course => course.title.trim().toLocaleLowerCase("pt-BR") === normalized);
+    setForm(current => ({
+      ...current,
+      academyCourseTitle: value,
+      ...(selectedCourse
+        ? {
+            academyCategory: selectedCourse.category === "Curso" ? current.academyCategory : selectedCourse.category,
+            academyLevel: selectedCourse.level,
+          }
+        : {}),
+    }));
+  }
 
   const refresh = async () => {
     await utils.admin.ebooks.invalidate();
@@ -204,14 +219,14 @@ export default function AdminEbooks() {
     onSuccess: () => {
       void refresh();
       setForm(newForm());
-      toast.success("Material da Academia criado.");
+      toast.success("Curso da Academia criado.");
     },
     onError: error => toast.error(error.message),
   });
   const update = trpc.admin.updateEbook.useMutation({
     onSuccess: () => {
       void refresh();
-      toast.success("Material atualizado.");
+      toast.success("Curso atualizado.");
     },
     onError: error => toast.error(error.message),
   });
@@ -240,7 +255,7 @@ export default function AdminEbooks() {
     try {
       const pdfUpload = await readPdfFile(file);
       setForm(current => {
-        const title = current.title.trim() || titleFromPdfName(file.name) || "Novo e-book";
+        const title = current.title.trim() || titleFromPdfName(file.name) || "Novo PDF";
         const sourceId = current.sourceId.trim() || `pdf-${Date.now()}`;
         const academy = buildAcademyMetadata({ ...current, title });
         return {
@@ -261,7 +276,7 @@ export default function AdminEbooks() {
     event.preventDefault();
     const title = form.title.trim();
     if (!title) {
-      toast.error("Informe o título do material.");
+      toast.error("Informe o título do PDF.");
       return;
     }
     if (!form.pdfUpload && !hasExistingPdf) {
@@ -325,7 +340,7 @@ export default function AdminEbooks() {
                 <p className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-zinc-400">Carregando cursos...</p>
               ) : courseGroups.length ? (
                 courseGroups.map(course => (
-                  <section key={course.title} className="rounded-xl border border-white/10 bg-black/25 p-3">
+                  <section key={course.slug} className="rounded-xl border border-white/10 bg-black/25 p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold leading-5 text-white [overflow-wrap:anywhere]">{course.title}</p>
@@ -394,10 +409,11 @@ export default function AdminEbooks() {
                 <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_150px]">
                   <label className="text-sm text-zinc-200">
                     Curso
-                    <input required list="academy-course-options" value={form.academyCourseTitle} onChange={event => setForm({ ...form, academyCourseTitle: event.target.value })} placeholder="Ex.: Engatinhando no MKT" className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" />
+                    <input required list="academy-course-options" value={form.academyCourseTitle} onChange={event => handleCourseTitleChange(event.target.value)} placeholder="Ex.: Engatinhando no MKT" className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" />
                     <datalist id="academy-course-options">
                       {courseOptions.map(course => <option key={course} value={course} />)}
                     </datalist>
+                    <span className="mt-1 block text-xs leading-5 text-zinc-500">Digite um novo curso ou escolha um existente para adicionar PDFs à sequência.</span>
                   </label>
                   <label className="text-sm text-zinc-200">
                     Ordem
