@@ -35,6 +35,7 @@ type EbookForm = {
 
 const MAX_PDF_BYTES = 25 * 1024 * 1024;
 const ACADEMY_METADATA_NAME = "codigo-lucrativo-academy";
+const levelLabel = { fundamentos: "Fundamentos", pratica: "Prática", avancado: "Avançado" } as const;
 function escapeHtml(value: string) {
   return value.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
 }
@@ -177,7 +178,7 @@ export default function AdminEbooks() {
       const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent);
       const title = academy.courseTitle?.trim();
       if (!title) return;
-      const key = academy.courseSlug || slugifyAcademyCourseTitle(title);
+      const key = academy.courseSlug || slugifyCourseTitle(title);
       const current = groups.get(key) || { title, category: academy.courseCategory || "Curso", items: [] };
       current.items.push({ ebook, academy });
       groups.set(key, current);
