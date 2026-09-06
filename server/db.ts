@@ -1164,6 +1164,12 @@ const ebookListFields = {
   updatedAt: ebooks.updatedAt,
 };
 type EbookStatus = "draft" | "published" | "archived";
+type EbookPdfUpload = {
+  dataUrl: string;
+  contentType: "application/pdf";
+  originalName?: string | null;
+  size?: number | null;
+};
 type EbookInput = {
   sourceId: string;
   sourceFile: string;
@@ -1173,7 +1179,10 @@ type EbookInput = {
   htmlContent: string;
   status: EbookStatus;
   createdBy: number;
+  pdfUpload?: EbookPdfUpload | null;
 };
+
+const MAX_EBOOK_PDF_BYTES = 25 * 1024 * 1024;
 
 type EbookContentMetadata = {
   contentType: "application/pdf" | "text/html";
@@ -1200,6 +1209,77 @@ function ebookContentLookupKey(ebook: EbookContentLookupSource) {
   return sourceId && sourcePath ? `${sourceId}::${sourcePath}` : null;
 }
 
+function getUploadedPdfMetadata(ebook: EbookContentLookupSource): EbookContentMetadata | null {
+  const sourcePath = ebook.sourcePath?.trim();
+  if (!sourcePath) return null;
+
+  const normalizedPath = sourcePath.toLowerCase();
+  const isStoredPdf =
+    normalizedPath.startsWith("/manus-storage/") ||
+    normalizedPath.startsWith("manus-storage/") ||
+    normalizedPath.startsWith("https://") ||
+    normalizedPath.startsWith("http://");
+
+  if (!isStoredPdf || !normalizedPath.includes(".pdf")) return null;
+
+  return {
+    contentType: "application/pdf",
+    pdfPath: sourcePath,
+    pdfUrl: sourcePath.startsWith("manus-storage/") ? `/${sourcePath}` : sourcePath,
+  };
+}
+
+function sanitizePdfFileName(value: string | null | undefined) {
+  const fallback = "ebook.pdf";
+  const cleaned = (value || fallback)
+    .trim()
+    .replace(/[/\\]/g, "-")
+    .replace(/[^a-zA-Z0-9._-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^[-.]+|[-.]+$/g, "");
+
+  const filename = cleaned || fallback;
+  return filename.toLowerCase().endsWith(".pdf") ? filename : `${filename}.pdf`;
+}
+
+function createPdfFallbackHtml(title: string, filename: string) {
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${title}</title></head><body><main><h1>${title}</h1><p>Este material foi publicado em PDF: ${filename}.</p></main></body></html>`;
+}
+
+function parseEbookPdfUpload(upload: EbookPdfUpload) {
+  const match = upload.dataUrl.match(/^data:application\/pdf;base64,([A-Za-z0-9+/=\s]+)$/);
+  if (!match) throw new Error("Envie um arquivo PDF válido.");
+
+  const buffer = Buffer.from(match[1].replace(/\s/g, ""), "base64");
+  if (!buffer.length) throw new Error("O PDF enviado está vazio.");
+  if (buffer.length > MAX_EBOOK_PDF_BYTES || (upload.size ?? 0) > MAX_EBOOK_PDF_BYTES) {
+    throw new Error("O PDF deve ter no máximo 25 MB.");
+  }
+  if (buffer.subarray(0, 5).toString("ascii") !== "%PDF-") {
+    throw new Error("O arquivo enviado não possui assinatura de PDF válida.");
+  }
+
+  return buffer;
+}
+
+async function normalizeEbookInput(input: EbookInput) {
+  const { pdfUpload, ...ebookInput } = input;
+
+  if (!pdfUpload) return ebookInput;
+
+  const buffer = parseEbookPdfUpload(pdfUpload);
+  const sourceId = ebookInput.sourceId.trim();
+  const filename = sanitizePdfFileName(pdfUpload.originalName || ebookInput.sourceFile || ebookInput.title);
+  const stored = await storagePut(`ebooks/${sourceId}/${filename}`, buffer, "application/pdf");
+
+  return {
+    ...ebookInput,
+    sourceFile: filename,
+    sourcePath: stored.url,
+    htmlContent: ebookInput.htmlContent.trim() || createPdfFallbackHtml(ebookInput.title.trim(), filename),
+  };
+}
+
 async function getPackagedEbookContentMetadataBySource() {
   try {
     const packagedEbooks = await getPackagedEbooks();
@@ -1224,6 +1304,9 @@ function withEbookContentMetadata<T extends object & EbookContentLookupSource>(
   ebook: T,
   packagedMetadataBySource?: Map<string, EbookContentMetadata>,
 ) {
+  const uploadedMetadata = getUploadedPdfMetadata(ebook);
+  if (uploadedMetadata) return { ...ebook, ...uploadedMetadata };
+
   const key = ebookContentLookupKey(ebook);
   const metadata = key ? packagedMetadataBySource?.get(key) : null;
   return metadata ? { ...ebook, ...metadata } : withEbookContentDefaults(ebook);
@@ -1265,7 +1348,8 @@ export async function getAdminEbook(ebookId: number) {
 export async function createAdminEbook(input: EbookInput) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const result = await db.insert(ebooks).values({ ...input, publishedAt: input.status === "published" ? new Date() : null });
+  const ebookInput = await normalizeEbookInput(input);
+  const result = await db.insert(ebooks).values({ ...ebookInput, publishedAt: ebookInput.status === "published" ? new Date() : null });
   return { id: Number(result[0].insertId) };
 }
 export async function updateAdminEbook(ebookId: number, input: Omit<EbookInput, "createdBy">) {
@@ -1273,7 +1357,9 @@ export async function updateAdminEbook(ebookId: number, input: Omit<EbookInput, 
   if (!db) throw new Error("Banco de dados indisponível.");
   const current = await db.select({ id: ebooks.id }).from(ebooks).where(eq(ebooks.id, ebookId)).limit(1);
   if (!current[0]) throw new Error("E-book não encontrado.");
-  await db.update(ebooks).set({ ...input, publishedAt: input.status === "published" ? new Date() : null }).where(eq(ebooks.id, ebookId));
+  const ebookInput = await normalizeEbookInput({ ...input, createdBy: 0 });
+  const { createdBy: _createdBy, ...values } = ebookInput;
+  await db.update(ebooks).set({ ...values, publishedAt: values.status === "published" ? new Date() : null }).where(eq(ebooks.id, ebookId));
   return { success: true } as const;
 }
 type CampaignRequestLike = { headers?: { cookie?: string | string[] } };
