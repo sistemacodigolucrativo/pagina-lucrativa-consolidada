@@ -145,7 +145,7 @@ export default function MemberCourses() {
               </article>
             ))}
           </section>
-        ) : <section className="rounded-2xl border border-dashed border-white/15 bg-zinc-950/40 p-5 text-sm leading-6 text-zinc-300 sm:p-7">Nenhum curso com material publicado está disponível no momento. A administração pode vincular e publicar novos conteúdos pela Academia de execução.</section>}
+        ) : <section className="rounded-2xl border border-dashed border-white/15 bg-zinc-950/40 p-5 text-sm leading-6 text-zinc-300 sm:p-7">Nenhum curso publicado está disponível no momento. Para aparecer aqui, o curso precisa estar como Publicado e ter pelo menos um PDF vinculado.</section>}
       </main>
     </DashboardLayout>
   );
