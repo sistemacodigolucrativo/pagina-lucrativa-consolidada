@@ -105,18 +105,22 @@ describe("módulo de e-books", () => {
     expect(memberCourses).toContain('aria-label="Materiais do curso"');
     expect(memberCourses).toContain("pdfUrl={activeEbook.pdfUrl ?? null}");
     expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
-    expect(admin).toContain("Academia e e-books");
+    expect(admin).toContain("Academia</h1>");
     expect(admin).toContain("readPdfFile");
     expect(admin).toContain("MAX_PDF_BYTES");
     expect(admin).toContain('type="file"');
     expect(admin).toContain('accept=".pdf,application/pdf"');
     expect(admin).toContain("createPdfFallbackHtml");
     expect(admin).toContain("codigo-lucrativo-academy");
-    expect(admin).toContain("E-book de curso");
-    expect(admin).toContain("Curso e biblioteca");
     expect(admin).toContain("Dados do curso");
+    expect(admin).toContain("Todo PDF publicado nesta tela entra como material de curso");
+    expect(admin).not.toContain("E-book avulso");
+    expect(admin).not.toContain("Curso e biblioteca");
+    expect(admin).not.toContain("<option value=\"library\">");
+    expect(admin).not.toContain("<option value=\"both\">");
     expect(admin).not.toContain("HTML do e-book (fallback)");
     expect(admin).not.toContain("srcDoc={form.htmlContent}");
+    expect(admin).not.toContain("se ele será avulso");
   });
 
   it("expõe os PDFs importados por rota estática e remove a dependência dos HTMLs empacotados", async () => {
