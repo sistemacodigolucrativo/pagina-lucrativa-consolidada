@@ -125,10 +125,16 @@ describe("módulo de e-books", () => {
 
     expect(reader).toContain('readerVariant?: "default" | "tech-futuristic"');
     expect(reader).toContain('data-reader-variant="tech-futuristic"');
-    expect(reader).toContain("techJumpSections");
     expect(reader).toContain("fitStudioOriginalContent");
-    expect(reader).toContain("TEMPLATE INTEGRAL");
-    expect(reader).toContain("SIMULAÇÃO SMARTPHONE - 412px");
+    expect(reader).toContain("techFrameClass");
+    expect(reader).not.toContain("setDeviceView");
+    expect(reader).not.toContain("SIMULAÇÃO SMARTPHONE - 412px");
+    expect(reader).not.toContain("SIMULAÇÃO TABLET - 768px");
+    expect(reader).not.toContain("TEMPLATE ATIVO");
+    expect(reader).not.toContain("Template ativo");
+    expect(reader).not.toContain("Paleta:");
+    expect(reader).not.toContain("Tipografia:");
+    expect(reader).not.toContain("techJumpSections");
     expect(memberReader).toContain('selectedCatalog?.shelf.id === "copy"');
     expect(memberReader).toContain('selectedCatalog?.shelf.id === "vendas"');
     expect(memberReader).toContain('readerVariant={usesTechFuturisticReader ? "tech-futuristic" : "default"}');
