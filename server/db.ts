@@ -1274,7 +1274,7 @@ function createPdfFallbackHtml(title: string, filename: string) {
 function slugifyAcademyCourseTitle(value: string) {
   return value
     .normalize("NFD")
-    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
