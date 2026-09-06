@@ -30,6 +30,11 @@ export function registerStorageProxy(app: Express) {
         return;
       }
       res.set("Cache-Control", "private, max-age=3600");
+      if (key.toLowerCase().endsWith(".pdf")) {
+        res.set("Content-Disposition", "inline");
+        res.set("Content-Type", "application/pdf");
+        res.set("X-Content-Type-Options", "nosniff");
+      }
       res.sendFile(key, { root }, (error: Error | null) => {
         if (!error || res.headersSent) return;
         const typedError = error as NodeJS.ErrnoException & { statusCode?: number };
