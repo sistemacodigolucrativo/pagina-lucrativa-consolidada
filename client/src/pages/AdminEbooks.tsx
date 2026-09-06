@@ -54,6 +54,36 @@ function slugifyCourseTitle(value: string) {
     .slice(0, 96) || "curso";
 }
 
+function titleFromCourseSlug(value: string) {
+  return value
+    .split("-")
+    .filter(Boolean)
+    .map(part => part.slice(0, 1).toUpperCase() + part.slice(1))
+    .join(" ") || "Curso";
+}
+
+function inferAcademyMetadataFromPath(sourcePath: string | null | undefined): AcademyMetadata | null {
+  if (!sourcePath) return null;
+  let decodedPath = sourcePath;
+  try {
+    decodedPath = decodeURIComponent(sourcePath);
+  } catch {
+    decodedPath = sourcePath;
+  }
+
+  const courseSlug = decodedPath.match(/(?:^|\/)ebooks\/cursos\/([^\/?#]+)/i)?.[1];
+  if (!courseSlug) return null;
+  const normalizedSlug = slugifyCourseTitle(courseSlug);
+  return {
+    usage: "course",
+    courseTitle: titleFromCourseSlug(normalizedSlug),
+    courseSlug: normalizedSlug,
+    courseCategory: "Academia",
+    lessonOrder: 0,
+    level: "fundamentos",
+  };
+}
+
 function normalizeAcademyMetadata(value: unknown): AcademyMetadata | null {
   if (!value || typeof value !== "object") return null;
   const data = value as Partial<AcademyMetadata>;
@@ -72,14 +102,16 @@ function normalizeAcademyMetadata(value: unknown): AcademyMetadata | null {
   };
 }
 
-function extractAcademyMetadata(htmlContent: string | null | undefined): AcademyMetadata {
+function extractAcademyMetadata(htmlContent: string | null | undefined, sourcePath?: string | null): AcademyMetadata {
+  const inferredFromPath = inferAcademyMetadataFromPath(sourcePath);
   const tag = htmlContent?.match(new RegExp(`<meta\\s+[^>]*name=["']${ACADEMY_METADATA_NAME}["'][^>]*>`, "i"))?.[0];
   const encoded = tag?.match(/\scontent=["']([^"']+)["']/i)?.[1];
-  if (!encoded) return { usage: "course" };
+  if (!encoded) return inferredFromPath ?? { usage: "course" };
   try {
-    return normalizeAcademyMetadata(JSON.parse(decodeURIComponent(encoded))) ?? { usage: "course" };
+    const metadata = normalizeAcademyMetadata(JSON.parse(decodeURIComponent(encoded)));
+    return metadata?.courseTitle ? metadata : inferredFromPath ?? metadata ?? { usage: "course" };
   } catch {
-    return { usage: "course" };
+    return inferredFromPath ?? { usage: "course" };
   }
 }
 
@@ -143,7 +175,7 @@ export default function AdminEbooks() {
 
   useEffect(() => {
     if (!detail.data) return;
-    const academy = extractAcademyMetadata(detail.data.htmlContent);
+    const academy = extractAcademyMetadata(detail.data.htmlContent, detail.data.sourcePath);
     setForm({
       sourceId: detail.data.sourceId,
       sourceFile: detail.data.sourceFile,
@@ -161,15 +193,15 @@ export default function AdminEbooks() {
     });
   }, [detail.data]);
 
-  const courseMaterials = useMemo(() => (ebooks.data ?? []).filter(ebook => extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent).courseTitle), [ebooks.data]);
+  const courseMaterials = useMemo(() => (ebooks.data ?? []).filter(ebook => extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath).courseTitle), [ebooks.data]);
   const pendingCourseMaterials = useMemo(
-    () => (ebooks.data ?? []).filter(ebook => ebook.status === "published" && !extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent).courseTitle),
+    () => (ebooks.data ?? []).filter(ebook => ebook.status === "published" && !extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath).courseTitle),
     [ebooks.data],
   );
   const courseOptions = useMemo(() => {
     const names = new Set<string>();
     courseMaterials.forEach(ebook => {
-      const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent);
+      const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath);
       if (academy.courseTitle) names.add(academy.courseTitle);
     });
     return Array.from(names).sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -179,7 +211,7 @@ export default function AdminEbooks() {
     const groups = new Map<string, { slug: string; title: string; category: string; level: AcademyLevel; items: Array<{ ebook: (typeof courseMaterials)[number]; academy: AcademyMetadata }> }>();
 
     courseMaterials.forEach(ebook => {
-      const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent);
+      const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath);
       const title = academy.courseTitle?.trim();
       if (!title) return;
       const key = academy.courseSlug || slugifyCourseTitle(title);
