@@ -121,7 +121,11 @@ export default function MemberCourses() {
           <h1 className="text-2xl font-semibold text-white sm:text-3xl">Aprenda e aplique</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">Selecione um curso publicado para estudar no leitor integrado e registrar seu progresso individual no Escritório Virtual.</p>
         </header>
-        {courses.isLoading ? <p className="text-sm text-zinc-400">Carregando cursos...</p> : courses.data?.length ? (
+        {courses.isLoading ? <p className="text-sm text-zinc-400">Carregando cursos...</p> : courses.isError ? (
+          <section className="rounded-2xl border border-red-300/25 bg-red-300/5 p-5 text-sm leading-6 text-red-100 sm:p-7">
+            Não foi possível carregar a Academia agora. Erro: {courses.error.message}
+          </section>
+        ) : courses.data?.length ? (
           <section className="grid gap-4 lg:grid-cols-2">
             {courses.data.map(course => (
               <article key={course.id} className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
