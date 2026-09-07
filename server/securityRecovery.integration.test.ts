@@ -44,4 +44,16 @@ describe("recuperação de senha por pergunta secreta", () => {
     expect(applications).toContain("securityQuestion");
     expect(applications).toContain("securityAnswer");
   });
+
+  it("aguarda confirmação da sessão antes de redirecionar no primeiro login", async () => {
+    const loginPage = await readFile(path.join(root, "client/src/pages/DemoLogin.tsx"), "utf8");
+    expect(loginPage).toContain("const [loginRedirecting, setLoginRedirecting] = useState(false)");
+    expect(loginPage).toContain("if (login.isPending || loginRedirecting) return;");
+    expect(loginPage).toContain("await login.mutateAsync({ username: username.trim(), password })");
+    expect(loginPage).toContain("await utils.auth.me.invalidate()");
+    expect(loginPage).toContain("const currentUser = await utils.auth.me.fetch().catch(() => null)");
+    expect(loginPage).toContain("window.setTimeout(resolve, 150)");
+    expect(loginPage).toContain("Sessão iniciada, mas ainda não foi confirmada. Tente novamente.");
+    expect(loginPage).toContain("aria-busy={login.isPending || loginRedirecting}");
+  });
 });

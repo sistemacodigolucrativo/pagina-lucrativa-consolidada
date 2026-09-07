@@ -14,19 +14,14 @@ export default function DemoLogin() {
   const [showPassword, setShowPassword] = useState(false);
   const [formError, setFormError] = useState("");
   const [recovering, setRecovering] = useState(false);
+  const [loginRedirecting, setLoginRedirecting] = useState(false);
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [securityAnswer, setSecurityAnswer] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [recoverySuccess, setRecoverySuccess] = useState(false);
 
-  const login = trpc.auth.demoLogin.useMutation({
-    onSuccess: async account => {
-      await utils.auth.me.invalidate();
-      setLocation(account.role === "admin" ? "/admin" : "/membros");
-    },
-    onError: error => setFormError(error.message),
-  });
+  const login = trpc.auth.demoLogin.useMutation();
   const startRecovery = trpc.auth.startPasswordRecovery.useMutation({
     onError: error => setFormError(error.message),
   });
@@ -45,11 +40,27 @@ export default function DemoLogin() {
     onError: error => setFormError(error.message),
   });
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (login.isPending || loginRedirecting) return;
     setFormError("");
     setRecoverySuccess(false);
-    login.mutate({ username, password });
+    setLoginRedirecting(true);
+    try {
+      const account = await login.mutateAsync({ username: username.trim(), password });
+      await utils.auth.me.invalidate();
+      const currentUser = await utils.auth.me.fetch().catch(() => null);
+      if (!currentUser) {
+        await new Promise(resolve => window.setTimeout(resolve, 150));
+        await utils.auth.me.invalidate();
+        const retryUser = await utils.auth.me.fetch().catch(() => null);
+        if (!retryUser) throw new Error("Sessão iniciada, mas ainda não foi confirmada. Tente novamente.");
+      }
+      setLocation(account.role === "admin" ? "/admin" : "/membros");
+    } catch (error) {
+      setFormError(error instanceof Error ? error.message : "Não foi possível iniciar a sessão.");
+      setLoginRedirecting(false);
+    }
   }
 
   function submitRecoveryAccount(event: FormEvent<HTMLFormElement>) {
@@ -125,9 +136,9 @@ export default function DemoLogin() {
 
                 {(formError || login.isError) && <p role="alert" className="border-l-2 border-red-400 pl-3 text-sm text-red-200">{formError || "Não foi possível iniciar a sessão."}</p>}
 
-                <Button type="submit" disabled={login.isPending} className="h-12 w-full rounded-md bg-[#03d660] font-semibold text-[#00060D] shadow-[0_10px_30px_rgba(3,214,96,0.2)] transition hover:bg-[#ABF6D0]">
-                  <span>{login.isPending ? "Iniciando sessão..." : "Entrar na conta"}</span>
-                  {!login.isPending && <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />}
+                <Button type="submit" disabled={login.isPending || loginRedirecting} aria-busy={login.isPending || loginRedirecting} className="h-12 w-full rounded-md bg-[#03d660] font-semibold text-[#00060D] shadow-[0_10px_30px_rgba(3,214,96,0.2)] transition hover:bg-[#ABF6D0]">
+                  <span>{login.isPending || loginRedirecting ? "Iniciando sessão..." : "Entrar na conta"}</span>
+                  {!login.isPending && !loginRedirecting && <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />}
                 </Button>
 
                 <div className="flex items-center justify-between gap-4 border-t border-white/10 pt-5">

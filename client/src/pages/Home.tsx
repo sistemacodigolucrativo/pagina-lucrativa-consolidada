@@ -245,6 +245,7 @@ export default function Home() {
   const formattedAverageRating = averageRating !== null ? averageRating.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : null;
 
   return <div className="sales-page reference-page">
+    <PublicSocialProofToast />
     <header className="site-header">
       <div className="shell nav">
         <a href="#inicio" aria-label="Método Código Lucrativo — início" onClick={closeMenu}><Brand /></a>
@@ -300,7 +301,6 @@ export default function Home() {
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite"><PublicSocialProofToast /></div>
              {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer entrar no digital com <span className="sales-kicker-tail">método pronto</span></div>}
              {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
             <TopPromoBanner />

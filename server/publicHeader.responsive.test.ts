@@ -41,7 +41,7 @@ describe("public responsive header and hero layout", () => {
 
   it("keeps the navbar sticky and the hero presentation responsive", () => {
     expect(cssSource).toContain('.site-header { position: sticky; top: 0; z-index: 50;');
-    expect(cssSource).toContain('.sales-page { min-height: 100vh; overflow: clip;');
+    expect(cssSource).toContain('.sales-page { position: relative; min-height: 100vh; overflow: clip;');
     expect(cssSource).toContain('.affiliate-banner { position: relative;');
     expect(cssSource).toContain('.affiliate-profile-hero { max-width: none;');
     expect(cssSource).toContain('.affiliate-profile-summary { display: flex;');
@@ -123,12 +123,15 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).toContain('setNotice(null)');
     expect(socialProofSource).toContain('Math.min(settings.initialDelaySeconds * 1000, 4_000)');
     expect(socialProofSource).not.toContain('createPortal');
-    expect(socialProofSource).not.toContain('document.getElementById("public-social-proof-toast-slot")');
     expect(socialProofSource).not.toContain('toastSlot');
     expect(socialProofSource).toContain('public-social-proof-toast-inline');
-    expect(homeSource).toContain('id="public-social-proof-toast-slot"');
-    expect(cssSource).toContain('.public-social-proof-toast-slot { position: fixed;');
-    expect(cssSource).toContain('top: calc(env(safe-area-inset-top, 0px) + 92px);');
+    expect(socialProofSource).toContain('id="public-social-proof-toast-slot"');
+    expect(socialProofSource).toContain('const slotRef = useRef<HTMLDivElement>(null)');
+    expect(socialProofSource).toContain('window.scrollY + topInViewport');
+    expect(socialProofSource).toContain('document.documentElement.classList.contains("public-mobile-scrolled")');
+    expect(socialProofSource).toContain('".reference-page .mobile-menu-button"');
+    expect(cssSource).toContain('.public-social-proof-toast-slot { position: absolute;');
+    expect(cssSource).toContain('top: var(--public-toast-top');
     expect(cssSource).toContain('pointer-events: none;');
     expect(cssSource).toContain('.public-social-proof-toast { position: static;');
   });

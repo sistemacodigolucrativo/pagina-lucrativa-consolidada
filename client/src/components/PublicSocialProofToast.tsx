@@ -60,6 +60,7 @@ export default function PublicSocialProofToast() {
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
   const [templates, setTemplates] = useState<PublicToastTemplate[]>([...publicToastDefaultTemplates]);
   const [settings, setSettings] = useState<PublicToastSettings>(publicToastDefaultSettings);
+  const slotRef = useRef<HTMLDivElement>(null);
   const historyRef = useRef<number[]>([]);
   const previewDismissRef = useRef<number | undefined>(undefined);
 
@@ -156,6 +157,54 @@ export default function PublicSocialProofToast() {
     return () => { cancelled = true; clearTimers(); };
   }, [location, settings, templates]);
 
+  useEffect(() => {
+    if (!notice) return;
+    let frame = 0;
+
+    const positionSlot = () => {
+      const slot = slotRef.current;
+      if (!slot) return;
+
+      const viewportWidth = Math.max(window.innerWidth, 1);
+      const viewportHeight = Math.max(window.innerHeight, 1);
+      const safeTop = 12;
+      const safeSide = viewportWidth <= 650 ? 8 : 16;
+      const slotWidth = Math.min(viewportWidth - safeSide * 2, viewportWidth <= 650 ? viewportWidth - 16 : viewportWidth <= 900 ? 340 : 360);
+      const hamburger = document.querySelector<HTMLElement>(".reference-page .mobile-menu-button");
+      const hamburgerRect = hamburger?.getBoundingClientRect();
+      const compactHeader = document.documentElement.classList.contains("public-mobile-scrolled");
+      const affiliateRect = document.querySelector<HTMLElement>(".reference-page .affiliate-banner")?.getBoundingClientRect();
+      const defaultTop = safeTop + 92;
+      const belowAffiliate = affiliateRect && affiliateRect.bottom > 0 && affiliateRect.bottom < viewportHeight
+        ? Math.min(viewportHeight - 80, affiliateRect.bottom + 14)
+        : defaultTop;
+      const besideHamburger = Boolean(compactHeader && hamburgerRect && hamburgerRect.width > 0);
+      const topInViewport = besideHamburger ? Math.max(safeTop, hamburgerRect!.top + 1) : belowAffiliate;
+      const leftInViewport = besideHamburger
+        ? Math.max(safeSide + slotWidth / 2, Math.min(hamburgerRect!.left - 12 - slotWidth / 2, viewportWidth - safeSide - slotWidth / 2))
+        : viewportWidth / 2;
+
+      slot.style.setProperty("--public-toast-top", `${Math.round(window.scrollY + topInViewport)}px`);
+      slot.style.setProperty("--public-toast-left", `${Math.round(leftInViewport)}px`);
+      slot.style.setProperty("--public-toast-width", `${Math.round(slotWidth)}px`);
+    };
+
+    const schedulePosition = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        positionSlot();
+      });
+    };
+
+    schedulePosition();
+    window.addEventListener("resize", schedulePosition);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("resize", schedulePosition);
+    };
+  }, [notice]);
+
   if (!notice) return null;
   const showSimulationNotice = notice.forceSimulationNotice ?? settings.showSimulationNotice;
   const headerMessage = notice.headerMessage ?? settings.headerMessage;
@@ -167,13 +216,14 @@ export default function PublicSocialProofToast() {
     "--toast-footer-color": colors.footerColor,
   } as CSSProperties;
 
-  const toast = <aside translate="no" className="public-social-proof-toast public-social-proof-toast-inline" style={style} role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
-    <span className="public-social-proof-toast-mark" aria-hidden="true">CL</span>
-    <span className="public-social-proof-toast-copy">
-      {showSimulationNotice && headerMessage ? <span className="public-social-proof-toast-kicker">{headerMessage}</span> : null}
-      <strong>{colorizedMessage(notice.message, notice.displayName, colors.nameColor)}</strong>
-      {showSimulationNotice && footerMessage ? <small>{footerMessage}</small> : null}
-    </span>
-  </aside>;
-  return toast;
+  return <div id="public-social-proof-toast-slot" ref={slotRef} className="public-social-proof-toast-slot" aria-live="polite">
+    {notice ? <aside translate="no" className="public-social-proof-toast public-social-proof-toast-inline" style={style} role="status" aria-live="polite" aria-atomic="true" key={notice.key}>
+      <span className="public-social-proof-toast-mark" aria-hidden="true">CL</span>
+      <span className="public-social-proof-toast-copy">
+        {showSimulationNotice && headerMessage ? <span className="public-social-proof-toast-kicker">{headerMessage}</span> : null}
+        <strong>{colorizedMessage(notice.message, notice.displayName, colors.nameColor)}</strong>
+        {showSimulationNotice && footerMessage ? <small>{footerMessage}</small> : null}
+      </span>
+    </aside> : null}
+  </div>;
 }
