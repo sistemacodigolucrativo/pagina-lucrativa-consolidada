@@ -25,14 +25,15 @@ type CourseEbook = {
 export default function MemberCourses() {
   const [location, setLocation] = useLocation();
   const utils = trpc.useUtils();
-  const courses = trpc.member.courses.useQuery();
+  const courses = trpc.member.academy.listCourses.useQuery();
   const routeKey = location === "/membros/academia" ? null : location.replace(/^\/membros\/curso\//, "").replace(/^\/membros\//, "");
-  const currentCourse = trpc.member.course.useQuery({ routeKey: routeKey || "curso" }, { enabled: Boolean(routeKey) });
+  const currentCourse = trpc.member.academy.courseByRouteKey.useQuery({ routeKey: routeKey || "curso" }, { enabled: Boolean(routeKey) });
   const [activeEbookId, setActiveEbookId] = useState<number | null>(null);
-  const updateProgress = trpc.member.updateCourseProgress.useMutation({
+  const updateProgress = trpc.member.academy.updateProgress.useMutation({
     onSuccess: () => {
+      void utils.member.academy.listCourses.invalidate();
+      void utils.member.academy.courseByRouteKey.invalidate();
       void utils.member.courses.invalidate();
-      void utils.member.academy.invalidate();
       void utils.member.course.invalidate();
       toast.success("Progresso atualizado.");
     },

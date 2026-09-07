@@ -541,39 +541,11 @@ async function assertCourseEbook(ebookId: number | null, mustBePublished: boolea
 }
 
 export async function getMemberCourses(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  const [academyCourses, courseRows, progressRows, publishedEbookRows] = await Promise.all([
-    getAcademyEbookCourses(userId),
-    db.select().from(courses).where(eq(courses.isPublished, 1)).orderBy(desc(courses.updatedAt)),
-    db.select().from(courseProgress).where(eq(courseProgress.userId, userId)),
-    db.select({ id: ebooks.id }).from(ebooks).where(eq(ebooks.status, "published")),
-  ]);
-  const progressByCourse = new Map(progressRows.map(row => [row.courseId, row]));
-  const publishedEbookIds = new Set(publishedEbookRows.map(ebook => ebook.id));
-  const legacyCourses = courseRows
-    .filter(course => course.ebookId !== null && publishedEbookIds.has(course.ebookId))
-    .map(course => ({ ...course, progressPercent: progressByCourse.get(course.id)?.progressPercent ?? 0, lastAccessedAt: progressByCourse.get(course.id)?.lastAccessedAt ?? null }));
-  return [...academyCourses, ...legacyCourses];
+  return getAcademyEbookCourses(userId);
 }
 
 export async function getMemberCourseByRouteKey(userId: number, routeKey: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const academyCourse = await getAcademyEbookCourseByRouteKey(userId, routeKey);
-  if (academyCourse) return academyCourse;
-  const courseRows = await db.select().from(courses).where(and(eq(courses.routeKey, routeKey), eq(courses.isPublished, 1))).limit(1);
-  const course = courseRows[0];
-  if (!course?.ebookId) return null;
-  const [ebookRows, progressRows] = await Promise.all([
-    db.select().from(ebooks).where(and(eq(ebooks.id, course.ebookId), eq(ebooks.status, "published"))).limit(1),
-    db.select().from(courseProgress).where(and(eq(courseProgress.userId, userId), eq(courseProgress.courseId, course.id))).limit(1),
-  ]);
-  const ebook = ebookRows[0];
-  if (!ebook) return null;
-  const [enrichedEbook] = await withPackagedEbookContentMetadata([ebook]);
-  const progress = progressRows[0];
-  return { ...course, ebook: enrichedEbook, ebooks: [enrichedEbook], progressPercent: progress?.progressPercent ?? 0, lastAccessedAt: progress?.lastAccessedAt ?? null };
+  return getAcademyEbookCourseByRouteKey(userId, routeKey);
 }
 
 export async function updateMemberCourseProgress(userId: number, courseId: number, progressPercent: number) {
@@ -587,12 +559,7 @@ export async function updateMemberCourseProgress(userId: number, courseId: numbe
     await db.insert(courseProgress).values({ userId, courseId, progressPercent: normalizedAcademyProgress, lastAccessedAt: now }).onDuplicateKeyUpdate({ set: { progressPercent: normalizedAcademyProgress, lastAccessedAt: now } });
     return { courseId, progressPercent: normalizedAcademyProgress };
   }
-  const course = await db.select({ id: courses.id }).from(courses).where(and(eq(courses.id, courseId), eq(courses.isPublished, 1))).limit(1);
-  if (!course[0]) throw new Error("Curso não encontrado ou indisponível.");
-  const normalized = Math.max(0, Math.min(100, Math.round(progressPercent)));
-  const now = new Date();
-  await db.insert(courseProgress).values({ userId, courseId, progressPercent: normalized, lastAccessedAt: now }).onDuplicateKeyUpdate({ set: { progressPercent: normalized, lastAccessedAt: now } });
-  return { courseId, progressPercent: normalized };
+  throw new Error("Curso não encontrado ou indisponível.");
 }
 
 export async function getAdminCourses() {
@@ -1184,6 +1151,7 @@ type EbookAcademyMetadata = {
   courseTitle?: string;
   courseSlug?: string;
   courseCategory?: string;
+  libraryCategory?: string;
   lessonOrder?: number;
   level?: CourseLevel;
 };
@@ -1319,16 +1287,18 @@ function normalizeEbookAcademyMetadata(value: unknown): EbookAcademyMetadata | n
   const data = value as Partial<EbookAcademyMetadata>;
   const usage: EbookAcademyUsage = data.usage === "course" || data.usage === "both" ? data.usage : "library";
   const courseTitle = typeof data.courseTitle === "string" ? data.courseTitle.trim() : "";
+  const libraryCategory = typeof data.libraryCategory === "string" ? data.libraryCategory.trim() : "";
   if (usage !== "library" && !courseTitle) return { usage: "library" };
   const courseCategory = typeof data.courseCategory === "string" ? data.courseCategory.trim() : "";
   const lessonOrder = Number.isFinite(Number(data.lessonOrder)) ? Math.max(0, Math.round(Number(data.lessonOrder))) : 0;
   const level: CourseLevel = data.level === "pratica" || data.level === "avancado" ? data.level : "fundamentos";
-  if (usage === "library") return { usage };
+  if (usage === "library") return { usage, libraryCategory };
   return {
     usage,
     courseTitle,
     courseSlug: typeof data.courseSlug === "string" && data.courseSlug.trim() ? data.courseSlug.trim() : slugifyAcademyCourseTitle(courseTitle),
     courseCategory,
+    libraryCategory,
     lessonOrder,
     level,
   };
@@ -1337,7 +1307,7 @@ function normalizeEbookAcademyMetadata(value: unknown): EbookAcademyMetadata | n
 function extractEbookAcademyMetadata(ebook: { htmlContent?: string | null; sourcePath?: string | null }): EbookAcademyMetadata | null {
   const inferredFromPath = inferEbookAcademyMetadataFromPath(ebook);
   const tag = ebook.htmlContent?.match(new RegExp(`<meta\\s+[^>]*name=["']${ACADEMY_METADATA_NAME}["'][^>]*>`, "i"))?.[0];
-  const encoded = tag?.match(/\\scontent=["']([^"']+)["']/i)?.[1];
+  const encoded = tag?.match(/\scontent=["']([^"']+)["']/i)?.[1];
   if (!encoded) return inferredFromPath;
   try {
     const metadata = normalizeEbookAcademyMetadata(JSON.parse(decodeURIComponent(encoded)));
@@ -1522,8 +1492,9 @@ export async function getPublishedEbook(ebookId: number) {
   const result = await db.select().from(ebooks).where(and(eq(ebooks.id, ebookId), eq(ebooks.status, "published"))).limit(1);
   if (!result[0]) return getPackagedEbook(ebookId);
   const [ebook] = await withPackagedEbookContentMetadata([result[0]]);
-  return ebook;
+  return isEbookVisibleInLibrary(ebook) ? ebook : null;
 }
+
 export async function getAdminEbooks() {
   const db = await getDb();
   if (!db) return [];
@@ -1924,12 +1895,12 @@ export async function reviewPaymentReceipt(userId: number, input: { applicationI
 export async function getAdminOverview() {
   const db = await getDb();
   if (!db) return null;
-  const [memberRows, courseRows] = await Promise.all([
-    db.select().from(users), db.select().from(courses),
+  const [memberRows, academyCourses] = await Promise.all([
+    db.select().from(users), getAcademyEbookCourses(0),
   ]);
   return {
     memberCount: memberRows.filter(user => user.role === "user").length,
-    publishedCourseCount: courseRows.filter(course => course.isPublished === 1).length,
+    publishedCourseCount: academyCourses.length,
   };
 }
 

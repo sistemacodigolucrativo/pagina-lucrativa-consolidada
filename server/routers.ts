@@ -297,7 +297,11 @@ export const appRouter = router({
     createCampaign: protectedProcedure.input(campaignInput).mutation(({ ctx, input }) => createMemberCampaign(ctx.user.id, input)),
     deleteCampaign: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => deleteMemberCampaign(ctx.user.id, input.id)),
     finance: protectedProcedure.query(({ ctx }) => getMemberFinance(ctx.user.id)),
-    academy: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
+    academy: router({
+      listCourses: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
+      courseByRouteKey: protectedProcedure.input(z.object({ routeKey: z.string().trim().min(3).max(160) })).query(({ ctx, input }) => getMemberCourseByRouteKey(ctx.user.id, input.routeKey)),
+      updateProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
+    }),
     courses: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
     course: protectedProcedure.input(z.object({ routeKey: z.string().trim().min(3).max(160) })).query(({ ctx, input }) => getMemberCourseByRouteKey(ctx.user.id, input.routeKey)),
     updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
@@ -361,6 +365,15 @@ export const appRouter = router({
     createContent: adminProcedure.input(contentInput).mutation(({ ctx, input }) => createAdminContent({ ...input, createdBy: ctx.user.id })),
     updateContent: adminProcedure.input(updateContentInput).mutation(({ input }) => { const { id, ...content } = input; return updateAdminContent(id, content); }),
     updateContentStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "archived"]) })).mutation(({ input }) => updateAdminContentStatus(input.id, input.status)),
+    academy: router({
+      list: adminProcedure.query(() => getAdminEbooks()),
+      detail: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminEbook(input.id)),
+      createMaterial: adminProcedure.input(ebookInput).mutation(({ ctx, input }) => createAdminEbook({ ...input, createdBy: ctx.user.id })),
+      updateMaterial: adminProcedure.input(ebookInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => {
+        const { id, ...ebook } = input;
+        return updateAdminEbook(id, ebook);
+      }),
+    }),
     ebooks: adminProcedure.query(() => getAdminEbooks()),
     ebook: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminEbook(input.id)),
     createEbook: adminProcedure.input(ebookInput).mutation(({ ctx, input }) => createAdminEbook({ ...input, createdBy: ctx.user.id })),

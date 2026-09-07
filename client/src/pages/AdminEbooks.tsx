@@ -4,9 +4,10 @@ import { trpc } from "@/lib/trpc";
 import { ExternalLink, FileText, GraduationCap, PlusCircle, Save, UploadCloud, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useLocation } from "wouter";
 
 type EbookStatus = "draft" | "published" | "archived";
-type AcademyUsage = "course";
+type AcademyUsage = "library" | "course" | "both";
 type AcademyLevel = "fundamentos" | "pratica" | "avancado";
 type PdfUpload = { dataUrl: string; contentType: "application/pdf"; originalName: string; size: number };
 type AcademyMetadata = {
@@ -14,6 +15,7 @@ type AcademyMetadata = {
   courseTitle?: string;
   courseSlug?: string;
   courseCategory?: string;
+  libraryCategory?: string;
   lessonOrder?: number;
   level?: AcademyLevel;
 };
@@ -27,6 +29,7 @@ type EbookForm = {
   status: EbookStatus;
   pdfUpload: PdfUpload | null;
   usage: AcademyUsage;
+  libraryCategory: string;
   academyCourseTitle: string;
   academyCategory: string;
   academyOrder: string;
@@ -87,13 +90,17 @@ function inferAcademyMetadataFromPath(sourcePath: string | null | undefined): Ac
 function normalizeAcademyMetadata(value: unknown): AcademyMetadata | null {
   if (!value || typeof value !== "object") return null;
   const data = value as Partial<AcademyMetadata>;
-  const usage: AcademyUsage = "course";
+  const usage: AcademyUsage = data.usage === "course" || data.usage === "both" ? data.usage : "library";
+  const libraryCategory = typeof data.libraryCategory === "string" ? data.libraryCategory.trim() : "";
   const courseTitle = typeof data.courseTitle === "string" ? data.courseTitle.trim() : "";
   const courseCategory = typeof data.courseCategory === "string" ? data.courseCategory.trim() : "";
   const lessonOrder = Number.isFinite(Number(data.lessonOrder)) ? Math.max(0, Math.round(Number(data.lessonOrder))) : 0;
   const level: AcademyLevel = data.level === "pratica" || data.level === "avancado" ? data.level : "fundamentos";
+  if (usage === "library") return { usage, libraryCategory };
+  if (!courseTitle) return { usage, libraryCategory };
   return {
     usage,
+    libraryCategory,
     courseTitle,
     courseSlug: typeof data.courseSlug === "string" && data.courseSlug.trim() ? data.courseSlug.trim() : slugifyCourseTitle(courseTitle),
     courseCategory,
@@ -109,7 +116,7 @@ function extractAcademyMetadata(htmlContent: string | null | undefined, sourcePa
   if (!encoded) return inferredFromPath ?? { usage: "course" };
   try {
     const metadata = normalizeAcademyMetadata(JSON.parse(decodeURIComponent(encoded)));
-    return metadata?.courseTitle ? metadata : inferredFromPath ?? metadata ?? { usage: "course" };
+    return metadata?.usage === "course" || metadata?.usage === "both" ? metadata : inferredFromPath ?? metadata ?? { usage: "library" };
   } catch {
     return inferredFromPath ?? { usage: "course" };
   }
@@ -118,33 +125,42 @@ function extractAcademyMetadata(htmlContent: string | null | undefined, sourcePa
 function buildAcademyMetadata(form: EbookForm): AcademyMetadata {
   const courseTitle = form.academyCourseTitle.trim();
   const lessonOrder = form.academyOrder ? Math.max(0, Math.round(Number(form.academyOrder))) : 0;
-  return {
+  if (form.usage === "library") {
+    return {
+      usage: "library",
+      libraryCategory: form.libraryCategory.trim(),
+    };
+  }
+  const academy: AcademyMetadata = {
     usage: form.usage,
+    libraryCategory: form.libraryCategory.trim(),
     courseTitle,
     courseSlug: slugifyCourseTitle(courseTitle),
     courseCategory: form.academyCategory.trim(),
     lessonOrder,
     level: form.academyLevel,
   };
+  return academy;
 }
 
-function createPdfFallbackHtml(title: string, filename = "ebook.pdf", academy: AcademyMetadata = { usage: "course" }) {
+function createPdfFallbackHtml(title: string, filename = "ebook.pdf", academy: AcademyMetadata = { usage: "library" }) {
   const safeTitle = escapeHtml(title.trim() || "Material em PDF");
   const safeFilename = escapeHtml(filename.trim() || "ebook.pdf");
   const encodedAcademy = encodeURIComponent(JSON.stringify(academy));
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="${ACADEMY_METADATA_NAME}" content="${encodedAcademy}"><title>${safeTitle}</title></head><body><main><h1>${safeTitle}</h1><p>Este material foi publicado em PDF: ${safeFilename}.</p></main></body></html>`;
 }
 
-const newForm = (): EbookForm => ({
+const newForm = (usage: AcademyUsage = "course"): EbookForm => ({
   sourceId: "",
   sourceFile: "",
   sourcePath: "",
   title: "",
   summary: "",
-  htmlContent: createPdfFallbackHtml("Novo curso"),
+  htmlContent: createPdfFallbackHtml(usage === "library" ? "Novo e-book" : "Novo material", "ebook.pdf", { usage, libraryCategory: usage === "course" ? "" : "Negócio digital" }),
   status: "published",
   pdfUpload: null,
-  usage: "course",
+  usage,
+  libraryCategory: "Negócio digital",
   academyCourseTitle: "",
   academyCategory: "Fundamentos",
   academyOrder: "",
@@ -168,10 +184,18 @@ function readPdfFile(file: File) {
 
 export default function AdminEbooks() {
   const utils = trpc.useUtils();
-  const ebooks = trpc.admin.ebooks.useQuery();
+  const [location] = useLocation();
+  const isLibraryAdmin = location.startsWith("/admin/ebooks");
+  const defaultUsage: AcademyUsage = isLibraryAdmin ? "library" : "course";
+  const ebooks = trpc.admin.academy.list.useQuery();
   const [selectedId, setSelectedId] = useState<number | null>(null);
-  const detail = trpc.admin.ebook.useQuery({ id: selectedId ?? 0 }, { enabled: selectedId !== null });
-  const [form, setForm] = useState<EbookForm>(newForm);
+  const detail = trpc.admin.academy.detail.useQuery({ id: selectedId ?? 0 }, { enabled: selectedId !== null });
+  const [form, setForm] = useState<EbookForm>(() => newForm(defaultUsage));
+
+  useEffect(() => {
+    if (selectedId !== null) return;
+    setForm(current => (current.usage === defaultUsage ? current : newForm(defaultUsage)));
+  }, [defaultUsage, selectedId]);
 
   useEffect(() => {
     if (!detail.data) return;
@@ -186,6 +210,7 @@ export default function AdminEbooks() {
       status: detail.data.status as EbookStatus,
       pdfUpload: null,
       usage: academy.usage,
+      libraryCategory: academy.libraryCategory || "Negócio digital",
       academyCourseTitle: academy.courseTitle || "",
       academyCategory: academy.courseCategory || "Fundamentos",
       academyOrder: academy.lessonOrder ? String(academy.lessonOrder) : "",
@@ -193,9 +218,19 @@ export default function AdminEbooks() {
     });
   }, [detail.data]);
 
-  const courseMaterials = useMemo(() => (ebooks.data ?? []).filter(ebook => extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath).courseTitle), [ebooks.data]);
+  const courseMaterials = useMemo(() => (ebooks.data ?? []).filter(ebook => {
+    const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath);
+    return academy.usage !== "library" && academy.courseTitle;
+  }), [ebooks.data]);
+  const libraryMaterials = useMemo(() => (ebooks.data ?? []).filter(ebook => {
+    const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath);
+    return academy.usage === "library" || academy.usage === "both";
+  }), [ebooks.data]);
   const pendingCourseMaterials = useMemo(
-    () => (ebooks.data ?? []).filter(ebook => ebook.status === "published" && !extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath).courseTitle),
+    () => (ebooks.data ?? []).filter(ebook => {
+      const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath);
+      return ebook.status === "published" && academy.usage !== "library" && !academy.courseTitle;
+    }),
     [ebooks.data],
   );
   const courseOptions = useMemo(() => {
@@ -245,24 +280,28 @@ export default function AdminEbooks() {
 
   const refresh = async () => {
     await utils.admin.ebooks.invalidate();
+    await utils.admin.academy.list.invalidate();
     await utils.member.ebooks.invalidate();
+    await utils.member.academy.listCourses.invalidate();
     await utils.member.courses.invalidate();
-    await utils.member.academy.invalidate();
-    if (selectedId) await utils.admin.ebook.invalidate({ id: selectedId });
+    if (selectedId) {
+      await utils.admin.ebook.invalidate({ id: selectedId });
+      await utils.admin.academy.detail.invalidate({ id: selectedId });
+    }
   };
 
-  const create = trpc.admin.createEbook.useMutation({
+  const create = trpc.admin.academy.createMaterial.useMutation({
     onSuccess: () => {
       void refresh();
-      setForm(newForm());
-      toast.success("Curso da Academia criado.");
+      setForm(newForm(defaultUsage));
+      toast.success(isLibraryAdmin ? "E-book criado." : "Material da Academia criado.");
     },
     onError: error => toast.error(error.message),
   });
-  const update = trpc.admin.updateEbook.useMutation({
+  const update = trpc.admin.academy.updateMaterial.useMutation({
     onSuccess: () => {
       void refresh();
-      toast.success("Curso atualizado.");
+      toast.success("Material atualizado.");
     },
     onError: error => toast.error(error.message),
   });
@@ -273,7 +312,7 @@ export default function AdminEbooks() {
 
   const resetForm = () => {
     setSelectedId(null);
-    setForm(newForm());
+    setForm(newForm(defaultUsage));
   };
 
   async function handlePdfChange(event: ChangeEvent<HTMLInputElement>) {
@@ -319,7 +358,13 @@ export default function AdminEbooks() {
       toast.error("Selecione um arquivo PDF antes de salvar.");
       return;
     }
-    if (!form.academyCourseTitle.trim()) {
+    const targetsLibrary = form.usage === "library" || form.usage === "both";
+    const targetsCourse = form.usage === "course" || form.usage === "both";
+    if (targetsLibrary && !form.libraryCategory.trim()) {
+      toast.error("Informe a categoria da Biblioteca.");
+      return;
+    }
+    if (targetsCourse && !form.academyCourseTitle.trim()) {
       toast.error("Informe o curso da Academia.");
       return;
     }
@@ -351,10 +396,10 @@ export default function AdminEbooks() {
     <DashboardLayout menuItems={adminMenu} title="Administração">
       <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:space-y-7 sm:p-8">
         <header className="space-y-2">
-          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Academia</span>
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl">Academia</h1>
+          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{isLibraryAdmin ? "Biblioteca de e-books" : "Academia"}</span>
+          <h1 className="text-2xl font-semibold text-white sm:text-3xl">{isLibraryAdmin ? "Biblioteca de e-books" : "Academia"}</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">
-            Publique cursos em PDF, organize os materiais em sequência e entregue tudo no leitor da Academia.
+            {isLibraryAdmin ? "Controle e-books independentes da Biblioteca e materiais que também podem aparecer na Academia." : "Publique cursos em PDF, organize os materiais em sequência e entregue tudo no leitor da Academia."}
           </p>
         </header>
 
@@ -362,18 +407,50 @@ export default function AdminEbooks() {
           <aside className="order-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-3 lg:order-1">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
               <div>
-                <h2 className="text-sm font-semibold text-white">Cursos cadastrados</h2>
-                <p className="text-xs text-zinc-500">{courseMaterials.length} PDFs cadastrados{pendingCourseMaterials.length ? ` · ${pendingCourseMaterials.length} pendentes` : ""}</p>
+                <h2 className="text-sm font-semibold text-white">{isLibraryAdmin ? "E-books cadastrados" : "Cursos cadastrados"}</h2>
+                <p className="text-xs text-zinc-500">
+                  {isLibraryAdmin
+                    ? `${libraryMaterials.length} PDFs na Biblioteca`
+                    : `${courseMaterials.length} PDFs cadastrados${pendingCourseMaterials.length ? ` · ${pendingCourseMaterials.length} pendentes` : ""}`}
+                </p>
               </div>
               <button type="button" onClick={resetForm} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-emerald-200">
                 <PlusCircle className="size-4" />
-                Novo curso
+                Novo material
               </button>
             </div>
 
             <div className="max-h-none space-y-3 overflow-visible lg:max-h-[72vh] lg:overflow-y-auto lg:pr-1">
               {ebooks.isLoading ? (
-                <p className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-zinc-400">Carregando cursos...</p>
+                <p className="rounded-xl border border-white/10 bg-black/25 p-3 text-sm text-zinc-400">{isLibraryAdmin ? "Carregando e-books..." : "Carregando cursos..."}</p>
+              ) : isLibraryAdmin ? (
+                libraryMaterials.length ? (
+                  <div className="space-y-2">
+                    {libraryMaterials.map(ebook => {
+                      const academy = extractAcademyMetadata((ebook as { htmlContent?: string | null }).htmlContent, ebook.sourcePath);
+                      return (
+                        <button
+                          type="button"
+                          key={ebook.id}
+                          onClick={() => setSelectedId(ebook.id)}
+                          className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition hover:border-emerald-300/50 ${selectedId === ebook.id ? "border-emerald-300/70 bg-emerald-300/10" : "border-white/10 bg-zinc-950/70"}`}
+                        >
+                          <FileText className="mt-0.5 size-4 shrink-0 text-emerald-200" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-5 text-white [overflow-wrap:anywhere]">{ebook.title}</p>
+                            <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
+                              {ebook.status === "published" ? "Publicado" : ebook.status === "draft" ? "Rascunho" : "Arquivado"} · {academy.libraryCategory || "Sem categoria"}{academy.usage === "both" ? " · Academia" : ""}
+                            </p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <p className="rounded-xl border border-dashed border-white/15 bg-black/25 p-4 text-sm leading-6 text-zinc-400">
+                    Nenhum e-book da Biblioteca cadastrado ainda. Comece criando o primeiro material PDF.
+                  </p>
+                )
               ) : courseGroups.length || pendingCourseMaterials.length ? (
                 <>
                   {courseGroups.map(course => (
@@ -441,7 +518,7 @@ export default function AdminEbooks() {
                 </>
               ) : (
                 <p className="rounded-xl border border-dashed border-white/15 bg-black/25 p-4 text-sm leading-6 text-zinc-400">
-                  Nenhum curso publicado ainda. Comece criando o primeiro curso em PDF.
+                  Nenhum curso publicado ainda. Comece criando o primeiro material de curso em PDF.
                 </p>
               )}
             </div>
@@ -451,9 +528,9 @@ export default function AdminEbooks() {
             <form onSubmit={submit} className="space-y-5 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-lg font-medium text-white">{selectedId ? "Editar curso" : "Novo curso"}</h2>
+                  <h2 className="text-lg font-medium text-white">{selectedId ? "Editar material" : "Novo material PDF"}</h2>
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">
-                    Defina o curso primeiro, depois envie o PDF que fará parte da sequência. Cursos em rascunho não aparecem para membros.
+                    Defina onde o PDF será exibido, envie o arquivo e mantenha status, categoria e vínculo coerentes para o membro.
                   </p>
                 </div>
                 {selectedId && (
@@ -464,6 +541,27 @@ export default function AdminEbooks() {
                 )}
               </div>
 
+              <section className="rounded-xl border border-white/10 bg-black/20 p-4">
+                <div className="grid gap-4 sm:grid-cols-[220px_minmax(0,1fr)]">
+                  <label className="text-sm text-zinc-200">
+                    Destino
+                    <select value={form.usage} onChange={event => setForm({ ...form, usage: event.target.value as AcademyUsage })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white">
+                      <option value="library">Biblioteca</option>
+                      <option value="course">Academia</option>
+                      <option value="both">Biblioteca e Academia</option>
+                    </select>
+                  </label>
+                  {(form.usage === "library" || form.usage === "both") && (
+                    <label className="text-sm text-zinc-200">
+                      Categoria da Biblioteca
+                      <input value={form.libraryCategory} onChange={event => setForm({ ...form, libraryCategory: event.target.value })} placeholder="Ex.: Negócio digital" className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" />
+                      <span className="mt-1 block text-xs leading-5 text-zinc-500">Usada como fonte principal para organizar a Biblioteca de e-books do membro.</span>
+                    </label>
+                  )}
+                </div>
+              </section>
+
+              {(form.usage === "course" || form.usage === "both") && (
               <section className="rounded-xl border border-emerald-300/20 bg-emerald-300/5 p-4">
                 <div className="mb-4 flex items-center gap-2 text-white">
                   <GraduationCap className="size-5 text-emerald-300" />
@@ -498,6 +596,7 @@ export default function AdminEbooks() {
                   </label>
                 </div>
               </section>
+              )}
 
               <section className="space-y-4 rounded-xl border border-white/10 bg-black/20 p-4">
                 <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_180px]">
@@ -517,11 +616,11 @@ export default function AdminEbooks() {
 
                 {form.status !== "published" ? (
                   <p className="rounded-lg border border-amber-300/25 bg-amber-300/5 px-3 py-2 text-xs leading-5 text-amber-100">
-                    Este curso está como {form.status === "draft" ? "rascunho" : "arquivado"} e não aparece na Academia do membro.
+                    Este material está como {form.status === "draft" ? "rascunho" : "arquivado"} e não aparece para membros.
                   </p>
                 ) : (
                   <p className="rounded-lg border border-emerald-300/20 bg-emerald-300/5 px-3 py-2 text-xs leading-5 text-emerald-100">
-                    Publicado: este curso aparece para membros assim que tiver curso definido e PDF salvo.
+                    Publicado: este PDF aparece nos destinos selecionados quando tiver os dados obrigatórios preenchidos.
                   </p>
                 )}
 
@@ -550,17 +649,19 @@ export default function AdminEbooks() {
 
               <button disabled={pending} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-emerald-200 disabled:opacity-60 sm:w-auto">
                 <Save className="size-4" />
-                {pending ? "Salvando..." : selectedId ? "Salvar curso" : "Publicar curso"}
+                {pending ? "Salvando..." : selectedId ? "Salvar material" : "Publicar material"}
               </button>
             </form>
 
             <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
               <div className="mb-3 flex items-center gap-2 text-white">
                 <FileText className="size-5 text-emerald-300" />
-                <h2 className="font-medium">Padrão da Academia</h2>
+                <h2 className="font-medium">{isLibraryAdmin ? "Regras de exibição" : "Padrão da Academia"}</h2>
               </div>
               <p className="text-sm leading-6 text-zinc-300">
-                Todo PDF publicado nesta tela entra como material de curso e aparece agrupado na Academia do membro. Use o mesmo nome de curso para criar uma sequência com vários PDFs.
+                {isLibraryAdmin
+                  ? "PDFs com destino Biblioteca aparecem em /membros/ebooks. Materiais com destino Academia continuam agrupados por curso em /membros/academia."
+                  : "Materiais publicados com destino Academia aparecem agrupados por curso no painel do membro. PDFs publicados sem curso ficam como pendência administrativa."}
               </p>
             </section>
           </div>

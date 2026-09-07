@@ -23,10 +23,10 @@ describe("módulo de e-books", () => {
     const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
     expect(app).toContain('path="/membros/ebooks" component={EbookReader}');
     expect(app).toContain('path="/admin/academia" component={AdminEbooks}');
-    expect(app).toContain('path="/admin/ebooks" component={AdminEbooksRedirect}');
+    expect(app).toContain('path="/admin/ebooks" component={AdminEbooks}');
     expect(navigation).toContain('label: "Biblioteca de e-books", path: "/membros/ebooks"');
     expect(adminNavigation).toContain('label: "Academia", path: "/admin/academia"');
-    expect(adminNavigation).not.toContain('label: "E-books", path: "/admin/ebooks"');
+    expect(adminNavigation).toContain('label: "Biblioteca de e-books", path: "/admin/ebooks"');
   });
 
   it("organiza a biblioteca pública do membro como acervo pesquisável e categorizado", async () => {
@@ -107,7 +107,7 @@ describe("módulo de e-books", () => {
     expect(memberCourses).toContain("pdfUrl={activeEbook.pdfUrl ?? null}");
     expect(memberCourses).toContain("courses.isError");
     expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
-    expect(admin).toContain("Academia</h1>");
+    expect(admin).toContain('isLibraryAdmin ? "Biblioteca de e-books" : "Academia"');
     expect(admin).toContain("readPdfFile");
     expect(admin).toContain("MAX_PDF_BYTES");
     expect(admin).toContain('type="file"');
@@ -117,11 +117,11 @@ describe("módulo de e-books", () => {
     expect(admin).toContain("inferAcademyMetadataFromPath");
     expect(admin).toContain("Dados do curso");
     expect(admin).toContain("Publicados sem curso");
-    expect(admin).toContain("Todo PDF publicado nesta tela entra como material de curso");
+    expect(admin).toContain("Materiais publicados com destino Academia aparecem agrupados por curso");
     expect(admin).not.toContain("E-book avulso");
     expect(admin).not.toContain("Curso e biblioteca");
-    expect(admin).not.toContain("<option value=\"library\">");
-    expect(admin).not.toContain("<option value=\"both\">");
+    expect(admin).toContain("<option value=\"library\">");
+    expect(admin).toContain("<option value=\"both\">");
     expect(admin).not.toContain("HTML do e-book (fallback)");
     expect(admin).not.toContain("srcDoc={form.htmlContent}");
     expect(admin).not.toContain("se ele será avulso");

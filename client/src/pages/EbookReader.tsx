@@ -80,6 +80,11 @@ type EbookSummary = {
   sourceId?: string | null;
   title: string;
   summary?: string | null;
+  academy?: {
+    usage?: "library" | "course" | "both";
+    libraryCategory?: string;
+    courseCategory?: string;
+  } | null;
   contentType?: "application/pdf" | "text/html";
   pdfPath?: string | null;
   pdfUrl?: string | null;
@@ -143,9 +148,13 @@ function buildSearchableEbookText(ebook: EbookSummary) {
 
 function classifyEbook(ebook: EbookSummary) {
   const searchableText = buildSearchableEbookText(ebook);
+  const persistedCategory = ebook.academy?.libraryCategory?.trim() || ebook.academy?.courseCategory?.trim();
+  const persistedShelf = persistedCategory
+    ? libraryShelves.find(item => normalizeSearchText(item.label) === normalizeSearchText(persistedCategory) || item.id === normalizeSearchText(persistedCategory))
+    : null;
   const overrideShelfId = ebook.sourceId ? ebookShelfOverrides[ebook.sourceId] : undefined;
   const overrideShelf = overrideShelfId ? libraryShelves.find(item => item.id === overrideShelfId) : null;
-  const shelf = overrideShelf ?? libraryShelves.find(item => item.keywords.some(keyword => searchableText.includes(keyword))) ?? fallbackLibraryShelf;
+  const shelf = persistedShelf ?? overrideShelf ?? libraryShelves.find(item => item.keywords.some(keyword => searchableText.includes(keyword))) ?? fallbackLibraryShelf;
   return { ebook, shelf, searchableText };
 }
 

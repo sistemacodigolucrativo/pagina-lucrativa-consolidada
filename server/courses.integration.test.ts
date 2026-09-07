@@ -51,13 +51,13 @@ describe("Academia com leitor integrado", () => {
     const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
 
     expect(await fileExists("client/src/pages/AdminCourses.tsx")).toBe(false);
-    expect(app).toContain("function AdminEbooksRedirect()");
-    expect(app).toContain('<Redirect to="/admin/academia" replace />');
-    expect(app).toContain('path="/admin/ebooks" component={AdminEbooksRedirect}');
+    expect(app).not.toContain("function AdminEbooksRedirect()");
+    expect(app).not.toContain('<Redirect to="/admin/academia" replace />');
+    expect(app).toContain('path="/admin/ebooks" component={AdminEbooks}');
     expect(app).toContain('path="/admin/academia" component={AdminEbooks}');
     expect(adminNavigation).toContain('label: "Academia", path: "/admin/academia"');
-    expect(adminNavigation).not.toContain('label: "E-books", path: "/admin/ebooks"');
-    expect(adminEbooks).toContain("Todo PDF publicado nesta tela entra como material de curso");
+    expect(adminNavigation).toContain('label: "Biblioteca de e-books", path: "/admin/ebooks"');
+    expect(adminEbooks).toContain("Materiais publicados com destino Academia aparecem agrupados por curso");
     expect(adminEbooks).toContain("Publicados sem curso");
     expect(adminEbooks).toContain("inferAcademyMetadataFromPath");
     expect(adminEbooks).not.toContain("E-book avulso");
