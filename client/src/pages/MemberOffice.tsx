@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import {
   ObsidianBadge,
   ObsidianCard,
-  PlaceholderFeatureCard,
 } from "@/components/dashboard/PanelPrimitives";
 
 const menuItems: DashboardMenuItem[] = memberDashboardMenuItems;
@@ -34,12 +33,10 @@ const moduleDetails: Record<string, { eyebrow: string; title: string; detail: st
   "/membros/emails-site": { eyebrow: "Captação", title: "E-mails site e materiais", detail: "Centralize mensagens e materiais que ajudam a orientar visitantes interessados.", notes: ["Os contatos aparecerão aqui quando existirem dados próprios e autorizados.", "Use títulos objetivos e conteúdo de apoio útil."] },
   "/membros/emails-interessados": { eyebrow: "Captação", title: "E-mails de interessados", detail: "Acompanhe os contatos que demonstraram interesse, respeitando consentimento e privacidade.", notes: ["Nenhum contato de terceiros foi importado da referência.", "A lista será alimentada somente por captações da sua operação."] },
   "/membros/emails-whatsapp": { eyebrow: "Captação", title: "E-mails capturados WhatsApp", detail: "Organize os registros de interesse captados por canais de mensagem que tenham consentimento.", notes: ["Use uma linguagem de autorização clara antes de salvar dados.", "Evite transferir dados de outras plataformas sem base legal."] },
-  "/membros/patrocinador": { eyebrow: "Rede", title: "Meu patrocinador", detail: "Consulte aqui a relação de suporte da sua rede quando ela estiver cadastrada para sua conta.", notes: ["Dados de outras pessoas não são exibidos nesta prévia.", "A conexão será mostrada apenas para o membro autorizado."] },
   "/membros/blog": { eyebrow: "Material de divulgação", title: "Material de divulgação", detail: "Acesse materiais prontos para apoiar a divulgação do Código Lucrativo.", notes: ["Use banners, textos, descrições e conteúdos promocionais liberados pela administração.", "A Biblioteca de Recursos continua separada para ferramentas e arquivos externos."] },
   "/membros/classificados": { eyebrow: "Vitrine", title: "Classificados", detail: "Organize oportunidades e materiais comerciais próprios em uma vitrine única.", notes: ["Cadastre somente ofertas que você tem autorização para divulgar.", "Não apresente resultados ou avaliações não verificáveis."] },
   "/membros/historico": { eyebrow: "Análise", title: "Histórico de visitas", detail: "Acompanhe a evolução de visitas e origens quando sua operação começar a receber tráfego.", notes: ["As métricas serão exibidas a partir de dados próprios.", "Use campanhas identificadas para comparar canais."] },
   "/membros/perguntas-frequentes": { eyebrow: "Suporte", title: "Perguntas frequentes", detail: "Encontre orientações para as dúvidas mais comuns sobre página, divulgação e acesso.", notes: ["Use o suporte quando uma dúvida envolver sua conta.", "Não compartilhe senha ou dados financeiros em chats públicos."] },
-  "/membros/convites": { eyebrow: "Crescimento em rede", title: "Convide amigos", detail: "Compartilhe sua página de divulgação com pessoas que tenham interesse legítimo em conhecer a proposta.", notes: ["Convites devem apontar para o seu link de campanha.", "Acompanhe os resultados sem expor dados de convidados."] },
   "/membros/cartao-certificado": { eyebrow: "Reconhecimento", title: "Cartão e certificado", detail: "Guarde os materiais de identificação e certificados liberados para a sua conta.", notes: ["Arquivos aparecerão após publicação pela administração.", "Use apenas certificados associados à sua própria conta."] },
   "/membros/artigos": { eyebrow: "Material de divulgação", title: "Material de divulgação", detail: "Encontre imagens, banners, textos, copies e outros conteúdos preparados para suas divulgações.", notes: ["Use esta área para conteúdos promocionais prontos.", "Ferramentas, automações e links externos ficam na Biblioteca de Recursos."] },
   "/membros/automacoes": { eyebrow: "Comunicação assistida", title: "Preparar comunicações", detail: "Organize uma mensagem e registre o canal que você pretende utilizar com contatos consentidos.", notes: ["O módulo registra o preparo, mas não realiza envios externos automáticos.", "Use somente contatos próprios e autorizações verificáveis."] },
@@ -170,6 +167,7 @@ export default function MemberOffice() {
     const conversionRate = visits > 0 ? (conversions / visits) * 100 : 0;
     const metricUnavailable = analytics.isError || referrals.isError;
     const nextCourse = academy.data?.[0];
+    const nextCourseProgress = nextCourse?.progressPercent ?? 0;
 
     return <>
       <SectionIntro eyebrow="Escritório Virtual" title="Visão geral" detail="Acompanhe os indicadores globais da sua conta e acesse rapidamente seus principais caminhos de divulgação." />
@@ -203,8 +201,8 @@ export default function MemberOffice() {
             <div>
               <ObsidianBadge variant={nextCourse ? "success" : "neutral"}>{nextCourse ? "Publicado" : "Em preparação"}</ObsidianBadge>
               <h3>{nextCourse?.title ?? "Curso em preparação"}</h3>
-              <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level}` : "Módulos e progresso aparecerão quando houver conteúdo publicado."}</p>
-              <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: nextCourse ? "12%" : "45%" }} /></div>
+              <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level} · ${nextCourseProgress}% concluído` : "Módulos e progresso aparecerão quando houver conteúdo publicado."}</p>
+              {nextCourse ? <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: `${nextCourseProgress}%` }} /></div> : null}
             </div>
           </div>
         </ObsidianCard>
@@ -218,23 +216,6 @@ export default function MemberOffice() {
         </ObsidianCard>
       </section>
 
-      <section className="obsidian-placeholder-grid" aria-label="Placeholders preservados do template de membros">
-        <PlaceholderFeatureCard
-          icon={CircleDollarSign}
-          title="Solicitação de saque"
-          description="Placeholder visual mantido do template. O sistema atual informa adesões confirmadas e não cria saque sem backend próprio."
-        />
-        <PlaceholderFeatureCard
-          icon={BookOpenCheck}
-          title="Progresso detalhado de aulas"
-          description="Área preparada para progresso por aula quando o backend expuser essa granularidade."
-        />
-        <PlaceholderFeatureCard
-          icon={Target}
-          title="Gráfico de desempenho"
-          description="Espaço preservado para gráfico histórico real sem simular métricas inexistentes."
-        />
-      </section>
 
       <section className="office-workspace">
         <article><span className="office-eyebrow">Divulgação</span><h2>Ver campanhas</h2><p>Crie e organize campanhas de divulgação com links rastreáveis.</p><a href={withAppBase("/membros/operacao/campanhas")}>Abrir campanhas <ChevronRight size={15} /></a></article>

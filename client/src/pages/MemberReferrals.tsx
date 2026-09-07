@@ -1,11 +1,9 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
-import { Link2, Network, UserRoundCheck, UsersRound } from "lucide-react";
+import { Network, UserRoundCheck, UsersRound } from "lucide-react";
 
 const menu: DashboardMenuItem[] = [
   { icon: Network, label: "Minha rede direta", path: "/membros/rede", group: "Minha operação" },
-  { icon: UserRoundCheck, label: "Meu apresentador", path: "/membros/patrocinador", group: "Minha operação" },
-  { icon: Link2, label: "Preparar convites", path: "/membros/convites", group: "Relacionamento" },
 ];
 
 export default function MemberReferrals() {

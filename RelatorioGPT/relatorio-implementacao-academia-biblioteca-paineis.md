@@ -21,7 +21,7 @@ A Academia do membro deixou de misturar automaticamente registros legados de `co
 
 ## 3. Itens pendentes
 
-- Progresso por pagina ainda depende de eventos de pagina do leitor para gravar `currentPage` e `totalPages` em tempo real. A tabela e o endpoint foram criados, mas o leitor ainda registra acesso/progresso sem pagina granular.
+- Progresso por pagina permanece pendente porque exige schema/migration ou outro armazenamento persistente aprovado. O ciclo complementar nao adicionou DDL para preservar o deploy.
 - A criacao futura de tabelas `academyCourses` e `academyMaterials` nao foi feita neste ciclo por orientacao de baixo risco.
 - Nao foi removida a tabela `courses`; ela permanece em quarentena/compatibilidade.
 - Validacao manual autenticada criando/editando curso real no admin nao foi executada por mim via navegador logado.
@@ -49,14 +49,13 @@ Backend:
 - `getPublishedEbook(id)` passou a bloquear detalhe de material exclusivo de curso;
 - adicionado namespace `member.academy`;
 - adicionado namespace `admin.academy`;
-- adicionados endpoints de historico/progresso de leitura de e-book.
 
 Frontend:
 - `/admin/ebooks` renderiza `AdminEbooks` em vez de redirect;
 - admin permite selecionar destino `Biblioteca`, `Academia` ou `Biblioteca e Academia`;
 - Biblioteca do membro usa categoria persistida antes dos fallbacks;
 - Academia do membro usa namespace canonico `member.academy`;
-- card "Continuar lendo" informa quando usa historico salvo na conta.
+- card "Continuar lendo" permanece como atalho local por dispositivo enquanto nao houver persistencia aprovada por usuario.
 
 Schema/migration:
 - nenhuma alteracao de schema/migration foi mantida no commit remoto final porque o workflow `Bloquear alterações automáticas de banco` impede deploy automatico com arquivos em `drizzle/`.
@@ -92,3 +91,19 @@ Observacao: a migration experimental foi aplicada na VPS durante a validacao loc
 - Como `/admin/ebooks` e `/admin/academia` reaproveitam o mesmo componente, ainda existe oportunidade futura de extrair `AdminAcademy.tsx`, `AdminEbookLibrary.tsx` e helpers compartilhados, mas isso nao foi feito para evitar reescrita ampla neste ciclo.
 - A persistencia granular de leitura exige ciclo separado para schema/migration, com politica de banco revisada no workflow ou procedimento manual documentado.
 - A validacao visual autenticada deve confirmar telas `/admin/ebooks`, `/admin/academia`, `/membros/ebooks` e `/membros/academia` com dados reais.
+
+
+## 9. Correcao complementar aplicada
+
+- Novos materiais em `/admin/ebooks` e `/admin/academia` agora iniciam como `draft`, exigindo publicacao explicita.
+- A Biblioteca do membro deixou de depender de mapa fixo por `sourceId`; a categoria cadastrada no admin cria/prioriza a prateleira exibida ao membro.
+- Menus internos de Rede deixaram de apontar para `/membros/patrocinador` e `/membros/convites`, mantendo esses caminhos apenas como compatibilidade de redirect.
+- Placeholders visuais sem funcao foram removidos dos paineis principais de admin e membro.
+- O card de Academia na visao geral do membro deixou de usar barra fixa e passa a exibir o progresso real do primeiro curso disponivel.
+- `ebook-import/README.md` foi atualizado para refletir o acervo atual de 29 PDFs.
+
+## 10. Ainda pendente por depender de decisao de banco
+
+- Historico de leitura sincronizado por usuario.
+- Progresso granular por e-book/material/pagina.
+- Migracao definitiva de `courses` legado para uma entidade de curso/aula normalizada.

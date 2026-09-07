@@ -71,8 +71,14 @@ const libraryShelves = [
   },
 ] as const;
 
-type LibraryShelf = (typeof libraryShelves)[number];
-type FilterId = "todos" | LibraryShelf["id"];
+type LibraryShelf = {
+  id: string;
+  label: string;
+  shortLabel: string;
+  description: string;
+  keywords: readonly string[];
+};
+type FilterId = "todos" | string;
 type SortMode = "recentes" | "az" | "za";
 
 type EbookSummary = {
@@ -101,42 +107,6 @@ type CatalogedEbook = {
 
 const fallbackLibraryShelf = libraryShelves.find(shelf => shelf.id === "estrategia") ?? libraryShelves[0];
 
-const ebookShelfOverrides: Partial<Record<string, LibraryShelf["id"]>> = {
-  "1d8e16d1223794d3": "copy",
-  "c28dfb3c8d27a480": "produto",
-  "0c33c80d2a934efd": "copy",
-  df81699c12bfe98e: "copy",
-  f067a4112766fae7: "estrategia",
-  dcf68a15df77ef91: "estrategia",
-  f79108bef356d541: "produto",
-  d1d019b7cf8e87b3: "produtividade",
-  "9feb44600eef4e36": "produtividade",
-  "596d489e8ed40772": "estrategia",
-  "24ac8ef8864544ce": "vendas",
-  c301b3c54dadbd5b: "estrategia",
-  b5c5a22eee55b975: "trafego",
-  "00b5922dcfe4353f": "produtividade",
-  e1600e5778de91a9: "copy",
-  ec512a3f43bad092: "estrategia",
-  "4e760750248bd051": "copy",
-  "0dbeba2f97747491": "copy",
-  "8c9257e37e7f63fc": "trafego",
-  f47922b4f9f1ecdc: "produtividade",
-  ead8842d82b7517b: "trafego",
-  "5d55c45e0283fd5f": "vendas",
-  "2b2b7cfa601efeda": "produto",
-  a077a241d4707e86: "trafego",
-  f789f728a458e82b: "copy",
-  d89d22aac15c4251: "estrategia",
-  "2a3a6b18f7381053": "estrategia",
-  "3cdfa382690e0965": "estrategia",
-  "73b4d52872c84c1d": "trafego",
-};
-
-const filterOptions: Array<{ id: FilterId; label: string; shortLabel: string }> = [
-  { id: "todos", label: "Todos", shortLabel: "Todos" },
-  ...libraryShelves.map(shelf => ({ id: shelf.id, label: shelf.label, shortLabel: shelf.shortLabel })),
-];
 
 function normalizeSearchText(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -146,15 +116,40 @@ function buildSearchableEbookText(ebook: EbookSummary) {
   return normalizeSearchText(`${ebook.title} ${ebook.summary ?? ""}`);
 }
 
+function shelfIdFromLabel(value: string) {
+  const normalized = normalizeSearchText(value)
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 56);
+  return normalized ? `custom-${normalized}` : fallbackLibraryShelf.id;
+}
+
+function shelfFromPersistedCategory(value: string): LibraryShelf | null {
+  const category = value.trim();
+  if (!category) return null;
+  const normalizedCategory = normalizeSearchText(category);
+  const knownShelf = libraryShelves.find(item => normalizeSearchText(item.label) === normalizedCategory || item.id === normalizedCategory);
+  if (knownShelf) return knownShelf;
+  return {
+    id: shelfIdFromLabel(category),
+    label: category,
+    shortLabel: category.split(/\s+/).slice(0, 2).join(" "),
+    description: "Categoria cadastrada pela administração.",
+    keywords: [],
+  };
+}
+
+function isTechFuturisticCatalog(item: CatalogedEbook | null) {
+  if (!item) return false;
+  const categoryText = normalizeSearchText(`${item.shelf.id} ${item.shelf.label} ${item.ebook.title} ${item.ebook.summary ?? ""}`);
+  return categoryText.includes("copy") || categoryText.includes("venda");
+}
+
 function classifyEbook(ebook: EbookSummary) {
   const searchableText = buildSearchableEbookText(ebook);
   const persistedCategory = ebook.academy?.libraryCategory?.trim() || ebook.academy?.courseCategory?.trim();
-  const persistedShelf = persistedCategory
-    ? libraryShelves.find(item => normalizeSearchText(item.label) === normalizeSearchText(persistedCategory) || item.id === normalizeSearchText(persistedCategory))
-    : null;
-  const overrideShelfId = ebook.sourceId ? ebookShelfOverrides[ebook.sourceId] : undefined;
-  const overrideShelf = overrideShelfId ? libraryShelves.find(item => item.id === overrideShelfId) : null;
-  const shelf = persistedShelf ?? overrideShelf ?? libraryShelves.find(item => item.keywords.some(keyword => searchableText.includes(keyword))) ?? fallbackLibraryShelf;
+  const persistedShelf = persistedCategory ? shelfFromPersistedCategory(persistedCategory) : null;
+  const shelf = persistedShelf ?? libraryShelves.find(item => item.keywords.some(keyword => searchableText.includes(keyword))) ?? fallbackLibraryShelf;
   return { ebook, shelf, searchableText };
 }
 
@@ -239,6 +234,15 @@ export default function EbookReader() {
   }, []);
 
   const catalogedEbooks = useMemo(() => (ebooks.data ?? []).map(classifyEbook), [ebooks.data]);
+  const availableShelves = useMemo(() => {
+    const shelves = new Map<string, LibraryShelf>();
+    catalogedEbooks.forEach(item => shelves.set(item.shelf.id, item.shelf));
+    return Array.from(shelves.values()).sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+  }, [catalogedEbooks]);
+  const filterOptions = useMemo<Array<{ id: FilterId; label: string; shortLabel: string }>>(
+    () => [{ id: "todos", label: "Todos", shortLabel: "Todos" }, ...availableShelves.map(shelf => ({ id: shelf.id, label: shelf.label, shortLabel: shelf.shortLabel }))],
+    [availableShelves],
+  );
   const shelfCounts = useMemo(() => {
     const counts = new Map<FilterId, number>([["todos", catalogedEbooks.length]]);
     catalogedEbooks.forEach(item => counts.set(item.shelf.id, (counts.get(item.shelf.id) ?? 0) + 1));
@@ -259,11 +263,11 @@ export default function EbookReader() {
     });
   }, [activeFilter, catalogedEbooks, searchTerm, sortMode]);
   const visibleGroups = useMemo(() => {
-    const shelves = activeFilter === "todos" ? libraryShelves : libraryShelves.filter(shelf => shelf.id === activeFilter);
+    const shelves = activeFilter === "todos" ? availableShelves : availableShelves.filter(shelf => shelf.id === activeFilter);
     return shelves
       .map(shelf => ({ shelf, items: filteredEbooks.filter(item => item.shelf.id === shelf.id) }))
       .filter(group => group.items.length > 0);
-  }, [activeFilter, filteredEbooks]);
+  }, [activeFilter, availableShelves, filteredEbooks]);
   const recentEbooks = useMemo(
     () => recentIds
       .map(id => catalogedEbooks.find(item => item.ebook.id === id))
@@ -283,7 +287,8 @@ export default function EbookReader() {
   const usesTechFuturisticReader =
     selected.data?.htmlContent.includes("codigo-lucrativo-tech-shell") ||
     selectedCatalog?.shelf.id === "copy" ||
-    selectedCatalog?.shelf.id === "vendas";
+    selectedCatalog?.shelf.id === "vendas" ||
+    isTechFuturisticCatalog(selectedCatalog);
 
   const rememberEbook = (ebookId: number) => {
     setRecentIds(previous => {
@@ -362,7 +367,7 @@ export default function EbookReader() {
                   </p>
                   <h2 className="mt-1 break-words text-lg font-semibold leading-snug text-white">Prateleiras da biblioteca</h2>
                   <p className="mt-1 max-w-2xl break-words text-xs leading-5 text-zinc-400">
-                    Os e-books são agrupados automaticamente por tema a partir do título e resumo cadastrados.
+                    Os e-books usam a categoria cadastrada na administração. Materiais antigos ainda recebem agrupamento automático quando necessário.
                   </p>
                 </div>
                 <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_180px] lg:min-w-[520px]">

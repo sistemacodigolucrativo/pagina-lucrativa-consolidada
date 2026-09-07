@@ -1288,7 +1288,7 @@ function normalizeEbookAcademyMetadata(value: unknown): EbookAcademyMetadata | n
   const usage: EbookAcademyUsage = data.usage === "course" || data.usage === "both" ? data.usage : "library";
   const courseTitle = typeof data.courseTitle === "string" ? data.courseTitle.trim() : "";
   const libraryCategory = typeof data.libraryCategory === "string" ? data.libraryCategory.trim() : "";
-  if (usage !== "library" && !courseTitle) return { usage: "library" };
+  if (usage !== "library" && !courseTitle) return { usage, libraryCategory };
   const courseCategory = typeof data.courseCategory === "string" ? data.courseCategory.trim() : "";
   const lessonOrder = Number.isFinite(Number(data.lessonOrder)) ? Math.max(0, Math.round(Number(data.lessonOrder))) : 0;
   const level: CourseLevel = data.level === "pratica" || data.level === "avancado" ? data.level : "fundamentos";

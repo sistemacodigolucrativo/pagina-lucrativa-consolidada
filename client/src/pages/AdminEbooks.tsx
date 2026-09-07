@@ -113,12 +113,12 @@ function extractAcademyMetadata(htmlContent: string | null | undefined, sourcePa
   const inferredFromPath = inferAcademyMetadataFromPath(sourcePath);
   const tag = htmlContent?.match(new RegExp(`<meta\\s+[^>]*name=["']${ACADEMY_METADATA_NAME}["'][^>]*>`, "i"))?.[0];
   const encoded = tag?.match(/\scontent=["']([^"']+)["']/i)?.[1];
-  if (!encoded) return inferredFromPath ?? { usage: "course" };
+  if (!encoded) return inferredFromPath ?? { usage: "library" };
   try {
     const metadata = normalizeAcademyMetadata(JSON.parse(decodeURIComponent(encoded)));
     return metadata?.usage === "course" || metadata?.usage === "both" ? metadata : inferredFromPath ?? metadata ?? { usage: "library" };
   } catch {
-    return inferredFromPath ?? { usage: "course" };
+    return inferredFromPath ?? { usage: "library" };
   }
 }
 
@@ -157,10 +157,10 @@ const newForm = (usage: AcademyUsage = "course"): EbookForm => ({
   title: "",
   summary: "",
   htmlContent: createPdfFallbackHtml(usage === "library" ? "Novo e-book" : "Novo material", "ebook.pdf", { usage, libraryCategory: usage === "course" ? "" : "Negócio digital" }),
-  status: "published",
+  status: "draft",
   pdfUpload: null,
   usage,
-  libraryCategory: "Negócio digital",
+  libraryCategory: usage === "course" ? "" : "Negócio digital",
   academyCourseTitle: "",
   academyCategory: "Fundamentos",
   academyOrder: "",
@@ -416,7 +416,7 @@ export default function AdminEbooks() {
               </div>
               <button type="button" onClick={resetForm} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-emerald-200">
                 <PlusCircle className="size-4" />
-                Novo material
+                {isLibraryAdmin ? "Novo e-book" : "Novo material"}
               </button>
             </div>
 
@@ -528,7 +528,7 @@ export default function AdminEbooks() {
             <form onSubmit={submit} className="space-y-5 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="text-lg font-medium text-white">{selectedId ? "Editar material" : "Novo material PDF"}</h2>
+                  <h2 className="text-lg font-medium text-white">{selectedId ? "Editar material" : isLibraryAdmin ? "Novo e-book PDF" : "Novo material PDF"}</h2>
                   <p className="mt-1 max-w-2xl text-sm leading-6 text-zinc-400">
                     Defina onde o PDF será exibido, envie o arquivo e mantenha status, categoria e vínculo coerentes para o membro.
                   </p>
@@ -607,8 +607,8 @@ export default function AdminEbooks() {
                   <label className="text-sm text-zinc-200">
                     Status
                     <select value={form.status} onChange={event => setForm({ ...form, status: event.target.value as EbookStatus })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white">
-                      <option value="published">Publicado</option>
                       <option value="draft">Rascunho</option>
+                      <option value="published">Publicado</option>
                       <option value="archived">Arquivado</option>
                     </select>
                   </label>
@@ -649,7 +649,7 @@ export default function AdminEbooks() {
 
               <button disabled={pending} className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-emerald-200 disabled:opacity-60 sm:w-auto">
                 <Save className="size-4" />
-                {pending ? "Salvando..." : selectedId ? "Salvar material" : "Publicar material"}
+                {pending ? "Salvando..." : selectedId ? "Salvar material" : form.status === "published" ? "Publicar material" : "Salvar rascunho"}
               </button>
             </form>
 

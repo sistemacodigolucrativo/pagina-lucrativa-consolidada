@@ -41,6 +41,8 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain('label: "Produtividade"');
     expect(memberReader).toContain("normalizeSearchText");
     expect(memberReader).toContain("classifyEbook");
+    expect(memberReader).toContain("shelfFromPersistedCategory");
+    expect(memberReader).not.toContain("ebookShelfOverrides");
     expect(memberReader).toContain('placeholder="Buscar por título ou assunto"');
     expect(memberReader).toContain('aria-label="Ordenar e-books"');
     expect(memberReader).toContain('value="recentes"');
@@ -54,6 +56,7 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("snap-x snap-mandatory");
     expect(memberReader).toContain("snap-start");
     expect(memberReader).toContain("Prateleiras da biblioteca");
+    expect(memberReader).toContain("categoria cadastrada na administração");
   });
 
   it("renderiza PDF no leitor interno e mantém HTML isolado como fallback", async () => {
@@ -117,6 +120,7 @@ describe("módulo de e-books", () => {
     expect(admin).toContain("inferAcademyMetadataFromPath");
     expect(admin).toContain("Dados do curso");
     expect(admin).toContain("Publicados sem curso");
+    expect(admin).toContain('status: "draft"');
     expect(admin).toContain("Materiais publicados com destino Academia aparecem agrupados por curso");
     expect(admin).not.toContain("E-book avulso");
     expect(admin).not.toContain("Curso e biblioteca");
