@@ -18,7 +18,6 @@ import {
   getAdminContent,
   getAdminEbook,
   getAdminEbooks,
-  getAdminOverview,
   getAdminTickets,
   getAdminActivities,
   getMemberCampaigns,
@@ -45,12 +44,7 @@ import {
   getAdminPublicSalesSectionImages,
   getDefaultPublicAffiliateProfile,
   getPublicAffiliateProfile,
-  getPublishedEbook,
-  getPublishedEbooks,
   getPublishedCourses,
-  getMemberCourseByRouteKey,
-  getMemberCourses,
-  updateMemberCourseProgress,
   getAdminCourses,
   createAdminCourse,
   updateAdminCourse,
@@ -85,6 +79,18 @@ import {
   upsertAdminPublicSalesSectionImage,
   startSecurityPasswordRecovery,
 } from "./db";
+import {
+  getAdminOverview,
+  getMemberCourseByRouteKey,
+  getMemberCourses,
+  getMemberEbookReadingHistory,
+  getMemberEbookReadingProgress,
+  getPublishedEbook,
+  getPublishedEbooks,
+  updateAcademyCoursePublication,
+  updateMemberCourseProgress,
+  updateMemberEbookReadingProgress,
+} from "./academyCanonical";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema, paymentAccessInputSchema } from "@shared/applications";
 import { z } from "zod";
@@ -330,6 +336,13 @@ export const appRouter = router({
     content: protectedProcedure.query(() => getPublishedContent()),
     ebooks: protectedProcedure.query(() => getPublishedEbooks()),
     ebook: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getPublishedEbook(input.id)),
+    ebookReadingHistory: protectedProcedure.query(({ ctx }) => getMemberEbookReadingHistory(ctx.user.id)),
+    ebookReadingProgress: protectedProcedure.input(z.object({ ebookId: z.number().int().positive() })).query(({ ctx, input }) => getMemberEbookReadingProgress(ctx.user.id, input.ebookId)),
+    updateEbookReadingProgress: protectedProcedure.input(z.object({
+      ebookId: z.number().int().positive(),
+      currentPage: z.number().int().positive(),
+      totalPages: z.number().int().positive().max(9999),
+    })).mutation(({ ctx, input }) => updateMemberEbookReadingProgress(ctx.user.id, input.ebookId, input.currentPage, input.totalPages)),
     contacts: protectedProcedure.query(({ ctx }) => getMemberContacts(ctx.user.id)),
     createContact: protectedProcedure.input(captureContactInput).mutation(({ ctx, input }) => createMemberContact(ctx.user.id, input)),
     updateContact: protectedProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["new", "contacted", "qualified", "archived"]), source: z.string().trim().min(2).max(160).optional() })).mutation(({ ctx, input }) => updateMemberContact(ctx.user.id, input.id, input)),
@@ -373,6 +386,10 @@ export const appRouter = router({
         const { id, ...ebook } = input;
         return updateAdminEbook(id, ebook);
       }),
+      updateCoursePublication: adminProcedure.input(z.object({
+        courseSlug: z.string().trim().min(1).max(96),
+        isPublished: z.boolean(),
+      })).mutation(({ input }) => updateAcademyCoursePublication(input.courseSlug, input.isPublished)),
     }),
     ebooks: adminProcedure.query(() => getAdminEbooks()),
     ebook: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminEbook(input.id)),

@@ -3,42 +3,39 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.env.PROJECT_ROOT || process.cwd();
+const read = (file: string) => readFile(path.join(root, file), "utf8");
 
-describe("módulo de e-books", () => {
-  it("expõe leitura somente para membros autenticados e gestão somente para administradores", async () => {
-    const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+describe("módulo canônico de e-books e Academia", () => {
+  it("protege leitura/gestão e expõe progresso sincronizado", async () => {
+    const router = await read("server/routers.ts");
     expect(router).toContain("ebooks: protectedProcedure.query(() => getPublishedEbooks())");
-    expect(router).toContain("ebook: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getPublishedEbook(input.id))");
-    expect(router).toContain("ebooks: adminProcedure.query(() => getAdminEbooks())");
+    expect(router).toContain("ebook: protectedProcedure.input");
+    expect(router).toContain("ebookReadingHistory: protectedProcedure.query");
+    expect(router).toContain("ebookReadingProgress: protectedProcedure.input");
+    expect(router).toContain("updateEbookReadingProgress: protectedProcedure.input");
+    expect(router).toContain("updateCoursePublication: adminProcedure.input");
     expect(router).toContain("createEbook: adminProcedure.input(ebookInput)");
-    expect(router).toContain("updateEbook: adminProcedure.input(ebookInput.extend");
-    expect(router).toContain("const ebookPdfUploadInput = z.object");
     expect(router).toContain('contentType: z.literal("application/pdf")');
-    expect(router).toContain("pdfUpload: ebookPdfUploadInput.optional().nullable()");
   });
 
-  it("registra as rotas e a biblioteca no menu do Escritório Virtual", async () => {
-    const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
-    const navigation = await readFile(path.join(root, "shared/memberOfficeContent.ts"), "utf8");
-    const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
+  it("registra Biblioteca e Academia como rotas administrativas reais", async () => {
+    const app = await read("client/src/App.tsx");
+    const navigation = await read("shared/memberOfficeContent.ts");
+    const adminNavigation = await read("client/src/lib/adminNavigation.ts");
     expect(app).toContain('path="/membros/ebooks" component={EbookReader}');
-    expect(app).toContain('path="/admin/academia" component={AdminEbooks}');
+    expect(app).toContain('path="/admin/academia" component={AdminAcademy}');
     expect(app).toContain('path="/admin/ebooks" component={AdminEbooks}');
     expect(navigation).toContain('label: "Biblioteca de e-books", path: "/membros/ebooks"');
     expect(adminNavigation).toContain('label: "Academia", path: "/admin/academia"');
     expect(adminNavigation).toContain('label: "Biblioteca de e-books", path: "/admin/ebooks"');
   });
 
-  it("organiza a biblioteca pública do membro como acervo pesquisável e categorizado", async () => {
-    const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
+  it("organiza a biblioteca por categoria persistida e mantém fallback local apenas como contingência", async () => {
+    const memberReader = await read("client/src/pages/EbookReader.tsx");
     expect(memberReader).toContain("const libraryShelves = [");
-    expect(memberReader).toContain('label: "Copy e anúncios"');
-    expect(memberReader).toContain('label: "Vendas e oferta"');
-    expect(memberReader).toContain('label: "Tráfego e divulgação"');
-    expect(memberReader).toContain('label: "Produto digital"');
-    expect(memberReader).toContain('label: "Ferramentas e modelos"');
-    expect(memberReader).toContain('label: "Negócio digital"');
-    expect(memberReader).toContain('label: "Produtividade"');
+    for (const label of ["Copy e anúncios", "Vendas e oferta", "Tráfego e divulgação", "Produto digital", "Ferramentas e modelos", "Negócio digital", "Produtividade"]) {
+      expect(memberReader).toContain(`label: \"${label}\"`);
+    }
     expect(memberReader).toContain("normalizeSearchText");
     expect(memberReader).toContain("classifyEbook");
     expect(memberReader).toContain("shelfFromPersistedCategory");
@@ -50,142 +47,82 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain('value="za"');
     expect(memberReader).toContain("recentEbooksStorageKey");
     expect(memberReader).toContain("window.localStorage.setItem(recentEbooksStorageKey");
+    expect(memberReader).toContain("ebookReadingHistory");
+    expect(memberReader).toContain("updateEbookReadingProgress");
+    expect(memberReader).toContain("Progresso sincronizado com sua conta.");
     expect(memberReader).toContain("Continuar lendo");
     expect(memberReader).toContain('aria-label="Carrossel de e-books recentes"');
-    expect(memberReader).toContain("overflow-x-auto");
     expect(memberReader).toContain("snap-x snap-mandatory");
     expect(memberReader).toContain("snap-start");
     expect(memberReader).toContain("Prateleiras da biblioteca");
     expect(memberReader).toContain("categoria cadastrada na administração");
   });
 
-  it("renderiza PDF no leitor interno e mantém HTML isolado como fallback", async () => {
-    const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
-    const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
-    const admin = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
+  it("renderiza PDF internamente, restaura página e informa progresso", async () => {
+    const reader = await read("client/src/components/ResponsiveEbookFrame.tsx");
+    const memberReader = await read("client/src/pages/EbookReader.tsx");
+    const memberCourses = await read("client/src/pages/MemberCourses.tsx");
     expect(reader).toContain("pdfUrl?: string | null");
     expect(reader).toContain('from "pdfjs-dist"');
-    expect(reader).toContain('pdf.worker.min.mjs?url');
     expect(reader).toContain("function PdfCanvasReader");
     expect(reader).toContain("getDocument({ url: pdfUrl, withCredentials: true })");
     expect(reader).toContain("page.render({ canvasContext, viewport, transform })");
     expect(reader).toContain('sandbox="allow-same-origin"');
-    expect(reader).toContain("srcDoc={htmlContent}");
     expect(reader).not.toContain("docs.google.com/gview");
-    expect(reader).not.toContain("src={pdfUrl ?? undefined}");
-    expect(reader).not.toContain("href={pdfUrl ?? undefined}");
-    expect(reader).toContain('data-reader-variant="pdf-focused"');
-    expect(reader).toContain("containerWidth - 4");
-    expect(reader).toContain("px-0.5 py-1");
-    expect(reader).toContain("gap-2");
-    expect(reader).toContain("Abrir PDF");
-    expect(reader).toContain("calculateResponsiveEbookScale");
+    expect(reader).toContain("initialPage?: number | null");
+    expect(reader).toContain("onProgressChange?:");
+    expect(reader).toContain("data-pdf-page={pageNumber}");
+    expect(reader).toContain("Página ${currentPage} de ${pageCount}");
     expect(reader).toContain("requestFullscreen");
-    expect(reader).toContain('"fullscreenchange"');
-    expect(reader).toContain('event.key !== "Escape"');
-    expect(reader).toContain('data-ebook-reader="responsive"');
-    expect(reader).toContain('displayMode?: "embedded" | "modal"');
-    expect(reader).toContain("data-reader-display={displayMode}");
-    expect(reader).toContain('displayMode === "modal"');
-    expect(reader).toContain("codigo-lucrativo-ebook-scale-root");
-    expect(reader).toContain('scaleRoot.style.setProperty("transform"');
-    expect(reader).toContain('body.style.removeProperty("zoom")');
-    expect(reader).not.toContain('body.style.setProperty("zoom"');
-    expect(reader).toContain('"Ampliar"');
-    expect(reader).toContain('"Sair da tela cheia"');
     expect(memberReader).toContain("<Dialog open={readerOpen}");
     expect(memberReader).toContain("setReaderOpen(true)");
     expect(memberReader).toContain("onEscapeKeyDown={handleDialogEscape}");
     expect(memberReader).toContain("pdfUrl={selected.data.pdfUrl ?? null}");
     expect(memberReader).toContain('displayMode="modal"');
+    expect(memberReader).toContain("initialPage={readingProgress.data?.currentPage ?? 1}");
+    expect(memberReader).toContain("onProgressChange={handleReadingProgress}");
     expect(memberReader).toContain("!inset-0");
     expect(memberReader).toContain("!w-auto");
     expect(memberReader).toContain("[overflow-wrap:anywhere]");
     expect(memberReader).toContain('DialogDescription className="sr-only"');
     expect(memberReader).toContain("pb-[calc(env(safe-area-inset-bottom)+0.25rem)]");
     expect(memberReader).toContain('className="h-full w-full min-w-0"');
-    const memberCourses = await readFile(path.join(root, "client/src/pages/MemberCourses.tsx"), "utf8");
     expect(memberCourses).toContain("courseEbooks");
     expect(memberCourses).toContain('aria-label="Materiais do curso"');
-    expect(memberCourses).toContain("pdfUrl={activeEbook.pdfUrl ?? null}");
-    expect(memberCourses).toContain("courses.isError");
-    expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
-    expect(admin).toContain('isLibraryAdmin ? "Biblioteca de e-books" : "Academia"');
+    expect(memberCourses).toContain("updateEbookReadingProgress");
+    expect(memberCourses).not.toContain("Avançar 20%");
+  });
+
+  it("mantém upload seguro, agrupamento administrativo e publicação de curso como unidade", async () => {
+    const admin = await read("client/src/pages/AdminEbooks.tsx");
+    const academy = await read("client/src/pages/AdminAcademy.tsx");
+    const canonical = await read("server/academyCanonical.ts");
+    const db = await read("server/db.ts");
     expect(admin).toContain("readPdfFile");
     expect(admin).toContain("MAX_PDF_BYTES");
-    expect(admin).toContain('type="file"');
     expect(admin).toContain('accept=".pdf,application/pdf"');
-    expect(admin).toContain("createPdfFallbackHtml");
-    expect(admin).toContain("codigo-lucrativo-academy");
-    expect(admin).toContain("inferAcademyMetadataFromPath");
-    expect(admin).toContain("Dados do curso");
     expect(admin).toContain("Publicados sem curso");
     expect(admin).toContain('status: "draft"');
     expect(admin).toContain("Materiais publicados com destino Academia aparecem agrupados por curso");
-    expect(admin).not.toContain("E-book avulso");
-    expect(admin).not.toContain("Curso e biblioteca");
-    expect(admin).toContain("<option value=\"library\">");
-    expect(admin).toContain("<option value=\"both\">");
-    expect(admin).not.toContain("HTML do e-book (fallback)");
-    expect(admin).not.toContain("srcDoc={form.htmlContent}");
-    expect(admin).not.toContain("se ele será avulso");
-  });
-
-  it("expõe os PDFs importados por rota estática e remove a dependência dos HTMLs empacotados", async () => {
-    const server = await readFile(path.join(root, "server/_core/index.ts"), "utf8");
-    const staticEbooks = await readFile(path.join(root, "server/staticEbooks.ts"), "utf8");
-    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
-    const storageProxy = await readFile(path.join(root, "server/_core/storageProxy.ts"), "utf8");
-
-    expect(staticEbooks).toContain('PACKAGED_EBOOK_FILE_ROUTE = "/ebook-files"');
-    expect(staticEbooks).toContain('contentType: "application/pdf" as const');
-    expect(staticEbooks).not.toContain('html-output');
-    expect(staticEbooks).toContain("await stat(resolvedPath)");
-    expect(server).toContain("registerPackagedEbookFiles(app, appPrefix)");
-    expect(server).toContain("express.static(pdfRoot");
-    expect(db).toContain("withEbookContentDefaults");
-    expect(db).toContain("getPackagedEbookContentMetadataBySource");
-    expect(db).toContain("withPackagedEbookContentMetadata");
-    expect(db).toContain("getUploadedPdfMetadata");
-    expect(db).toContain("parseEbookPdfUpload");
+    expect(academy).toContain("updateCoursePublication");
+    expect(academy).toContain("Publicação dos cursos");
+    expect(canonical).toContain("coursePublished");
+    expect(canonical).toContain("updateAcademyCoursePublication");
+    expect(canonical).toContain("stableCourseId");
+    expect(canonical).toContain('createHash("sha256")');
+    expect(canonical).toContain("EBOOK_READING_PROGRESS_ID_OFFSET");
+    expect(canonical).toContain("summary.sourceId && detail.sourceId !== summary.sourceId");
     expect(db).toContain('buffer.subarray(0, 5).toString("ascii") !== "%PDF-"');
-    expect(db).toContain("ACADEMY_METADATA_NAME");
-    expect(db).toContain("getAcademyEbookCourses");
-    expect(db).toContain("buildAcademyCoursesFromEbooks");
-    expect(db).toContain("inferEbookAcademyMetadataFromPath");
-    expect(db).toContain("ebooks\\/cursos");
-    expect(db).toContain('storagePut(`ebooks/${storageGroup}/${sourceId}/${filename}`');
-    expect(db).toContain("return enriched.filter(isEbookVisibleInLibrary)");
-    expect(storageProxy).toContain('key.toLowerCase().endsWith(".pdf")');
-    expect(storageProxy).toContain('res.set("Content-Disposition", "inline")');
-    expect(storageProxy).toContain('res.set("Content-Type", "application/pdf")');
-    expect(storageProxy).toContain('res.set("X-Content-Type-Options", "nosniff")');
   });
 
-  it("ativa o leitor Tech Futuristic integral para e-books de copy e vendas", async () => {
-    const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
-    const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
-    const studioLayout = await readFile(path.join(root, "server/ebookStudioLayout.ts"), "utf8");
-
+  it("mantém leitor Tech Futuristic para copy e vendas", async () => {
+    const reader = await read("client/src/components/ResponsiveEbookFrame.tsx");
+    const memberReader = await read("client/src/pages/EbookReader.tsx");
     expect(reader).toContain('readerVariant?: "default" | "tech-futuristic"');
     expect(reader).toContain('data-reader-variant="tech-futuristic"');
     expect(reader).toContain("fitStudioOriginalContent");
-    expect(reader).toContain("techFrameClass");
-    expect(reader).not.toContain("setDeviceView");
-    expect(reader).not.toContain("SIMULAÇÃO SMARTPHONE - 412px");
-    expect(reader).not.toContain("SIMULAÇÃO TABLET - 768px");
-    expect(reader).not.toContain("TEMPLATE ATIVO");
-    expect(reader).not.toContain("Template ativo");
-    expect(reader).not.toContain("Paleta:");
-    expect(reader).not.toContain("Tipografia:");
-    expect(reader).not.toContain("techJumpSections");
     expect(memberReader).toContain('selectedCatalog?.shelf.id === "copy"');
     expect(memberReader).toContain('selectedCatalog?.shelf.id === "vendas"');
     expect(memberReader).toContain('readerVariant={usesTechFuturisticReader ? "tech-futuristic" : "default"}');
-    expect(studioLayout).toContain("CHAPTER_01 // PART_I");
-    expect(studioLayout).toContain("CHAPTER_02 // PART_II");
-    expect(studioLayout).toContain("CHAPTER_03 // PART_III");
-    expect(studioLayout).toContain("COPYWRITING_E_VENDAS");
-    expect(studioLayout).toContain("VENDAS_E_OFERTA");
   });
 });

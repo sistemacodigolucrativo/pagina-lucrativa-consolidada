@@ -1,9 +1,8 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
-import ResponsiveEbookFrame from "@/components/ResponsiveEbookFrame";
+import ResponsiveEbookFrame, { type EbookReaderProgress } from "@/components/ResponsiveEbookFrame";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, BookOpenCheck, CheckCircle2, GraduationCap, LayoutDashboard, LoaderCircle, PlayCircle } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "sonner";
+import { ArrowLeft, BookOpenCheck, GraduationCap, LayoutDashboard, LoaderCircle, PlayCircle } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
 const menu: DashboardMenuItem[] = [
@@ -29,16 +28,7 @@ export default function MemberCourses() {
   const routeKey = location === "/membros/academia" ? null : location.replace(/^\/membros\/curso\//, "").replace(/^\/membros\//, "");
   const currentCourse = trpc.member.academy.courseByRouteKey.useQuery({ routeKey: routeKey || "curso" }, { enabled: Boolean(routeKey) });
   const [activeEbookId, setActiveEbookId] = useState<number | null>(null);
-  const updateProgress = trpc.member.academy.updateProgress.useMutation({
-    onSuccess: () => {
-      void utils.member.academy.listCourses.invalidate();
-      void utils.member.academy.courseByRouteKey.invalidate();
-      void utils.member.courses.invalidate();
-      void utils.member.course.invalidate();
-      toast.success("Progresso atualizado.");
-    },
-    onError: error => toast.error(error.message),
-  });
+  const lastPersistedProgressRef = useRef("");
 
   const course = currentCourse.data as (typeof currentCourse.data & { ebooks?: CourseEbook[]; ebookCount?: number }) | null | undefined;
   const courseEbooks = useMemo(() => {
@@ -49,12 +39,43 @@ export default function MemberCourses() {
   const courseEbookKey = courseEbooks.map(ebook => ebook.id).join(",");
   const activeEbook = courseEbooks.find(ebook => ebook.id === activeEbookId) ?? courseEbooks[0] ?? null;
 
+  const readingProgress = trpc.member.ebookReadingProgress.useQuery(
+    { ebookId: activeEbook?.id ?? 0 },
+    { enabled: Boolean(activeEbook?.id) },
+  );
+  const updateReadingProgress = trpc.member.updateEbookReadingProgress.useMutation({
+    onSuccess: () => {
+      void utils.member.ebookReadingHistory.invalidate();
+      if (activeEbook?.id) void utils.member.ebookReadingProgress.invalidate({ ebookId: activeEbook.id });
+      void utils.member.academy.listCourses.invalidate();
+      void utils.member.academy.courseByRouteKey.invalidate();
+      void utils.member.courses.invalidate();
+      void utils.member.course.invalidate();
+    },
+  });
+
+  const handleReadingProgress = useCallback((progress: EbookReaderProgress) => {
+    if (!activeEbook?.id) return;
+    const key = `${activeEbook.id}:${progress.currentPage}:${progress.totalPages}`;
+    if (lastPersistedProgressRef.current === key) return;
+    lastPersistedProgressRef.current = key;
+    updateReadingProgress.mutate({
+      ebookId: activeEbook.id,
+      currentPage: progress.currentPage,
+      totalPages: progress.totalPages,
+    });
+  }, [activeEbook?.id, updateReadingProgress]);
+
   useEffect(() => {
     if (!routeKey || !courseEbooks.length) return;
     if (!activeEbook || !courseEbooks.some(ebook => ebook.id === activeEbook.id)) {
       setActiveEbookId(courseEbooks[0].id);
     }
   }, [activeEbook, courseEbookKey, courseEbooks, routeKey]);
+
+  useEffect(() => {
+    lastPersistedProgressRef.current = "";
+  }, [activeEbook?.id]);
 
   if (routeKey) {
     return (
@@ -73,11 +94,10 @@ export default function MemberCourses() {
                 <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{course.category || "Academia de execução"} · {levelLabel[course.level]}</span>
                 <h1 className="mt-2 text-2xl font-semibold text-white [overflow-wrap:anywhere] sm:text-3xl">{course.title}</h1>
                 {course.summary && <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-300 [overflow-wrap:anywhere]">{course.summary}</p>}
-                <div className="mt-4 grid gap-3 sm:flex sm:flex-wrap sm:items-center">
-                  <span className="text-sm text-zinc-400">Progresso: <strong className="text-emerald-200">{course.progressPercent}%</strong></span>
+                <div className="mt-4 flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-zinc-400">Progresso do curso: <strong className="text-emerald-200">{course.progressPercent}%</strong></span>
                   <span className="text-sm text-zinc-500">{courseEbooks.length} {courseEbooks.length === 1 ? "material" : "materiais"}</span>
-                  <button type="button" disabled={updateProgress.isPending || course.progressPercent >= 100} onClick={() => updateProgress.mutate({ courseId: course.id, progressPercent: Math.min(100, course.progressPercent + 20) })} className="w-full rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black disabled:opacity-50 sm:w-auto">{course.progressPercent >= 100 ? "Concluído" : "Registrar avanço"}</button>
-                  <button type="button" disabled={updateProgress.isPending || course.progressPercent === 100} onClick={() => updateProgress.mutate({ courseId: course.id, progressPercent: 100 })} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-100 disabled:opacity-50 sm:w-auto"><CheckCircle2 className="size-4" />Concluir leitura</button>
+                  <span className="text-xs text-zinc-500">Calculado automaticamente a partir da leitura dos materiais.</span>
                 </div>
               </header>
               {courseEbooks.length > 1 ? (
@@ -97,7 +117,13 @@ export default function MemberCourses() {
               ) : null}
               <div className="min-w-0 bg-black/20 p-2 sm:p-4">
                 {activeEbook ? (
-                  <ResponsiveEbookFrame title={`Leitor de ${activeEbook.title}`} htmlContent={activeEbook.htmlContent} pdfUrl={activeEbook.pdfUrl ?? null} />
+                  <ResponsiveEbookFrame
+                    title={`Leitor de ${activeEbook.title}`}
+                    htmlContent={activeEbook.htmlContent}
+                    pdfUrl={activeEbook.pdfUrl ?? null}
+                    initialPage={readingProgress.data?.currentPage ?? 1}
+                    onProgressChange={handleReadingProgress}
+                  />
                 ) : (
                   <section className="rounded-xl border border-white/10 bg-black/30 p-5 text-sm text-zinc-300">Nenhum PDF publicado para este curso.</section>
                 )}
@@ -120,7 +146,7 @@ export default function MemberCourses() {
         <header className="space-y-2">
           <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Academia de execução</span>
           <h1 className="text-2xl font-semibold text-white sm:text-3xl">Aprenda e aplique</h1>
-          <p className="max-w-3xl text-sm leading-6 text-zinc-300">Selecione um curso publicado para estudar no leitor integrado e registrar seu progresso individual no Escritório Virtual.</p>
+          <p className="max-w-3xl text-sm leading-6 text-zinc-300">Selecione um curso publicado. O progresso é calculado automaticamente conforme você avança pelas páginas de cada material.</p>
         </header>
         {courses.isLoading ? <p className="text-sm text-zinc-400">Carregando cursos...</p> : courses.isError ? (
           <section className="rounded-2xl border border-red-300/25 bg-red-300/5 p-5 text-sm leading-6 text-red-100 sm:p-7">
@@ -141,9 +167,8 @@ export default function MemberCourses() {
                 <div className="mt-5 border-t border-white/10 pt-4">
                   <div className="flex items-center justify-between text-sm"><span className="text-zinc-400">Progresso individual</span><strong className="text-emerald-200">{course.progressPercent}%</strong></div>
                   <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-emerald-300 transition-all" style={{ width: `${course.progressPercent}%` }} /></div>
-                  <div className="mt-4 grid gap-2 sm:flex sm:flex-wrap sm:items-center">
+                  <div className="mt-4 flex flex-wrap items-center gap-2">
                     <button type="button" onClick={() => setLocation(`/membros/curso/${course.routeKey}`)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black sm:w-auto"><PlayCircle className="size-4" />Abrir material de execução</button>
-                    <button type="button" disabled={updateProgress.isPending || course.progressPercent >= 100} onClick={() => updateProgress.mutate({ courseId: course.id, progressPercent: Math.min(100, course.progressPercent + 20) })} className="w-full rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-100 disabled:opacity-50 sm:w-auto">{course.progressPercent >= 100 ? "Concluído" : "Avançar 20%"}</button>
                     <span className="text-xs text-zinc-500 sm:ml-auto">{"ebookCount" in course && course.ebookCount ? `${course.ebookCount} materiais` : course.durationMinutes ? `${course.durationMinutes} min` : "Duração a definir"}</span>
                   </div>
                 </div>

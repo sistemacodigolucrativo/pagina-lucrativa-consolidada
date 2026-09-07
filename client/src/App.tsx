@@ -9,6 +9,7 @@ import MemberOffice from "./pages/MemberOffice";
 import MemberOperationCenter from "./pages/MemberOperationCenter";
 import EbookReader from "./pages/EbookReader";
 import AdminEbooks from "./pages/AdminEbooks";
+import AdminAcademy from "./pages/AdminAcademy";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
 import MemberReceiving from "./pages/MemberReceiving";
@@ -134,7 +135,7 @@ function AppRoutes() {
     <Route path="/admin/pedidos" component={AdminOperations} />
     <Route path="/admin/financeiro" component={AdminOperations} />
     <Route path="/admin/relatos" component={AdminTestimonials} />
-    <Route path="/admin/academia" component={AdminEbooks} />
+    <Route path="/admin/academia" component={AdminAcademy} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />

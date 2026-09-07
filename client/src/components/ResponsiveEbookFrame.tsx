@@ -6,6 +6,12 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
+export type EbookReaderProgress = {
+  currentPage: number;
+  totalPages: number;
+  progressPercent: number;
+};
+
 type ResponsiveEbookFrameProps = {
   title: string;
   htmlContent: string;
@@ -13,6 +19,8 @@ type ResponsiveEbookFrameProps = {
   className?: string;
   displayMode?: "embedded" | "modal";
   readerVariant?: "default" | "tech-futuristic";
+  initialPage?: number | null;
+  onProgressChange?: (progress: EbookReaderProgress) => void;
 };
 
 const scaleRootId = "codigo-lucrativo-ebook-scale-root";
@@ -79,7 +87,7 @@ function PdfCanvasPage({ pdfDoc, pageNumber, containerWidth, zoom }: PdfCanvasPa
   }, [containerWidth, pageNumber, pdfDoc, zoom]);
 
   return (
-    <div className="relative flex w-full justify-center">
+    <div data-pdf-page={pageNumber} className="relative flex w-full justify-center">
       {status !== "ready" ? (
         <div className="absolute inset-x-2 top-2 z-10 rounded-md border border-slate-200 bg-white/90 px-3 py-2 text-center text-xs font-semibold text-slate-600 shadow-sm">
           {status === "error" ? "Não foi possível renderizar esta página." : "Carregando página..."}
@@ -94,13 +102,38 @@ function PdfCanvasPage({ pdfDoc, pageNumber, containerWidth, zoom }: PdfCanvasPa
   );
 }
 
-function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; title: string; className?: string }) {
+type PdfCanvasReaderProps = {
+  pdfUrl: string;
+  title: string;
+  className?: string;
+  initialPage?: number | null;
+  onProgressChange?: (progress: EbookReaderProgress) => void;
+};
+
+function PdfCanvasReader({ pdfUrl, title, className = "", initialPage = null, onProgressChange }: PdfCanvasReaderProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
+  const restoredUrlRef = useRef<string | null>(null);
+  const lastReportedPageRef = useRef(0);
+  const scrollFrameRef = useRef<number | null>(null);
   const [pdfDoc, setPdfDoc] = useState<PDFDocumentProxy | null>(null);
   const [pageCount, setPageCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [containerWidth, setContainerWidth] = useState(0);
   const [zoom, setZoom] = useState(1);
   const [status, setStatus] = useState<PdfReaderStatus>("loading");
+
+  const reportPage = useCallback((pageNumber: number) => {
+    if (!pageCount) return;
+    const page = Math.max(1, Math.min(pageCount, Math.round(pageNumber)));
+    setCurrentPage(page);
+    if (lastReportedPageRef.current === page) return;
+    lastReportedPageRef.current = page;
+    onProgressChange?.({
+      currentPage: page,
+      totalPages: pageCount,
+      progressPercent: Math.max(0, Math.min(100, Math.round((page / pageCount) * 100))),
+    });
+  }, [onProgressChange, pageCount]);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,6 +142,9 @@ function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; ti
     setStatus("loading");
     setPdfDoc(null);
     setPageCount(0);
+    setCurrentPage(1);
+    restoredUrlRef.current = null;
+    lastReportedPageRef.current = 0;
 
     void loadingTask.promise
       .then(document => {
@@ -148,13 +184,48 @@ function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; ti
     return () => observer.disconnect();
   }, []);
 
+  useEffect(() => {
+    if (status !== "ready" || !pageCount || restoredUrlRef.current === pdfUrl) return;
+    const page = Math.max(1, Math.min(pageCount, Math.round(initialPage || 1)));
+    const timer = window.setTimeout(() => {
+      const viewport = viewportRef.current;
+      const target = viewport?.querySelector<HTMLElement>(`[data-pdf-page="${page}"]`);
+      if (viewport && target) viewport.scrollTo({ top: Math.max(0, target.offsetTop - 4), behavior: "auto" });
+      restoredUrlRef.current = pdfUrl;
+      reportPage(page);
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [initialPage, pageCount, pdfUrl, reportPage, status]);
+
+  useEffect(() => () => {
+    if (scrollFrameRef.current !== null) window.cancelAnimationFrame(scrollFrameRef.current);
+  }, []);
+
+  const handleScroll = useCallback(() => {
+    if (scrollFrameRef.current !== null) window.cancelAnimationFrame(scrollFrameRef.current);
+    scrollFrameRef.current = window.requestAnimationFrame(() => {
+      scrollFrameRef.current = null;
+      const viewport = viewportRef.current;
+      if (!viewport || !pageCount) return;
+      const marker = viewport.getBoundingClientRect().top + Math.min(120, Math.max(32, viewport.clientHeight * 0.22));
+      const pages = Array.from(viewport.querySelectorAll<HTMLElement>("[data-pdf-page]"));
+      let candidate = pages[0];
+      for (const page of pages) {
+        candidate = page;
+        if (page.getBoundingClientRect().bottom > marker) break;
+      }
+      const pageNumber = Number(candidate?.dataset.pdfPage || 1);
+      if (Number.isInteger(pageNumber) && pageNumber > 0) reportPage(pageNumber);
+    });
+  }, [pageCount, reportPage]);
+
   const pageNumbers = Array.from({ length: pageCount }, (_, index) => index + 1);
 
   return (
     <section className={`flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-200 text-slate-900 ${className}`} aria-label={title}>
       <div className="sticky top-0 z-20 flex min-h-9 shrink-0 flex-wrap items-center justify-between gap-2 border-b border-slate-300 bg-white/95 px-2 py-1 text-xs shadow-sm backdrop-blur">
         <span className="font-semibold text-slate-700">
-          {status === "ready" ? `${pageCount} página${pageCount === 1 ? "" : "s"}` : status === "error" ? "Erro ao carregar PDF" : "Carregando PDF..."}
+          {status === "ready" ? `Página ${currentPage} de ${pageCount}` : status === "error" ? "Erro ao carregar PDF" : "Carregando PDF..."}
         </span>
         <div className="flex items-center gap-1.5">
           <button
@@ -175,7 +246,7 @@ function PdfCanvasReader({ pdfUrl, title, className = "" }: { pdfUrl: string; ti
         </div>
       </div>
 
-      <div ref={viewportRef} className="min-h-0 flex-1 overflow-auto px-0.5 py-1 sm:px-1">
+      <div ref={viewportRef} onScroll={handleScroll} className="min-h-0 flex-1 overflow-auto px-0.5 py-1 sm:px-1">
         {status === "error" ? (
           <div className="mx-auto max-w-md rounded-xl border border-red-200 bg-white p-5 text-center text-sm text-red-700 shadow-sm">
             Não foi possível carregar este PDF dentro do leitor.
@@ -222,6 +293,8 @@ export default function ResponsiveEbookFrame({
   className = "",
   displayMode = "embedded",
   readerVariant = "default",
+  initialPage = null,
+  onProgressChange,
 }: ResponsiveEbookFrameProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const frameRef = useRef<HTMLIFrameElement>(null);
@@ -522,7 +595,7 @@ export default function ResponsiveEbookFrame({
               {isFullscreen ? "Sair" : "Abrir PDF"}
             </button>
           </div>
-          <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1" />
+          <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1" initialPage={initialPage} onProgressChange={onProgressChange} />
         </div>
       </div>
     );
@@ -565,7 +638,7 @@ export default function ResponsiveEbookFrame({
         <main className="flex min-h-0 flex-1 justify-center overflow-auto bg-neutral-900 p-1 sm:p-2">
           <div className={techFrameClass}>
             {hasPdfSource && pdfUrl ? (
-              <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1 bg-[#050811]" />
+              <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1 bg-[#050811]" initialPage={initialPage} onProgressChange={onProgressChange} />
             ) : (
               <iframe
                 ref={frameRef}
@@ -621,6 +694,8 @@ export default function ResponsiveEbookFrame({
         <PdfCanvasReader
           pdfUrl={pdfUrl}
           title={title}
+          initialPage={initialPage}
+          onProgressChange={onProgressChange}
           className={isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}
         />
       ) : (
