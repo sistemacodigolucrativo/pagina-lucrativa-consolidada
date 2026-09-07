@@ -16,8 +16,6 @@ import {
   createMemberInvitation,
   deleteMemberCampaign,
   getAdminContent,
-  getAdminEbook,
-  getAdminEbooks,
   getAdminOverview,
   getAdminTickets,
   getAdminActivities,
@@ -47,14 +45,11 @@ import {
   getPublicAffiliateProfile,
   getPublishedEbook,
   getPublishedEbooks,
-  getPublishedCourses,
-  getMemberCourseByRouteKey,
-  getMemberCourses,
-  updateMemberCourseProgress,
   getAdminCourses,
   createAdminCourse,
   updateAdminCourse,
   updateAdminCoursePublication,
+  updateAdminCourseStatus,
   updateAdminContent,
   updateAdminContentStatus,
   updateAdminEbook,
@@ -87,6 +82,17 @@ import {
 } from "./db";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema, paymentAccessInputSchema } from "@shared/applications";
+import { ACADEMY_PDF_MAX_BYTES } from "@shared/academy";
+import {
+  createAdminAcademyMaterial,
+  getAdminAcademyMaterial,
+  getAdminAcademyMaterials,
+  getMemberAcademyCourseByRouteKey,
+  getMemberAcademyCourses,
+  setAdminAcademyMaterialStatus,
+  updateAdminAcademyMaterial,
+  updateMemberAcademyProgress,
+} from "./academyService";
 import { z } from "zod";
 
 const campaignInput = z.object({
@@ -204,8 +210,10 @@ const courseInput = z.object({
   durationMinutes: z.number().int().min(0).max(100000),
   level: z.enum(["fundamentos", "pratica", "avancado"]),
   ebookId: z.number().int().positive().nullable(),
-  isPublished: z.boolean(),
+  status: z.enum(["draft", "published", "archived"]).optional(),
+  isPublished: z.boolean().optional(),
 });
+const courseStatusFilterInput = z.object({ status: z.enum(["draft", "published", "archived"]).optional() }).optional();
 const publicSalesSectionImageInput = z.object({
   sectionId: z.string().trim().regex(/^[a-z0-9_]+$/).min(3).max(64),
   dataUrl: z.string().regex(/^data:image\/(?:jpeg|png|gif);base64,[A-Za-z0-9+/=\s]+$/).max(5_700_000),
@@ -255,6 +263,18 @@ const ebookInput = z.object({
   htmlContent: z.string().min(20).max(18000000),
   status: z.enum(["draft", "published", "archived"]),
 });
+const academyMaterialInput = z.object({
+  title: z.string().trim().min(3).max(240),
+  summary: z.string().trim().max(8000).optional().nullable(),
+  status: z.enum(["draft", "published", "archived"]),
+  courseTitle: z.string().trim().max(240).optional().nullable(),
+  courseSlug: z.string().trim().toLowerCase().max(160).optional().nullable(),
+  category: z.string().trim().max(96).optional().nullable(),
+  level: z.enum(["fundamentos", "pratica", "avancado"]).optional(),
+  lessonOrder: z.number().int().min(0).max(100000).optional(),
+  pdfDataUrl: z.string().regex(/^data:application\/pdf;base64,[A-Za-z0-9+/=\s]+$/).max(Math.ceil(ACADEMY_PDF_MAX_BYTES * 1.38)).optional().nullable(),
+  originalName: z.string().trim().max(255).optional().nullable(),
+});
 export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: normalizedEmailZodSchema, whatsapp: optionalPhoneZodSchema, source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
 export const invitationInput = z.object({ contactId: z.number().int().positive().optional().nullable(), channel: z.enum(["link", "email", "whatsapp"]), message: z.string().trim().max(4000).optional().nullable() });
 export const testimonialInput = z.object({ content: z.string().trim().min(30).max(8000), rating: z.number().int().min(1).max(5), authorConfirmed: z.literal(true) });
@@ -289,10 +309,14 @@ export const appRouter = router({
     createCampaign: protectedProcedure.input(campaignInput).mutation(({ ctx, input }) => createMemberCampaign(ctx.user.id, input)),
     deleteCampaign: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => deleteMemberCampaign(ctx.user.id, input.id)),
     finance: protectedProcedure.query(({ ctx }) => getMemberFinance(ctx.user.id)),
-    academy: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
-    courses: protectedProcedure.query(({ ctx }) => getMemberCourses(ctx.user.id)),
-    course: protectedProcedure.input(z.object({ routeKey: z.string().trim().min(3).max(160) })).query(({ ctx, input }) => getMemberCourseByRouteKey(ctx.user.id, input.routeKey)),
-    updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberCourseProgress(ctx.user.id, input.courseId, input.progressPercent)),
+    academy: router({
+      listCourses: protectedProcedure.query(({ ctx }) => getMemberAcademyCourses(ctx.user.id)),
+      courseByRouteKey: protectedProcedure.input(z.object({ routeKey: z.string().trim().min(3).max(160) })).query(({ ctx, input }) => getMemberAcademyCourseByRouteKey(ctx.user.id, input.routeKey)),
+      updateProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberAcademyProgress(ctx.user.id, input.courseId, input.progressPercent)),
+    }),
+    courses: protectedProcedure.query(({ ctx }) => getMemberAcademyCourses(ctx.user.id)),
+    course: protectedProcedure.input(z.object({ routeKey: z.string().trim().min(3).max(160) })).query(({ ctx, input }) => getMemberAcademyCourseByRouteKey(ctx.user.id, input.routeKey)),
+    updateCourseProgress: protectedProcedure.input(z.object({ courseId: z.number().int().positive(), progressPercent: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => updateMemberAcademyProgress(ctx.user.id, input.courseId, input.progressPercent)),
     profile: protectedProcedure.query(({ ctx }) => getMemberProfile(ctx.user.id)),
     markGettingStartedMetricsViewed: protectedProcedure.mutation(({ ctx }) => markMemberGettingStartedMetricsViewed(ctx.user.id)),
     updateProfile: protectedProcedure.input(profileInput).mutation(({ ctx, input }) => updateMemberProfile(ctx.user.id, input)),
@@ -345,16 +369,28 @@ export const appRouter = router({
   }),
   admin: router({
     overview: adminProcedure.query(() => getAdminOverview()),
-    courses: adminProcedure.query(() => getAdminCourses()),
+    academy: router({
+      list: adminProcedure.query(() => getAdminAcademyMaterials()),
+      detail: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminAcademyMaterial(input.id)),
+      createMaterial: adminProcedure.input(academyMaterialInput).mutation(({ ctx, input }) => createAdminAcademyMaterial({ ...input, createdBy: ctx.user.id })),
+      updateMaterial: adminProcedure.input(academyMaterialInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => {
+        const { id, ...material } = input;
+        return updateAdminAcademyMaterial(id, material);
+      }),
+      setMaterialStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "archived"]) })).mutation(({ input }) => setAdminAcademyMaterialStatus(input.id, input.status)),
+      archiveMaterial: adminProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ input }) => setAdminAcademyMaterialStatus(input.id, "archived")),
+    }),
+    courses: adminProcedure.input(courseStatusFilterInput).query(() => getAdminCourses()),
     createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
     updateCourse: adminProcedure.input(courseInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...course } = input; return updateAdminCourse(id, course); }),
     updateCoursePublication: adminProcedure.input(z.object({ id: z.number().int().positive(), isPublished: z.boolean() })).mutation(({ input }) => updateAdminCoursePublication(input.id, input.isPublished)),
+    updateCourseStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "archived"]) })).mutation(({ input }) => updateAdminCourseStatus(input.id, input.status)),
     content: adminProcedure.query(() => getAdminContent()),
     createContent: adminProcedure.input(contentInput).mutation(({ ctx, input }) => createAdminContent({ ...input, createdBy: ctx.user.id })),
     updateContent: adminProcedure.input(updateContentInput).mutation(({ input }) => { const { id, ...content } = input; return updateAdminContent(id, content); }),
     updateContentStatus: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["draft", "published", "archived"]) })).mutation(({ input }) => updateAdminContentStatus(input.id, input.status)),
-    ebooks: adminProcedure.query(() => getAdminEbooks()),
-    ebook: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminEbook(input.id)),
+    ebooks: adminProcedure.query(() => getAdminAcademyMaterials()),
+    ebook: adminProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getAdminAcademyMaterial(input.id)),
     createEbook: adminProcedure.input(ebookInput).mutation(({ ctx, input }) => createAdminEbook({ ...input, createdBy: ctx.user.id })),
     updateEbook: adminProcedure.input(ebookInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => {
       const { id, ...ebook } = input;

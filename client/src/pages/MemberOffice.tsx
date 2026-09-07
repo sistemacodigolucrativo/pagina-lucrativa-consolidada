@@ -101,7 +101,7 @@ export default function MemberOffice() {
   const analytics = trpc.member.analytics.useQuery({ period: "all" }, { enabled: currentPath === "/membros" });
   const referrals = trpc.member.referrals.useQuery(undefined, { enabled: currentPath === "/membros" });
   const campaigns = trpc.member.campaigns.useQuery(undefined, { enabled: currentPath === "/membros/campanhas" });
-  const academy = trpc.member.academy.useQuery(undefined, { enabled: currentPath === "/membros/academia" || currentPath === "/membros" });
+  const academy = trpc.member.academy.listCourses.useQuery(undefined, { enabled: currentPath === "/membros/academia" || currentPath === "/membros" });
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const onboardingStorageKey = useMemo(() => auth.user?.id ? `${overviewOnboardingStorageBase}.${auth.user.id}` : overviewOnboardingStorageBase, [auth.user?.id]);
 
@@ -151,7 +151,7 @@ export default function MemberOffice() {
     }
     if (currentPath === "/membros/academia" && academy.isLoading) return <LoadingPanel />;
     if (currentPath === "/membros/academia" && academy.isError) return <QueryState title="Não foi possível carregar os cursos." message="Atualize a página para tentar novamente. O painel não assumirá que não há cursos enquanto a consulta estiver indisponível." />;
-    if (currentPath === "/membros/academia") return <><SectionIntro eyebrow="Academia de execução" title="Aprenda e aplique" detail="Cursos publicados e progresso individual para transformar estudo em ações da sua operação digital." />{academy.data?.length ? <div className="office-course-grid">{academy.data.map(course => <article key={course.id}><span>{course.level}</span><h2>{course.title}</h2><p>{course.summary || "Conteúdo em preparação."}</p><footer><small>{course.durationMinutes} min</small><span>Disponível em breve</span></footer></article>)}</div> : <section className="office-empty"><span className="office-empty-mark">PL</span><h2>A área de estudo está sendo preparada.</h2><p>Os conteúdos publicados pela administração aparecerão aqui, organizados por etapa e tema.</p></section>}</>;
+    if (currentPath === "/membros/academia") return <><SectionIntro eyebrow="Academia de execução" title="Aprenda e aplique" detail="Cursos publicados e progresso individual para transformar estudo em ações da sua operação digital." />{academy.data?.length ? <div className="office-course-grid">{academy.data.map(course => <article key={course.id}><span>{course.level}</span><h2>{course.title}</h2><p>{course.summary || "Conteúdo em preparação."}</p><footer><small>{course.materialCount} material(is)</small><span>Disponível em breve</span></footer></article>)}</div> : <section className="office-empty"><span className="office-empty-mark">PL</span><h2>A área de estudo está sendo preparada.</h2><p>Os conteúdos publicados pela administração aparecerão aqui, organizados por etapa e tema.</p></section>}</>;
     if (currentPath === "/membros/rede") return <ModulePanel detail={{ eyebrow: "Minha operação", title: "Minha rede direta", detail: "Consulte o patrocinador e os indicados diretos vinculados à sua conta, com privacidade e rastreabilidade.", notes: ["A rede exibida representa vínculos diretos registrados pela operação.", "Indicação não significa venda, pagamento ou ganho automático."] }} />;
     if (currentPath === "/membros/materiais") return <ModulePanel detail={{ eyebrow: "Biblioteca de Recursos", title: "Biblioteca de Recursos", detail: "Acesse recursos publicados para apoiar sua divulgação e sua rotina.", notes: ["Os itens aparecem conforme publicação administrativa.", "Use cada recurso de acordo com sua licença e finalidade."] }} />;
     if (currentPath === "/membros/ranking") return <ModulePanel detail={{ eyebrow: "Pontos e níveis", title: "Acompanhe sua evolução", detail: "Consulte pontos confirmados e níveis derivados dos registros da sua própria conta.", notes: ["A pontuação depende de lançamentos e critérios administrativos.", "A prévia não expõe ganhos, nomes ou dados de outros membros."] }} />;
@@ -203,7 +203,7 @@ export default function MemberOffice() {
             <div>
               <ObsidianBadge variant={nextCourse ? "success" : "neutral"}>{nextCourse ? "Publicado" : "Em preparação"}</ObsidianBadge>
               <h3>{nextCourse?.title ?? "Curso em preparação"}</h3>
-              <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level}` : "Módulos e progresso aparecerão quando houver conteúdo publicado."}</p>
+              <p>{nextCourse ? `${nextCourse.materialCount} material(is) · ${nextCourse.level}` : "Módulos e progresso aparecerão quando houver conteúdo publicado."}</p>
               <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: nextCourse ? "12%" : "45%" }} /></div>
             </div>
           </div>

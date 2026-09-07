@@ -8,14 +8,13 @@ import Home from "./pages/Home";
 import MemberOffice from "./pages/MemberOffice";
 import MemberOperationCenter from "./pages/MemberOperationCenter";
 import EbookReader from "./pages/EbookReader";
-import AdminEbooks from "./pages/AdminEbooks";
+import AdminAcademy from "./pages/AdminAcademy";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
 import MemberReceiving from "./pages/MemberReceiving";
 import MemberAffiliateOrders from "./pages/MemberAffiliateOrders";
 import MemberPerformance from "./pages/MemberPerformance";
-import MemberCourses from "./pages/MemberCourses";
-import AdminCourses from "./pages/AdminCourses";
+import MemberAcademy from "./pages/MemberAcademy";
 import AdminPublications from "@/pages/AdminPublications";
 import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";
 import Preview from "@/pages/Preview";
@@ -43,6 +42,11 @@ import MemberLegacyRedirect from "./pages/MemberLegacyRedirect";
 import { CommercialRulesPage, ContactPage, FaqPage, InstitutionalPage, PrivacyPage, TermsPage } from "./pages/PublicInfoPage";
 import { DEV_PREFIX } from "./lib/devPath";
 import AdminDeployStatus from "./components/AdminDeployStatus";
+
+function AdminAcademyRedirect() {
+  window.history.replaceState(null, "", "/admin/academia");
+  return <AdminAcademy />;
+}
 
 function AppRoutes() {
   return <><AdminDeployStatus /><Switch>
@@ -97,29 +101,29 @@ function AppRoutes() {
     <Route path="/membros/recebimentos" component={MemberReceiving} />
     <Route path="/membros/meus-pedidos" component={MemberAffiliateOrders} />
     <Route path="/membros/pontos" component={MemberPerformance} />
-    <Route path="/membros/academia" component={MemberCourses} />
-    <Route path="/membros/curso-google-ads" component={MemberCourses} />
-    <Route path="/membros/curso-facebook-ads" component={MemberCourses} />
-    <Route path="/membros/curso-posts-facebook" component={MemberCourses} />
-    <Route path="/membros/curso-canva" component={MemberCourses} />
-    <Route path="/membros/curso-negocio" component={MemberCourses} />
-    <Route path="/membros/curso-autonomo" component={MemberCourses} />
-    <Route path="/membros/curso-recepcionista" component={MemberCourses} />
-    <Route path="/membros/curso-ebook" component={MemberCourses} />
-    <Route path="/membros/curso-importacao" component={MemberCourses} />
-    <Route path="/membros/curso-excel" component={MemberCourses} />
-    <Route path="/membros/curso-tiktok-ads" component={MemberCourses} />
-    <Route path="/membros/curso-captura" component={MemberCourses} />
-    <Route path="/membros/curso-logotipo" component={MemberCourses} />
-    <Route path="/membros/curso-capas-videos" component={MemberCourses} />
-    <Route path="/membros/curso-capas-3d" component={MemberCourses} />
-    <Route path="/membros/curso-dominio-estrategico" component={MemberCourses} />
-    <Route path="/membros/filmes" component={MemberCourses} />
-    <Route path="/membros/curso/:courseKey" component={MemberCourses} />
+    <Route path="/membros/academia" component={MemberAcademy} />
+    <Route path="/membros/curso-google-ads" component={MemberAcademy} />
+    <Route path="/membros/curso-facebook-ads" component={MemberAcademy} />
+    <Route path="/membros/curso-posts-facebook" component={MemberAcademy} />
+    <Route path="/membros/curso-canva" component={MemberAcademy} />
+    <Route path="/membros/curso-negocio" component={MemberAcademy} />
+    <Route path="/membros/curso-autonomo" component={MemberAcademy} />
+    <Route path="/membros/curso-recepcionista" component={MemberAcademy} />
+    <Route path="/membros/curso-ebook" component={MemberAcademy} />
+    <Route path="/membros/curso-importacao" component={MemberAcademy} />
+    <Route path="/membros/curso-excel" component={MemberAcademy} />
+    <Route path="/membros/curso-tiktok-ads" component={MemberAcademy} />
+    <Route path="/membros/curso-captura" component={MemberAcademy} />
+    <Route path="/membros/curso-logotipo" component={MemberAcademy} />
+    <Route path="/membros/curso-capas-videos" component={MemberAcademy} />
+    <Route path="/membros/curso-capas-3d" component={MemberAcademy} />
+    <Route path="/membros/curso-dominio-estrategico" component={MemberAcademy} />
+    <Route path="/membros/filmes" component={MemberAcademy} />
+    <Route path="/membros/curso/:courseKey" component={MemberAcademy} />
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
-    <Route path="/admin/ebooks" component={AdminEbooks} />
+    <Route path="/admin/ebooks" component={AdminAcademyRedirect} />
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/material-divulgacao" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
@@ -135,7 +139,7 @@ function AppRoutes() {
     <Route path="/admin/pedidos" component={AdminOperations} />
     <Route path="/admin/financeiro" component={AdminOperations} />
     <Route path="/admin/relatos" component={AdminTestimonials} />
-    <Route path="/admin/academia" component={AdminCourses} />
+    <Route path="/admin/academia" component={AdminAcademy} />
     <Route path="/admin" component={AdminOffice} />
     <Route path="/admin/:section" component={AdminOffice} />
     <Route path="/404" component={NotFound} />

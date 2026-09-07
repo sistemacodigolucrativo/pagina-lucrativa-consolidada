@@ -509,111 +509,50 @@ export async function deleteMemberCampaign(userId: number, campaignId: number) {
 }
 
 export async function getPublishedCourses() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(courses).where(eq(courses.isPublished, 1)).orderBy(desc(courses.updatedAt));
+  const { getMemberAcademyCourses } = await import("./academyService");
+  return getMemberAcademyCourses(0);
 }
 
 type CourseLevel = "fundamentos" | "pratica" | "avancado";
-type CourseInput = { title: string; summary?: string | null; category?: string | null; durationMinutes: number; level: CourseLevel; ebookId: number | null; isPublished: boolean };
-
-function createCourseRouteKey(title: string) {
-  const stem = title
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 120) || "curso";
-  return `${stem}-${randomUUID().slice(0, 8)}`;
-}
-
-async function assertCourseEbook(ebookId: number | null, mustBePublished: boolean) {
-  if (!ebookId) {
-    if (mustBePublished) throw new Error("Vincule um e-book publicado antes de disponibilizar este curso.");
-    return;
-  }
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const result = await db.select({ id: ebooks.id, status: ebooks.status }).from(ebooks).where(eq(ebooks.id, ebookId)).limit(1);
-  if (!result[0]) throw new Error("O e-book selecionado não existe.");
-  if (mustBePublished && result[0].status !== "published") throw new Error("Selecione um e-book publicado para disponibilizar este curso.");
-}
+type CourseInput = { title: string; summary?: string | null; category?: string | null; durationMinutes: number; level: CourseLevel; ebookId: number | null; status?: "draft" | "published" | "archived"; isPublished?: boolean };
 
 export async function getMemberCourses(userId: number) {
-  const db = await getDb();
-  if (!db) return [];
-  const [courseRows, progressRows, publishedEbookRows] = await Promise.all([
-    db.select().from(courses).where(eq(courses.isPublished, 1)).orderBy(desc(courses.updatedAt)),
-    db.select().from(courseProgress).where(eq(courseProgress.userId, userId)),
-    db.select({ id: ebooks.id }).from(ebooks).where(eq(ebooks.status, "published")),
-  ]);
-  const progressByCourse = new Map(progressRows.map(row => [row.courseId, row]));
-  const publishedEbookIds = new Set(publishedEbookRows.map(ebook => ebook.id));
-  return courseRows
-    .filter(course => course.ebookId !== null && publishedEbookIds.has(course.ebookId))
-    .map(course => ({ ...course, progressPercent: progressByCourse.get(course.id)?.progressPercent ?? 0, lastAccessedAt: progressByCourse.get(course.id)?.lastAccessedAt ?? null }));
+  const { getMemberAcademyCourses } = await import("./academyService");
+  return getMemberAcademyCourses(userId);
 }
 
 export async function getMemberCourseByRouteKey(userId: number, routeKey: string) {
-  const db = await getDb();
-  if (!db) return null;
-  const courseRows = await db.select().from(courses).where(and(eq(courses.routeKey, routeKey), eq(courses.isPublished, 1))).limit(1);
-  const course = courseRows[0];
-  if (!course?.ebookId) return null;
-  const [ebookRows, progressRows] = await Promise.all([
-    db.select().from(ebooks).where(and(eq(ebooks.id, course.ebookId), eq(ebooks.status, "published"))).limit(1),
-    db.select().from(courseProgress).where(and(eq(courseProgress.userId, userId), eq(courseProgress.courseId, course.id))).limit(1),
-  ]);
-  const ebook = ebookRows[0];
-  if (!ebook) return null;
-  const progress = progressRows[0];
-  return { ...course, ebook, progressPercent: progress?.progressPercent ?? 0, lastAccessedAt: progress?.lastAccessedAt ?? null };
+  const { getMemberAcademyCourseByRouteKey } = await import("./academyService");
+  return getMemberAcademyCourseByRouteKey(userId, routeKey);
 }
 
 export async function updateMemberCourseProgress(userId: number, courseId: number, progressPercent: number) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const course = await db.select({ id: courses.id }).from(courses).where(and(eq(courses.id, courseId), eq(courses.isPublished, 1))).limit(1);
-  if (!course[0]) throw new Error("Curso não encontrado ou indisponível.");
-  const normalized = Math.max(0, Math.min(100, Math.round(progressPercent)));
-  const now = new Date();
-  await db.insert(courseProgress).values({ userId, courseId, progressPercent: normalized, lastAccessedAt: now }).onDuplicateKeyUpdate({ set: { progressPercent: normalized, lastAccessedAt: now } });
-  return { courseId, progressPercent: normalized };
+  const { updateMemberAcademyProgress } = await import("./academyService");
+  return updateMemberAcademyProgress(userId, courseId, progressPercent);
 }
 
 export async function getAdminCourses() {
-  const db = await getDb();
-  if (!db) return [];
-  return db.select().from(courses).orderBy(desc(courses.updatedAt));
+  const { getLegacyAdminCourses } = await import("./academyService");
+  return getLegacyAdminCourses();
 }
 
 export async function createAdminCourse(input: CourseInput) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await assertCourseEbook(input.ebookId, input.isPublished);
-  const result = await db.insert(courses).values({ title: input.title.trim(), routeKey: createCourseRouteKey(input.title), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, ebookId: input.ebookId, isPublished: input.isPublished ? 1 : 0 });
-  return { id: Number(result[0].insertId) };
+  const { createAdminAcademyMaterial } = await import("./academyService");
+  return createAdminAcademyMaterial({ title: input.title, summary: input.summary, status: input.status ?? (input.isPublished ? "published" : "draft"), courseTitle: input.title, category: input.category, level: input.level, lessonOrder: 0, createdBy: 0 });
 }
 
 export async function updateAdminCourse(courseId: number, input: CourseInput) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  await assertCourseEbook(input.ebookId, input.isPublished);
-  await db.update(courses).set({ title: input.title.trim(), summary: input.summary?.trim() || null, category: input.category?.trim() || null, durationMinutes: input.durationMinutes, level: input.level, ebookId: input.ebookId, isPublished: input.isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
-  return { success: true } as const;
+  const { updateAdminAcademyMaterial } = await import("./academyService");
+  return updateAdminAcademyMaterial(courseId, { title: input.title, summary: input.summary, status: input.status ?? (input.isPublished ? "published" : "draft"), courseTitle: input.title, category: input.category, level: input.level, lessonOrder: 0 });
+}
+
+export async function updateAdminCourseStatus(courseId: number, status: "draft" | "published" | "archived") {
+  const { setAdminAcademyMaterialStatus } = await import("./academyService");
+  return setAdminAcademyMaterialStatus(courseId, status);
 }
 
 export async function updateAdminCoursePublication(courseId: number, isPublished: boolean) {
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  if (isPublished) {
-    const courseRows = await db.select({ ebookId: courses.ebookId }).from(courses).where(eq(courses.id, courseId)).limit(1);
-    if (!courseRows[0]) throw new Error("Curso não encontrado.");
-    await assertCourseEbook(courseRows[0].ebookId, true);
-  }
-  await db.update(courses).set({ isPublished: isPublished ? 1 : 0 }).where(eq(courses.id, courseId));
-  return { success: true } as const;
+  return updateAdminCourseStatus(courseId, isPublished ? "published" : "draft");
 }
 
 
@@ -1250,9 +1189,9 @@ export async function getPublishedEbook(ebookId: number) {
 }
 export async function getAdminEbooks() {
   const db = await getDb();
-  if (!db) return [];
+  if (!db) return getPackagedEbooks();
   const result = await db.select(ebookListFields).from(ebooks).orderBy(desc(ebooks.updatedAt));
-  return withPackagedEbookContentMetadata(result);
+  return result.length ? withPackagedEbookContentMetadata(result) : getPackagedEbooks();
 }
 export async function getAdminEbook(ebookId: number) {
   const db = await getDb();

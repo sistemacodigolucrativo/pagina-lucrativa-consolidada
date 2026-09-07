@@ -9,7 +9,7 @@ describe("módulo de e-books", () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
     expect(router).toContain("ebooks: protectedProcedure.query(() => getPublishedEbooks())");
     expect(router).toContain("ebook: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ input }) => getPublishedEbook(input.id))");
-    expect(router).toContain("ebooks: adminProcedure.query(() => getAdminEbooks())");
+    expect(router).toContain("ebooks: adminProcedure.query(() => getAdminAcademyMaterials())");
     expect(router).toContain("createEbook: adminProcedure.input(ebookInput)");
     expect(router).toContain("updateEbook: adminProcedure.input(ebookInput.extend");
   });
@@ -18,7 +18,7 @@ describe("módulo de e-books", () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const navigation = await readFile(path.join(root, "shared/memberOfficeContent.ts"), "utf8");
     expect(app).toContain('path="/membros/ebooks" component={EbookReader}');
-    expect(app).toContain('path="/admin/ebooks" component={AdminEbooks}');
+    expect(app).toContain('path="/admin/ebooks" component={AdminAcademyRedirect}');
     expect(navigation).toContain('label: "Biblioteca de e-books", path: "/membros/ebooks"');
   });
 
@@ -52,7 +52,8 @@ describe("módulo de e-books", () => {
   it("renderiza PDF no leitor interno e mantém HTML isolado como fallback", async () => {
     const reader = await readFile(path.join(root, "client/src/components/ResponsiveEbookFrame.tsx"), "utf8");
     const memberReader = await readFile(path.join(root, "client/src/pages/EbookReader.tsx"), "utf8");
-    const admin = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
+    const admin = await readFile(path.join(root, "client/src/pages/AdminAcademy.tsx"), "utf8");
+    const adminWrapper = await readFile(path.join(root, "client/src/pages/AdminEbooks.tsx"), "utf8");
     expect(reader).toContain("pdfUrl?: string | null");
     expect(reader).toContain('from "pdfjs-dist"');
     expect(reader).toContain('pdf.worker.min.mjs?url');
@@ -95,10 +96,11 @@ describe("módulo de e-books", () => {
     expect(memberReader).toContain("pb-[calc(env(safe-area-inset-bottom)+0.25rem)]");
     expect(memberReader).toContain('className="h-full w-full min-w-0"');
     expect(memberReader).not.toContain("xl:grid-cols-[300px_minmax(0,1fr)]");
-    expect(admin).toContain("E-books PDF e HTML");
-    expect(admin).toContain("HTML do e-book (fallback)");
-    expect(admin).toContain('sandbox=""');
-    expect(admin).toContain("srcDoc={form.htmlContent}");
+    expect(admin).toContain("Novo material PDF");
+    expect(admin).toContain('accept="application/pdf"');
+    expect(admin).toContain("O PDF deve ter no máximo 25 MB.");
+    expect(admin).toContain("O arquivo enviado não possui assinatura PDF válida.");
+    expect(adminWrapper).toContain("export default AdminAcademy");
   });
 
   it("expõe os PDFs importados por rota estática e remove a dependência dos HTMLs empacotados", async () => {
