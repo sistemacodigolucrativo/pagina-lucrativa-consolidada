@@ -129,38 +129,6 @@ export async function getPublishedEbook(ebookId: number) {
   return detail;
 }
 
-export async function getMemberEbookReadingHistory(userId: number) {
-  const db = await getDb();
-  if (!db) return [] as ReadingProgress[];
-  const rows = await db.select().from(courseProgress).where(and(eq(courseProgress.userId, userId), gte(courseProgress.courseId, EBOOK_READING_PROGRESS_ID_OFFSET), lt(courseProgress.courseId, EBOOK_READING_PROGRESS_ID_LIMIT))).orderBy(desc(courseProgress.lastAccessedAt), desc(courseProgress.updatedAt));
-  const published = await getPublishedEbooks();
-  const allowed = new Set(published.map(item => item.id));
-  return rows.map(row => decodePageProgress(row.progressPercent, ebookIdFromReadingProgressRowId(row.courseId), row.lastAccessedAt)).filter((item): item is ReadingProgress => Boolean(item && allowed.has(item.ebookId))).slice(0, 20);
-}
-
-export async function getMemberEbookReadingProgress(userId: number, ebookId: number) {
-  const db = await getDb();
-  if (!db) return null;
-  const published = await getPublishedEbooks();
-  if (!published.some(item => item.id === ebookId)) return null;
-  const rows = await db.select().from(courseProgress).where(and(eq(courseProgress.userId, userId), eq(courseProgress.courseId, readingProgressRowId(ebookId)))).limit(1);
-  const row = rows[0];
-  return row ? decodePageProgress(row.progressPercent, ebookId, row.lastAccessedAt) : null;
-}
-
-export async function updateMemberEbookReadingProgress(userId: number, ebookId: number, currentPage: number, totalPages: number) {
-  const published = await getPublishedEbooks();
-  if (!published.some(item => item.id === ebookId)) throw new Error("E-book não encontrado ou indisponível.");
-  if (!Number.isInteger(totalPages) || totalPages < 1 || totalPages >= PAGE_PACK_FACTOR) throw new Error("Quantidade de páginas inválida para este leitor.");
-  const db = await getDb();
-  if (!db) throw new Error("Banco de dados indisponível.");
-  const courseId = readingProgressRowId(ebookId);
-  const packed = encodePageProgress(currentPage, totalPages);
-  const now = new Date();
-  await db.insert(courseProgress).values({ userId, courseId, progressPercent: packed, lastAccessedAt: now }).onDuplicateKeyUpdate({ set: { progressPercent: packed, lastAccessedAt: now } });
-  return decodePageProgress(packed, ebookId, now);
-}
-
 function courseEbooks(course: Awaited<ReturnType<typeof getLegacyMemberCourses>>[number]) {
   const candidate = course as typeof course & { ebooks?: Array<{ id: number; htmlContent?: string | null; sourcePath?: string | null }>; ebook?: { id: number; htmlContent?: string | null; sourcePath?: string | null } | null };
   if (Array.isArray(candidate.ebooks) && candidate.ebooks.length) return candidate.ebooks;
@@ -170,6 +138,46 @@ function courseEbooks(course: Awaited<ReturnType<typeof getLegacyMemberCourses>>
 function courseIsPublishedAsGroup(course: Awaited<ReturnType<typeof getLegacyMemberCourses>>[number]) {
   const items = courseEbooks(course);
   return Boolean(items.length && items.every(item => readAcademyMetadata(item.htmlContent, item.sourcePath)?.coursePublished !== false));
+}
+
+async function getReadableEbookIds(userId: number) {
+  const [libraryEbooks, academyCourses] = await Promise.all([getPublishedEbooks(), getLegacyMemberCourses(userId)]);
+  const ids = new Set(libraryEbooks.map(item => item.id));
+  academyCourses.filter(courseIsPublishedAsGroup).forEach(course => courseEbooks(course).forEach(item => ids.add(item.id)));
+  return ids;
+}
+
+export async function getMemberEbookReadingHistory(userId: number) {
+  const db = await getDb();
+  if (!db) return [] as ReadingProgress[];
+  const [rows, allowed] = await Promise.all([
+    db.select().from(courseProgress).where(and(eq(courseProgress.userId, userId), gte(courseProgress.courseId, EBOOK_READING_PROGRESS_ID_OFFSET), lt(courseProgress.courseId, EBOOK_READING_PROGRESS_ID_LIMIT))).orderBy(desc(courseProgress.lastAccessedAt), desc(courseProgress.updatedAt)),
+    getReadableEbookIds(userId),
+  ]);
+  return rows.map(row => decodePageProgress(row.progressPercent, ebookIdFromReadingProgressRowId(row.courseId), row.lastAccessedAt)).filter((item): item is ReadingProgress => Boolean(item && allowed.has(item.ebookId))).slice(0, 20);
+}
+
+export async function getMemberEbookReadingProgress(userId: number, ebookId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const allowed = await getReadableEbookIds(userId);
+  if (!allowed.has(ebookId)) return null;
+  const rows = await db.select().from(courseProgress).where(and(eq(courseProgress.userId, userId), eq(courseProgress.courseId, readingProgressRowId(ebookId)))).limit(1);
+  const row = rows[0];
+  return row ? decodePageProgress(row.progressPercent, ebookId, row.lastAccessedAt) : null;
+}
+
+export async function updateMemberEbookReadingProgress(userId: number, ebookId: number, currentPage: number, totalPages: number) {
+  const allowed = await getReadableEbookIds(userId);
+  if (!allowed.has(ebookId)) throw new Error("E-book não encontrado ou indisponível.");
+  if (!Number.isInteger(totalPages) || totalPages < 1 || totalPages >= PAGE_PACK_FACTOR) throw new Error("Quantidade de páginas inválida para este leitor.");
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const courseId = readingProgressRowId(ebookId);
+  const packed = encodePageProgress(currentPage, totalPages);
+  const now = new Date();
+  await db.insert(courseProgress).values({ userId, courseId, progressPercent: packed, lastAccessedAt: now }).onDuplicateKeyUpdate({ set: { progressPercent: packed, lastAccessedAt: now } });
+  return decodePageProgress(packed, ebookId, now);
 }
 
 export async function getMemberCourses(userId: number) {
