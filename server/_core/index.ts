@@ -17,6 +17,7 @@ import { registerAdminContentManagement } from "./adminContentManagement";
 import { registerAdminRelationshipMaintenance } from "./adminRelationshipMaintenance";
 import { serveStatic, setupVite } from "./vite";
 import { PACKAGED_EBOOK_FILE_ROUTE } from "../staticEbooks";
+import { applyTemporaryAdminAccessRepair } from "../adminAccessRepair";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -68,6 +69,8 @@ function registerPackagedEbookFiles(app: express.Express, appPrefix: string) {
 }
 
 async function startServer() {
+  await applyTemporaryAdminAccessRepair();
+
   const app = express();
   const server = createServer(app);
   const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
