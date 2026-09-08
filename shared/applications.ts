@@ -12,6 +12,23 @@ export const applicationInputSchema = z.object({
 
 export type ApplicationInput = z.infer<typeof applicationInputSchema>;
 
+export type PublicPaymentReceiving = {
+  preferredMethod: "pix" | "bank_transfer" | "other" | string;
+  holderName: string | null;
+  receivingKey: string | null;
+  instructions: string | null;
+  pagSeguro: { email: string } | null;
+  paypal: { email: string } | null;
+  banks: Array<{
+    name: string | null;
+    agency: string | null;
+    account: string | null;
+    type: "checking" | "savings" | null;
+    holder: string | null;
+  }>;
+  other: { key: string | null; instructions: string | null } | null;
+};
+
 export type PublicPaymentPage = {
   trackingCode: string;
   buyerName: string;
@@ -27,6 +44,7 @@ export type PublicPaymentPage = {
     instructions: string | null;
   } | null;
   paymentLinks: Array<{ label: string; paymentUrl: string }>;
+  receiving?: PublicPaymentReceiving | null;
 };
 
 export const paymentAccessInputSchema = z.object({
