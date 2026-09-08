@@ -6,6 +6,14 @@ import path from "path";
 import { createServer as createViteServer } from "vite";
 import viteConfig from "../../vite.config";
 
+const APP_SHELL_CACHE_CONTROL = "no-store, no-cache, must-revalidate, proxy-revalidate";
+
+function setNoCacheAppShellHeaders(res: express.Response) {
+  res.setHeader("Cache-Control", APP_SHELL_CACHE_CONTROL);
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
+}
+
 export async function setupVite(app: Express, server: Server) {
   const serverOptions = {
     middlewareMode: true,
@@ -39,6 +47,7 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`
       );
       const page = await vite.transformIndexHtml(url, template);
+      setNoCacheAppShellHeaders(res);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
@@ -58,10 +67,24 @@ export function serveStatic(app: Express) {
     );
   }
 
-  app.use(express.static(distPath));
+  app.use(express.static(distPath, {
+    setHeaders(res, filePath) {
+      if (path.basename(filePath).toLowerCase() === "index.html") {
+        res.setHeader("Cache-Control", APP_SHELL_CACHE_CONTROL);
+        res.setHeader("Pragma", "no-cache");
+        res.setHeader("Expires", "0");
+        return;
+      }
+
+      if (filePath.includes(`${path.sep}assets${path.sep}`)) {
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      }
+    },
+  }));
 
   // fall through to index.html if the file doesn't exist
   app.use("*", (_req, res) => {
+    setNoCacheAppShellHeaders(res);
     res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
