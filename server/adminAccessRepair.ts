@@ -3,6 +3,7 @@ import { users } from "../drizzle/schema";
 import { getDb } from "./db";
 
 const ADMIN_OPEN_ID = "local_demo_admin";
+const DEPLOY_SMOKE_PORT = "3199";
 
 /**
  * Temporary production-only recovery hook.
@@ -10,7 +11,7 @@ const ADMIN_OPEN_ID = "local_demo_admin";
  * can be used again. Remove this file immediately after the recovery deploy.
  */
 export async function applyTemporaryAdminAccessRepair() {
-  if (process.env.NODE_ENV !== "production" || process.env.DEPLOY_SMOKE_TEST === "1") return;
+  if (process.env.NODE_ENV !== "production" || process.env.PORT === DEPLOY_SMOKE_PORT) return;
 
   const db = await getDb();
   if (!db) throw new Error("[AdminAccessRepair] Banco de dados indisponível; recuperação não aplicada.");
