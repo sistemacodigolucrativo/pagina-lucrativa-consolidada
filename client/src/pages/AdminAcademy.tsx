@@ -279,6 +279,7 @@ export default function AdminAcademy() {
   const [courseEditor, setCourseEditor] = useState<CourseEditorState | null>(null);
   const [courseForm, setCourseForm] = useState<CourseForm>({ title: "", order: "", category: "Fundamentos", level: "fundamentos" });
   const [materialEditor, setMaterialEditor] = useState<MaterialEditorState>(null);
+  const [materialsVisible, setMaterialsVisible] = useState(false);
 
   const courses = useMemo<CourseView[]>(() => {
     const ebooks = (ebooksQuery.data ?? []) as AdminEbook[];
@@ -341,7 +342,7 @@ export default function AdminAcademy() {
       }
     }
 
-    for (const slug of unmatchedGroups) {
+    for (const slug of Array.from(unmatchedGroups)) {
       const group = groups.get(slug);
       if (!group) continue;
       result.push({
@@ -357,6 +358,11 @@ export default function AdminAcademy() {
     });
   }, [ebooksQuery.data, storedCoursesQuery.data]);
 
+  const nextCourseOrder = useMemo(() => {
+    const maxStoredOrder = courses.reduce((max, course) => Math.max(max, course.order), 0);
+    return Math.min(999, Math.max(courses.length, maxStoredOrder) + 1);
+  }, [courses]);
+
   const selectedCourse = useMemo(() => {
     if (!courseEditor || courseEditor.creating) return null;
     if (courseEditor.courseId !== null) return courses.find(course => course.id === courseEditor.courseId) ?? null;
@@ -364,6 +370,7 @@ export default function AdminAcademy() {
   }, [courseEditor, courses]);
 
   const openCourse = (course: CourseView) => {
+    setMaterialsVisible(false);
     setCourseEditor({ courseId: course.id, slug: course.slug, originalTitle: course.title, creating: false });
     setCourseForm({
       title: course.title,
@@ -374,11 +381,13 @@ export default function AdminAcademy() {
   };
 
   const startNewCourse = () => {
+    setMaterialsVisible(false);
     setCourseEditor({ courseId: null, slug: "", originalTitle: "", creating: true });
-    setCourseForm({ title: "", order: "", category: "Fundamentos", level: "fundamentos" });
+    setCourseForm({ title: "", order: String(nextCourseOrder), category: "Fundamentos", level: "fundamentos" });
   };
 
   const closeCourse = () => {
+    setMaterialsVisible(false);
     setCourseEditor(null);
     setCourseForm({ title: "", order: "", category: "Fundamentos", level: "fundamentos" });
   };
@@ -425,7 +434,8 @@ export default function AdminAcademy() {
     event.preventDefault();
     const title = courseForm.title.trim();
     const category = courseForm.category.trim();
-    const order = courseForm.order.trim() ? Number(courseForm.order) : 0;
+    const automaticOrder = courseEditor?.creating ? nextCourseOrder : Number(courseForm.order || 0);
+    const order = Number.isInteger(automaticOrder) ? automaticOrder : 0;
     if (title.length < 3) {
       toast.error("Informe o nome do curso.");
       return;
@@ -434,8 +444,8 @@ export default function AdminAcademy() {
       toast.error("Informe a categoria do curso.");
       return;
     }
-    if (!Number.isInteger(order) || order < 0 || order > 999) {
-      toast.error("Informe uma ordem válida para o curso.");
+    if (order < 0 || order > 999) {
+      toast.error("Não foi possível determinar a ordem do curso.");
       return;
     }
 
@@ -462,6 +472,7 @@ export default function AdminAcademy() {
 
       await syncCourseMaterials(sourceCourse, title, category, courseForm.level, order);
       await refreshAcademy();
+      setCourseForm(current => ({ ...current, order: String(order) }));
       setCourseEditor({ courseId, slug: slugify(title), originalTitle: title, creating: false });
       toast.success(courseEditor?.creating ? "Curso criado. Agora você pode adicionar materiais." : "Curso atualizado.");
     } catch (error) {
@@ -492,10 +503,12 @@ export default function AdminAcademy() {
   if (courseEditor) {
     const currentCourse = selectedCourse;
     const canAddMaterial = Boolean(currentCourse?.id);
+    const hasMaterials = Boolean(currentCourse?.items.length);
+    const showPublicationBar = !courseEditor.creating && hasMaterials && Boolean(currentCourse);
 
     return (
       <DashboardLayout menuItems={adminMenu} title="Administração">
-        <main className="mx-auto w-full max-w-5xl space-y-7 p-4 sm:p-8">
+        <main className={`mx-auto w-full max-w-5xl space-y-7 p-4 sm:p-8 ${showPublicationBar ? "pb-[calc(env(safe-area-inset-bottom)+9rem)] sm:pb-32" : ""}`}>
           <header className="space-y-4 border-b border-white/10 pb-6">
             <button type="button" onClick={closeCourse} className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 transition hover:text-white">
               <ArrowLeft className="size-4" />
@@ -518,7 +531,14 @@ export default function AdminAcademy() {
               </label>
               <label className="text-sm text-zinc-200">
                 Ordem
-                <input type="number" min={0} max={999} value={courseForm.order} onChange={event => setCourseForm(current => ({ ...current, order: event.target.value }))} placeholder="1" className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2.5 text-white" />
+                <input
+                  type="number"
+                  value={courseForm.order}
+                  readOnly
+                  aria-readonly="true"
+                  className="mt-1 w-full cursor-not-allowed rounded-lg border border-white/10 bg-zinc-950 px-3 py-2.5 text-zinc-400"
+                />
+                <span className="mt-1 block text-[11px] leading-4 text-zinc-600">Definida automaticamente.</span>
               </label>
             </div>
 
@@ -550,13 +570,17 @@ export default function AdminAcademy() {
                   <h2 className="text-lg font-semibold text-white">Materiais do curso</h2>
                   <p className="mt-1 text-sm text-zinc-400">{currentCourse?.items.length ?? 0} {(currentCourse?.items.length ?? 0) === 1 ? "material cadastrado" : "materiais cadastrados"}</p>
                 </div>
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  {currentCourse?.items.length ? (
-                    <button type="button" disabled={updatePublication.isPending} onClick={() => void toggleCoursePublication(currentCourse)} className={`inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 ${currentCourse.published ? "border-amber-300/30 text-amber-100 hover:bg-amber-300/10" : "border-emerald-300/30 text-emerald-100 hover:bg-emerald-300/10"}`}>
-                      {currentCourse.published ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                      {currentCourse.published ? "Ocultar curso" : "Publicar curso"}
-                    </button>
-                  ) : null}
+
+                {hasMaterials ? (
+                  <button
+                    type="button"
+                    onClick={() => setMaterialsVisible(value => !value)}
+                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition hover:border-emerald-300/40 hover:text-emerald-100"
+                  >
+                    <FileText className="size-4" />
+                    {materialsVisible ? "Ocultar Materiais" : "Visualizar Materiais"}
+                  </button>
+                ) : (
                   <button
                     type="button"
                     disabled={!canAddMaterial}
@@ -566,7 +590,7 @@ export default function AdminAcademy() {
                     <PlusCircle className="size-4" />
                     Adicionar Material
                   </button>
-                </div>
+                )}
               </div>
 
               {!canAddMaterial ? (
@@ -575,41 +599,84 @@ export default function AdminAcademy() {
                 </p>
               ) : null}
 
-              {currentCourse?.items.length ? (
-                <div className="divide-y divide-white/10 border-y border-white/10">
-                  {currentCourse.items.map(({ ebook, metadata }, index) => (
+              {hasMaterials && materialsVisible && currentCourse ? (
+                <div className="space-y-4 border-t border-white/10 pt-4">
+                  <div className="flex justify-end">
                     <button
                       type="button"
-                      key={ebook.id}
-                      onClick={() => setMaterialEditor({ mode: "edit", course: currentCourse, ebookId: ebook.id, title: ebook.title })}
-                      className="flex w-full items-center gap-3 px-1 py-4 text-left transition hover:bg-white/[0.025] sm:px-3"
+                      onClick={() => setMaterialEditor({ mode: "create", course: currentCourse })}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-2.5 text-sm font-semibold text-black transition hover:bg-emerald-200 sm:w-auto"
                     >
-                      <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-300/10 text-xs font-semibold text-emerald-200">
-                        {metadata.lessonOrder || index + 1}
-                      </span>
-                      <FileText className="size-4 shrink-0 text-zinc-500" />
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm font-medium text-white [overflow-wrap:anywhere]">{ebook.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">{statusLabel(ebook.status)}</p>
-                      </div>
+                      <PlusCircle className="size-4" />
+                      Adicionar Material
                     </button>
-                  ))}
+                  </div>
+
+                  <div className="divide-y divide-white/10 border-y border-white/10">
+                    {currentCourse.items.map(({ ebook, metadata }, index) => (
+                      <button
+                        type="button"
+                        key={ebook.id}
+                        onClick={() => setMaterialEditor({ mode: "edit", course: currentCourse, ebookId: ebook.id, title: ebook.title })}
+                        className="flex w-full items-center gap-3 px-1 py-4 text-left transition hover:bg-white/[0.025] sm:px-3"
+                      >
+                        <span className="flex size-8 shrink-0 items-center justify-center rounded-full border border-emerald-300/20 bg-emerald-300/10 text-xs font-semibold text-emerald-200">
+                          {metadata.lessonOrder || index + 1}
+                        </span>
+                        <FileText className="size-4 shrink-0 text-zinc-500" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-medium text-white [overflow-wrap:anywhere]">{ebook.title}</p>
+                          <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">{statusLabel(ebook.status)}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              ) : (
+              ) : null}
+
+              {!hasMaterials ? (
                 <div className="border-y border-dashed border-white/15 py-8 text-center">
                   <FileText className="mx-auto size-7 text-zinc-600" />
                   <p className="mt-3 text-sm text-zinc-400">Este curso ainda não possui materiais.</p>
-                  <p className="mt-1 text-xs text-zinc-600">Use “Adicionar Material” depois de salvar o curso.</p>
+                  <p className="mt-1 text-xs text-zinc-600">Use “Adicionar Material” para cadastrar o primeiro material.</p>
                 </div>
-              )}
+              ) : !materialsVisible ? (
+                <div className="border-y border-dashed border-white/15 py-7 text-center">
+                  <FileText className="mx-auto size-6 text-zinc-600" />
+                  <p className="mt-3 text-sm text-zinc-400">Os materiais estão recolhidos.</p>
+                  <p className="mt-1 text-xs text-zinc-600">Clique em “Visualizar Materiais” para listar, editar ou adicionar materiais.</p>
+                </div>
+              ) : null}
 
               <div className="flex items-start gap-3 border-t border-white/10 pt-5 text-sm leading-6 text-zinc-400">
                 <BookOpenCheck className="mt-0.5 size-4 shrink-0 text-emerald-300" />
-                <p><span className="font-medium text-zinc-200">Publicação dos cursos:</span> o curso só é disponibilizado para membros quando possui materiais publicados e o controle acima estiver em “publicado”.</p>
+                <p><span className="font-medium text-zinc-200">Publicação dos cursos:</span> o controle de publicação fica disponível na barra flutuante do rodapé quando o curso possui materiais.</p>
               </div>
             </section>
           ) : null}
         </main>
+
+        {showPublicationBar && currentCourse ? (
+          <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-[110] w-[calc(100%_-_1.5rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-white/15 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur sm:p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Publicação do curso</p>
+                <p className="mt-1 text-sm text-zinc-300">
+                  Status: <span className={currentCourse.published ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>{currentCourse.published ? "Publicado" : "Oculto"}</span>
+                </p>
+              </div>
+              <button
+                type="button"
+                disabled={updatePublication.isPending}
+                onClick={() => void toggleCoursePublication(currentCourse)}
+                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 sm:w-auto ${currentCourse.published ? "border-amber-300/30 text-amber-100 hover:bg-amber-300/10" : "border-emerald-300/30 text-emerald-100 hover:bg-emerald-300/10"}`}
+              >
+                {currentCourse.published ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                {currentCourse.published ? "Ocultar curso" : "Publicar curso"}
+              </button>
+            </div>
+          </div>
+        ) : null}
       </DashboardLayout>
     );
   }
@@ -626,7 +693,12 @@ export default function AdminAcademy() {
         </header>
 
         <section className="border-b border-white/10 pb-6">
-          <button type="button" onClick={startNewCourse} className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-200 sm:w-auto">
+          <button
+            type="button"
+            disabled={ebooksQuery.isLoading || storedCoursesQuery.isLoading}
+            onClick={startNewCourse}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-200 disabled:cursor-wait disabled:opacity-50 sm:w-auto"
+          >
             <PlusCircle className="size-4" />
             Novo Curso
           </button>

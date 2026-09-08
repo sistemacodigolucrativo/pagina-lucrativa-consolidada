@@ -68,4 +68,19 @@ describe("Academia com leitor integrado", () => {
     expect(adminAcademy).toContain("Publicação dos cursos");
     expect(adminAcademy).toContain("updateCoursePublication");
   });
+
+  it("mantém materiais recolhidos, publicação flutuante e ordem automática", async () => {
+    const adminAcademy = await readFile(path.join(root, "client/src/pages/AdminAcademy.tsx"), "utf8");
+
+    expect(adminAcademy).toContain("materialsVisible");
+    expect(adminAcademy).toContain("Visualizar Materiais");
+    expect(adminAcademy).toContain("Ocultar Materiais");
+    expect(adminAcademy).toContain("Adicionar Material");
+    expect(adminAcademy).toContain("Publicação do curso");
+    expect(adminAcademy).toContain("bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]");
+    expect(adminAcademy).toContain("nextCourseOrder");
+    expect(adminAcademy).toContain("Math.max(courses.length, maxStoredOrder) + 1");
+    expect(adminAcademy).toContain("readOnly");
+    expect(adminAcademy).toContain("Definida automaticamente.");
+  });
 });
