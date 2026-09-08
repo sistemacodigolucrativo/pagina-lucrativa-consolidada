@@ -80,6 +80,14 @@ import {
   startSecurityPasswordRecovery,
 } from "./db";
 import {
+  createApplicationWithUniqueEmail,
+  getApplicationPaymentPageComplete,
+  getApplicationPersonalizationAccessPrefilled,
+  resetPasswordWithSecurityAnswerSafe,
+  startSecurityPasswordRecoverySafe,
+  updateMemberAccountLocked,
+} from "./criticalFlowFixes";
+import {
   getAdminOverview,
   getMemberCourseByRouteKey,
   getMemberCourses,
@@ -135,8 +143,7 @@ export const profilePhotoInput = z.object({
 });
 export const accountInput = z.object({
   name: z.string().trim().min(2, "Informe seu nome.").max(180),
-  email: normalizedEmailZodSchema,
-  newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres.").optional().nullable(),
+  newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres.").max(128).optional().nullable(),
   confirmPassword: z.string().max(128).optional().nullable(),
 }).superRefine((value, context) => {
   if (value.newPassword && value.newPassword !== value.confirmPassword) {
@@ -289,10 +296,10 @@ export const appRouter = router({
       ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, { ...cookieOptions, sameSite: cookieOptions.secure ? "none" : "lax", maxAge: 1000 * 60 * 60 * 12 });
       return { role: account.role } as const;
     }),
-    startPasswordRecovery: publicProcedure.input(passwordRecoveryStartInput).mutation(({ input }) => startSecurityPasswordRecovery(input.identifier)),
+    startPasswordRecovery: publicProcedure.input(passwordRecoveryStartInput).mutation(({ input }) => startSecurityPasswordRecoverySafe(input.identifier)),
     resetPasswordWithSecurityAnswer: publicProcedure.input(passwordRecoveryResetInput).mutation(({ input }) => {
       const { confirmPassword: _confirmPassword, ...resetInput } = input;
-      return resetPasswordWithSecurityAnswer(resetInput);
+      return resetPasswordWithSecurityAnswerSafe(resetInput);
     }),
   }),
   member: router({
@@ -318,7 +325,7 @@ export const appRouter = router({
     account: protectedProcedure.query(({ ctx }) => getMemberAccount(ctx.user.id)),
     updateAccount: protectedProcedure.input(accountInput).mutation(({ ctx, input }) => {
       const { confirmPassword: _confirmPassword, ...accountInputValue } = input;
-      return updateMemberAccount(ctx.user.id, accountInputValue);
+      return updateMemberAccountLocked(ctx.user.id, accountInputValue);
     }),
     updateSecurityRecovery: protectedProcedure.input(securityRecoveryInput).mutation(({ ctx, input }) => updateMemberSecurityRecovery(ctx.user.id, input)),
     receiving: protectedProcedure.query(({ ctx }) => getMemberReceivingPreference(ctx.user.id)),
@@ -355,15 +362,15 @@ export const appRouter = router({
     createTestimonial: protectedProcedure.input(testimonialInput).mutation(({ ctx, input }) => createMemberTestimonial(ctx.user.id, input)),
   }),
   applications: router({
-    submit: publicProcedure.input(applicationInputSchema).mutation(({ ctx, input }) => createApplication(input, ctx.req)),
+    submit: publicProcedure.input(applicationInputSchema).mutation(({ ctx, input }) => createApplicationWithUniqueEmail(input, ctx.req)),
     lookup: publicProcedure.input(z.object({ trackingCode: z.string().trim().min(6).max(24), email: normalizedEmailZodSchema })).query(({ input }) => getApplicationTracking(input.trackingCode, input.email)),
-    paymentPage: publicProcedure.input(paymentAccessInputSchema).mutation(({ input }) => getApplicationPaymentPage(input.trackingCode, input.paymentAccessToken)),
+    paymentPage: publicProcedure.input(paymentAccessInputSchema).mutation(({ input }) => getApplicationPaymentPageComplete(input.trackingCode, input.paymentAccessToken)),
     uploadReceipt: publicProcedure.input(applicationReceiptUploadSchema).mutation(({ input }) => uploadApplicationPaymentReceipt(input)),
   }),
   public: router({
     affiliateProfile: publicProcedure.input(z.object({ slug: z.string().trim().toLowerCase().regex(/^[a-z0-9-]+$/).min(3).max(96) })).query(({ input }) => getPublicAffiliateProfile(input.slug)),
     defaultAffiliateProfile: publicProcedure.query(() => getDefaultPublicAffiliateProfile()),
-    applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccess(input.code)),
+    applicationPersonalizationAccess: publicProcedure.input(z.object({ code: z.string().trim().toLowerCase().regex(/^[a-z0-9]+$/).min(8).max(48) })).query(({ input }) => getApplicationPersonalizationAccessPrefilled(input.code)),
     salesSectionImages: publicProcedure.query(() => getPublicSalesSectionImages()),
     salesSocialProof: publicProcedure.query(() => getPublicSalesSocialProof()),
     completePersonalization: publicProcedure.input(applicationPersonalizationSchema).mutation(({ input }) => completeApplicationPersonalization(input)),
