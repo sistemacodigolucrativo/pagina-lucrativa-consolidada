@@ -121,10 +121,6 @@ done
 cleanup_smoke
 [[ "$SMOKE_OK" -eq 1 ]] || fail "Smoke test do novo release falhou. Consulte $SMOKE_LOG."
 
-write_deploy_status "deploying" 78 "Sincronizando acervo de e-books em PDF"
-log "Validando PDFs e sincronizando catálogo da Biblioteca"
-node scripts/import-ebooks.mjs
-
 write_deploy_status "deploying" 82 "Ativando nova versão"
 log "Ativando release de forma atômica"
 ln -sfn "$NEW_RELEASE" "$CURRENT_LINK.next"
