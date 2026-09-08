@@ -10,7 +10,7 @@ const ADMIN_OPEN_ID = "local_demo_admin";
  * can be used again. Remove this file immediately after the recovery deploy.
  */
 export async function applyTemporaryAdminAccessRepair() {
-  if (process.env.NODE_ENV !== "production") return;
+  if (process.env.NODE_ENV !== "production" || process.env.DEPLOY_SMOKE_TEST === "1") return;
 
   const db = await getDb();
   if (!db) throw new Error("[AdminAccessRepair] Banco de dados indisponível; recuperação não aplicada.");
