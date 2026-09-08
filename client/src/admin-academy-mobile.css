@@ -26,7 +26,10 @@
     width: auto !important;
     max-width: none !important;
     margin: 0 !important;
+    --tw-translate-x: 0 !important;
+    --tw-translate-y: 0 !important;
     transform: none !important;
+    translate: none !important;
     box-sizing: border-box;
     overflow: hidden;
     z-index: 200 !important;
