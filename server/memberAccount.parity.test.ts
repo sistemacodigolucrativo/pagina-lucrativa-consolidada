@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import { accountInput, receivingPreferenceInput } from "./routers";
 
 describe("separação funcional de conta e recebimento", () => {
-  it("mantém Meus dados restrito a nome, e-mail e senha", () => {
-    const result = accountInput.safeParse({ name: "Membro Código Lucrativo", email: "membro@example.com", newPassword: null, confirmPassword: null });
+  it("mantém Meus dados restrito a nome e senha e descarta tentativa de alterar e-mail", () => {
+    const result = accountInput.safeParse({ name: "Membro Código Lucrativo", email: "outro@example.com", newPassword: null, confirmPassword: null });
     expect(result.success).toBe(true);
-    if (result.success) expect(result.data).not.toHaveProperty("paypalEmail");
+    if (result.success) {
+      expect(result.data).not.toHaveProperty("email");
+      expect(result.data).not.toHaveProperty("paypalEmail");
+    }
   });
 
   it("aceita o payload completo de recebimento no contrato correto", () => {
@@ -34,8 +37,8 @@ describe("separação funcional de conta e recebimento", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects a mismatched new password confirmation", () => {
-    const result = accountInput.safeParse({ name: "Membro Código Lucrativo", email: "membro@example.com", newPassword: "nova-senha", confirmPassword: "outra-senha" });
+  it("rejeita confirmação de nova senha diferente", () => {
+    const result = accountInput.safeParse({ name: "Membro Código Lucrativo", newPassword: "nova-senha", confirmPassword: "outra-senha" });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues.some(issue => issue.path[0] === "confirmPassword")).toBe(true);
   });
