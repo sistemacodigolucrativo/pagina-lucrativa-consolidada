@@ -38,10 +38,15 @@ export default function ApplicationPersonalization() {
   });
 
   useEffect(() => {
-    const fullName = access.data?.fullName;
-    if (!fullName || form.name) return;
-    setForm(current => ({ ...current, name: fullName }));
-  }, [access.data?.fullName, form.name]);
+    const fullName = access.data?.fullName ?? "";
+    const whatsapp = normalizePhone(access.data?.whatsapp ?? "");
+    if (!fullName && !whatsapp) return;
+    setForm(current => ({
+      ...current,
+      name: current.name || fullName,
+      whatsapp: current.whatsapp || whatsapp,
+    }));
+  }, [access.data?.fullName, access.data?.whatsapp]);
 
   const passwordRules = [
     { label: "mínimo de 6 caracteres", ok: password.length >= 6 },
@@ -94,9 +99,9 @@ export default function ApplicationPersonalization() {
 
   return <main className="min-h-screen bg-[#050505] p-5 text-zinc-100"><form onSubmit={submit} className="mx-auto w-full max-w-xl space-y-5 rounded-3xl border border-emerald-300/20 bg-zinc-950 p-5 shadow-2xl sm:p-8">
     <header><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Personalização liberada</span><h1 className="mt-3 text-3xl font-semibold text-white">Configure seu Código Lucrativo.</h1><p className="mt-2 text-sm leading-6 text-zinc-400">Informe os dados públicos iniciais da sua estrutura e crie a senha usada com o e-mail do pedido para entrar no Escritório Virtual.</p></header>
-    <section className="rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-300">
-      <strong className="block text-white">{access.data.fullName}</strong>
-      <span>E-mail de login: {access.data.email}</span>
+    <section className="min-w-0 rounded-2xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-300">
+      <strong className="block break-words text-white [overflow-wrap:anywhere]">{access.data.fullName}</strong>
+      <span className="block break-words [overflow-wrap:anywhere]">E-mail de login: {access.data.email}</span>
     </section>
     <section className="grid gap-4">
       <label className="block text-sm text-zinc-200">Nome público *<input required minLength={2} maxLength={180} value={form.name} onChange={event => { setErrors(current => ({ ...current, name: undefined })); setForm(current => ({ ...current, name: event.target.value })); }} aria-invalid={Boolean(errors.name) || undefined} className={field} placeholder="Seu nome" />{errors.name ? <small className={errorClass} role="alert">{errors.name}</small> : null}</label>
