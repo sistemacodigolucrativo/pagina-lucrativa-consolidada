@@ -9,6 +9,7 @@ import {
   getPublishedEbook as getLegacyPublishedEbook,
   getPublishedEbooks as getLegacyPublishedEbooks,
 } from "./db";
+import { getPackagedEbooks } from "./staticEbooks";
 
 const ACADEMY_METADATA_NAME = "codigo-lucrativo-academy";
 const LEGACY_ACADEMY_COURSE_ID_OFFSET = 900_000_000;
@@ -41,6 +42,8 @@ type ReadingProgress = {
 type StoredCourseProgress = typeof courseProgress.$inferSelect;
 type LibraryCategorizedEbook = { sourceId?: string | null; academy?: RawAcademyMetadata | null };
 
+let packagedLibrarySyncPromise: Promise<void> | null = null;
+
 function withPackagedLibraryCategory<T extends LibraryCategorizedEbook>(ebook: T) {
   const libraryCategory = getPackagedEbookLibraryCategory(ebook.sourceId);
   if (!libraryCategory || ebook.academy?.libraryCategory?.trim()) return ebook;
@@ -52,6 +55,33 @@ function withPackagedLibraryCategory<T extends LibraryCategorizedEbook>(ebook: T
       libraryCategory,
     },
   };
+}
+
+async function ensurePackagedLibraryEbooks() {
+  if (!packagedLibrarySyncPromise) {
+    packagedLibrarySyncPromise = (async () => {
+      const db = await getDb();
+      if (!db) return;
+      const packaged = await getPackagedEbooks();
+      for (const ebook of packaged) {
+        await db.insert(ebooks).values({
+          sourceId: ebook.sourceId,
+          sourceFile: ebook.sourceFile,
+          sourcePath: ebook.sourcePath,
+          title: ebook.title,
+          summary: ebook.summary,
+          htmlContent: "",
+          status: "published",
+          createdBy: null,
+          publishedAt: new Date(),
+        }).onDuplicateKeyUpdate({ set: { sourceId: ebook.sourceId } });
+      }
+    })().catch(error => {
+      packagedLibrarySyncPromise = null;
+      console.warn("[Ebook Library] Não foi possível sincronizar o acervo PDF empacotado:", error);
+    });
+  }
+  await packagedLibrarySyncPromise;
 }
 
 function slugify(value: string) {
@@ -131,6 +161,7 @@ function newestProgress(rows: StoredCourseProgress[]) {
 }
 
 export async function getPublishedEbooks() {
+  await ensurePackagedLibraryEbooks();
   const published = await getLegacyPublishedEbooks();
   return published.map(ebook => withPackagedLibraryCategory(ebook));
 }
