@@ -460,21 +460,55 @@ export default function AdminAcademy() {
       ebookId: stored?.ebookId ?? null,
       isPublished: Boolean(stored?.isPublished),
     };
+    const wasCreating = courseEditor?.creating === true;
 
     try {
       let courseId = courseEditor?.courseId ?? null;
+      let resolvedOrder = order;
+      let createdCourseForMaterial: CourseView | null = null;
       if (courseId !== null) {
         await updateCourse.mutateAsync({ id: courseId, ...payload });
       } else {
         const created = await createCourse.mutateAsync({ ...payload, isPublished: false, ebookId: null });
         courseId = created.id;
+        resolvedOrder = Number.isFinite(Number(created.order)) ? Math.max(0, Math.min(999, Math.round(Number(created.order)))) : order;
+        const createdSlug = slugify(title);
+        createdCourseForMaterial = {
+          key: `course:${courseId}`,
+          id: courseId,
+          slug: createdSlug,
+          title,
+          category,
+          level: courseForm.level,
+          order: resolvedOrder,
+          published: false,
+          storedCourse: {
+            id: courseId,
+            title,
+            routeKey: createdSlug,
+            summary: writeCourseOrder(null, resolvedOrder),
+            category,
+            durationMinutes: 0,
+            level: courseForm.level,
+            ebookId: null,
+            isPublished: 0,
+          },
+          items: [],
+        };
       }
 
-      await syncCourseMaterials(sourceCourse, title, category, courseForm.level, order);
+      await syncCourseMaterials(sourceCourse, title, category, courseForm.level, resolvedOrder);
       await refreshAcademy();
-      setCourseForm(current => ({ ...current, order: String(order) }));
+      setCourseForm(current => ({ ...current, order: String(resolvedOrder) }));
       setCourseEditor({ courseId, slug: slugify(title), originalTitle: title, creating: false });
-      toast.success(courseEditor?.creating ? "Curso criado. Agora você pode adicionar materiais." : "Curso atualizado.");
+
+      if (wasCreating && createdCourseForMaterial) {
+        setMaterialsVisible(true);
+        setMaterialEditor({ mode: "create", course: createdCourseForMaterial });
+        toast.success("Curso criado. Adicione o primeiro material.");
+      } else {
+        toast.success("Curso atualizado.");
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível salvar o curso.");
     }
@@ -657,23 +691,25 @@ export default function AdminAcademy() {
         </main>
 
         {showPublicationBar && currentCourse ? (
-          <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] left-1/2 z-[110] w-[calc(100%_-_1.5rem)] max-w-xl -translate-x-1/2 rounded-2xl border border-white/15 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur sm:p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Publicação do curso</p>
-                <p className="mt-1 text-sm text-zinc-300">
-                  Status: <span className={currentCourse.published ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>{currentCourse.published ? "Publicado" : "Oculto"}</span>
-                </p>
+          <div className="admin-academy-publication-bar fixed inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-[220] flex justify-center px-3 pointer-events-none sm:bottom-6 sm:px-4">
+            <div className="admin-academy-publication-card pointer-events-auto w-full max-w-xl rounded-2xl border border-white/15 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur sm:p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Publicação do curso</p>
+                  <p className="mt-1 text-sm text-zinc-300">
+                    Status: <span className={currentCourse.published ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>{currentCourse.published ? "Publicado" : "Oculto"}</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  disabled={updatePublication.isPending}
+                  onClick={() => void toggleCoursePublication(currentCourse)}
+                  className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 sm:w-auto ${currentCourse.published ? "border-amber-300/30 text-amber-100 hover:bg-amber-300/10" : "border-emerald-300/30 text-emerald-100 hover:bg-emerald-300/10"}`}
+                >
+                  {currentCourse.published ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                  {currentCourse.published ? "Ocultar curso" : "Publicar curso"}
+                </button>
               </div>
-              <button
-                type="button"
-                disabled={updatePublication.isPending}
-                onClick={() => void toggleCoursePublication(currentCourse)}
-                className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 sm:w-auto ${currentCourse.published ? "border-amber-300/30 text-amber-100 hover:bg-amber-300/10" : "border-emerald-300/30 text-emerald-100 hover:bg-emerald-300/10"}`}
-              >
-                {currentCourse.published ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-                {currentCourse.published ? "Ocultar curso" : "Publicar curso"}
-              </button>
             </div>
           </div>
         ) : null}
