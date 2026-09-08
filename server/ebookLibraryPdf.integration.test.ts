@@ -33,7 +33,7 @@ describe("Acervo de materiais de estudo em PDF", () => {
     }
   });
 
-  it("sincroniza o catálogo no deploy sem sobrescrever a curadoria de registros existentes", async () => {
+  it("sincroniza o catálogo pelo backend sem exigir credenciais de banco no script de deploy", async () => {
     const importer = await readFile(path.join(root, "scripts/import-ebooks.mjs"), "utf8");
     const deploy = await readFile(path.join(root, "scripts/deploy-vps.sh"), "utf8");
     const canonical = await readFile(path.join(root, "server/academyCanonical.ts"), "utf8");
@@ -44,7 +44,13 @@ describe("Acervo de materiais de estudo em PDF", () => {
     const duplicateUpdate = importer.split("ON DUPLICATE KEY UPDATE")[1] ?? "";
     expect(duplicateUpdate).not.toContain("htmlContent =");
     expect(duplicateUpdate).not.toContain("status =");
-    expect(deploy).toContain("node scripts/import-ebooks.mjs");
+
+    expect(deploy).not.toContain("node scripts/import-ebooks.mjs");
+    expect(canonical).toContain('import { getPackagedEbooks } from "./staticEbooks"');
+    expect(canonical).toContain("ensurePackagedLibraryEbooks");
+    expect(canonical).toContain("await db.insert(ebooks).values");
+    expect(canonical).toContain("onDuplicateKeyUpdate({ set: { sourceId: ebook.sourceId } })");
+    expect(canonical).toContain("await ensurePackagedLibraryEbooks()");
     expect(canonical).toContain("getPackagedEbookLibraryCategory");
     expect(canonical).toContain("ebook.academy?.libraryCategory?.trim()");
     expect(canonical).toContain('usage: ebook.academy?.usage ?? "library"');
