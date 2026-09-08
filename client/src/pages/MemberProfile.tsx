@@ -2,6 +2,7 @@ import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardL
 import GettingStartedReturnButton from "@/components/GettingStartedReturnButton";
 import { PhoneInput } from "@/components/PhoneInput";
 import { withAppBase } from "@/lib/devPath";
+import { prepareProfilePhoto } from "@/lib/profileImage";
 import { trpc } from "@/lib/trpc";
 import { normalizePhone, validatePhoneBR } from "@shared/contactValidation";
 import { normalizeHttpUrl, validateHttpUrl } from "@shared/structuredValidation";
@@ -154,7 +155,7 @@ export default function MemberProfile() {
     });
   };
 
-  const handlePhoto = (event: ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
     if (!file) return;
@@ -162,19 +163,16 @@ export default function MemberProfile() {
       toast.error("Envie uma imagem JPG, PNG ou GIF.");
       return;
     }
-    if (file.size > 1024 * 1024) {
-      toast.error("A foto deve ter no máximo 1 MB.");
-      return;
+    setPhotoBusy(true);
+    setErrors(current => ({ ...current, photoUrl: undefined }));
+    try {
+      const prepared = await prepareProfilePhoto(file);
+      uploadPhoto.mutate({ dataUrl: prepared.dataUrl, contentType: prepared.contentType });
+      if (prepared.compressed) toast.info("A foto foi otimizada automaticamente para o perfil.");
+    } catch (error) {
+      setPhotoBusy(false);
+      toast.error(error instanceof Error ? error.message : "Não foi possível preparar a foto selecionada.");
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result !== "string") return;
-      setPhotoBusy(true);
-      setErrors(current => ({ ...current, photoUrl: undefined }));
-      uploadPhoto.mutate({ dataUrl: reader.result, contentType: file.type as "image/jpeg" | "image/png" | "image/gif" });
-    };
-    reader.onerror = () => toast.error("Não foi possível ler a foto selecionada.");
-    reader.readAsDataURL(file);
   };
 
   const profilePhotoUrl = useMemo(() => {
@@ -202,7 +200,7 @@ export default function MemberProfile() {
         <button type="submit" disabled={saveProfile.isPending || profile.isLoading} className="inline-flex items-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60"><Save size={16} />{saveProfile.isPending ? "Salvando..." : "Salvar perfil"}</button>
       </form>
 
-      <aside className="order-1 space-y-4 lg:order-2"><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><ImagePlus size={18} className="text-emerald-300" /><h2 className="font-medium">Foto pessoal *</h2></div><p className="mt-3 text-sm leading-6 text-zinc-400">JPG, PNG ou GIF, com até 1 MB. Obrigatória para concluir a Etapa 1.</p>{profilePhotoUrl ? <img src={profilePhotoUrl} alt="Foto do perfil" className="mt-4 aspect-square w-full rounded-xl border border-white/10 object-cover" /> : <div className="mt-4 flex aspect-square items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-zinc-500">Nenhuma foto enviada</div>}{errors.photoUrl ? <small className={errorClass} role="alert">{errors.photoUrl}</small> : null}<label className="mt-4 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black"><Upload size={16} />{photoBusy ? "Enviando..." : "Enviar foto"}<input type="file" accept="image/jpeg,image/png,image/gif" className="sr-only" disabled={photoBusy} onChange={handlePhoto} /></label></section><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 text-sm leading-6 text-zinc-400"><div className="flex items-center gap-2 text-white"><Link2 size={18} className="text-emerald-300" /><h2 className="font-medium">Perfil do Autor</h2></div><p className="mt-3">Descrição, WhatsApp, Website e redes sociais ficam associados ao seu perfil público e podem ser usados nas áreas editoriais autorizadas.</p></section></aside>
+      <aside className="order-1 space-y-4 lg:order-2"><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><div className="flex items-center gap-2 text-white"><ImagePlus size={18} className="text-emerald-300" /><h2 className="font-medium">Foto pessoal *</h2></div><p className="mt-3 text-sm leading-6 text-zinc-400">JPG, PNG ou GIF. Imagens acima de 1 MB são otimizadas automaticamente antes do envio. Obrigatória para concluir a Etapa 1.</p>{profilePhotoUrl ? <img src={profilePhotoUrl} alt="Foto do perfil" className="mt-4 aspect-square w-full rounded-xl border border-white/10 object-cover" /> : <div className="mt-4 flex aspect-square items-center justify-center rounded-xl border border-dashed border-white/15 text-sm text-zinc-500">Nenhuma foto enviada</div>}{errors.photoUrl ? <small className={errorClass} role="alert">{errors.photoUrl}</small> : null}<label className="mt-4 inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg bg-emerald-300 px-3 py-2 text-sm font-semibold text-black"><Upload size={16} />{photoBusy ? "Processando..." : "Enviar foto"}<input type="file" accept="image/jpeg,image/png,image/gif" className="sr-only" disabled={photoBusy} onChange={handlePhoto} /></label></section><section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 text-sm leading-6 text-zinc-400"><div className="flex items-center gap-2 text-white"><Link2 size={18} className="text-emerald-300" /><h2 className="font-medium">Perfil do Autor</h2></div><p className="mt-3">Descrição, WhatsApp, Website e redes sociais ficam associados ao seu perfil público e podem ser usados nas áreas editoriais autorizadas.</p></section></aside>
     </section>
   </main><GettingStartedReturnButton /></DashboardLayout>;
 }
