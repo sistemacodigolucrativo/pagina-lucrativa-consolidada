@@ -18,7 +18,9 @@ describe("atribuição e conversões de campanhas", () => {
   it("passa o request público para preservar cookies de visitante e sessão", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
-    expect(router).toContain("createApplication(input, ctx.req)");
+    const fixes = await readFile(path.join(root, "server/criticalFlowFixes.ts"), "utf8");
+    expect(router).toContain("createApplicationWithUniqueEmail(input, ctx.req)");
+    expect(fixes).toContain("return createApplication(input, request)");
     expect(db).toContain('readCampaignCookie(request, "pl_visitor")');
     expect(db).toContain('readCampaignCookie(request, "pl_session")');
   });
