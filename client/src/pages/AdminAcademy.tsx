@@ -1,17 +1,31 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
-import { ArrowLeft, BookOpenCheck, Eye, EyeOff, FileText, LoaderCircle, PlusCircle, Save } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Archive, ArrowLeft, BookOpenCheck, Eye, EyeOff, FileText, LoaderCircle, PlusCircle, Save, Trash2 } from "lucide-react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AdminEbooks from "./AdminEbooks";
 
 const ACADEMY_METADATA_NAME = "codigo-lucrativo-academy";
 const COURSE_ORDER_MARKER = "codigo-lucrativo-academy-course-order";
+const COURSE_ARCHIVED_MARKER = "codigo-lucrativo-academy-course-archived";
+const COURSE_DELETED_MARKER = "codigo-lucrativo-academy-course-deleted";
 
 type AcademyLevel = "fundamentos" | "pratica" | "avancado";
 type AcademyMetadata = {
   usage?: "library" | "course" | "both";
+  courseId?: number;
   courseTitle?: string;
   courseSlug?: string;
   courseCategory?: string;
@@ -20,6 +34,8 @@ type AcademyMetadata = {
   courseOrder?: number;
   level?: AcademyLevel;
   coursePublished?: boolean;
+  courseArchived?: boolean;
+  courseDeleted?: boolean;
   [key: string]: unknown;
 };
 
@@ -55,6 +71,8 @@ type CourseView = {
   level: AcademyLevel;
   order: number;
   published: boolean;
+  archived: boolean;
+  deleted: boolean;
   storedCourse: StoredCourse | null;
   items: Array<{ ebook: AdminEbook; metadata: AcademyMetadata }>;
 };
@@ -77,6 +95,8 @@ type MaterialEditorState =
   | { mode: "create"; course: CourseView }
   | { mode: "edit"; course: CourseView; ebookId: number; title: string }
   | null;
+
+type CourseManagementAction = "publish" | "archive" | "delete";
 
 const levelLabel: Record<AcademyLevel, string> = {
   fundamentos: "Fundamentos",
@@ -155,6 +175,23 @@ function writeCourseOrder(summary: string | null | undefined, order: number) {
   return `${clean}${clean ? "\n" : ""}<!--${COURSE_ORDER_MARKER}:${order}-->`;
 }
 
+function readCourseFlag(summary: string | null | undefined, marker: string) {
+  return new RegExp(`<!--${marker}:1-->`, "i").test(summary ?? "");
+}
+
+function writeCourseFlag(summary: string | null | undefined, marker: string, enabled: boolean) {
+  const matcher = new RegExp(`\\s*<!--${marker}:[01]-->`, "gi");
+  const clean = (summary ?? "").replace(matcher, "").trim();
+  return enabled ? `${clean}${clean ? "\n" : ""}<!--${marker}:1-->` : clean;
+}
+
+function writeCourseSummaryState(summary: string | null | undefined, order: number, archived: boolean, deleted: boolean) {
+  let next = writeCourseOrder(summary, order);
+  next = writeCourseFlag(next, COURSE_ARCHIVED_MARKER, archived);
+  next = writeCourseFlag(next, COURSE_DELETED_MARKER, deleted);
+  return next;
+}
+
 function statusLabel(status: AdminEbook["status"]) {
   if (status === "published") return "Publicado";
   if (status === "draft") return "Rascunho";
@@ -223,7 +260,7 @@ function AcademyMaterialEditor({ editor, onClose }: { editor: Exclude<MaterialEd
   }, [editor]);
 
   return (
-    <div data-academy-material-adapter>
+    <div data-academy-material-adapter data-academy-course-id={editor.course.id ?? undefined}>
       <style>{`
         [data-academy-material-adapter] main > header { display: none !important; }
         [data-academy-material-adapter] main > section { display: block !important; }
@@ -274,12 +311,15 @@ export default function AdminAcademy() {
   const createCourse = trpc.admin.createCourse.useMutation();
   const updateCourse = trpc.admin.updateCourse.useMutation();
   const updateMaterial = trpc.admin.academy.updateMaterial.useMutation();
+  const linkMaterialToCourse = trpc.admin.academy.updateMaterial.useMutation();
   const updatePublication = trpc.admin.academy.updateCoursePublication.useMutation();
 
   const [courseEditor, setCourseEditor] = useState<CourseEditorState | null>(null);
   const [courseForm, setCourseForm] = useState<CourseForm>({ title: "", order: "", category: "Fundamentos", level: "fundamentos" });
   const [materialEditor, setMaterialEditor] = useState<MaterialEditorState>(null);
   const [materialsVisible, setMaterialsVisible] = useState(false);
+  const [courseAction, setCourseAction] = useState<{ key: string; action: CourseManagementAction } | null>(null);
+  const linkingMaterialIds = useRef(new Set<number>());
 
   const courses = useMemo<CourseView[]>(() => {
     const ebooks = (ebooksQuery.data ?? []) as AdminEbook[];
@@ -290,19 +330,32 @@ export default function AdminAcademy() {
       const metadata = readAcademyMetadata(ebook.htmlContent, ebook.sourcePath);
       if (!metadata || (metadata.usage !== "course" && metadata.usage !== "both") || !metadata.courseTitle?.trim()) continue;
       const slug = metadata.courseSlug?.trim() || slugify(metadata.courseTitle);
+      const metadataCourseId = Number(metadata.courseId);
+      const validCourseId = Number.isInteger(metadataCourseId) && metadataCourseId > 0 ? metadataCourseId : null;
       const current = groups.get(slug) ?? {
         key: `academy:${slug}`,
-        id: null,
+        id: validCourseId,
         slug,
         title: metadata.courseTitle.trim(),
         category: metadata.courseCategory?.trim() || "Academia",
         level: metadata.level === "pratica" || metadata.level === "avancado" ? metadata.level : "fundamentos",
         order: Number.isFinite(Number(metadata.courseOrder)) ? Math.max(0, Math.round(Number(metadata.courseOrder))) : 0,
         published: true,
+        archived: false,
+        deleted: false,
         storedCourse: null,
         items: [],
       };
+      if (current.id === null && validCourseId !== null) current.id = validCourseId;
       if (metadata.coursePublished === false) current.published = false;
+      if (metadata.courseArchived === true) {
+        current.archived = true;
+        current.published = false;
+      }
+      if (metadata.courseDeleted === true) {
+        current.deleted = true;
+        current.published = false;
+      }
       current.items.push({ ebook, metadata });
       groups.set(slug, current);
     }
@@ -312,9 +365,13 @@ export default function AdminAcademy() {
 
     for (const stored of storedCourses) {
       const titleKey = normalizedTitle(stored.title);
-      const match = Array.from(groups.values()).find(group => normalizedTitle(group.title) === titleKey);
+      const match = Array.from(groups.values()).find(group => group.id === stored.id || normalizedTitle(group.title) === titleKey);
+      const storedArchived = readCourseFlag(stored.summary, COURSE_ARCHIVED_MARKER);
+      const storedDeleted = readCourseFlag(stored.summary, COURSE_DELETED_MARKER);
       if (match) {
         unmatchedGroups.delete(match.slug);
+        const archived = match.archived || storedArchived;
+        const deleted = match.deleted || storedDeleted;
         result.push({
           ...match,
           key: `course:${stored.id}`,
@@ -323,6 +380,9 @@ export default function AdminAcademy() {
           category: stored.category?.trim() || match.category,
           level: stored.level,
           order: readCourseOrder(stored.summary),
+          published: !archived && !deleted && match.published,
+          archived,
+          deleted,
           storedCourse: stored,
           items: [...match.items].sort((a, b) => (a.metadata.lessonOrder ?? 0) - (b.metadata.lessonOrder ?? 0) || a.ebook.title.localeCompare(b.ebook.title, "pt-BR")),
         });
@@ -336,6 +396,8 @@ export default function AdminAcademy() {
           level: stored.level,
           order: readCourseOrder(stored.summary),
           published: false,
+          archived: storedArchived,
+          deleted: storedDeleted,
           storedCourse: stored,
           items: [],
         });
@@ -351,7 +413,7 @@ export default function AdminAcademy() {
       });
     }
 
-    return result.sort((a, b) => {
+    return result.filter(course => !course.deleted).sort((a, b) => {
       const orderA = a.order > 0 ? a.order : Number.MAX_SAFE_INTEGER;
       const orderB = b.order > 0 ? b.order : Number.MAX_SAFE_INTEGER;
       return orderA - orderB || a.title.localeCompare(b.title, "pt-BR");
@@ -403,6 +465,48 @@ export default function AdminAcademy() {
     ]);
   };
 
+  useEffect(() => {
+    const pendingLinks = courses.flatMap(course => {
+      if (!course.id) return [];
+      return course.items
+        .filter(({ ebook, metadata }) => metadata.courseId !== course.id && !linkingMaterialIds.current.has(ebook.id))
+        .map(item => ({ courseId: course.id as number, item }));
+    });
+    if (!pendingLinks.length) return;
+
+    let cancelled = false;
+    void (async () => {
+      let changed = false;
+      for (const { courseId, item } of pendingLinks) {
+        if (cancelled) break;
+        linkingMaterialIds.current.add(item.ebook.id);
+        try {
+          await linkMaterialToCourse.mutateAsync({
+            id: item.ebook.id,
+            sourceId: item.ebook.sourceId,
+            sourceFile: item.ebook.sourceFile,
+            sourcePath: item.ebook.sourcePath,
+            title: item.ebook.title,
+            summary: item.ebook.summary ?? null,
+            htmlContent: writeAcademyMetadata(item.ebook.htmlContent ?? "", { ...item.metadata, courseId }),
+            status: item.ebook.status,
+            pdfUpload: null,
+          });
+          changed = true;
+        } catch {
+          // Compatibilidade: falha no backfill não interrompe a gestão do curso.
+        } finally {
+          linkingMaterialIds.current.delete(item.ebook.id);
+        }
+      }
+      if (changed && !cancelled) await utils.admin.academy.list.invalidate();
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [courses]);
+
   async function syncCourseMaterials(course: CourseView | null, title: string, category: string, level: AcademyLevel, order: number) {
     if (!course?.items.length) return;
     const courseSlug = slugify(title);
@@ -410,6 +514,7 @@ export default function AdminAcademy() {
     for (const { ebook, metadata } of course.items) {
       const htmlContent = writeAcademyMetadata(ebook.htmlContent ?? "", {
         ...metadata,
+        courseId: course.id ?? metadata.courseId,
         courseTitle: title,
         courseSlug,
         courseCategory: category,
@@ -427,6 +532,93 @@ export default function AdminAcademy() {
         status: ebook.status,
         pdfUpload: null,
       });
+    }
+  }
+
+  async function syncCourseManagementMetadata(course: CourseView, state: { published: boolean; archived: boolean; deleted: boolean }) {
+    if (!course.items.length) return;
+    for (const { ebook, metadata } of course.items) {
+      await updateMaterial.mutateAsync({
+        id: ebook.id,
+        sourceId: ebook.sourceId,
+        sourceFile: ebook.sourceFile,
+        sourcePath: ebook.sourcePath,
+        title: ebook.title,
+        summary: ebook.summary ?? null,
+        htmlContent: writeAcademyMetadata(ebook.htmlContent ?? "", {
+          ...metadata,
+          courseId: course.id ?? metadata.courseId,
+          coursePublished: state.published,
+          courseArchived: state.archived,
+          courseDeleted: state.deleted,
+        }),
+        status: ebook.status,
+        pdfUpload: null,
+      });
+    }
+  }
+
+  async function syncStoredCourseManagementState(course: CourseView, state: { published: boolean; archived: boolean; deleted: boolean }) {
+    const stored = course.storedCourse;
+    if (!stored || !course.id) return;
+    await updateCourse.mutateAsync({
+      id: course.id,
+      title: course.title,
+      summary: writeCourseSummaryState(stored.summary, course.order, state.archived, state.deleted),
+      category: course.category,
+      durationMinutes: stored.durationMinutes,
+      level: course.level,
+      ebookId: stored.ebookId,
+      isPublished: state.published && Boolean(stored.ebookId),
+    });
+  }
+
+  async function applyCourseManagementState(course: CourseView, state: { published: boolean; archived: boolean; deleted: boolean }) {
+    if (course.items.length) {
+      await updatePublication.mutateAsync({ courseSlug: course.slug, isPublished: state.published });
+      await syncCourseManagementMetadata(course, state);
+    }
+    await syncStoredCourseManagementState(course, state);
+    await refreshAcademy();
+  }
+
+  async function publishCourse(course: CourseView) {
+    if (!course.items.length) {
+      toast.error("Adicione ao menos um material antes de publicar o curso.");
+      return;
+    }
+    setCourseAction({ key: course.key, action: "publish" });
+    try {
+      await applyCourseManagementState(course, { published: true, archived: false, deleted: false });
+      toast.success("Curso publicado na Academia.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível publicar o curso.");
+    } finally {
+      setCourseAction(null);
+    }
+  }
+
+  async function archiveCourse(course: CourseView) {
+    setCourseAction({ key: course.key, action: "archive" });
+    try {
+      await applyCourseManagementState(course, { published: false, archived: true, deleted: false });
+      toast.success("Curso arquivado.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível arquivar o curso.");
+    } finally {
+      setCourseAction(null);
+    }
+  }
+
+  async function deleteCourse(course: CourseView) {
+    setCourseAction({ key: course.key, action: "delete" });
+    try {
+      await applyCourseManagementState(course, { published: false, archived: true, deleted: true });
+      toast.success("Curso excluído da Academia. Os materiais foram preservados.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível excluir o curso.");
+    } finally {
+      setCourseAction(null);
     }
   }
 
@@ -451,9 +643,10 @@ export default function AdminAcademy() {
 
     const sourceCourse = selectedCourse;
     const stored = sourceCourse?.storedCourse ?? null;
+    const wasCreating = Boolean(courseEditor?.creating);
     const payload = {
       title,
-      summary: writeCourseOrder(stored?.summary, order),
+      summary: writeCourseSummaryState(stored?.summary, order, sourceCourse?.archived ?? false, sourceCourse?.deleted ?? false),
       category,
       durationMinutes: stored?.durationMinutes ?? 0,
       level: courseForm.level,
@@ -463,35 +656,59 @@ export default function AdminAcademy() {
 
     try {
       let courseId = courseEditor?.courseId ?? null;
+      let createdCourseForMaterial: CourseView | null = null;
       if (courseId !== null) {
         await updateCourse.mutateAsync({ id: courseId, ...payload });
       } else {
         const created = await createCourse.mutateAsync({ ...payload, isPublished: false, ebookId: null });
         courseId = created.id;
+        createdCourseForMaterial = {
+          key: `course:${created.id}`,
+          id: created.id,
+          slug: slugify(title),
+          title,
+          category,
+          level: courseForm.level,
+          order,
+          published: false,
+          archived: false,
+          deleted: false,
+          storedCourse: null,
+          items: [],
+        };
       }
 
       await syncCourseMaterials(sourceCourse, title, category, courseForm.level, order);
       await refreshAcademy();
       setCourseForm(current => ({ ...current, order: String(order) }));
       setCourseEditor({ courseId, slug: slugify(title), originalTitle: title, creating: false });
-      toast.success(courseEditor?.creating ? "Curso criado. Agora você pode adicionar materiais." : "Curso atualizado.");
+
+      if (wasCreating && createdCourseForMaterial) {
+        toast.success("Curso criado. Adicione o primeiro material.");
+        setMaterialEditor({ mode: "create", course: createdCourseForMaterial });
+        return;
+      }
+
+      toast.success("Curso atualizado.");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível salvar o curso.");
     }
   }
 
   async function toggleCoursePublication(course: CourseView) {
-    if (!course.items.length) {
-      toast.error("Adicione ao menos um material antes de publicar o curso.");
+    if (course.published) {
+      setCourseAction({ key: course.key, action: "publish" });
+      try {
+        await applyCourseManagementState(course, { published: false, archived: false, deleted: false });
+        toast.success("Curso ocultado da Academia.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Não foi possível alterar a publicação do curso.");
+      } finally {
+        setCourseAction(null);
+      }
       return;
     }
-    try {
-      await updatePublication.mutateAsync({ courseSlug: course.slug, isPublished: !course.published });
-      await refreshAcademy();
-      toast.success(course.published ? "Curso ocultado da Academia." : "Curso publicado na Academia.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível alterar a publicação do curso.");
-    }
+    await publishCourse(course);
   }
 
   if (materialEditor) {
@@ -662,12 +879,12 @@ export default function AdminAcademy() {
               <div className="min-w-0">
                 <p className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-500">Publicação do curso</p>
                 <p className="mt-1 text-sm text-zinc-300">
-                  Status: <span className={currentCourse.published ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>{currentCourse.published ? "Publicado" : "Oculto"}</span>
+                  Status: <span className={currentCourse.archived ? "font-semibold text-zinc-300" : currentCourse.published ? "font-semibold text-emerald-200" : "font-semibold text-amber-200"}>{currentCourse.archived ? "Arquivado" : currentCourse.published ? "Publicado" : "Oculto"}</span>
                 </p>
               </div>
               <button
                 type="button"
-                disabled={updatePublication.isPending}
+                disabled={updatePublication.isPending || courseAction?.key === currentCourse.key}
                 onClick={() => void toggleCoursePublication(currentCourse)}
                 className={`inline-flex w-full items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-semibold transition disabled:opacity-50 sm:w-auto ${currentCourse.published ? "border-amber-300/30 text-amber-100 hover:bg-amber-300/10" : "border-emerald-300/30 text-emerald-100 hover:bg-emerald-300/10"}`}
               >
@@ -717,22 +934,77 @@ export default function AdminAcademy() {
             <p className="flex items-center gap-2 py-8 text-sm text-zinc-400"><LoaderCircle className="size-4 animate-spin" />Carregando cursos...</p>
           ) : courses.length ? (
             <div className="divide-y divide-white/10 border-y border-white/10">
-              {courses.map(course => (
-                <div key={course.key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
-                  <button type="button" onClick={() => openCourse(course)} className="min-w-0 flex-1 text-left">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-medium text-white [overflow-wrap:anywhere]">{course.title}</p>
-                      <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-zinc-400">{course.items.length} {course.items.length === 1 ? "material" : "materiais"}</span>
+              {courses.map(course => {
+                const actionPending = courseAction?.key === course.key;
+                return (
+                  <div key={course.key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
+                    <button type="button" onClick={() => openCourse(course)} className="min-w-0 flex-1 text-left">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="font-medium text-white [overflow-wrap:anywhere]">{course.title}</p>
+                        <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-zinc-400">{course.items.length} {course.items.length === 1 ? "material" : "materiais"}</span>
+                      </div>
+                      <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
+                        {course.order ? `Ordem ${course.order} · ` : ""}{course.category} · {levelLabel[course.level]} · {course.archived ? "Arquivado" : course.items.length ? (course.published ? "Publicado" : "Oculto") : "Sem materiais"}
+                      </p>
+                    </button>
+
+                    <div className="flex shrink-0 flex-col gap-2 sm:w-[232px]">
+                      <button type="button" onClick={() => openCourse(course)} className="inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-emerald-300/40 hover:text-emerald-100">
+                        Abrir curso
+                      </button>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          disabled={actionPending || course.published || !course.items.length}
+                          onClick={() => void publishCourse(course)}
+                          className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-300/20 px-2 py-2 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-300/10 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {actionPending && courseAction?.action === "publish" ? <LoaderCircle className="size-3 animate-spin" /> : <Eye className="size-3" />}
+                          Publicar
+                        </button>
+
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <button
+                              type="button"
+                              disabled={actionPending}
+                              className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-red-300/20 px-2 py-2 text-[11px] font-semibold text-red-200 transition hover:bg-red-300/10 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              {actionPending && courseAction?.action === "delete" ? <LoaderCircle className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+                              Excluir
+                            </button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Excluir “{course.title}”?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                O curso será removido da listagem da Academia e ficará indisponível para membros. Os materiais associados serão preservados para evitar perda acidental de conteúdo.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => void deleteCourse(course)} className="bg-red-600 text-white hover:bg-red-500">
+                                Excluir curso
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+
+                        <button
+                          type="button"
+                          disabled={actionPending || course.archived}
+                          onClick={() => void archiveCourse(course)}
+                          className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-white/15 px-2 py-2 text-[11px] font-semibold text-zinc-300 transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {actionPending && courseAction?.action === "archive" ? <LoaderCircle className="size-3 animate-spin" /> : <Archive className="size-3" />}
+                          Arquivar
+                        </button>
+                      </div>
                     </div>
-                    <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
-                      {course.order ? `Ordem ${course.order} · ` : ""}{course.category} · {levelLabel[course.level]} · {course.items.length ? (course.published ? "Publicado" : "Oculto") : "Sem materiais"}
-                    </p>
-                  </button>
-                  <button type="button" onClick={() => openCourse(course)} className="inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-emerald-300/40 hover:text-emerald-100">
-                    Abrir curso
-                  </button>
-                </div>
-              ))}
+                  </div>
+                );
+              })}
             </div>
           ) : (
             <div className="border-y border-dashed border-white/15 py-10 text-center">
