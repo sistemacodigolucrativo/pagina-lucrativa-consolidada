@@ -1,0 +1,35 @@
+/* Mobile visibility hardening for Admin > Academia course editor. */
+@media (max-width: 640px) {
+  .dashboard-main > main.max-w-5xl {
+    overflow: visible;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .dashboard-main > main.max-w-5xl > section > div:first-child > button,
+  .dashboard-main > main.max-w-5xl > section > div:first-child > div > button,
+  .dashboard-main > main.max-w-5xl > section > div[class*="border-t"] button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .dashboard-main > main.max-w-5xl input[readonly] {
+    opacity: 1;
+    -webkit-text-fill-color: #a1a1aa;
+  }
+
+  .dashboard-main > div.fixed[class*="max-w-xl"] {
+    left: 0.75rem !important;
+    right: 0.75rem !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+    z-index: 200 !important;
+  }
+
+  .dashboard-main > div.fixed[class*="max-w-xl"] button {
+    width: 100%;
+    min-height: 44px;
+  }
+}

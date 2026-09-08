@@ -12,6 +12,7 @@ import "./dashboard-premium.css";
 import "./c1-obsidian-emerald.css";
 import "./home-spacing-fixes.css";
 import "./public-mobile-compact-header.css";
+import "./admin-academy-mobile.css";
 
 const queryClient = new QueryClient();
 
