@@ -126,7 +126,8 @@ export default function ApplicationPayment() {
   const { paymentLinks } = payment.data;
   const latestReceiptStatus = payment.data.latestReceiptStatus;
   const hasReceiptAwaitingReview = application.paymentStatus === "receipt_received" || latestReceiptStatus === "pending";
-  const hasSubmittedReceipt = application.paymentStatus === "confirmed" || Boolean(latestReceiptStatus);
+  const canRetryRejectedReceipt = application.paymentStatus === "rejected" && latestReceiptStatus !== "pending";
+  const hasSubmittedReceipt = application.paymentStatus === "confirmed" || (Boolean(latestReceiptStatus) && !canRetryRejectedReceipt);
   const orderTrackingCode = application.trackingCode || trackingCode;
   const trackingHref = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(orderTrackingCode)}`);
   const showReceiptUpload = Boolean(selectedMethod && selectedMethod !== "checkout") && application.paymentStatus !== "confirmed";
