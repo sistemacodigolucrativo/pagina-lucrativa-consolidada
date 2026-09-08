@@ -71,16 +71,28 @@ describe("Academia com leitor integrado", () => {
 
   it("mantém materiais recolhidos, publicação flutuante e ordem automática", async () => {
     const adminAcademy = await readFile(path.join(root, "client/src/pages/AdminAcademy.tsx"), "utf8");
+    const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
+    const adminCourseOrder = await readFile(path.join(root, "server/adminCourseOrder.ts"), "utf8");
+    const mobileCss = await readFile(path.join(root, "client/src/admin-academy-mobile.css"), "utf8");
 
     expect(adminAcademy).toContain("materialsVisible");
     expect(adminAcademy).toContain("Visualizar Materiais");
     expect(adminAcademy).toContain("Ocultar Materiais");
     expect(adminAcademy).toContain("Adicionar Material");
     expect(adminAcademy).toContain("Publicação do curso");
+    expect(adminAcademy).toContain("admin-academy-publication-bar");
     expect(adminAcademy).toContain("bottom-[calc(env(safe-area-inset-bottom)+0.75rem)]");
     expect(adminAcademy).toContain("nextCourseOrder");
     expect(adminAcademy).toContain("Math.max(courses.length, maxStoredOrder) + 1");
     expect(adminAcademy).toContain("readOnly");
     expect(adminAcademy).toContain("Definida automaticamente.");
+    expect(adminAcademy).toContain('setMaterialEditor({ mode: "create", course: createdCourseForMaterial })');
+    expect(router).toContain("createAdminCourseWithAutomaticOrder");
+    expect(adminCourseOrder).toContain("GET_LOCK");
+    expect(adminCourseOrder).toContain("nextAvailableCourseOrder");
+    expect(adminCourseOrder).toContain("writeCourseOrder(input.summary, order)");
+    expect(mobileCss).toContain(".admin-academy-publication-bar");
+    expect(mobileCss).toContain("max-width: 100dvw");
+    expect(mobileCss).toContain("safe-area-inset-bottom");
   });
 });
