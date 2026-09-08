@@ -46,7 +46,6 @@ import {
   getPublicAffiliateProfile,
   getPublishedCourses,
   getAdminCourses,
-  createAdminCourse,
   updateAdminCourse,
   updateAdminCoursePublication,
   updateAdminContent,
@@ -79,6 +78,7 @@ import {
   upsertAdminPublicSalesSectionImage,
   startSecurityPasswordRecovery,
 } from "./db";
+import { createAdminCourseWithAutomaticOrder } from "./adminCourseOrder";
 import {
   getAdminOverview,
   getMemberCourseByRouteKey,
@@ -371,7 +371,7 @@ export const appRouter = router({
   admin: router({
     overview: adminProcedure.query(() => getAdminOverview()),
     courses: adminProcedure.query(() => getAdminCourses()),
-    createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourse(input)),
+    createCourse: adminProcedure.input(courseInput).mutation(({ input }) => createAdminCourseWithAutomaticOrder(input)),
     updateCourse: adminProcedure.input(courseInput.extend({ id: z.number().int().positive() })).mutation(({ input }) => { const { id, ...course } = input; return updateAdminCourse(id, course); }),
     updateCoursePublication: adminProcedure.input(z.object({ id: z.number().int().positive(), isPublished: z.boolean() })).mutation(({ input }) => updateAdminCoursePublication(input.id, input.isPublished)),
     content: adminProcedure.query(() => getAdminContent()),
