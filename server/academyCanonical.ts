@@ -1,6 +1,7 @@
 import { and, desc, eq, gte, lt } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import { courseProgress, ebooks } from "../drizzle/schema";
+import { getPackagedEbookLibraryCategory } from "../shared/ebookLibraryCatalog";
 import {
   getAdminOverview as getLegacyAdminOverview,
   getDb,
@@ -38,6 +39,20 @@ type ReadingProgress = {
 };
 
 type StoredCourseProgress = typeof courseProgress.$inferSelect;
+type LibraryCategorizedEbook = { sourceId?: string | null; academy?: RawAcademyMetadata | null };
+
+function withPackagedLibraryCategory<T extends LibraryCategorizedEbook>(ebook: T) {
+  const libraryCategory = getPackagedEbookLibraryCategory(ebook.sourceId);
+  if (!libraryCategory || ebook.academy?.libraryCategory?.trim()) return ebook;
+  return {
+    ...ebook,
+    academy: {
+      ...(ebook.academy ?? {}),
+      usage: ebook.academy?.usage ?? "library",
+      libraryCategory,
+    },
+  };
+}
 
 function slugify(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 96) || "curso";
@@ -116,7 +131,8 @@ function newestProgress(rows: StoredCourseProgress[]) {
 }
 
 export async function getPublishedEbooks() {
-  return getLegacyPublishedEbooks();
+  const published = await getLegacyPublishedEbooks();
+  return published.map(ebook => withPackagedLibraryCategory(ebook));
 }
 
 export async function getPublishedEbook(ebookId: number) {
@@ -126,7 +142,7 @@ export async function getPublishedEbook(ebookId: number) {
   const detail = await getLegacyPublishedEbook(ebookId);
   if (!detail) return null;
   if ("sourceId" in summary && summary.sourceId && detail.sourceId !== summary.sourceId) return null;
-  return detail;
+  return withPackagedLibraryCategory(detail);
 }
 
 function courseEbooks(course: Awaited<ReturnType<typeof getLegacyMemberCourses>>[number]) {
