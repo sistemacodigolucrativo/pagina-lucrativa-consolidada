@@ -4,6 +4,10 @@ on:
   push:
     branches: [feat-testimonials-resource-library-pages]
     paths:
+      - client/src/App.tsx
+      - client/src/pages/AdminTestimonials.tsx
+      - client/src/pages/AdminPublications.tsx
+      - server/adminContentEbooksTestimonials.responsive.test.ts
       - .github/workflows/validate-latest-annotations.yml
 
 permissions:
@@ -84,7 +88,7 @@ jobs:
             { path: "/admin/biblioteca-recursos", heading: "Biblioteca de Recursos", required: ["Conteúdos cadastrados", "Criar"] },
             { path: "/admin/biblioteca-recursos/novo", heading: "Novo conteúdo — Biblioteca de Recursos", required: ["Voltar para Biblioteca de Recursos", "Criar"] },
             { path: "/admin/biblioteca-recursos/1/editar", heading: "Editar conteúdo — Biblioteca de Recursos", required: ["Voltar para Biblioteca de Recursos"] },
-            { path: "/admin/material-divulgacao", heading: "Material de Divulgação", required: ["Conteúdos cadastrados", "Criar"] },
+            { path: "/admin/material-divulgacao", heading: "Material de Divulgação", required: ["Materiais cadastrados", "Adicionar novo material"] },
             { path: "/admin/material-divulgacao/novo", heading: "Novo conteúdo — Material de Divulgação", required: ["Voltar para Material de Divulgação", "Criar"] },
             { path: "/admin/material-divulgacao/1/editar", heading: "Editar conteúdo — Material de Divulgação", required: ["Voltar para Material de Divulgação"] },
           ];
@@ -119,7 +123,7 @@ jobs:
             if (new URL(page.url()).pathname !== "/admin/biblioteca-recursos") failures += 1;
 
             await page.goto(`${baseURL}/admin/material-divulgacao`, { waitUntil: "networkidle" });
-            await page.getByRole("button", { name: "Criar", exact: true }).click();
+            await page.getByRole("button", { name: "Adicionar novo material", exact: true }).click();
             if (new URL(page.url()).pathname !== "/admin/material-divulgacao/novo") failures += 1;
             await page.getByRole("button", { name: "Voltar para Material de Divulgação" }).click();
             if (new URL(page.url()).pathname !== "/admin/material-divulgacao") failures += 1;
