@@ -102,6 +102,57 @@ rollback() {
 }
 trap rollback ERR INT TERM
 
+start_manual_deploy_worker() {
+  [[ "$DEPLOY_INVOCATION" != "manual" ]] || return 0
+  local worker_source="$NEW_RELEASE/scripts/manual-deploy-worker.sh"
+  [[ -f "$worker_source" ]] || fail "Worker de deploy manual não está presente no release validado."
+
+  local stable_worker="$DEPLOY_ROOT/manual-deploy-worker.sh"
+  local worker_pid_file="$DEPLOY_ROOT/manual-deploy-worker.pid"
+  local worker_log="$DEPLOY_ROOT/manual-deploy-worker.log"
+  local heartbeat_file="$DEPLOY_ROOT/manual-deploy-worker.json"
+  local old_pid=""
+
+  cp "$worker_source" "$stable_worker"
+  chmod 750 "$stable_worker"
+
+  if [[ -f "$worker_pid_file" ]]; then
+    old_pid="$(tr -dc '0-9' < "$worker_pid_file" || true)"
+    if [[ -n "$old_pid" ]] && kill -0 "$old_pid" >/dev/null 2>&1; then
+      kill "$old_pid" >/dev/null 2>&1 || true
+      for _ in $(seq 1 20); do
+        kill -0 "$old_pid" >/dev/null 2>&1 || break
+        sleep 0.1
+      done
+    fi
+  fi
+
+  rm -f "$heartbeat_file"
+  (
+    exec 9>&-
+    exec nohup setsid env \
+      DEPLOY_ROOT="$DEPLOY_ROOT" \
+      SERVICE_NAME="$SERVICE_NAME" \
+      HEALTHCHECK_URL="$HEALTHCHECK_URL" \
+      PUBLIC_HEALTHCHECK_URL="$PUBLIC_HEALTHCHECK_URL" \
+      PNPM_BIN="$PNPM_BIN" \
+      bash "$stable_worker"
+  ) >>"$worker_log" 2>&1 < /dev/null &
+  local worker_pid=$!
+  printf '%s\n' "$worker_pid" > "$worker_pid_file"
+
+  local worker_ready=0
+  for _ in $(seq 1 20); do
+    if kill -0 "$worker_pid" >/dev/null 2>&1 && [[ -s "$heartbeat_file" ]]; then
+      worker_ready=1
+      break
+    fi
+    sleep 0.1
+  done
+  [[ "$worker_ready" -eq 1 ]] || fail "Worker de deploy manual não iniciou corretamente."
+  log "Worker de deploy manual ativo (PID $worker_pid)."
+}
+
 write_deploy_status "deploying" 20 "Criando novo release"
 log "Criando release $NEW_RELEASE"
 mkdir "$NEW_RELEASE"
@@ -134,6 +185,8 @@ done
 cleanup_smoke
 [[ "$SMOKE_OK" -eq 1 ]] || fail "Smoke test do novo release falhou. Consulte $SMOKE_LOG."
 
+start_manual_deploy_worker
+
 write_deploy_status "deploying" 82 "Ativando nova versão"
 log "Ativando release de forma atômica"
 ln -sfn "$NEW_RELEASE" "$CURRENT_LINK.next"
@@ -156,52 +209,9 @@ if [[ -n "$PUBLIC_HEALTHCHECK_URL" ]]; then
   curl --fail --silent --show-error --max-time 15 "$PUBLIC_HEALTHCHECK_URL" >/dev/null
 fi
 
-start_manual_deploy_worker() {
-  [[ "$DEPLOY_INVOCATION" != "manual" ]] || return 0
-  local worker_source="$NEW_RELEASE/scripts/manual-deploy-worker.sh"
-  [[ -f "$worker_source" ]] || {
-    log "Worker de deploy manual não está presente neste release; autodeploy permanece ativo."
-    return 0
-  }
-
-  local stable_worker="$DEPLOY_ROOT/manual-deploy-worker.sh"
-  local worker_pid_file="$DEPLOY_ROOT/manual-deploy-worker.pid"
-  local worker_log="$DEPLOY_ROOT/manual-deploy-worker.log"
-  local old_pid=""
-
-  cp "$worker_source" "$stable_worker"
-  chmod 750 "$stable_worker"
-
-  if [[ -f "$worker_pid_file" ]]; then
-    old_pid="$(tr -dc '0-9' < "$worker_pid_file" || true)"
-    if [[ -n "$old_pid" ]] && kill -0 "$old_pid" >/dev/null 2>&1; then
-      kill "$old_pid" >/dev/null 2>&1 || true
-      for _ in $(seq 1 20); do
-        kill -0 "$old_pid" >/dev/null 2>&1 || break
-        sleep 0.1
-      done
-    fi
-  fi
-
-  (
-    exec 9>&-
-    exec nohup setsid env \
-      DEPLOY_ROOT="$DEPLOY_ROOT" \
-      SERVICE_NAME="$SERVICE_NAME" \
-      HEALTHCHECK_URL="$HEALTHCHECK_URL" \
-      PUBLIC_HEALTHCHECK_URL="$PUBLIC_HEALTHCHECK_URL" \
-      PNPM_BIN="$PNPM_BIN" \
-      bash "$stable_worker"
-  ) >>"$worker_log" 2>&1 < /dev/null &
-  local worker_pid=$!
-  printf '%s\n' "$worker_pid" > "$worker_pid_file"
-  log "Worker de deploy manual ativo (PID $worker_pid)."
-}
-
 trap - ERR INT TERM
 SWITCHED=0
 rm -f "$ARTIFACT_PATH"
 write_deploy_status "completed" 100 "Deploy concluído"
-start_manual_deploy_worker
 log "Deploy concluído: $TARGET_SHA"
 log "Release anterior preservado: $PREVIOUS_RELEASE"
