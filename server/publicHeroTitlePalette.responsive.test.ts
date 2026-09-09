@@ -32,7 +32,7 @@ describe("Hero público — paleta estável após Configurar Seções", () => {
     const fixes = read("client/src/home-spacing-fixes.css");
     expect(base).toContain("font-size: clamp(45px, 5.25vw, 70px)");
     expect(base).toContain("@media (max-width: 900px)");
-    expect(base).toContain("@media (max-width: 560px)");
+    expect(base).toContain("@media (max-width: 650px)");
     expect(base).toContain("font-size: clamp(36px, 10.2vw, 46px)");
     expect(fixes).toContain("@media (max-width: 900px)");
     expect(fixes).toContain("@media (max-width: 560px)");
