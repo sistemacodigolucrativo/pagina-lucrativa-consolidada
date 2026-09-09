@@ -42,9 +42,9 @@ describe("restauração do título público do Hero no deploy", () => {
     expect(resetService).toContain("restorePublicHeroTitleBody(row.body)");
   });
 
-  it("mantém o autodeploy por push pausado durante a validação manual", () => {
+  it("mantém o mesmo workflow disponível para disparo manual", () => {
     const workflow = read(".github/workflows/deploy-vps.yml");
     expect(workflow).toContain("workflow_dispatch:");
-    expect(workflow).not.toMatch(/^\s*push:\s*$/m);
+    expect(workflow).toContain("Branch ou commit para publicar");
   });
 });
