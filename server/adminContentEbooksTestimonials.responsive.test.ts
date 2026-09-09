@@ -20,6 +20,38 @@ describe("anotações administrativas — publicações, e-books e agradecimento
     expect(source).toContain("grid w-full min-w-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:w-auto sm:flex");
   });
 
+  it("padroniza Biblioteca de Recursos e Material de Divulgação com listagem e formulários independentes", () => {
+    const source = read("client/src/pages/AdminPublications.tsx");
+    const routes = read("client/src/App.tsx");
+    expect(source).toContain('splitFlow: true');
+    expect(source).toContain('normalizedLocation === `${config.basePath}/novo`');
+    expect(source).toContain('setLocation(`${config.basePath}/novo`)');
+    expect(source).toContain('setLocation(`${config.basePath}/${item.id}/editar`)');
+    expect(source).toContain('onSuccess: () => { void refresh(); toast.success("Conteúdo registrado."); if (config.splitFlow) goToList()');
+    expect(source).toContain('Conteúdos cadastrados');
+    expect(source).toContain('onClick={openCreate}');
+    expect(source).toContain('Voltar para {config.title}');
+    expect(source).toContain('overflow-x-clip p-4 sm:p-6 lg:p-8');
+    expect(routes).toContain('/admin/material-divulgacao/novo');
+    expect(routes).toContain('/admin/material-divulgacao/:contentId/editar');
+    expect(routes).toContain('/admin/biblioteca-recursos/novo');
+    expect(routes).toContain('/admin/biblioteca-recursos/:contentId/editar');
+  });
+
+  it("mostra Todos os agradecimentos em prévia expansível sem remover as páginas por status", () => {
+    const source = read("client/src/pages/AdminTestimonials.tsx");
+    expect(source).toContain('const [expandedIds, setExpandedIds]');
+    expect(source).toContain('function toggleExpanded(id: number)');
+    expect(source).toContain('id="testimonial-all-list"');
+    expect(source).toContain('Todos os agradecimentos');
+    expect(source).toContain('aria-expanded={expanded}');
+    expect(source).toContain('line-clamp-3');
+    expect(source).toContain('Ver agradecimento completo');
+    expect(source).toContain('Recolher agradecimento');
+    expect(source).toContain('overflow-x-clip p-4 sm:space-y-7 sm:p-6 lg:p-8');
+    expect(source).toContain('onClick={() => setLocation(statusPaths[status])}');
+  });
+
   it("organiza Biblioteca de e-books com criação e edição em telas independentes", () => {
     const source = read("client/src/pages/AdminEbooks.tsx");
     expect(source).toContain('const libraryCreateMode = location === "/admin/ebooks/novo"');
