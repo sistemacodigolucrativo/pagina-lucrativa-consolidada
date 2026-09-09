@@ -106,17 +106,30 @@ export default function AdminReferrals() {
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">Gerencie contas, bloqueios e exclusões com retenção de 7 dias sem apagar a rede de indicados.</p>
         </header>
 
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <article className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-5"><p className="text-xs uppercase tracking-wider text-emerald-200">Membros</p><strong className="mt-2 block text-3xl text-white">{loadingMembers ? "..." : management.members.length}</strong></article>
           <article className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><p className="text-xs uppercase tracking-wider text-zinc-400">Vínculos ativos</p><strong className="mt-2 block text-3xl text-white">{network.isLoading ? "..." : data?.activeCount ?? 0}</strong></article>
-          <article className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><p className="text-xs uppercase tracking-wider text-zinc-400">Bloqueados</p><strong className="mt-2 block text-3xl text-white">{management.members.filter(member => member.blocked && !member.deletionRequestedAt).length}</strong></article>
-          <article className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-5"><p className="text-xs uppercase tracking-wider text-amber-200">Exclusão em 7 dias</p><strong className="mt-2 block text-3xl text-white">{management.deletionQueue.length}</strong></article>
+          <article className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:col-span-2 lg:col-span-1"><p className="text-xs uppercase tracking-wider text-zinc-400">Bloqueados</p><strong className="mt-2 block text-3xl text-white">{management.members.filter(member => member.blocked && !member.deletionRequestedAt).length}</strong></article>
         </section>
 
-        <a href={withAppBase("/admin/membros/exclusoes")} className="block rounded-2xl border border-amber-300/25 bg-amber-300/5 p-5 transition hover:border-amber-300/45 hover:bg-amber-300/[0.08] focus:outline-none focus:ring-2 focus:ring-amber-300/30" aria-label="Abrir Área temporária de exclusão">
-          <div className="flex items-center gap-2 text-white"><Clock3 className="size-5 text-amber-300" /><h2 className="font-medium">Área temporária de exclusão</h2></div>
-          <p className="mt-3 text-sm leading-6 text-zinc-300">Contas permanecem aqui por 7 dias antes da remoção definitiva.</p>
-          <p className="text-sm leading-6 text-zinc-300">Os indicados do membro excluído são preservados e passam a ficar órfãos.</p>
+        <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
+          <div className="flex items-center gap-2 text-white"><ShieldCheck className="size-5 text-emerald-300" /><h2 className="font-medium">Rede de indicações</h2></div>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">Os vínculos continuam sendo criados pelo fluxo real de adesão. Quando um patrocinador é excluído definitivamente, os indicados permanecem ativos e o vínculo é removido.</p>
+          {network.error ? <p className="mt-4 text-sm text-red-200">Não foi possível carregar a rede.</p> : !network.isLoading && !(data?.links.length) ? <div className="mt-4 flex items-center gap-2 rounded-xl border border-dashed border-white/15 p-4 text-sm text-zinc-400"><Network className="size-4" />Nenhum vínculo registrado.</div> : null}
+        </section>
+
+        <a href={withAppBase("/admin/membros/exclusoes")} className="block rounded-2xl border border-amber-300/25 bg-amber-300/5 p-4 transition hover:border-amber-300/45 hover:bg-amber-300/[0.08] focus:outline-none focus:ring-2 focus:ring-amber-300/30 sm:p-5" aria-label="Abrir Área temporária de exclusão">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 text-white"><Clock3 className="size-5 shrink-0 text-amber-300" /><h2 className="font-medium">Área temporária de exclusão</h2></div>
+              <p className="mt-3 text-sm leading-6 text-zinc-300">Contas permanecem aqui por 7 dias antes da remoção definitiva.</p>
+              <p className="text-sm leading-6 text-zinc-300">Os indicados do membro excluído são preservados e passam a ficar órfãos.</p>
+            </div>
+            <div className="flex w-full shrink-0 items-center justify-between rounded-xl border border-amber-300/20 bg-black/20 px-4 py-3 sm:w-auto sm:min-w-36 sm:flex-col sm:items-end sm:justify-start">
+              <span className="text-xs uppercase tracking-wider text-amber-200">Contas na área</span>
+              <strong className="text-2xl text-white sm:mt-1 sm:text-3xl">{loadingMembers ? "..." : management.deletionQueue.length}</strong>
+            </div>
+          </div>
         </a>
 
         <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
@@ -160,12 +173,6 @@ export default function AdminReferrals() {
               </div> : null}
             </article>;
           })}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-zinc-400">Nenhum membro registrado.</p>}
-        </section>
-
-        <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
-          <div className="flex items-center gap-2 text-white"><ShieldCheck className="size-5 text-emerald-300" /><h2 className="font-medium">Rede de indicações</h2></div>
-          <p className="mt-2 text-sm leading-6 text-zinc-400">Os vínculos continuam sendo criados pelo fluxo real de adesão. Quando um patrocinador é excluído definitivamente, os indicados permanecem ativos e o vínculo é removido.</p>
-          {network.error ? <p className="mt-4 text-sm text-red-200">Não foi possível carregar a rede.</p> : !network.isLoading && !(data?.links.length) ? <div className="mt-4 flex items-center gap-2 rounded-xl border border-dashed border-white/15 p-4 text-sm text-zinc-400"><Network className="size-4" />Nenhum vínculo registrado.</div> : null}
         </section>
       </main>
     </DashboardLayout>
