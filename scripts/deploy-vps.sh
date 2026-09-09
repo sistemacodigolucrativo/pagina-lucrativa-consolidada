@@ -211,7 +211,7 @@ fi
 
 write_deploy_status "deploying" 99 "Restaurando título padrão do Hero"
 log "Restaurando somente o título do Hero salvo pelo editor"
-"$PNPM_BIN" exec tsx scripts/reset-public-hero-title.ts
+DEPLOY_ROOT="$DEPLOY_ROOT" "$PNPM_BIN" exec tsx scripts/reset-public-hero-title.ts
 
 trap - ERR INT TERM
 SWITCHED=0

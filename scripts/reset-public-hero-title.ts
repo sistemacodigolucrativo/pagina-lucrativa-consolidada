@@ -11,7 +11,8 @@ import { PUBLIC_HERO_TITLE } from "../shared/publicHeroTitle";
 const COPY_ENDPOINT = process.env.PUBLIC_SALES_COPY_RESET_URL || "http://127.0.0.1:3101/api/public-sales-copy";
 
 async function main() {
-  const root = process.cwd();
+  const root = process.env.DEPLOY_ROOT?.trim();
+  if (!root || !path.isAbsolute(root)) throw new Error("DEPLOY_ROOT absoluto é obrigatório para restaurar o Hero.");
   const pending = path.join(root, DEPLOY_HERO_RESET_PENDING);
   const complete = path.join(root, DEPLOY_HERO_RESET_COMPLETE);
   const failed = path.join(root, DEPLOY_HERO_RESET_FAILED);

@@ -6,10 +6,17 @@ import { managedContent } from "../drizzle/schema";
 import { PUBLIC_SALES_COPY_CATEGORY } from "../shared/publicSalesCopyEditor";
 import { restorePublicHeroTitleBody } from "../shared/publicHeroTitle";
 import { getDb } from "./db";
+import { LOCAL_STORAGE_DIR } from "./storage";
 
 export const DEPLOY_HERO_RESET_PENDING = ".pending-public-hero-title-reset";
 export const DEPLOY_HERO_RESET_COMPLETE = ".public-hero-title-reset-complete.json";
 export const DEPLOY_HERO_RESET_FAILED = ".public-hero-title-reset-failed.json";
+
+export function publicHeroDeployResetRoot() {
+  const configuredRoot = process.env.DEPLOY_ROOT?.trim();
+  if (configuredRoot && path.isAbsolute(configuredRoot)) return configuredRoot;
+  return path.dirname(LOCAL_STORAGE_DIR);
+}
 
 async function exists(file: string) {
   try {
@@ -20,7 +27,7 @@ async function exists(file: string) {
   }
 }
 
-export async function matchesPendingPublicHeroTitleResetToken(candidate: string, root = process.cwd()) {
+export async function matchesPendingPublicHeroTitleResetToken(candidate: string, root = publicHeroDeployResetRoot()) {
   if (!/^[0-9a-f]{64}$/.test(candidate)) return false;
   try {
     const expected = (await readFile(path.join(root, DEPLOY_HERO_RESET_PENDING), "utf8")).trim();
@@ -69,7 +76,7 @@ export async function resetPublicHeroTitleForDeploy() {
   return { matched: rows.length, updated, unchanged, malformed };
 }
 
-export async function processPendingPublicHeroTitleResetForDeploy(root = process.cwd()) {
+export async function processPendingPublicHeroTitleResetForDeploy(root = publicHeroDeployResetRoot()) {
   const pending = path.join(root, DEPLOY_HERO_RESET_PENDING);
   const complete = path.join(root, DEPLOY_HERO_RESET_COMPLETE);
   const failed = path.join(root, DEPLOY_HERO_RESET_FAILED);
