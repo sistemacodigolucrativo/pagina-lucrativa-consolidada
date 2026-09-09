@@ -1,5 +1,5 @@
 import type { DashboardMenuItem } from "@/components/DashboardLayout";
-import { Bell, BookOpenCheck, CalendarClock, ChartNoAxesCombined, FileText, ImagePlus, LayoutTemplate, LifeBuoy, Library, Megaphone, UsersRound } from "lucide-react";
+import { Bell, BookOpenCheck, CalendarClock, ChartNoAxesCombined, FileText, ImagePlus, LayoutTemplate, LifeBuoy, Library, Megaphone, Rocket, UsersRound } from "lucide-react";
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
@@ -14,6 +14,7 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: ImagePlus, label: "Configurar Seções", path: "/admin/imagens", group: "Sistema" },
   { icon: LayoutTemplate, label: "Preview", path: "/preview", group: "Sistema" },
   { icon: Bell, label: "Toast", path: "/admin/toast", group: "Sistema" },
+  { icon: Rocket, label: "Deploy manual", path: "/admin/deploy", group: "Sistema" },
   { icon: CalendarClock, label: "FUTURAS IMPLEMENTAÇÕES", path: "/admin/futuras-implementacoes", group: "Anotações" },
 ];
 
