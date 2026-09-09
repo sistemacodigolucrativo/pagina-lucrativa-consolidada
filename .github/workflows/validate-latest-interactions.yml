@@ -59,6 +59,7 @@ jobs:
           const signature = createHmac("sha256", secret).update(encodedPayload).digest("base64url");
           const cookieValue = `${encodedPayload}.${signature}`;
           const now = new Date().toISOString();
+          const adminUser = { id: 1, openId: "local_demo_admin", name: "Administrador Código Lucrativo", email: "administrador@pagina-lucrativa.local", passwordHash: null, loginMethod: "local_demo", role: "admin", createdAt: now, updatedAt: now, lastSignedIn: now };
           const testimonialText = "Validação automática de expansão. Este agradecimento possui conteúdo propositalmente extenso para confirmar que a visualização Todos inicia limitada com reticências e que, após o clique, o conteúdo completo fica disponível sem prejudicar o card ou a largura da tela em nenhum dispositivo validado.";
           const testimonials = [{ id: 701, userId: 1, memberName: "Membro de validação", memberEmail: "validacao@example.com", content: testimonialText, rating: 5, status: "pending", adminNote: null, createdAt: now, updatedAt: now }];
           const contents = [
@@ -89,6 +90,7 @@ jobs:
               const rawProcedures = url.pathname.split("/api/trpc/")[1] ?? "";
               const procedures = rawProcedures.split(",").filter(Boolean);
               const results = procedures.map(procedure => {
+                if (procedure === "auth.me") return success(adminUser);
                 if (procedure === "admin.testimonials") return success(testimonials);
                 if (procedure === "admin.content") return success(contents);
                 if (procedure === "admin.createContent") return success({ id: 999 });
