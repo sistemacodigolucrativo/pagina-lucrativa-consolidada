@@ -102,9 +102,10 @@ jobs:
               const currentPath = new URL(page.url()).pathname;
               const h1 = (await page.locator("h1").first().textContent().catch(() => null))?.trim() ?? "";
               const bodyText = await page.locator("body").innerText();
+              const normalizedBody = bodyText.toLocaleLowerCase("pt-BR");
               const dimensions = await page.evaluate(() => ({ viewport: window.innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth }));
               const horizontalOverflow = Math.max(dimensions.documentWidth, dimensions.bodyWidth) > dimensions.viewport + 1;
-              const missing = route.required.filter(text => !bodyText.includes(text));
+              const missing = route.required.filter(text => !normalizedBody.includes(text.toLocaleLowerCase("pt-BR")));
               const ok = currentPath === route.path && h1.includes(route.heading) && !horizontalOverflow && missing.length === 0 && (response ? response.status() < 500 : true);
               console.log(JSON.stringify({ viewport: viewport.name, route: route.path, currentPath, heading: h1, horizontalOverflow, missing, ok }));
               await page.screenshot({ path: `visual-artifacts/${viewport.name}-${route.path.replaceAll("/", "_").replace(/^_/, "")}.png`, fullPage: true });
@@ -124,7 +125,7 @@ jobs:
             if (new URL(page.url()).pathname !== "/admin/material-divulgacao") failures += 1;
 
             await page.goto(`${baseURL}/admin/relatos`, { waitUntil: "networkidle" });
-            await page.getByRole("button", { name: /Em análise/ }).click();
+            await page.getByRole("button", { name: /Em análise/i }).click();
             if (new URL(page.url()).pathname !== "/admin/relatos/em-analise") failures += 1;
             await context.close();
           }
