@@ -11,6 +11,7 @@ import EbookReader from "./pages/EbookReader";
 import AdminEbooks from "./pages/AdminEbooks";
 import AdminAcademy from "./pages/AdminAcademy";
 import AdminMemberEdit from "./pages/AdminMemberEdit";
+import AdminMemberDeletionQueue from "./pages/AdminMemberDeletionQueue";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
 import MemberReceiving from "./pages/MemberReceiving";
@@ -121,6 +122,7 @@ function AppRoutes() {
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
+    <Route path="/admin/membros/exclusoes" component={AdminMemberDeletionQueue} />
     <Route path="/admin/membros/:memberId/editar" component={AdminMemberEdit} />
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/material-divulgacao" component={AdminPublications} />
