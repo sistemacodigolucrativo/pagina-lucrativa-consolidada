@@ -25,6 +25,18 @@
   margin-bottom: 18px;
 }
 
+/*
+ * O editor de "Configurar Seções" persiste a copy como texto simples.
+ * A cor do título pertence à identidade visual, não ao conteúdo persistido.
+ * Esta regra, carregada depois de index.css, normaliza o título inteiro para
+ * o mesmo token da paleta e impede que a presença/ausência do span do fallback
+ * altere a cor após salvar ou reposicionar conteúdo no editor.
+ */
+.reference-page .sales-hero .sales-hero-copy > h1,
+.reference-page .sales-hero .sales-hero-copy > h1 span {
+  color: var(--gold-bright);
+}
+
 @media (max-width: 900px) {
   .reference-page .sales-hero {
     padding-top: 12px;
