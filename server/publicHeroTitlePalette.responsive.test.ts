@@ -1,30 +1,48 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
+import { PUBLIC_HERO_TITLE, splitPublicHeroTitle } from "../shared/publicHeroTitle";
 
 const read = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
 
 describe("Hero público — paleta estável após Configurar Seções", () => {
-  it("mantém a copy do editor como texto e a cor como responsabilidade do estilo estrutural", () => {
-    const home = read("client/src/pages/Home.tsx");
+  it("preserva as duas cores da identidade mesmo quando o título vem do editor", () => {
     const editor = read("shared/publicSalesCopyEditor.ts");
+    const runtime = read("client/src/components/PublicSalesCopyRuntime.tsx");
     const fixes = read("client/src/home-spacing-fixes.css");
     const main = read("client/src/main.tsx");
 
-    expect(editor).toContain('f("title", "Título", "Receba o Método Código Lucrativo pronto para começar — com estrutura consolidada para ativar e operar.", "textarea", "h1")');
-    expect(home).toContain("overrides.hero?.title");
-    expect(fixes).toContain(".reference-page .sales-hero .sales-hero-copy > h1,");
-    expect(fixes).toContain(".reference-page .sales-hero .sales-hero-copy > h1 span");
+    expect(editor).toContain(PUBLIC_HERO_TITLE);
+    expect(runtime).toContain("splitPublicHeroTitle(title)");
+    expect(runtime).toContain('accentNode.className = "public-hero-title-accent"');
+    expect(fixes).toContain(".public-hero-title-accent");
+    expect(fixes).toContain("color: var(--gold);");
     expect(fixes).toContain("color: var(--gold-bright);");
     expect(main.indexOf('import "./home-spacing-fixes.css"')).toBeGreaterThan(main.indexOf('import "./index.css"'));
+
+    expect(splitPublicHeroTitle(PUBLIC_HERO_TITLE)).toEqual({
+      accent: "Receba o Método Código Lucrativo pronto para começar",
+      remainder: "— com estrutura consolidada para ativar e operar.",
+    });
   });
 
-  it("usa o mesmo token de cor com e sem o span do fallback", () => {
+  it("não mostra o fallback antigo antes de resolver a copy persistida", () => {
+    const runtime = read("client/src/components/PublicSalesCopyRuntime.tsx");
+    const fixes = read("client/src/home-spacing-fixes.css");
+    expect(runtime).toContain("ready: false");
+    expect(runtime).toContain("ready: true");
+    expect(runtime).toContain('element.classList.add("public-hero-title-ready")');
+    expect(fixes).toContain("visibility: hidden;");
+    expect(fixes).toContain("> h1.public-hero-title-ready");
+    expect(fixes).toContain("visibility: visible;");
+  });
+
+  it("reutiliza os tokens existentes da paleta em vez de criar novas cores", () => {
     const base = read("client/src/index.css");
     const fixes = read("client/src/home-spacing-fixes.css");
+    expect(base).toContain("--gold: #03D660;");
     expect(base).toContain("--gold-bright: #ABF6D0;");
-    expect(base).toContain(".sales-page h1 span, .sales-page h2 span { color: var(--gold);");
-    expect(fixes).toContain("h1 span {\n  color: var(--gold-bright);");
+    expect(fixes).not.toMatch(/#[0-9a-fA-F]{3,8}/);
   });
 
   it("preserva o comportamento responsivo existente em desktop, tablet e mobile", () => {
