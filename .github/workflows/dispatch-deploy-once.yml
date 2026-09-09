@@ -1,0 +1,23 @@
+name: Disparar deploy revisado uma vez
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/dispatch-deploy-once.yml
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar workflow de produção existente
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run deploy-vps.yml --repo "$GH_REPO" --ref main -f ref=main
+
+# Disparo único para publicar a correção de Material de Divulgação após testes e build bem-sucedidos.
