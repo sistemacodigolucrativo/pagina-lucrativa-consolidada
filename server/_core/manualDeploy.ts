@@ -24,6 +24,17 @@ type DeployState = {
   updatedAt?: string;
 };
 
+type ManualDeployAudit = {
+  status: "running" | "completed" | "failed";
+  sha: string;
+  requestedBy: number | null;
+  requestedAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  stage: string | null;
+  exitCode: number | null;
+};
+
 type WorkerHeartbeat = {
   updatedAt?: string;
 };
@@ -45,6 +56,7 @@ function filesFor(root: string) {
     request: path.join(root, "manual-deploy-request.json"),
     processing: path.join(root, "manual-deploy-processing.json"),
     heartbeat: path.join(root, "manual-deploy-worker.json"),
+    audit: path.join(root, "manual-deploy-result.json"),
   };
 }
 
@@ -92,6 +104,22 @@ async function readDeployState(root: string): Promise<DeployState> {
   };
 }
 
+async function readManualDeployAudit(root: string): Promise<ManualDeployAudit | null> {
+  const parsed = await readJson<Partial<ManualDeployAudit>>(filesFor(root).audit);
+  if (!parsed || !["running", "completed", "failed"].includes(String(parsed.status))) return null;
+  if (typeof parsed.sha !== "string" || !/^[0-9a-f]{40}$/.test(parsed.sha)) return null;
+  return {
+    status: parsed.status as ManualDeployAudit["status"],
+    sha: parsed.sha,
+    requestedBy: Number.isInteger(parsed.requestedBy) ? Number(parsed.requestedBy) : null,
+    requestedAt: typeof parsed.requestedAt === "string" ? parsed.requestedAt : null,
+    startedAt: typeof parsed.startedAt === "string" ? parsed.startedAt : null,
+    finishedAt: typeof parsed.finishedAt === "string" ? parsed.finishedAt : null,
+    stage: typeof parsed.stage === "string" ? parsed.stage : null,
+    exitCode: Number.isInteger(parsed.exitCode) ? Number(parsed.exitCode) : null,
+  };
+}
+
 async function workerIsActive(root: string) {
   const heartbeat = await readJson<WorkerHeartbeat>(filesFor(root).heartbeat);
   const timestamp = heartbeat?.updatedAt ? new Date(heartbeat.updatedAt).getTime() : NaN;
@@ -100,10 +128,11 @@ async function workerIsActive(root: string) {
 
 export async function inspectManualDeploy(root = manualDeployRoot()) {
   const deployFiles = filesFor(root);
-  const [sha, workerActive, deployStatus, requestExists, processingExists] = await Promise.all([
+  const [sha, workerActive, deployStatus, lastManualDeploy, requestExists, processingExists] = await Promise.all([
     readCurrentSha(root),
     workerIsActive(root),
     readDeployState(root),
+    readManualDeployAudit(root),
     fileExists(deployFiles.request),
     fileExists(deployFiles.processing),
   ]);
@@ -114,6 +143,7 @@ export async function inspectManualDeploy(root = manualDeployRoot()) {
     workerActive,
     queued,
     deployStatus,
+    lastManualDeploy,
     updates: MANUAL_DEPLOY_UPDATES,
   };
 }
@@ -139,7 +169,7 @@ export async function queueManualDeployRequest(adminId: number, root = manualDep
   const temp = `${deployFiles.request}.tmp-${process.pid}-${Date.now()}`;
   await writeFile(temp, `${JSON.stringify(request)}\n`, { encoding: "utf8", mode: 0o640 });
   await rename(temp, deployFiles.request);
-  return { status: "queued" as const, sha: info.currentSha };
+  return { status: "queued" as const, sha: info.currentSha, requestedAt: request.requestedAt };
 }
 
 async function requireAdmin(req: Request, res: Response) {
