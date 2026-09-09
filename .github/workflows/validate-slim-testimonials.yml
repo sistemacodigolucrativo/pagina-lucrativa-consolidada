@@ -112,29 +112,39 @@ jobs:
                 const article = page.locator("#testimonial-moderation-list article").first();
                 await article.waitFor({ state: "visible" });
                 const toggle = article.locator(`button[aria-controls="testimonial-moderation-details-${target.id}"]`);
+                const noteField = article.locator('textarea[placeholder^="Opcional:"]');
+                const statusField = article.locator("select");
+                const saveButton = article.getByRole("button", { name: /Salvar nota/i });
+                const deleteButton = article.getByRole("button", { name: /Excluir/i });
                 await toggle.waitFor({ state: "visible" });
                 if ((await toggle.getAttribute("aria-expanded")) !== "false") throw new Error("card não iniciou recolhido");
                 const collapsedBox = await toggle.boundingBox();
                 if (!collapsedBox || collapsedBox.height > 64) throw new Error(`card recolhido não está super slim: ${collapsedBox?.height ?? "sem medida"}px`);
-                if (await article.getByText("Nota privada para o membro", { exact: true }).isVisible().catch(() => false)) throw new Error("ações administrativas ficaram visíveis no modo slim");
+                if (await noteField.isVisible().catch(() => false)) throw new Error("nota privada ficou visível no modo slim");
+                if (await statusField.isVisible().catch(() => false)) throw new Error("status ficou visível no modo slim");
+                if (await saveButton.isVisible().catch(() => false)) throw new Error("salvar ficou visível no modo slim");
+                if (await deleteButton.isVisible().catch(() => false)) throw new Error("excluir ficou visível no modo slim");
                 const record = testimonials.find(item => item.id === target.id);
                 if (!record) throw new Error("registro de validação ausente");
                 if (await article.getByText(record.content, { exact: true }).isVisible().catch(() => false)) throw new Error("conteúdo completo ficou visível no modo slim");
 
                 await toggle.click();
                 if ((await toggle.getAttribute("aria-expanded")) !== "true") throw new Error("card não expandiu");
-                await article.getByText("Nota privada para o membro", { exact: true }).waitFor({ state: "visible" });
+                await noteField.waitFor({ state: "visible" });
+                await statusField.waitFor({ state: "visible" });
+                await saveButton.waitFor({ state: "visible" });
+                await deleteButton.waitFor({ state: "visible" });
                 await article.getByText(record.content, { exact: true }).waitFor({ state: "visible" });
-                if (!(await article.getByText("Status", { exact: true }).isVisible())) throw new Error("status não apareceu ao expandir");
-                if (!(await article.getByRole("button", { name: /Salvar nota/i }).isVisible())) throw new Error("salvar não apareceu ao expandir");
-                if (!(await article.getByRole("button", { name: /Excluir/i }).isVisible())) throw new Error("excluir não apareceu ao expandir");
                 const dimensions = await page.evaluate(() => ({ viewport: innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth }));
                 if (Math.max(dimensions.documentWidth, dimensions.bodyWidth) > dimensions.viewport + 1) throw new Error("overflow horizontal ao expandir");
                 await page.screenshot({ path: `slim-testimonial-artifacts/${viewport.name}-${target.status}-expanded.png`, fullPage: true });
 
                 await toggle.click();
                 if ((await toggle.getAttribute("aria-expanded")) !== "false") throw new Error("card não recolheu");
-                if (await article.getByText("Nota privada para o membro", { exact: true }).isVisible().catch(() => false)) throw new Error("ações continuaram visíveis após recolher");
+                if (await noteField.isVisible().catch(() => false)) throw new Error("nota privada continuou visível após recolher");
+                if (await statusField.isVisible().catch(() => false)) throw new Error("status continuou visível após recolher");
+                if (await saveButton.isVisible().catch(() => false)) throw new Error("salvar continuou visível após recolher");
+                if (await deleteButton.isVisible().catch(() => false)) throw new Error("excluir continuou visível após recolher");
               } catch (error) {
                 const message = error instanceof Error ? error.message : String(error);
                 errors.push(`${viewport.name}/${target.status}: ${message}`);
