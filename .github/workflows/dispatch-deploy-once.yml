@@ -19,3 +19,5 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh workflow run deploy-vps.yml --repo "$GH_REPO" --ref main -f ref=main
+
+# Disparo único revisado após validação das anotações administrativas.
