@@ -1,5 +1,6 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import LibraryResourcesPremium from "@/components/resources/LibraryResourcesPremium";
+import { splitPromotionalMaterialBody } from "@/lib/promotionalMaterialMetadata";
 import { trpc } from "@/lib/trpc";
 import { BookOpenText, FileText, Inbox, LayoutDashboard, LibraryBig, Mail, MessageCircleQuestion } from "lucide-react";
 import { useLocation } from "wouter";
@@ -34,11 +35,24 @@ export default function MemberPublications() {
   const Icon = view.icon;
   const content = trpc.member.content.useQuery();
   const items = (content.data ?? []).filter(item => !view.kind || item.kind === view.kind);
+  const promotionalItems = items.map(item => {
+    if (item.kind !== "article") return { ...item, imageUrl: null };
+    const promotional = splitPromotionalMaterialBody(item.body);
+    return { ...item, body: promotional.body, imageUrl: promotional.imageUrl || null };
+  });
 
   if (location === "/membros/materiais") {
     return (
       <DashboardLayout menuItems={menu} title="Escritório Virtual">
         <LibraryResourcesPremium items={items} isLoading={content.isLoading} />
+      </DashboardLayout>
+    );
+  }
+
+  if (location === "/membros/artigos" || location === "/membros/blog") {
+    return (
+      <DashboardLayout menuItems={menu} title="Escritório Virtual">
+        <LibraryResourcesPremium items={promotionalItems} isLoading={content.isLoading} variant="promotional" />
       </DashboardLayout>
     );
   }
@@ -60,11 +74,11 @@ export default function MemberPublications() {
         <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
           <div className="mb-5 flex items-center justify-between gap-3">
             <h2 className="font-medium text-white">{location === "/membros/artigos" ? "Materiais prontos para divulgação" : "Recursos publicados para você"}</h2>
-            <span className="text-xs uppercase tracking-wider text-zinc-500">{items.length} publicações</span>
+            <span className="text-xs uppercase tracking-wider text-zinc-500">{promotionalItems.length} publicações</span>
           </div>
-          {content.isLoading ? <p className="text-sm text-zinc-400">Carregando publicações...</p> : items.length ? (
+          {content.isLoading ? <p className="text-sm text-zinc-400">Carregando publicações...</p> : promotionalItems.length ? (
             <div className="grid gap-4 lg:grid-cols-2">
-              {items.map(item => (
+              {promotionalItems.map(item => (
                 <article key={item.id} className="rounded-xl border border-white/10 bg-black/25 p-5">
                   <span className="text-xs uppercase tracking-wider text-emerald-200">{item.kind === "faq" ? "Pergunta frequente" : item.kind === "material" ? "Biblioteca de Recursos" : item.kind === "notice" ? "Comunicação" : location === "/membros/artigos" ? "Material de divulgação" : "Publicação"}</span>
                   <h3 className="mt-2 text-lg font-medium text-white">{item.title}</h3>
