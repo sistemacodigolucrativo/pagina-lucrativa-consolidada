@@ -14,7 +14,7 @@ permissions:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 35
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -92,6 +92,7 @@ jobs:
           for (const viewport of viewports) {
             const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
             const page = await context.newPage();
+            page.setDefaultTimeout(7000);
             await page.route("**/api/trpc/**", async route => {
               const request = route.request();
               const url = new URL(request.url());
@@ -107,10 +108,11 @@ jobs:
 
             for (const target of routes) {
               try {
-                await page.goto(`${baseURL}${target.path}`, { waitUntil: "networkidle", timeout: 30000 });
+                await page.goto(`${baseURL}${target.path}`, { waitUntil: "domcontentloaded", timeout: 10000 });
                 const article = page.locator("#testimonial-moderation-list article").first();
-                await article.waitFor({ state: "visible", timeout: 15000 });
+                await article.waitFor({ state: "visible" });
                 const toggle = article.locator(`button[aria-controls="testimonial-moderation-details-${target.id}"]`);
+                await toggle.waitFor({ state: "visible" });
                 if ((await toggle.getAttribute("aria-expanded")) !== "false") throw new Error("card não iniciou recolhido");
                 const collapsedBox = await toggle.boundingBox();
                 if (!collapsedBox || collapsedBox.height > 64) throw new Error(`card recolhido não está super slim: ${collapsedBox?.height ?? "sem medida"}px`);
