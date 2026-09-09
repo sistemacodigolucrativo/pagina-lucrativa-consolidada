@@ -209,6 +209,10 @@ if [[ -n "$PUBLIC_HEALTHCHECK_URL" ]]; then
   curl --fail --silent --show-error --max-time 15 "$PUBLIC_HEALTHCHECK_URL" >/dev/null
 fi
 
+write_deploy_status "deploying" 99 "Restaurando título padrão do Hero"
+log "Restaurando somente o título do Hero salvo pelo editor"
+"$PNPM_BIN" exec tsx scripts/reset-public-hero-title.ts
+
 trap - ERR INT TERM
 SWITCHED=0
 rm -f "$ARTIFACT_PATH"
