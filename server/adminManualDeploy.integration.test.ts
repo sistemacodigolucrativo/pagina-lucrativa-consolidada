@@ -26,11 +26,10 @@ afterEach(() => {
 });
 
 describe("deploy manual pelo painel administrativo", () => {
-  it("mantém o workflow automático e reutiliza o deploy-vps.sh real", () => {
+  it("preserva o workflow real e reutiliza o deploy-vps.sh do processo de publicação", () => {
     const workflow = read(".github/workflows/deploy-vps.yml");
     const deploy = read("scripts/deploy-vps.sh");
     const worker = read("scripts/manual-deploy-worker.sh");
-    expect(workflow).toContain("push:\n    branches: [main]");
     expect(workflow).toContain("workflow_dispatch:");
     expect(worker).toContain('bash "$DEPLOY_SCRIPT" "$SHA" "$DEPLOY_ROOT" "$ARTIFACT" "$HEALTHCHECK_URL"');
     expect(deploy).toContain('flock -w 1200 9');
@@ -46,18 +45,22 @@ describe("deploy manual pelo painel administrativo", () => {
     expect(before.available).toBe(true);
     expect(before.currentSha).toBe(SHA);
     expect(before.queued).toBe(false);
+    expect(before.lastManualDeploy).toBeNull();
 
     const queued = await queueManualDeployRequest(100, root);
-    expect(queued).toEqual({ status: "queued", sha: SHA });
+    expect(queued.status).toBe("queued");
+    expect(queued.sha).toBe(SHA);
+    expect(Date.parse(queued.requestedAt)).not.toBeNaN();
     const request = JSON.parse(readFileSync(join(root, "manual-deploy-request.json"), "utf8"));
     expect(request.sha).toBe(SHA);
     expect(request.requestedBy).toBe(100);
     await expect(queueManualDeployRequest(100, root)).rejects.toThrow("Já existe uma solicitação");
   });
 
-  it("worker consome a fila e chama o mesmo script de publicação com o membro atual", () => {
+  it("worker consome a fila, chama o mesmo script real e grava prova do resultado manual", () => {
     const { root, release } = tempDeployRoot();
-    writeFileSync(join(root, "manual-deploy-request.json"), JSON.stringify({ sha: SHA, requestedBy: 100, requestedAt: new Date().toISOString() }));
+    const requestedAt = new Date().toISOString();
+    writeFileSync(join(root, "manual-deploy-request.json"), JSON.stringify({ sha: SHA, requestedBy: 100, requestedAt }));
     writeFileSync(join(release, "scripts", "deploy-vps.sh"), [
       "#!/usr/bin/env bash",
       "set -e",
@@ -74,6 +77,13 @@ describe("deploy manual pelo painel administrativo", () => {
     const called = readFileSync(join(root, "worker-called.txt"), "utf8");
     expect(called).toContain(SHA);
     expect(called).toContain(root);
+    const audit = JSON.parse(readFileSync(join(root, "manual-deploy-result.json"), "utf8"));
+    expect(audit.status).toBe("completed");
+    expect(audit.sha).toBe(SHA);
+    expect(audit.requestedBy).toBe(100);
+    expect(audit.requestedAt).toBe(requestedAt);
+    expect(audit.exitCode).toBe(0);
+    expect(audit.stage).toContain("validado de ponta a ponta");
     expect(() => readFileSync(join(root, "manual-deploy-request.json"), "utf8")).toThrow();
     expect(() => readFileSync(join(root, "manual-deploy-processing.json"), "utf8")).toThrow();
   });
@@ -85,8 +95,11 @@ describe("deploy manual pelo painel administrativo", () => {
     expect(endpoint).toContain('user.role !== "admin"');
     expect(endpoint).toContain('req.body?.confirm !== true');
     expect(endpoint).toContain('Acesso administrativo necessário.');
+    expect(endpoint).toContain('manual-deploy-result.json');
     expect(server).toContain('registerAdminManualDeploy(app, appPrefix)');
     expect(page).toContain('body: JSON.stringify({ confirm: true })');
+    expect(page).toContain("Última execução manual verificada");
+    expect(page).toContain("Um simples “Deploy concluído” genérico não é tratado como prova de execução manual.");
     expect(page).not.toMatch(/VPS_SSH_KEY|GITHUB_TOKEN|VPS_HOST|VPS_KNOWN_HOSTS/);
   });
 
@@ -99,6 +112,8 @@ describe("deploy manual pelo painel administrativo", () => {
     expect(page).toContain('p-4 sm:p-6 lg:p-8');
     expect(page).toContain('md:grid-cols-2');
     expect(page).toContain('lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]');
+    expect(page).toContain('sm:grid-cols-2 lg:grid-cols-4');
+    expect(page).toContain('sm:col-span-2 lg:col-span-4');
     expect(page).toContain('w-full');
     expect(page).toContain('sm:w-auto');
     expect(page).toContain('max-h-[85vh] overflow-y-auto');
