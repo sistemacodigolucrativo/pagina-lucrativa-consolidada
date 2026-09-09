@@ -1,0 +1,160 @@
+name: Validar interações das novas anotações
+
+on:
+  push:
+    branches: [feat-testimonials-resource-library-pages]
+    paths:
+      - .github/workflows/validate-latest-interactions.yml
+
+permissions:
+  contents: read
+
+jobs:
+  interactions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat-testimonials-resource-library-pages
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Preparar aplicação e navegador
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
+          pnpm install --frozen-lockfile
+          pnpm build
+          pnpm add -D playwright@1.55.0 --ignore-workspace-root-check
+          pnpm exec playwright install chromium
+
+      - name: Iniciar aplicação local
+        shell: bash
+        run: |
+          JWT_SECRET=admin-interaction-validation-secret PORT=4174 NODE_ENV=production node dist/index.js > /tmp/latest-interactions-server.log 2>&1 &
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4174/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat /tmp/latest-interactions-server.log
+          exit 1
+
+      - name: Criar teste funcional isolado
+        shell: bash
+        run: |
+          cat > scripts/validate-latest-interactions.mjs <<'JS'
+          import { chromium } from "playwright";
+          import { createHmac } from "node:crypto";
+          import { mkdir } from "node:fs/promises";
+
+          const baseURL = "http://127.0.0.1:4174";
+          const secret = "admin-interaction-validation-secret";
+          const encodedPayload = Buffer.from(JSON.stringify({ openId: "local_demo_admin", role: "admin", expiresAt: Date.now() + 3600000 }), "utf8").toString("base64url");
+          const signature = createHmac("sha256", secret).update(encodedPayload).digest("base64url");
+          const cookieValue = `${encodedPayload}.${signature}`;
+          const now = new Date().toISOString();
+          const testimonialText = "Validação automática de expansão. Este agradecimento possui conteúdo propositalmente extenso para confirmar que a visualização Todos inicia limitada com reticências e que, após o clique, o conteúdo completo fica disponível sem prejudicar o card ou a largura da tela em nenhum dispositivo validado.";
+          const testimonials = [{ id: 701, userId: 1, memberName: "Membro de validação", memberEmail: "validacao@example.com", content: testimonialText, rating: 5, status: "pending", adminNote: null, createdAt: now, updatedAt: now }];
+          const contents = [
+            { id: 801, kind: "material", title: "Recurso de validação", summary: "Resumo do recurso", body: "Conteúdo completo do recurso", resourceUrl: "https://drive.google.com/file/d/validacao/view", resourceCategory: "Automação", resourceType: "Ferramenta", status: "draft", createdAt: now, updatedAt: now },
+            { id: 802, kind: "article", title: "Material de validação", summary: "Resumo do material", body: "Conteúdo completo do material", resourceUrl: null, resourceCategory: null, resourceType: null, status: "draft", createdAt: now, updatedAt: now },
+          ];
+          const trpc = data => JSON.stringify([{ result: { data: { json: data } } }]);
+          const viewports = [
+            { name: "mobile", width: 390, height: 844 },
+            { name: "tablet", width: 768, height: 1024 },
+            { name: "desktop", width: 1440, height: 900 },
+          ];
+
+          await mkdir("interaction-artifacts", { recursive: true });
+          const browser = await chromium.launch({ headless: true });
+          const errors = [];
+
+          for (const viewport of viewports) {
+            const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
+            await context.addCookies([{ name: "pl_demo_session", value: cookieValue, url: baseURL, httpOnly: true, sameSite: "Lax" }]);
+            const page = await context.newPage();
+
+            await page.route("**/api/trpc/admin.testimonials*", async route => {
+              await route.fulfill({ status: 200, contentType: "application/json", body: trpc(testimonials) });
+            });
+            await page.route("**/api/trpc/admin.content*", async route => {
+              await route.fulfill({ status: 200, contentType: "application/json", body: trpc(contents) });
+            });
+            await page.route("**/api/trpc/admin.createContent*", async route => {
+              await route.fulfill({ status: 200, contentType: "application/json", body: trpc({ id: 999 }) });
+            });
+
+            const fail = async message => {
+              errors.push(`${viewport.name}: ${message}`);
+              await page.screenshot({ path: `interaction-artifacts/${viewport.name}-failure-${errors.length}.png`, fullPage: true }).catch(() => {});
+            };
+
+            await page.goto(`${baseURL}/admin/relatos`, { waitUntil: "networkidle" });
+            const testimonialParagraph = page.getByText(testimonialText, { exact: true });
+            await testimonialParagraph.waitFor({ state: "visible" });
+            const beforeClass = await testimonialParagraph.getAttribute("class");
+            if (!beforeClass?.includes("line-clamp-3")) await fail("agradecimento não iniciou limitado");
+            await page.getByText("Ver agradecimento completo", { exact: true }).click();
+            const afterClass = await testimonialParagraph.getAttribute("class");
+            if (afterClass?.includes("line-clamp-3")) await fail("agradecimento não expandiu após o clique");
+            if (!(await page.getByText("Recolher agradecimento", { exact: true }).isVisible())) await fail("ação de recolher não apareceu após expansão");
+            await page.getByText("Recolher agradecimento", { exact: true }).click();
+            if (!(await testimonialParagraph.getAttribute("class"))?.includes("line-clamp-3")) await fail("agradecimento não voltou ao estado reduzido");
+            await page.getByRole("button", { name: /Em análise/i }).click();
+            await page.waitForURL("**/admin/relatos/em-analise");
+            if (!(await page.getByText("Membro de validação", { exact: true }).isVisible())) await fail("página Em análise não exibiu o registro do status");
+
+            await page.goto(`${baseURL}/admin/biblioteca-recursos`, { waitUntil: "networkidle" });
+            await page.getByText("Recurso de validação", { exact: true }).click();
+            await page.waitForURL("**/admin/biblioteca-recursos/801/editar");
+            if ((await page.getByLabel("Título").inputValue()) !== "Recurso de validação") await fail("edição da Biblioteca não carregou o item selecionado");
+            await page.getByRole("button", { name: "Voltar para Biblioteca de Recursos" }).click();
+            await page.getByRole("button", { name: "Criar", exact: true }).click();
+            await page.waitForURL("**/admin/biblioteca-recursos/novo");
+            await page.getByLabel("Título").fill("Novo recurso de validação");
+            await page.getByLabel("Resumo / descrição breve").fill("Resumo criado no teste isolado");
+            await page.getByLabel("Conteúdo / descrição completa").fill("Conteúdo criado no teste isolado");
+            await page.getByRole("button", { name: "Criar", exact: true }).click();
+            await page.waitForURL("**/admin/biblioteca-recursos");
+
+            await page.goto(`${baseURL}/admin/material-divulgacao`, { waitUntil: "networkidle" });
+            await page.getByText("Material de validação", { exact: true }).click();
+            await page.waitForURL("**/admin/material-divulgacao/802/editar");
+            if ((await page.getByLabel("Título").inputValue()) !== "Material de validação") await fail("edição do Material de Divulgação não carregou o item selecionado");
+            await page.getByRole("button", { name: "Voltar para Material de Divulgação" }).click();
+            await page.getByRole("button", { name: "Criar", exact: true }).click();
+            await page.waitForURL("**/admin/material-divulgacao/novo");
+            await page.getByLabel("Título").fill("Novo material de validação");
+            await page.getByLabel("Resumo / descrição breve").fill("Resumo criado no teste isolado");
+            await page.getByLabel("Conteúdo / descrição completa").fill("Conteúdo criado no teste isolado");
+            await page.getByRole("button", { name: "Criar", exact: true }).click();
+            await page.waitForURL("**/admin/material-divulgacao");
+
+            const dimensions = await page.evaluate(() => ({ viewport: innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth }));
+            if (Math.max(dimensions.documentWidth, dimensions.bodyWidth) > dimensions.viewport + 1) await fail("overflow horizontal após as interações");
+            await page.screenshot({ path: `interaction-artifacts/${viewport.name}-success.png`, fullPage: true });
+            await context.close();
+          }
+
+          await browser.close();
+          if (errors.length) {
+            console.error(errors.join("\n"));
+            process.exit(1);
+          }
+          console.log("Interações validadas em Mobile, Tablet e Desktop: expandir/recolher, páginas por status, editar item, criar conteúdo e retornar à listagem.");
+          JS
+
+      - name: Executar interações em Mobile Tablet e Desktop
+        run: node scripts/validate-latest-interactions.mjs
+
+      - name: Salvar evidências
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-admin-interactions
+          path: interaction-artifacts/*.png
+          if-no-files-found: warn
