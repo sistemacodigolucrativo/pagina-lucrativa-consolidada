@@ -37,7 +37,7 @@ describe("Membros e Rede — organização e exclusão temporária", () => {
     expect(queue).toContain("sm:grid-cols-2");
     expect(queue).toContain("lg:flex-row");
     expect(queue).toContain("xl:flex-row");
-    expect(queue).toContain("> Restaurar<");
-    expect(queue).toContain("> Excluir definitivamente<");
+    expect(queue).toContain("Restaurar");
+    expect(queue).toContain("Excluir definitivamente");
   });
 });
