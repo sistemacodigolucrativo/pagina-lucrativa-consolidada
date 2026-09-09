@@ -20,4 +20,4 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: gh workflow run deploy-vps.yml --repo "$GH_REPO" --ref main -f ref=main
 
-# Disparo único revisado após correção da raiz compartilhada do reset do Hero.
+# Disparo único revisado para publicar as anotações consolidadas e restaurar o título padrão do Hero.
