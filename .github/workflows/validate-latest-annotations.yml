@@ -1,0 +1,238 @@
+name: Validar novas anotações administrativas
+
+on:
+  push:
+    branches: [feat-testimonials-resource-library-pages]
+    paths:
+      - .github/workflows/validate-latest-annotations.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat-testimonials-resource-library-pages
+          fetch-depth: 0
+
+      - name: Completar rotas e contratos de validação
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          app = Path('client/src/App.tsx')
+          text = app.read_text()
+          old = '''    <Route path="/admin/deploy" component={AdminManualDeploy} />
+    <Route path="/admin/material-divulgacao" component={AdminPublications} />
+    <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
+    <Route path="/admin/perguntas-frequentes" component={AdminPublications} />'''
+          new = '''    <Route path="/admin/deploy" component={AdminManualDeploy} />
+    <Route path="/admin/material-divulgacao/novo" component={AdminPublications} />
+    <Route path="/admin/material-divulgacao/:contentId/editar" component={AdminPublications} />
+    <Route path="/admin/material-divulgacao" component={AdminPublications} />
+    <Route path="/admin/biblioteca-recursos/novo" component={AdminPublications} />
+    <Route path="/admin/biblioteca-recursos/:contentId/editar" component={AdminPublications} />
+    <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
+    <Route path="/admin/perguntas-frequentes" component={AdminPublications} />'''
+          if old not in text:
+              raise SystemExit('Trecho de rotas administrativas não encontrado.')
+          app.write_text(text.replace(old, new, 1))
+
+          test = Path('server/adminContentEbooksTestimonials.responsive.test.ts')
+          text = test.read_text()
+          marker = '''  it("organiza Biblioteca de e-books com criação e edição em telas independentes", () => {'''
+          addition = '''  it("padroniza Biblioteca de Recursos e Material de Divulgação com listagem e formulários independentes", () => {
+    const source = read("client/src/pages/AdminPublications.tsx");
+    const routes = read("client/src/App.tsx");
+    expect(source).toContain('splitFlow: true');
+    expect(source).toContain('normalizedLocation === `${config.basePath}/novo`');
+    expect(source).toContain('setLocation(`${config.basePath}/novo`)');
+    expect(source).toContain('setLocation(`${config.basePath}/${item.id}/editar`)');
+    expect(source).toContain('onSuccess: () => { void refresh(); toast.success("Conteúdo registrado."); if (config.splitFlow) goToList()');
+    expect(source).toContain('Conteúdos cadastrados');
+    expect(source).toContain('onClick={openCreate}');
+    expect(source).toContain('Voltar para {config.title}');
+    expect(source).toContain('overflow-x-clip p-4 sm:p-6 lg:p-8');
+    expect(routes).toContain('/admin/material-divulgacao/novo');
+    expect(routes).toContain('/admin/material-divulgacao/:contentId/editar');
+    expect(routes).toContain('/admin/biblioteca-recursos/novo');
+    expect(routes).toContain('/admin/biblioteca-recursos/:contentId/editar');
+  });
+
+  it("mostra Todos os agradecimentos em prévia expansível sem remover as páginas por status", () => {
+    const source = read("client/src/pages/AdminTestimonials.tsx");
+    expect(source).toContain('const [expandedIds, setExpandedIds]');
+    expect(source).toContain('function toggleExpanded(id: number)');
+    expect(source).toContain('id="testimonial-all-list"');
+    expect(source).toContain('Todos os agradecimentos');
+    expect(source).toContain('aria-expanded={expanded}');
+    expect(source).toContain('line-clamp-3');
+    expect(source).toContain('Ver agradecimento completo');
+    expect(source).toContain('Recolher agradecimento');
+    expect(source).toContain('overflow-x-clip p-4 sm:space-y-7 sm:p-6 lg:p-8');
+    expect(source).toContain('onClick={() => setLocation(statusPaths[status])}');
+  });
+
+'''
+          if marker not in text:
+              raise SystemExit('Ponto de inserção dos testes não encontrado.')
+          test.write_text(text.replace(marker, addition + marker, 1))
+          PY
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Ativar pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
+
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm check
+
+      - name: Testes
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build
+
+      - name: Instalar Playwright temporariamente
+        run: |
+          pnpm add -D playwright@1.55.0 --ignore-workspace-root-check
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Iniciar aplicação local
+        shell: bash
+        run: |
+          JWT_SECRET=admin-visual-validation-secret PORT=4173 NODE_ENV=production node dist/index.js > /tmp/latest-annotations-server.log 2>&1 &
+          echo $! > /tmp/latest-annotations-server.pid
+          for i in $(seq 1 40); do
+            if curl -fsS http://127.0.0.1:4173/ >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/latest-annotations-server.log
+          exit 1
+
+      - name: Validar visualmente Mobile Tablet e Desktop
+        shell: bash
+        run: |
+          cat > /tmp/validate-latest-annotations.mjs <<'JS'
+          import { chromium } from "playwright";
+          import { createHmac } from "node:crypto";
+          import { mkdir } from "node:fs/promises";
+
+          const baseURL = "http://127.0.0.1:4173";
+          const secret = "admin-visual-validation-secret";
+          const encodedPayload = Buffer.from(JSON.stringify({
+            openId: "local_demo_admin",
+            role: "admin",
+            expiresAt: Date.now() + 60 * 60 * 1000,
+          }), "utf8").toString("base64url");
+          const signature = createHmac("sha256", secret).update(encodedPayload).digest("base64url");
+          const cookieValue = `${encodedPayload}.${signature}`;
+
+          const viewports = [
+            { name: "mobile", width: 390, height: 844 },
+            { name: "tablet", width: 768, height: 1024 },
+            { name: "desktop", width: 1440, height: 900 },
+          ];
+
+          const routes = [
+            { path: "/admin/relatos", heading: "Agradecimentos de membros", required: ["Todos", "Em análise", "Aprovado", "Necessita ajuste", "Arquivado", "Todos os agradecimentos"] },
+            { path: "/admin/relatos/em-analise", heading: "Agradecimentos — Em análise", required: ["Voltar para Agradecimentos"] },
+            { path: "/admin/relatos/aprovados", heading: "Agradecimentos — Aprovado", required: ["Voltar para Agradecimentos"] },
+            { path: "/admin/relatos/necessita-ajuste", heading: "Agradecimentos — Necessita ajuste", required: ["Voltar para Agradecimentos"] },
+            { path: "/admin/relatos/arquivados", heading: "Agradecimentos — Arquivado", required: ["Voltar para Agradecimentos"] },
+            { path: "/admin/biblioteca-recursos", heading: "Biblioteca de Recursos", required: ["Conteúdos cadastrados", "Criar"] },
+            { path: "/admin/biblioteca-recursos/novo", heading: "Novo conteúdo — Biblioteca de Recursos", required: ["Voltar para Biblioteca de Recursos", "Criar"] },
+            { path: "/admin/biblioteca-recursos/1/editar", heading: "Editar conteúdo — Biblioteca de Recursos", required: ["Voltar para Biblioteca de Recursos"] },
+            { path: "/admin/material-divulgacao", heading: "Material de Divulgação", required: ["Conteúdos cadastrados", "Criar"] },
+            { path: "/admin/material-divulgacao/novo", heading: "Novo conteúdo — Material de Divulgação", required: ["Voltar para Material de Divulgação", "Criar"] },
+            { path: "/admin/material-divulgacao/1/editar", heading: "Editar conteúdo — Material de Divulgação", required: ["Voltar para Material de Divulgação"] },
+          ];
+
+          await mkdir("visual-artifacts", { recursive: true });
+          const browser = await chromium.launch({ headless: true });
+          let failures = 0;
+
+          for (const viewport of viewports) {
+            const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
+            await context.addCookies([{ name: "pl_demo_session", value: cookieValue, url: baseURL, httpOnly: true, sameSite: "Lax" }]);
+            const page = await context.newPage();
+
+            for (const route of routes) {
+              const response = await page.goto(`${baseURL}${route.path}`, { waitUntil: "networkidle", timeout: 30000 });
+              await page.waitForTimeout(200);
+              const currentPath = new URL(page.url()).pathname;
+              const h1 = (await page.locator("h1").first().textContent().catch(() => null))?.trim() ?? "";
+              const bodyText = await page.locator("body").innerText();
+              const dimensions = await page.evaluate(() => ({ viewport: window.innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth }));
+              const horizontalOverflow = Math.max(dimensions.documentWidth, dimensions.bodyWidth) > dimensions.viewport + 1;
+              const missing = route.required.filter(text => !bodyText.includes(text));
+              const ok = currentPath === route.path && h1.includes(route.heading) && !horizontalOverflow && missing.length === 0 && (response ? response.status() < 500 : true);
+              console.log(JSON.stringify({ viewport: viewport.name, route: route.path, currentPath, heading: h1, horizontalOverflow, missing, ok }));
+              await page.screenshot({ path: `visual-artifacts/${viewport.name}-${route.path.replaceAll("/", "_").replace(/^_/, "")}.png`, fullPage: true });
+              if (!ok) failures += 1;
+            }
+
+            await page.goto(`${baseURL}/admin/biblioteca-recursos`, { waitUntil: "networkidle" });
+            await page.getByRole("button", { name: "Criar", exact: true }).click();
+            if (new URL(page.url()).pathname !== "/admin/biblioteca-recursos/novo") failures += 1;
+            await page.getByRole("button", { name: "Voltar para Biblioteca de Recursos" }).click();
+            if (new URL(page.url()).pathname !== "/admin/biblioteca-recursos") failures += 1;
+
+            await page.goto(`${baseURL}/admin/material-divulgacao`, { waitUntil: "networkidle" });
+            await page.getByRole("button", { name: "Criar", exact: true }).click();
+            if (new URL(page.url()).pathname !== "/admin/material-divulgacao/novo") failures += 1;
+            await page.getByRole("button", { name: "Voltar para Material de Divulgação" }).click();
+            if (new URL(page.url()).pathname !== "/admin/material-divulgacao") failures += 1;
+
+            await page.goto(`${baseURL}/admin/relatos`, { waitUntil: "networkidle" });
+            await page.getByRole("button", { name: /Em análise/ }).click();
+            if (new URL(page.url()).pathname !== "/admin/relatos/em-analise") failures += 1;
+
+            await context.close();
+          }
+
+          await browser.close();
+          if (failures) {
+            console.error(`Validação visual/funcional falhou em ${failures} verificação(ões).`);
+            process.exit(1);
+          }
+          console.log("Validação concluída em Mobile, Tablet e Desktop sem overflow e com navegação independente funcionando.");
+          JS
+          node /tmp/validate-latest-annotations.mjs
+
+      - name: Restaurar dependências temporárias
+        if: always()
+        run: git restore package.json pnpm-lock.yaml || true
+
+      - name: Salvar capturas para auditoria
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: latest-admin-annotations-visual
+          path: visual-artifacts/*.png
+          if-no-files-found: warn
+
+      - name: Commitar rotas e testes validados
+        if: success()
+        shell: bash
+        run: |
+          git config user.name "sistemacodigolucrativo"
+          git config user.email "sistemacodigolucrativo@gmail.com"
+          git add client/src/App.tsx server/adminContentEbooksTestimonials.responsive.test.ts
+          git diff --cached --quiet && exit 0
+          git commit -m "test: validate testimonial and content split flows"
+          git push origin HEAD:feat-testimonials-resource-library-pages
