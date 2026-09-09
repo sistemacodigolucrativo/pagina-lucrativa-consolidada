@@ -196,8 +196,11 @@ export default function AdminEbooks() {
   useEffect(() => {
     if (selectedId !== null) return;
     setForm(current => (current.usage === defaultUsage ? current : newForm(defaultUsage)));
+  }, [defaultUsage, selectedId]);
+
+  useEffect(() => {
     setFormOpen(!isLibraryAdmin);
-  }, [defaultUsage, isLibraryAdmin, selectedId]);
+  }, [isLibraryAdmin]);
 
   useEffect(() => {
     if (!detail.data) return;
