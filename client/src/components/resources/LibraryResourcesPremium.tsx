@@ -1,6 +1,7 @@
 import {
   BookOpen,
   CheckSquare,
+  Download,
   ExternalLink,
   FileText,
   Grid2X2,
@@ -22,6 +23,7 @@ type LibraryResource = {
   title: string;
   summary?: string | null;
   body?: string | null;
+  imageUrl?: string | null;
   resourceUrl?: string | null;
   resourceCategory?: string | null;
   resourceType?: string | null;
@@ -30,6 +32,7 @@ type LibraryResource = {
 type Props = {
   items: LibraryResource[];
   isLoading: boolean;
+  variant?: "library" | "promotional";
 };
 
 type TypeConfig = {
@@ -67,17 +70,44 @@ function getTypeConfig(resourceType?: string | null): TypeConfig {
   if (type.includes("ferrament") || type.includes("tool")) {
     return { icon: Wrench, label: "FERRAMENTA", badge: "border-orange-500/30 bg-orange-500/15 text-orange-300", hover: "hover:border-orange-400/45", glow: "bg-orange-500/10" };
   }
-  if (type.includes("marketing") || type.includes("divulgação")) {
-    return { icon: Megaphone, label: "MARKETING", badge: "border-fuchsia-500/30 bg-fuchsia-500/15 text-fuchsia-300", hover: "hover:border-fuchsia-400/45", glow: "bg-fuchsia-500/10" };
+  if (type.includes("marketing") || type.includes("divulgação") || type.includes("banner") || type.includes("copy")) {
+    return { icon: Megaphone, label: resourceType?.trim().toUpperCase() || "MARKETING", badge: "border-fuchsia-500/30 bg-fuchsia-500/15 text-fuchsia-300", hover: "hover:border-fuchsia-400/45", glow: "bg-fuchsia-500/10" };
   }
   return { icon: Layers3, label: resourceType?.trim().toUpperCase() || "RECURSO", badge: "border-indigo-500/30 bg-indigo-500/15 text-indigo-300", hover: "hover:border-indigo-400/45", glow: "bg-indigo-500/10" };
 }
 
-export default function LibraryResourcesPremium({ items, isLoading }: Props) {
+export default function LibraryResourcesPremium({ items, isLoading, variant = "library" }: Props) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
   const [selected, setSelected] = useState<LibraryResource | null>(null);
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const isPromotional = variant === "promotional";
+
+  const copy = isPromotional ? {
+    eyebrow: "Central de divulgação",
+    title: "Material de divulgação",
+    description: "Imagens, banners, textos e outros materiais preparados para apoiar suas divulgações em um só lugar.",
+    countLabel: "Materiais",
+    searchPlaceholder: "Buscar materiais...",
+    sectionTitle: "Materiais disponíveis",
+    emptyTitle: "Nenhum material encontrado",
+    emptyDescription: "Tente outro termo de busca ou selecione uma categoria diferente.",
+    detailsLabel: "Ver material",
+    backLabel: "← Voltar aos materiais",
+    actionLabel: "Baixar material",
+  } : {
+    eyebrow: "Central de conhecimento",
+    title: "Biblioteca de Recursos",
+    description: "Materiais práticos para acelerar sua divulgação, organização e operação digital em um só lugar.",
+    countLabel: "Recursos",
+    searchPlaceholder: "Buscar recursos...",
+    sectionTitle: "Recursos disponíveis",
+    emptyTitle: "Nenhum recurso encontrado",
+    emptyDescription: "Tente outro termo de busca ou selecione uma categoria diferente.",
+    detailsLabel: "Ver detalhes",
+    backLabel: "← Voltar à Biblioteca",
+    actionLabel: "Acessar recurso",
+  };
 
   const categories = useMemo(() => {
     const unique = Array.from(new Set(items.map(item => item.resourceCategory?.trim()).filter((value): value is string => Boolean(value)))).sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -103,15 +133,15 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
           <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
             <div className="max-w-3xl">
               <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
-                <Sparkles className="size-4" /> Central de conhecimento
+                <Sparkles className="size-4" /> {copy.eyebrow}
               </div>
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">Biblioteca de Recursos</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-400 sm:text-base">Materiais práticos para acelerar sua divulgação, organização e operação digital em um só lugar.</p>
+              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">{copy.title}</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-400 sm:text-base">{copy.description}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-2 sm:flex">
               <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
-                <span className="block text-[10px] uppercase tracking-[0.18em] text-neutral-500">Recursos</span>
+                <span className="block text-[10px] uppercase tracking-[0.18em] text-neutral-500">{copy.countLabel}</span>
                 <strong className="mt-1 block text-xl text-white">{items.length}</strong>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
@@ -129,7 +159,7 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
               <input
                 value={query}
                 onChange={event => setQuery(event.target.value)}
-                placeholder="Buscar recursos..."
+                placeholder={copy.searchPlaceholder}
                 className="h-12 w-full rounded-2xl border border-white/10 bg-neutral-900/75 pl-11 pr-11 text-sm text-white outline-none transition placeholder:text-neutral-600 focus:border-emerald-400/45 focus:ring-2 focus:ring-emerald-500/10"
               />
               {query ? <button type="button" onClick={() => setQuery("")} aria-label="Limpar busca" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-neutral-500 transition hover:bg-white/5 hover:text-white"><X className="size-4" /></button> : null}
@@ -157,7 +187,7 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
 
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-sm font-bold text-white">Recursos disponíveis</h2>
+            <h2 className="text-sm font-bold text-white">{copy.sectionTitle}</h2>
             <p className="mt-1 text-xs text-neutral-500">{filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}</p>
           </div>
         </div>
@@ -178,15 +208,16 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
                   className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-neutral-900/90 via-neutral-900/65 to-neutral-950/95 p-5 transition duration-300 ${config.hover} hover:-translate-y-1 hover:shadow-2xl ${viewMode === "list" ? "sm:flex sm:items-center sm:gap-5" : "min-h-56"}`}
                 >
                   <div className={`pointer-events-none absolute -right-20 -top-20 size-44 rounded-full blur-3xl transition duration-500 ${config.glow} group-hover:scale-125`} />
+                  {resource.imageUrl ? <div className={`relative z-10 overflow-hidden rounded-xl border border-white/10 bg-black/30 ${viewMode === "list" ? "mb-4 aspect-video sm:mb-0 sm:w-44 sm:shrink-0" : "mb-5 aspect-video"}`}><img src={resource.imageUrl} alt={`Prévia de ${resource.title}`} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" /></div> : null}
                   <div className={`relative z-10 ${viewMode === "list" ? "sm:flex-1" : "flex h-full flex-col"}`}>
                     <div className="mb-5 flex items-center justify-between gap-3">
                       <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] font-black tracking-[0.08em] ${config.badge}`}><Icon className="size-3.5" />{config.label}</span>
                       <span className="max-w-[45%] truncate text-[10px] uppercase tracking-[0.12em] text-neutral-600">{resource.resourceCategory || "Outros"}</span>
                     </div>
                     <h3 className="text-lg font-bold leading-snug text-white transition group-hover:text-emerald-200">{resource.title}</h3>
-                    {resource.summary ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-neutral-400">{resource.summary}</p> : <p className="mt-3 text-sm leading-6 text-neutral-600">Abra os detalhes para conhecer este recurso.</p>}
+                    {resource.summary ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-neutral-400">{resource.summary}</p> : <p className="mt-3 text-sm leading-6 text-neutral-600">Abra os detalhes para conhecer este {isPromotional ? "material" : "recurso"}.</p>}
                     <div className={`mt-auto flex items-center justify-between gap-3 ${viewMode === "grid" ? "pt-6" : "pt-4 sm:pt-3"}`}>
-                      <span className="text-xs font-semibold text-emerald-300">Ver detalhes</span>
+                      <span className="text-xs font-semibold text-emerald-300">{copy.detailsLabel}</span>
                       <span className="grid size-8 place-items-center rounded-full border border-white/10 bg-white/[0.035] text-neutral-400 transition group-hover:border-emerald-400/30 group-hover:text-emerald-300"><ExternalLink className="size-3.5" /></span>
                     </div>
                   </div>
@@ -197,8 +228,8 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
         ) : (
           <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.025] px-6 py-14 text-center">
             <Search className="mx-auto size-8 text-neutral-700" />
-            <h3 className="mt-4 font-semibold text-white">Nenhum recurso encontrado</h3>
-            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">Tente outro termo de busca ou selecione uma categoria diferente.</p>
+            <h3 className="mt-4 font-semibold text-white">{copy.emptyTitle}</h3>
+            <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-neutral-500">{copy.emptyDescription}</p>
             {(query || category !== "Todos") ? <button type="button" onClick={() => { setQuery(""); setCategory("Todos"); }} className="mt-5 rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-xs font-bold text-emerald-200 transition hover:bg-emerald-500/15">Limpar filtros</button> : null}
           </div>
         )}
@@ -209,7 +240,7 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
           <button type="button" className="fixed inset-0 cursor-default" onClick={() => setSelected(null)} aria-label="Fechar detalhes" />
           <section className="relative z-10 my-auto flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950 shadow-[0_30px_90px_rgba(0,0,0,.75)]">
             <div className="flex items-center justify-between border-b border-white/10 bg-neutral-950/95 px-5 py-4 backdrop-blur sm:px-7">
-              <button type="button" onClick={() => setSelected(null)} className="text-xs font-semibold text-neutral-400 transition hover:text-white">← Voltar à Biblioteca</button>
+              <button type="button" onClick={() => setSelected(null)} className="text-xs font-semibold text-neutral-400 transition hover:text-white">{copy.backLabel}</button>
               <button type="button" onClick={() => setSelected(null)} className="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-neutral-400 transition hover:text-white" aria-label="Fechar"><X className="size-4" /></button>
             </div>
             <div className="overflow-y-auto p-5 sm:p-8">
@@ -217,11 +248,12 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
                 const config = getTypeConfig(selected.resourceType);
                 const Icon = config.icon;
                 return <>
+                  {selected.imageUrl ? <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-black/30"><img src={selected.imageUrl} alt={`Imagem de ${selected.title}`} loading="lazy" className="max-h-[52vh] w-full object-contain" /></div> : null}
                   <div className="mb-5 flex flex-wrap items-center gap-2"><span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-black tracking-[0.08em] ${config.badge}`}><Icon className="size-3.5" />{config.label}</span><span className="rounded-md border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-neutral-500">{selected.resourceCategory || "Outros"}</span></div>
                   <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{selected.title}</h2>
                   {selected.summary ? <p className="mt-4 text-sm leading-7 text-neutral-400 sm:text-base">{selected.summary}</p> : null}
                   {selected.body ? <div className="mt-7 whitespace-pre-wrap border-t border-white/10 pt-6 text-sm leading-7 text-neutral-300">{selected.body}</div> : null}
-                  {selected.resourceUrl ? <a href={selected.resourceUrl} target="_blank" rel="noreferrer" className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 px-5 py-3 text-sm font-black text-neutral-950 shadow-[0_0_30px_rgba(16,185,129,.24)] transition hover:from-emerald-400 hover:to-emerald-300 sm:w-auto"><ExternalLink className="size-4" />Acessar recurso</a> : null}
+                  {selected.resourceUrl ? <a href={selected.resourceUrl} target="_blank" rel="noreferrer" download={isPromotional ? "" : undefined} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 px-5 py-3 text-sm font-black text-neutral-950 shadow-[0_0_30px_rgba(16,185,129,.24)] transition hover:from-emerald-400 hover:to-emerald-300 sm:w-auto">{isPromotional ? <Download className="size-4" /> : <ExternalLink className="size-4" />}{copy.actionLabel}</a> : null}
                 </>;
               })()}
             </div>
