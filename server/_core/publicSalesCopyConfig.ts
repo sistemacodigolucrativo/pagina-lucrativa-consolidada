@@ -17,6 +17,7 @@ export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
   for (const path of paths) {
     app.get(path, async (_req, res) => {
       try {
+        await processPendingPublicHeroTitleResetForDeploy();
         const content = await getAdminContent();
         const overrides: PublicSalesCopyOverrides = {};
         let floatingLayout: Record<string, unknown> = {};
