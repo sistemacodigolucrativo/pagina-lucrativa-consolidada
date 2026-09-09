@@ -68,18 +68,8 @@ export default function AdminReferrals() {
     });
   }
 
-  async function editMember(member: ManagedMember) {
-    const name = window.prompt("Nome do membro:", member.name ?? "");
-    if (name === null) return;
-    const email = window.prompt("E-mail do membro:", member.email ?? "");
-    if (email === null) return;
-    setBusyId(member.id);
-    try {
-      await request("/api/admin/member-management/edit", { method: "POST", body: JSON.stringify({ userId: member.id, name, email }) });
-      await loadMembers();
-      toast.success("Membro atualizado.");
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Falha ao editar membro."); }
-    finally { setBusyId(null); }
+  function editMember(member: ManagedMember) {
+    window.location.assign(withAppBase(`/admin/membros/${member.id}/editar`));
   }
 
   async function toggleBlock(member: ManagedMember) {
@@ -174,7 +164,7 @@ export default function AdminReferrals() {
                   <div className="rounded-lg bg-white/[0.035] p-2.5"><span className="block text-zinc-500">Última atualização</span><strong className="mt-1 block break-words font-medium text-zinc-200">{formatDate(member.updatedAt)}</strong></div>
                 </div>
                 <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:flex-wrap">
-                  <button disabled={busyId === member.id} onClick={() => void editMember(member)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50 sm:w-auto"><PencilLine className="size-4" />Editar</button>
+                  <button disabled={busyId === member.id} onClick={() => editMember(member)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50 sm:w-auto"><PencilLine className="size-4" />Editar</button>
                   <button disabled={busyId === member.id} onClick={() => void toggleBlock(member)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-amber-300/25 px-3 py-2 text-sm text-amber-200 disabled:opacity-50 sm:w-auto"><Ban className="size-4" />{member.blocked ? "Desbloquear" : "Bloquear"}</button>
                   <button disabled={busyId === member.id} onClick={() => void scheduleDeletion(member)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-red-400/25 px-3 py-2 text-sm text-red-200 disabled:opacity-50 sm:w-auto"><Trash2 className="size-4" />Excluir</button>
                 </div>
