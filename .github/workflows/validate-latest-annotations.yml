@@ -60,7 +60,7 @@ jobs:
       - name: Criar validador visual temporário
         shell: bash
         run: |
-          cat > /tmp/validate-latest-annotations.mjs <<'JS'
+          cat > scripts/validate-latest-annotations.mjs <<'JS'
           import { chromium } from "playwright";
           import { createHmac } from "node:crypto";
           import { mkdir } from "node:fs/promises";
@@ -137,7 +137,7 @@ jobs:
           JS
 
       - name: Validar visualmente Mobile Tablet e Desktop
-        run: node /tmp/validate-latest-annotations.mjs
+        run: node scripts/validate-latest-annotations.mjs
 
       - name: Exibir log da aplicação
         if: always()
