@@ -1,11 +1,14 @@
 import type { Express } from "express";
 import { getAdminContent } from "../db";
+import { processPendingPublicHeroTitleResetForDeploy } from "../publicHeroTitleReset";
 import { PUBLIC_SALES_COPY_CATEGORY, type PublicSalesCopyOverrides } from "@shared/publicSalesCopyEditor";
 
 const FLOATING_LAYOUT_CATEGORY = "public-sales-layout";
 const FLOATING_LAYOUT_RESOURCE = "floating";
 
 export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
+  void processPendingPublicHeroTitleResetForDeploy();
+
   const paths = Array.from(new Set([
     "/api/public-sales-copy",
     appPrefix ? `${appPrefix}/api/public-sales-copy` : null,
