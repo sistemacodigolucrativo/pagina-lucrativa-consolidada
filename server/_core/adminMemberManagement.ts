@@ -29,7 +29,6 @@ import {
   users,
 } from "../../drizzle/schema";
 import { getDb, getMemberReceivingPreference, updateMemberReceivingPreference } from "../db";
-import { receivingPreferenceInput } from "../routers";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 
 const CONTROL_CATEGORY = "member-admin-control";
@@ -249,6 +248,7 @@ export function registerAdminMemberManagement(app: Express, appPrefix: string) {
       if (!Number.isInteger(userId) || userId <= 0) return void res.status(400).json({ error: "Membro inválido." });
       const member = await getManagedMember(userId);
       if (!member) return void res.status(404).json({ error: "Membro não encontrado." });
+      const { receivingPreferenceInput } = await import("../routers");
       const parsed = receivingPreferenceInput.safeParse(req.body);
       if (!parsed.success) return void res.status(400).json({ error: parsed.error.issues[0]?.message || "Dados de recebimento inválidos." });
       try {
