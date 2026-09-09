@@ -129,7 +129,11 @@ function AppRoutes() {
     <Route path="/admin/membros/:memberId/editar" component={AdminMemberEdit} />
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/deploy" component={AdminManualDeploy} />
+    <Route path="/admin/material-divulgacao/novo" component={AdminPublications} />
+    <Route path="/admin/material-divulgacao/:contentId/editar" component={AdminPublications} />
     <Route path="/admin/material-divulgacao" component={AdminPublications} />
+    <Route path="/admin/biblioteca-recursos/novo" component={AdminPublications} />
+    <Route path="/admin/biblioteca-recursos/:contentId/editar" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
     <Route path="/admin/perguntas-frequentes" component={AdminPublications} />
     <Route path="/admin/publicacoes" component={AdminPublications} />

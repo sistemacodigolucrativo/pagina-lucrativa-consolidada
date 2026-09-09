@@ -1,7 +1,7 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
-import { ArrowLeft, CheckCircle2, FileText, LayoutDashboard, Save, Search, Star, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, FileText, LayoutDashboard, Save, Search, Star, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -27,6 +27,7 @@ export default function AdminTestimonials() {
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [query, setQuery] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const activeStatus = statusOrder.find(status => statusPaths[status] === location) ?? null;
   const isQueueScreen = activeStatus !== null;
 
@@ -40,6 +41,14 @@ export default function AdminTestimonials() {
 
   function save(id: number, status: TestimonialStatus, fallbackNote: string | null) {
     update.mutate({ id, status, adminNote: notes[id] ?? fallbackNote ?? null });
+  }
+
+  function toggleExpanded(id: number) {
+    setExpandedIds(current => {
+      const next = new Set(current);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
   }
 
   const all = testimonials.data ?? [];
@@ -79,7 +88,7 @@ export default function AdminTestimonials() {
 
   return (
     <DashboardLayout menuItems={menu} title="Administração">
-      <main className="mx-auto w-full max-w-6xl space-y-6 p-4 sm:space-y-7 sm:p-6 lg:p-8">
+      <main className="mx-auto w-full min-w-0 max-w-6xl space-y-6 overflow-x-clip p-4 sm:space-y-7 sm:p-6 lg:p-8">
         <header className="min-w-0 space-y-2">
           <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Gestão de agradecimentos</span>
           <h1 className="break-words text-2xl font-semibold text-white sm:text-3xl">
@@ -111,8 +120,44 @@ export default function AdminTestimonials() {
                 </button>
               ))}
             </section>
-            <section className="rounded-2xl border border-dashed border-white/15 bg-zinc-950/40 p-4 text-sm leading-6 text-zinc-400 sm:p-5">
-              Selecione um dos cards de status para abrir a respectiva lista em uma tela independente.
+
+            <section id="testimonial-all-list" className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-6">
+              <div className="mb-4 min-w-0">
+                <h2 className="break-words font-medium text-white">Todos os agradecimentos</h2>
+                <p className="mt-1 text-xs text-zinc-500">{counts.all} registros cadastrados</p>
+              </div>
+              {testimonials.isLoading ? (
+                <p className="text-sm text-zinc-400">Carregando agradecimentos...</p>
+              ) : testimonials.isError ? (
+                <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">Não foi possível carregar os agradecimentos. Confirme a sessão administrativa e tente novamente.</p>
+              ) : all.length ? (
+                <div className="space-y-3">
+                  {all.map(item => {
+                    const expanded = expandedIds.has(item.id);
+                    return (
+                      <article key={item.id} className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25 p-3 sm:p-4">
+                        <button type="button" onClick={() => toggleExpanded(item.id)} aria-expanded={expanded} aria-controls={`testimonial-content-${item.id}`} className="block w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60">
+                          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                            <div className="min-w-0 flex-1">
+                              <span className="text-xs uppercase tracking-wider text-emerald-200">{statusLabels[item.status as TestimonialStatus]}</span>
+                              <h3 className="mt-1 break-words font-medium text-white">{item.memberName || "Membro sem nome"}</h3>
+                              <p className="break-words text-xs text-zinc-500">{item.memberEmail || "E-mail não informado"}</p>
+                            </div>
+                            <time className="shrink-0 text-xs text-zinc-500">Atualizado em {new Date(item.updatedAt).toLocaleString("pt-BR")}</time>
+                          </div>
+                          <p id={`testimonial-content-${item.id}`} className={`mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200 ${expanded ? "" : "line-clamp-3"}`}>{item.content}</p>
+                          <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-200">
+                            {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                            {expanded ? "Recolher agradecimento" : "Ver agradecimento completo"}
+                          </span>
+                        </button>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">Ainda não há agradecimentos cadastrados.</p>
+              )}
             </section>
           </>
         ) : (
