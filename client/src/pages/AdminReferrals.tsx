@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { adminMenu } from "@/lib/adminNavigation";
 import { withAppBase } from "@/lib/devPath";
-import { Ban, Clock3, Network, PencilLine, RotateCcw, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { Ban, ChevronDown, Clock3, Network, PencilLine, RotateCcw, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -39,11 +39,17 @@ export default function AdminReferrals() {
   const [management, setManagement] = useState<MemberManagementResponse>({ members: [], deletionQueue: [] });
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [expandedMemberIds, setExpandedMemberIds] = useState<Set<number>>(() => new Set());
 
   const loadMembers = useCallback(async () => {
     setLoadingMembers(true);
     try {
-      setManagement(await request("/api/admin/member-management") as MemberManagementResponse);
+      const nextManagement = await request("/api/admin/member-management") as MemberManagementResponse;
+      setManagement(nextManagement);
+      setExpandedMemberIds(current => {
+        const activeIds = new Set(nextManagement.members.filter(member => !member.deletionRequestedAt).map(member => member.id));
+        return new Set([...current].filter(id => activeIds.has(id)));
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível carregar os membros.");
     } finally {
@@ -52,6 +58,15 @@ export default function AdminReferrals() {
   }, []);
 
   useEffect(() => { void loadMembers(); }, [loadMembers]);
+
+  function toggleMemberExpanded(memberId: number) {
+    setExpandedMemberIds(current => {
+      const next = new Set(current);
+      if (next.has(memberId)) next.delete(memberId);
+      else next.add(memberId);
+      return next;
+    });
+  }
 
   async function editMember(member: ManagedMember) {
     const name = window.prompt("Nome do membro:", member.name ?? "");
@@ -122,12 +137,50 @@ export default function AdminReferrals() {
         {management.deletionQueue.length ? <section className="rounded-2xl border border-amber-300/25 bg-amber-300/5 p-5">
           <div className="mb-4 flex items-center gap-2 text-white"><Clock3 className="size-5 text-amber-300" /><h2 className="font-medium">Área temporária de exclusão</h2></div>
           <p className="mb-4 text-sm leading-6 text-zinc-300">Contas permanecem aqui por 7 dias antes da remoção definitiva. Os indicados do membro excluído são preservados e passam a ficar órfãos.</p>
-          <div className="space-y-3">{management.deletionQueue.map(member => <article key={member.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/20 bg-black/25 p-4"><div><strong className="text-white">{member.name || `Membro #${member.id}`}</strong><p className="text-sm text-zinc-400">{member.email || "Sem e-mail"}</p><p className="mt-1 text-xs text-amber-200">Exclusão definitiva: {formatDate(member.deleteAfter)}</p></div><button disabled={busyId === member.id} onClick={() => void restoreMember(member)} className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/30 px-3 py-2 text-sm text-emerald-200 disabled:opacity-50"><RotateCcw className="size-4" />Restaurar</button></article>)}</div>
+          <div className="space-y-3">{management.deletionQueue.map(member => <article key={member.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/20 bg-black/25 p-4"><div className="min-w-0"><strong className="break-words text-white">{member.name || `Membro #${member.id}`}</strong><p className="break-all text-sm text-zinc-400">{member.email || "Sem e-mail"}</p><p className="mt-1 text-xs text-amber-200">Exclusão definitiva: {formatDate(member.deleteAfter)}</p></div><button disabled={busyId === member.id} onClick={() => void restoreMember(member)} className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/30 px-3 py-2 text-sm text-emerald-200 disabled:opacity-50"><RotateCcw className="size-4" />Restaurar</button></article>)}</div>
         </section> : null}
 
-        <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
+        <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2 text-white"><UsersRound className="size-5 text-emerald-300" /><h2 className="font-medium">Contas de membros</h2></div>
-          {loadingMembers ? <p className="text-sm text-zinc-400">Carregando membros...</p> : management.members.length ? <div className="grid gap-3 lg:grid-cols-2">{management.members.filter(member => !member.deletionRequestedAt).map(member => <article key={member.id} className="rounded-xl border border-white/10 bg-black/25 p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div className="min-w-0"><p className="truncate font-medium text-white">{member.name || `Membro #${member.id}`}</p><p className="truncate text-xs text-zinc-500">{member.email || "Sem e-mail"}</p><div className="mt-2 flex flex-wrap gap-2 text-xs"><span className={member.blocked ? "rounded-full bg-red-500/10 px-2 py-1 text-red-200" : "rounded-full bg-emerald-400/10 px-2 py-1 text-emerald-200"}>{member.blocked ? "Bloqueado" : "Ativo"}</span><span className="rounded-full bg-white/5 px-2 py-1 text-zinc-300">{member.referralsCount} indicados</span>{member.sponsorId ? <span className="rounded-full bg-white/5 px-2 py-1 text-zinc-300">Patrocinador #{member.sponsorId}</span> : <span className="rounded-full bg-amber-400/10 px-2 py-1 text-amber-200">Órfão</span>}</div></div><div className="text-right text-xs text-zinc-500">Último acesso<br />{formatDate(member.lastSignedIn)}</div></div><div className="mt-4 flex flex-wrap gap-2 border-t border-white/10 pt-3"><button disabled={busyId === member.id} onClick={() => void editMember(member)} className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200"><PencilLine className="size-4" />Editar</button><button disabled={busyId === member.id} onClick={() => void toggleBlock(member)} className="inline-flex items-center gap-1 rounded-lg border border-amber-300/25 px-3 py-2 text-sm text-amber-200"><Ban className="size-4" />{member.blocked ? "Desbloquear" : "Bloquear"}</button><button disabled={busyId === member.id} onClick={() => void scheduleDeletion(member)} className="inline-flex items-center gap-1 rounded-lg border border-red-400/25 px-3 py-2 text-sm text-red-200"><Trash2 className="size-4" />Excluir</button></div></article>)}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-zinc-400">Nenhum membro registrado.</p>}
+          {loadingMembers ? <p className="text-sm text-zinc-400">Carregando membros...</p> : management.members.length ? <div className="grid gap-2.5 lg:grid-cols-2">{management.members.filter(member => !member.deletionRequestedAt).map(member => {
+            const expanded = expandedMemberIds.has(member.id);
+            return <article key={member.id} className={`min-w-0 overflow-hidden rounded-xl border bg-black/25 transition-colors ${expanded ? "border-emerald-300/25" : "border-white/10 hover:border-white/20"}`}>
+              <button
+                type="button"
+                aria-expanded={expanded}
+                aria-controls={`member-details-${member.id}`}
+                onClick={() => toggleMemberExpanded(member.id)}
+                className="flex w-full min-w-0 items-center gap-3 p-3 text-left sm:p-3.5"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate font-medium text-white">{member.name || `Membro #${member.id}`}</p>
+                    <span className={member.blocked ? "shrink-0 rounded-full bg-red-500/10 px-2 py-1 text-[11px] text-red-200" : "shrink-0 rounded-full bg-emerald-400/10 px-2 py-1 text-[11px] text-emerald-200"}>{member.blocked ? "Bloqueado" : "Ativo"}</span>
+                  </div>
+                  <div className="mt-0.5 flex min-w-0 items-center gap-2 text-xs text-zinc-500">
+                    <span className="shrink-0">#{member.id}</span>
+                    <span aria-hidden="true">•</span>
+                    <span className="min-w-0 truncate">{member.email || "Sem e-mail"}</span>
+                  </div>
+                </div>
+                <ChevronDown className={`size-4 shrink-0 text-zinc-400 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`} aria-hidden="true" />
+              </button>
+
+              {expanded ? <div id={`member-details-${member.id}`} className="border-t border-white/10 px-3 pb-3 pt-3 sm:px-3.5 sm:pb-3.5">
+                <div className="grid gap-2 text-xs sm:grid-cols-2">
+                  <div className="rounded-lg bg-white/[0.035] p-2.5"><span className="block text-zinc-500">Último acesso</span><strong className="mt-1 block break-words font-medium text-zinc-200">{formatDate(member.lastSignedIn)}</strong></div>
+                  <div className="rounded-lg bg-white/[0.035] p-2.5"><span className="block text-zinc-500">Rede</span><strong className="mt-1 block break-words font-medium text-zinc-200">{member.referralsCount} indicados · {member.sponsorId ? `Patrocinador #${member.sponsorId}` : "Órfão"}</strong></div>
+                  <div className="rounded-lg bg-white/[0.035] p-2.5"><span className="block text-zinc-500">Cadastro</span><strong className="mt-1 block break-words font-medium text-zinc-200">{formatDate(member.createdAt)}</strong></div>
+                  <div className="rounded-lg bg-white/[0.035] p-2.5"><span className="block text-zinc-500">Última atualização</span><strong className="mt-1 block break-words font-medium text-zinc-200">{formatDate(member.updatedAt)}</strong></div>
+                </div>
+                <div className="mt-3 flex flex-col gap-2 border-t border-white/10 pt-3 sm:flex-row sm:flex-wrap">
+                  <button disabled={busyId === member.id} onClick={() => void editMember(member)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 disabled:opacity-50 sm:w-auto"><PencilLine className="size-4" />Editar</button>
+                  <button disabled={busyId === member.id} onClick={() => void toggleBlock(member)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-amber-300/25 px-3 py-2 text-sm text-amber-200 disabled:opacity-50 sm:w-auto"><Ban className="size-4" />{member.blocked ? "Desbloquear" : "Bloquear"}</button>
+                  <button disabled={busyId === member.id} onClick={() => void scheduleDeletion(member)} className="inline-flex w-full items-center justify-center gap-1 rounded-lg border border-red-400/25 px-3 py-2 text-sm text-red-200 disabled:opacity-50 sm:w-auto"><Trash2 className="size-4" />Excluir</button>
+                </div>
+              </div> : null}
+            </article>;
+          })}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-zinc-400">Nenhum membro registrado.</p>}
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
