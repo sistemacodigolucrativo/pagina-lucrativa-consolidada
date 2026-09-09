@@ -1,4 +1,5 @@
-import { access, rm, unlink, writeFile } from "node:fs/promises";
+import { timingSafeEqual } from "node:crypto";
+import { access, readFile, rm, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { and, eq } from "drizzle-orm";
 import { managedContent } from "../drizzle/schema";
@@ -14,6 +15,19 @@ async function exists(file: string) {
   try {
     await access(file);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function matchesPendingPublicHeroTitleResetToken(candidate: string, root = process.cwd()) {
+  if (!/^[0-9a-f]{64}$/.test(candidate)) return false;
+  try {
+    const expected = (await readFile(path.join(root, DEPLOY_HERO_RESET_PENDING), "utf8")).trim();
+    if (!/^[0-9a-f]{64}$/.test(expected)) return false;
+    const receivedBuffer = Buffer.from(candidate, "utf8");
+    const expectedBuffer = Buffer.from(expected, "utf8");
+    return receivedBuffer.length === expectedBuffer.length && timingSafeEqual(receivedBuffer, expectedBuffer);
   } catch {
     return false;
   }
