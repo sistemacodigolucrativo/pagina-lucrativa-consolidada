@@ -1,7 +1,7 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
-import { ExternalLink, FileText, GraduationCap, PlusCircle, Save, UploadCloud, X } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, GraduationCap, PlusCircle, Save, UploadCloud, X } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -184,11 +184,15 @@ function readPdfFile(file: File) {
 
 export default function AdminEbooks() {
   const utils = trpc.useUtils();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const isLibraryAdmin = location.startsWith("/admin/ebooks");
+  const libraryCreateMode = location === "/admin/ebooks/novo";
+  const libraryEditMatch = location.match(/^\/admin\/ebooks\/(\d+)\/editar$/);
+  const libraryEditId = libraryEditMatch ? Number(libraryEditMatch[1]) : null;
+  const isLibraryFormScreen = isLibraryAdmin && (libraryCreateMode || libraryEditId !== null);
   const defaultUsage: AcademyUsage = isLibraryAdmin ? "library" : "course";
   const ebooks = trpc.admin.academy.list.useQuery();
-  const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [selectedId, setSelectedId] = useState<number | null>(() => libraryEditId);
   const detail = trpc.admin.academy.detail.useQuery({ id: selectedId ?? 0 }, { enabled: selectedId !== null });
   const [form, setForm] = useState<EbookForm>(() => newForm(defaultUsage));
   const [formOpen, setFormOpen] = useState(() => !isLibraryAdmin);
@@ -199,8 +203,14 @@ export default function AdminEbooks() {
   }, [defaultUsage, selectedId]);
 
   useEffect(() => {
-    setFormOpen(!isLibraryAdmin);
-  }, [isLibraryAdmin]);
+    if (!isLibraryAdmin) {
+      setFormOpen(true);
+      return;
+    }
+    setSelectedId(libraryEditId);
+    setFormOpen(isLibraryFormScreen);
+    if (libraryCreateMode) setForm(newForm("library"));
+  }, [isLibraryAdmin, isLibraryFormScreen, libraryCreateMode, libraryEditId]);
 
   useEffect(() => {
     if (!detail.data) return;
@@ -300,7 +310,10 @@ export default function AdminEbooks() {
       void refresh();
       setSelectedId(null);
       setForm(newForm(defaultUsage));
-      if (isLibraryAdmin) setFormOpen(false);
+      if (isLibraryAdmin) {
+        setFormOpen(false);
+        setLocation("/admin/ebooks");
+      }
       toast.success(isLibraryAdmin ? "E-book criado." : "Material da Academia criado.");
     },
     onError: error => toast.error(error.message),
@@ -308,6 +321,7 @@ export default function AdminEbooks() {
   const update = trpc.admin.academy.updateMaterial.useMutation({
     onSuccess: () => {
       void refresh();
+      if (isLibraryAdmin) setLocation("/admin/ebooks");
       toast.success("Material atualizado.");
     },
     onError: error => toast.error(error.message),
@@ -320,16 +334,27 @@ export default function AdminEbooks() {
   const closeForm = () => {
     setSelectedId(null);
     setForm(newForm(defaultUsage));
-    if (isLibraryAdmin) setFormOpen(false);
+    if (isLibraryAdmin) {
+      setFormOpen(false);
+      setLocation("/admin/ebooks");
+    }
   };
 
   const openNewForm = () => {
+    if (isLibraryAdmin) {
+      setLocation("/admin/ebooks/novo");
+      return;
+    }
     setSelectedId(null);
     setForm(newForm(defaultUsage));
     setFormOpen(true);
   };
 
   const openExisting = (id: number) => {
+    if (isLibraryAdmin) {
+      setLocation(`/admin/ebooks/${id}/editar`);
+      return;
+    }
     setSelectedId(id);
     setFormOpen(true);
   };
@@ -411,19 +436,26 @@ export default function AdminEbooks() {
     else create.mutate(payload);
   }
 
+  const libraryPageTitle = libraryCreateMode ? "Novo e-book" : libraryEditId !== null ? "Editar e-book" : "Biblioteca de e-books";
+  const libraryPageDescription = libraryCreateMode
+    ? "Cadastre o novo PDF em uma tela dedicada, preservando as regras da Biblioteca e da Academia."
+    : libraryEditId !== null
+      ? "Edite somente o e-book selecionado em uma tela dedicada e retorne à listagem ao concluir."
+      : "Controle e-books independentes da Biblioteca e materiais que também podem aparecer na Academia.";
+
   return (
     <DashboardLayout menuItems={adminMenu} title="Administração">
       <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:space-y-7 sm:p-8">
         <header className={isLibraryAdmin ? "space-y-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5" : "space-y-2"}>
           <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{isLibraryAdmin ? "Biblioteca de e-books" : "Academia"}</span>
-          <h1 className="text-2xl font-semibold text-white sm:text-3xl">{isLibraryAdmin ? "Biblioteca de e-books" : "Academia"}</h1>
+          <h1 className="break-words text-2xl font-semibold text-white sm:text-3xl">{isLibraryAdmin ? libraryPageTitle : "Academia"}</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">
-            {isLibraryAdmin ? "Controle e-books independentes da Biblioteca e materiais que também podem aparecer na Academia." : "Publique cursos em PDF, organize os materiais em sequência e entregue tudo no leitor da Academia."}
+            {isLibraryAdmin ? libraryPageDescription : "Publique cursos em PDF, organize os materiais em sequência e entregue tudo no leitor da Academia."}
           </p>
         </header>
 
-        <section className={isLibraryAdmin ? "grid gap-5" : "grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)] lg:items-start"}>
-          <aside className={isLibraryAdmin ? "order-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-3" : "order-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-3 lg:order-1"}>
+        <section className={isLibraryAdmin ? "grid min-w-0 gap-5" : "grid min-w-0 gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)] lg:items-start"}>
+          <aside className={isLibraryAdmin ? (isLibraryFormScreen ? "hidden" : "order-2 min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-3") : "order-2 min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-3 lg:order-1"}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
               <div>
                 <h2 className="text-sm font-semibold text-white">{isLibraryAdmin ? "E-books cadastrados" : "Cursos cadastrados"}</h2>
@@ -554,8 +586,8 @@ export default function AdminEbooks() {
                 </div>
                 {(selectedId || (isLibraryAdmin && formOpen)) && (
                   <button type="button" onClick={closeForm} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-400 transition hover:border-white/30 hover:text-white">
-                    <X className="size-4" />
-                    {selectedId ? "Fechar edição" : "Fechar formulário"}
+                    {isLibraryAdmin ? <ArrowLeft className="size-4" /> : <X className="size-4" />}
+                    {isLibraryAdmin ? "Voltar para e-books" : selectedId ? "Fechar edição" : "Fechar formulário"}
                   </button>
                 )}
               </div>
@@ -672,7 +704,7 @@ export default function AdminEbooks() {
               </button>
             </form> : null}
 
-            <section className={isLibraryAdmin ? "order-1 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5" : "rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5"}>
+            <section className={isLibraryAdmin ? (isLibraryFormScreen ? "hidden" : "order-1 min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5") : "min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5"}>
               <div className="mb-3 flex items-center gap-2 text-white">
                 <FileText className="size-5 text-emerald-300" />
                 <h2 className="font-medium">{isLibraryAdmin ? "Regras de exibição" : "Padrão da Academia"}</h2>

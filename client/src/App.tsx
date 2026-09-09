@@ -122,6 +122,8 @@ function AppRoutes() {
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperations} />
+    <Route path="/admin/ebooks/novo" component={AdminEbooks} />
+    <Route path="/admin/ebooks/:ebookId/editar" component={AdminEbooks} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
     <Route path="/admin/membros/exclusoes" component={AdminMemberDeletionQueue} />
     <Route path="/admin/membros/:memberId/editar" component={AdminMemberEdit} />
@@ -140,6 +142,10 @@ function AppRoutes() {
     <Route path="/admin/auditoria" component={AdminAudit} />
     <Route path="/admin/pedidos" component={AdminOperations} />
     <Route path="/admin/financeiro" component={AdminOperations} />
+    <Route path="/admin/relatos/em-analise" component={AdminTestimonials} />
+    <Route path="/admin/relatos/aprovados" component={AdminTestimonials} />
+    <Route path="/admin/relatos/necessita-ajuste" component={AdminTestimonials} />
+    <Route path="/admin/relatos/arquivados" component={AdminTestimonials} />
     <Route path="/admin/relatos" component={AdminTestimonials} />
     <Route path="/admin/academia" component={AdminAcademy} />
     <Route path="/admin" component={AdminOffice} />
