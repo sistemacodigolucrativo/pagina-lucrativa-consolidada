@@ -28,7 +28,8 @@ import {
   userSecurityRecovery,
   users,
 } from "../../drizzle/schema";
-import { getDb } from "../db";
+import { getDb, getMemberReceivingPreference, updateMemberReceivingPreference } from "../db";
+import { receivingPreferenceInput } from "../routers";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 
 const CONTROL_CATEGORY = "member-admin-control";
@@ -83,6 +84,20 @@ async function getControlRow(userId: number) {
     console.warn("[AdminMemberManagement] Failed to read member control state:", error);
     return null;
   }
+}
+
+async function getManagedMember(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const rows = await db.select({
+    id: users.id,
+    name: users.name,
+    email: users.email,
+    createdAt: users.createdAt,
+    updatedAt: users.updatedAt,
+    lastSignedIn: users.lastSignedIn,
+  }).from(users).where(and(eq(users.id, userId), eq(users.role, "user"))).limit(1);
+  return rows[0] ?? null;
 }
 
 async function saveControl(userId: number, adminId: number, next: MemberControl) {
@@ -199,6 +214,20 @@ export function registerAdminMemberManagement(app: Express, appPrefix: string) {
       catch (error) { res.status(500).json({ error: error instanceof Error ? error.message : "Falha ao carregar membros." }); }
     });
 
+    app.get(`${path}/:userId`, async (req, res) => {
+      if (!await requireAdmin(req, res)) return;
+      const userId = Number(req.params.userId);
+      if (!Number.isInteger(userId) || userId <= 0) return void res.status(400).json({ error: "Membro inválido." });
+      try {
+        const member = await getManagedMember(userId);
+        if (!member) return void res.status(404).json({ error: "Membro não encontrado." });
+        const receiving = await getMemberReceivingPreference(userId);
+        res.json({ member, receiving });
+      } catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : "Falha ao carregar o membro." });
+      }
+    });
+
     app.post(`${path}/edit`, async (req, res) => {
       if (!await requireAdmin(req, res)) return;
       const userId = Number(req.body?.userId);
@@ -207,8 +236,27 @@ export function registerAdminMemberManagement(app: Express, appPrefix: string) {
       if (!Number.isInteger(userId) || userId <= 0 || name.length < 2 || !email.includes("@")) return void res.status(400).json({ error: "Dados do membro inválidos." });
       const db = await getDb();
       if (!db) return void res.status(503).json({ error: "Banco de dados indisponível." });
+      const member = await getManagedMember(userId);
+      if (!member) return void res.status(404).json({ error: "Membro não encontrado." });
       await db.update(users).set({ name, email }).where(and(eq(users.id, userId), eq(users.role, "user")));
-      res.json({ success: true });
+      const updated = await getManagedMember(userId);
+      res.json({ success: true, member: updated });
+    });
+
+    app.post(`${path}/receiving`, async (req, res) => {
+      if (!await requireAdmin(req, res)) return;
+      const userId = Number(req.body?.userId);
+      if (!Number.isInteger(userId) || userId <= 0) return void res.status(400).json({ error: "Membro inválido." });
+      const member = await getManagedMember(userId);
+      if (!member) return void res.status(404).json({ error: "Membro não encontrado." });
+      const parsed = receivingPreferenceInput.safeParse(req.body);
+      if (!parsed.success) return void res.status(400).json({ error: parsed.error.issues[0]?.message || "Dados de recebimento inválidos." });
+      try {
+        const receiving = await updateMemberReceivingPreference(userId, parsed.data);
+        res.json({ success: true, receiving });
+      } catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : "Falha ao atualizar os dados de recebimento." });
+      }
     });
 
     app.post(`${path}/block`, async (req, res) => {
