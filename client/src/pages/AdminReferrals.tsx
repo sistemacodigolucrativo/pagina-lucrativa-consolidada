@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { adminMenu } from "@/lib/adminNavigation";
 import { withAppBase } from "@/lib/devPath";
-import { Ban, ChevronDown, Clock3, Network, PencilLine, RotateCcw, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { Ban, ChevronDown, Clock3, Network, PencilLine, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -96,17 +96,6 @@ export default function AdminReferrals() {
     finally { setBusyId(null); }
   }
 
-  async function restoreMember(member: ManagedMember) {
-    if (!window.confirm(`Restaurar ${member.name || `membro #${member.id}`} e cancelar a exclusão programada?`)) return;
-    setBusyId(member.id);
-    try {
-      await request("/api/admin/member-management/restore", { method: "POST", body: JSON.stringify({ userId: member.id }) });
-      await loadMembers();
-      toast.success("Exclusão cancelada e acesso restaurado.");
-    } catch (error) { toast.error(error instanceof Error ? error.message : "Falha ao restaurar membro."); }
-    finally { setBusyId(null); }
-  }
-
   const data = network.data;
   return (
     <DashboardLayout menuItems={adminMenu} title="Administração">
@@ -124,11 +113,11 @@ export default function AdminReferrals() {
           <article className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-5"><p className="text-xs uppercase tracking-wider text-amber-200">Exclusão em 7 dias</p><strong className="mt-2 block text-3xl text-white">{management.deletionQueue.length}</strong></article>
         </section>
 
-        {management.deletionQueue.length ? <section className="rounded-2xl border border-amber-300/25 bg-amber-300/5 p-5">
-          <div className="mb-4 flex items-center gap-2 text-white"><Clock3 className="size-5 text-amber-300" /><h2 className="font-medium">Área temporária de exclusão</h2></div>
-          <p className="mb-4 text-sm leading-6 text-zinc-300">Contas permanecem aqui por 7 dias antes da remoção definitiva. Os indicados do membro excluído são preservados e passam a ficar órfãos.</p>
-          <div className="space-y-3">{management.deletionQueue.map(member => <article key={member.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-300/20 bg-black/25 p-4"><div className="min-w-0"><strong className="break-words text-white">{member.name || `Membro #${member.id}`}</strong><p className="break-all text-sm text-zinc-400">{member.email || "Sem e-mail"}</p><p className="mt-1 text-xs text-amber-200">Exclusão definitiva: {formatDate(member.deleteAfter)}</p></div><button disabled={busyId === member.id} onClick={() => void restoreMember(member)} className="inline-flex items-center gap-2 rounded-lg border border-emerald-300/30 px-3 py-2 text-sm text-emerald-200 disabled:opacity-50"><RotateCcw className="size-4" />Restaurar</button></article>)}</div>
-        </section> : null}
+        <a href={withAppBase("/admin/membros/exclusoes")} className="block rounded-2xl border border-amber-300/25 bg-amber-300/5 p-5 transition hover:border-amber-300/45 hover:bg-amber-300/[0.08] focus:outline-none focus:ring-2 focus:ring-amber-300/30" aria-label="Abrir Área temporária de exclusão">
+          <div className="flex items-center gap-2 text-white"><Clock3 className="size-5 text-amber-300" /><h2 className="font-medium">Área temporária de exclusão</h2></div>
+          <p className="mt-3 text-sm leading-6 text-zinc-300">Contas permanecem aqui por 7 dias antes da remoção definitiva.</p>
+          <p className="text-sm leading-6 text-zinc-300">Os indicados do membro excluído são preservados e passam a ficar órfãos.</p>
+        </a>
 
         <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2 text-white"><UsersRound className="size-5 text-emerald-300" /><h2 className="font-medium">Contas de membros</h2></div>
