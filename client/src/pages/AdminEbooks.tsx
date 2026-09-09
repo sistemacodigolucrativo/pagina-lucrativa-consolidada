@@ -191,11 +191,13 @@ export default function AdminEbooks() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const detail = trpc.admin.academy.detail.useQuery({ id: selectedId ?? 0 }, { enabled: selectedId !== null });
   const [form, setForm] = useState<EbookForm>(() => newForm(defaultUsage));
+  const [formOpen, setFormOpen] = useState(() => !isLibraryAdmin);
 
   useEffect(() => {
     if (selectedId !== null) return;
     setForm(current => (current.usage === defaultUsage ? current : newForm(defaultUsage)));
-  }, [defaultUsage, selectedId]);
+    setFormOpen(!isLibraryAdmin);
+  }, [defaultUsage, isLibraryAdmin, selectedId]);
 
   useEffect(() => {
     if (!detail.data) return;
@@ -293,7 +295,9 @@ export default function AdminEbooks() {
   const create = trpc.admin.academy.createMaterial.useMutation({
     onSuccess: () => {
       void refresh();
+      setSelectedId(null);
       setForm(newForm(defaultUsage));
+      if (isLibraryAdmin) setFormOpen(false);
       toast.success(isLibraryAdmin ? "E-book criado." : "Material da Academia criado.");
     },
     onError: error => toast.error(error.message),
@@ -310,9 +314,21 @@ export default function AdminEbooks() {
   const currentPdfUrl = detail.data?.pdfUrl ?? null;
   const hasExistingPdf = Boolean(currentPdfUrl);
 
-  const resetForm = () => {
+  const closeForm = () => {
     setSelectedId(null);
     setForm(newForm(defaultUsage));
+    if (isLibraryAdmin) setFormOpen(false);
+  };
+
+  const openNewForm = () => {
+    setSelectedId(null);
+    setForm(newForm(defaultUsage));
+    setFormOpen(true);
+  };
+
+  const openExisting = (id: number) => {
+    setSelectedId(id);
+    setFormOpen(true);
   };
 
   async function handlePdfChange(event: ChangeEvent<HTMLInputElement>) {
@@ -395,7 +411,7 @@ export default function AdminEbooks() {
   return (
     <DashboardLayout menuItems={adminMenu} title="Administração">
       <main className="mx-auto w-full max-w-7xl space-y-6 p-4 sm:space-y-7 sm:p-8">
-        <header className="space-y-2">
+        <header className={isLibraryAdmin ? "space-y-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5" : "space-y-2"}>
           <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{isLibraryAdmin ? "Biblioteca de e-books" : "Academia"}</span>
           <h1 className="text-2xl font-semibold text-white sm:text-3xl">{isLibraryAdmin ? "Biblioteca de e-books" : "Academia"}</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">
@@ -403,8 +419,8 @@ export default function AdminEbooks() {
           </p>
         </header>
 
-        <section className="grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)] lg:items-start">
-          <aside className="order-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-3 lg:order-1">
+        <section className={isLibraryAdmin ? "grid gap-5" : "grid gap-5 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.35fr)] lg:items-start"}>
+          <aside className={isLibraryAdmin ? "order-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-3" : "order-2 rounded-2xl border border-white/10 bg-zinc-950/60 p-3 lg:order-1"}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 px-1">
               <div>
                 <h2 className="text-sm font-semibold text-white">{isLibraryAdmin ? "E-books cadastrados" : "Cursos cadastrados"}</h2>
@@ -414,7 +430,7 @@ export default function AdminEbooks() {
                     : `${courseMaterials.length} PDFs cadastrados${pendingCourseMaterials.length ? ` · ${pendingCourseMaterials.length} pendentes` : ""}`}
                 </p>
               </div>
-              <button type="button" onClick={resetForm} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-emerald-200">
+              <button type="button" onClick={openNewForm} className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-300 px-3 py-2 text-xs font-semibold text-black transition hover:bg-emerald-200">
                 <PlusCircle className="size-4" />
                 {isLibraryAdmin ? "Novo e-book" : "Novo material"}
               </button>
@@ -432,7 +448,7 @@ export default function AdminEbooks() {
                         <button
                           type="button"
                           key={ebook.id}
-                          onClick={() => setSelectedId(ebook.id)}
+                          onClick={() => openExisting(ebook.id)}
                           className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition hover:border-emerald-300/50 ${selectedId === ebook.id ? "border-emerald-300/70 bg-emerald-300/10" : "border-white/10 bg-zinc-950/70"}`}
                         >
                           <FileText className="mt-0.5 size-4 shrink-0 text-emerald-200" />
@@ -472,7 +488,7 @@ export default function AdminEbooks() {
                             <button
                               type="button"
                               key={ebook.id}
-                              onClick={() => setSelectedId(ebook.id)}
+                              onClick={() => openExisting(ebook.id)}
                               className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition hover:border-emerald-300/50 ${selectedId === ebook.id ? "border-emerald-300/70 bg-emerald-300/10" : "border-white/10 bg-zinc-950/70"}`}
                             >
                               <span className="flex size-7 shrink-0 items-center justify-center rounded-full border border-emerald-300/25 bg-emerald-300/10 text-xs font-semibold text-emerald-200">
@@ -502,7 +518,7 @@ export default function AdminEbooks() {
                           <button
                             type="button"
                             key={ebook.id}
-                            onClick={() => setSelectedId(ebook.id)}
+                            onClick={() => openExisting(ebook.id)}
                             className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition hover:border-amber-300/50 ${selectedId === ebook.id ? "border-amber-300/70 bg-amber-300/10" : "border-white/10 bg-zinc-950/70"}`}
                           >
                             <FileText className="mt-0.5 size-4 shrink-0 text-amber-200" />
@@ -524,8 +540,8 @@ export default function AdminEbooks() {
             </div>
           </aside>
 
-          <div className="order-1 space-y-5 lg:order-2">
-            <form onSubmit={submit} className="space-y-5 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
+          <div className={isLibraryAdmin ? "contents" : "order-1 space-y-5 lg:order-2"}>
+            {(!isLibraryAdmin || formOpen) ? <form onSubmit={submit} className={`${isLibraryAdmin ? "order-3 " : ""}space-y-5 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5`}>
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <h2 className="text-lg font-medium text-white">{selectedId ? "Editar material" : isLibraryAdmin ? "Novo e-book PDF" : "Novo material PDF"}</h2>
@@ -533,10 +549,10 @@ export default function AdminEbooks() {
                     Defina onde o PDF será exibido, envie o arquivo e mantenha status, categoria e vínculo coerentes para o membro.
                   </p>
                 </div>
-                {selectedId && (
-                  <button type="button" onClick={resetForm} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-400 transition hover:border-white/30 hover:text-white">
+                {(selectedId || (isLibraryAdmin && formOpen)) && (
+                  <button type="button" onClick={closeForm} className="inline-flex items-center gap-1 rounded-lg border border-white/10 px-3 py-2 text-sm text-zinc-400 transition hover:border-white/30 hover:text-white">
                     <X className="size-4" />
-                    Fechar edição
+                    {selectedId ? "Fechar edição" : "Fechar formulário"}
                   </button>
                 )}
               </div>
@@ -651,9 +667,9 @@ export default function AdminEbooks() {
                 <Save className="size-4" />
                 {pending ? "Salvando..." : selectedId ? "Salvar material" : form.status === "published" ? "Publicar material" : "Salvar rascunho"}
               </button>
-            </form>
+            </form> : null}
 
-            <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
+            <section className={isLibraryAdmin ? "order-1 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5" : "rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5"}>
               <div className="mb-3 flex items-center gap-2 text-white">
                 <FileText className="size-5 text-emerald-300" />
                 <h2 className="font-medium">{isLibraryAdmin ? "Regras de exibição" : "Padrão da Academia"}</h2>
