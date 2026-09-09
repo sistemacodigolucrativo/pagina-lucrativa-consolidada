@@ -42,7 +42,7 @@ jobs:
       - name: Instalar Playwright temporariamente
         run: |
           pnpm add -D playwright@1.55.0 --ignore-workspace-root-check
-          pnpm exec playwright install --with-deps chromium
+          pnpm exec playwright install chromium
 
       - name: Iniciar aplicação local
         shell: bash
