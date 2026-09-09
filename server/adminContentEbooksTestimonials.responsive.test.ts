@@ -52,6 +52,19 @@ describe("anotações administrativas — publicações, e-books e agradecimento
     expect(source).toContain('onClick={() => setLocation(statusPaths[status])}');
   });
 
+  it("mantém os cards das páginas por status super slim e expande as ações administrativas sob demanda", () => {
+    const source = read("client/src/pages/AdminTestimonials.tsx");
+    expect(source).toContain('const detailsId = `testimonial-moderation-details-${item.id}`');
+    expect(source).toContain('aria-controls={detailsId}');
+    expect(source).toContain('min-h-11 w-full min-w-0 items-center');
+    expect(source).toContain('{expanded ? "Recolher" : "Expandir"}');
+    expect(source).toContain('{expanded ? (');
+    expect(source).toContain('Nota privada para o membro');
+    expect(source).toContain('<select value={item.status}');
+    expect(source).toContain('Salvar nota');
+    expect(source).toContain('>Excluir</button>');
+  });
+
   it("organiza Biblioteca de e-books com criação e edição em telas independentes", () => {
     const source = read("client/src/pages/AdminEbooks.tsx");
     expect(source).toContain('const libraryCreateMode = location === "/admin/ebooks/novo"');

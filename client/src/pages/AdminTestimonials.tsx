@@ -188,36 +188,60 @@ export default function AdminTestimonials() {
               ) : testimonials.isError ? (
                 <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">Não foi possível carregar a fila de agradecimentos. Confirme a sessão administrativa e tente novamente.</p>
               ) : visible.length ? (
-                <div className="space-y-4">
-                  {visible.map(item => (
-                    <article key={item.id} className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25 p-4 sm:p-5">
-                      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                        <div className="min-w-0 flex-1">
-                          <span className="text-xs uppercase tracking-wider text-emerald-200">{statusLabels[item.status as TestimonialStatus]}</span>
-                          <h2 className="mt-1 break-words font-medium text-white">{item.memberName || "Membro sem nome"}</h2>
-                          <p className="break-words text-sm text-zinc-500">{item.memberEmail || "E-mail não informado"}</p>
-                          <p className="mt-2 flex items-center gap-1 text-xs text-zinc-400"><Star className="size-3 text-emerald-300" />{item.rating ? `${item.rating}/5` : "Sem avaliação registrada"}</p>
-                        </div>
-                        <time className="shrink-0 text-xs text-zinc-500">Atualizado em {new Date(item.updatedAt).toLocaleString("pt-BR")}</time>
-                      </div>
-                      <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200">{item.content}</p>
-                      <div className="mt-5 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_180px_auto]">
-                        <label className="min-w-0 text-sm text-zinc-300">Nota privada para o membro
-                          <textarea value={notes[item.id] ?? item.adminNote ?? ""} onChange={event => setNotes(current => ({ ...current, [item.id]: event.target.value }))} maxLength={4000} className="mt-1 min-h-24 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/50 focus:ring-2" placeholder="Opcional: descreva a decisão ou o ajuste necessário." />
-                        </label>
-                        <label className="min-w-0 text-sm text-zinc-300">Status
-                          <select value={item.status} onChange={event => save(item.id, event.target.value as TestimonialStatus, item.adminNote)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 text-white">
-                            <option value="pending">Em análise</option><option value="approved">Aprovado</option><option value="rejected">Necessita ajuste</option><option value="archived">Arquivado</option>
-                          </select>
-                        </label>
-                        <div className="mt-auto grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                          <button onClick={() => save(item.id, item.status as TestimonialStatus, item.adminNote)} disabled={update.isPending} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.97] disabled:opacity-60"><Save className="size-4" />Salvar nota</button>
-                          <button onClick={() => void remove(item.id, item.memberName)} disabled={deletingId === item.id} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-200 disabled:opacity-60"><Trash2 className="size-4" />Excluir</button>
-                        </div>
-                      </div>
-                      <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-zinc-500"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-200" />Aprovação mantém a origem real do agradecimento; o conteúdo não deve ser fabricado ou alterado para simular a experiência do membro.</p>
-                    </article>
-                  ))}
+                <div className="space-y-2">
+                  {visible.map(item => {
+                    const expanded = expandedIds.has(item.id);
+                    const detailsId = `testimonial-moderation-details-${item.id}`;
+                    return (
+                      <article key={item.id} className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25">
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(item.id)}
+                          aria-expanded={expanded}
+                          aria-controls={detailsId}
+                          className="flex min-h-11 w-full min-w-0 items-center gap-2 px-3 py-2 text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-300/60 sm:gap-3 sm:px-4"
+                        >
+                          <span className="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
+                            {statusLabels[item.status as TestimonialStatus]}
+                          </span>
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">{item.memberName || "Membro sem nome"}</span>
+                          <span className="hidden min-w-0 max-w-52 truncate text-xs text-zinc-500 md:block">{item.memberEmail || "E-mail não informado"}</span>
+                          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-200">
+                            {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+                            <span className="hidden sm:inline">{expanded ? "Recolher" : "Expandir"}</span>
+                          </span>
+                        </button>
+
+                        {expanded ? (
+                          <div id={detailsId} className="min-w-0 border-t border-white/10 px-3 pb-4 pt-4 sm:px-4 sm:pb-5">
+                            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="min-w-0 flex-1">
+                                <p className="break-words text-sm text-zinc-500">{item.memberEmail || "E-mail não informado"}</p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-zinc-400"><Star className="size-3 text-emerald-300" />{item.rating ? `${item.rating}/5` : "Sem avaliação registrada"}</p>
+                              </div>
+                              <time className="shrink-0 text-xs text-zinc-500">Atualizado em {new Date(item.updatedAt).toLocaleString("pt-BR")}</time>
+                            </div>
+                            <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200">{item.content}</p>
+                            <div className="mt-5 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_180px_auto]">
+                              <label className="min-w-0 text-sm text-zinc-300">Nota privada para o membro
+                                <textarea value={notes[item.id] ?? item.adminNote ?? ""} onChange={event => setNotes(current => ({ ...current, [item.id]: event.target.value }))} maxLength={4000} className="mt-1 min-h-24 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/50 focus:ring-2" placeholder="Opcional: descreva a decisão ou o ajuste necessário." />
+                              </label>
+                              <label className="min-w-0 text-sm text-zinc-300">Status
+                                <select value={item.status} onChange={event => save(item.id, event.target.value as TestimonialStatus, item.adminNote)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 text-white">
+                                  <option value="pending">Em análise</option><option value="approved">Aprovado</option><option value="rejected">Necessita ajuste</option><option value="archived">Arquivado</option>
+                                </select>
+                              </label>
+                              <div className="mt-auto grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                                <button onClick={() => save(item.id, item.status as TestimonialStatus, item.adminNote)} disabled={update.isPending} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.97] disabled:opacity-60"><Save className="size-4" />Salvar nota</button>
+                                <button onClick={() => void remove(item.id, item.memberName)} disabled={deletingId === item.id} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-200 disabled:opacity-60"><Trash2 className="size-4" />Excluir</button>
+                              </div>
+                            </div>
+                            <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-zinc-500"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-200" />Aprovação mantém a origem real do agradecimento; o conteúdo não deve ser fabricado ou alterado para simular a experiência do membro.</p>
+                          </div>
+                        ) : null}
+                      </article>
+                    );
+                  })}
                 </div>
               ) : (
                 <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">Nenhum agradecimento corresponde a este status e à busca atual.</p>
