@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { withAppBase } from "@/lib/devPath";
 import type { PublicSalesCopyOverrides } from "@shared/publicSalesCopyEditor";
+import { PUBLIC_HERO_TITLE, splitPublicHeroTitle } from "@shared/publicHeroTitle";
 
 type Point = { x?: number; y?: number };
 export type FloatingLayout = Partial<Record<"desktop" | "tablet" | "mobile", Partial<Record<"fab" | "cta" | "toast", Point>>>>;
@@ -8,31 +9,37 @@ export type FloatingLayout = Partial<Record<"desktop" | "tablet" | "mobile", Par
 type PublicSalesCopyState = {
   overrides: PublicSalesCopyOverrides;
   floatingLayout: FloatingLayout;
+  ready: boolean;
 };
 
 const PUBLIC_SALES_COPY_ENDPOINT = "/api/public-sales-copy";
-const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: {}, floatingLayout: {} });
+const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: {}, floatingLayout: {}, ready: false });
 const FLOATING_POSITION_PROPS = ["left", "top", "right", "bottom", "transform"] as const;
+const HERO_TITLE_SELECTOR = ".reference-page .sales-hero .sales-hero-copy > h1";
 
 export function usePublicSalesCopy() {
   return useContext(PublicSalesCopyContext);
 }
 
 export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PublicSalesCopyState>({ overrides: {}, floatingLayout: {} });
+  const [state, setState] = useState<PublicSalesCopyState>({ overrides: {}, floatingLayout: {}, ready: false });
 
   useEffect(() => {
     let active = true;
     fetch(withAppBase(PUBLIC_SALES_COPY_ENDPOINT), { credentials: "include" })
       .then(response => response.ok ? response.json() : Promise.reject(new Error("Falha ao carregar copy pública")))
-      .then((payload: PublicSalesCopyState) => {
+      .then((payload: Omit<PublicSalesCopyState, "ready">) => {
         if (!active) return;
         setState({
           overrides: payload.overrides ?? {},
           floatingLayout: payload.floatingLayout ?? {},
+          ready: true,
         });
       })
-      .catch(error => console.warn("[PublicSalesCopy] copy pública indisponível:", error));
+      .catch(error => {
+        console.warn("[PublicSalesCopy] copy pública indisponível:", error);
+        if (active) setState(current => ({ ...current, ready: true }));
+      });
     return () => { active = false; };
   }, []);
 
@@ -84,6 +91,27 @@ function preventFloatingActionOverlap() {
   }
 }
 
+function applyHeroTitle(overrides: PublicSalesCopyOverrides, ready: boolean) {
+  document.querySelectorAll<HTMLHeadingElement>(HERO_TITLE_SELECTOR).forEach(element => {
+    if (!ready) {
+      element.classList.remove("public-hero-title-ready");
+      return;
+    }
+
+    const title = overrides.hero?.title?.trim() || PUBLIC_HERO_TITLE;
+    if (element.dataset.publicHeroTitle === title && element.classList.contains("public-hero-title-ready")) return;
+
+    const { accent, remainder } = splitPublicHeroTitle(title);
+    const accentNode = document.createElement("span");
+    accentNode.className = "public-hero-title-accent";
+    accentNode.textContent = accent;
+    element.replaceChildren(accentNode);
+    if (remainder) element.append(document.createTextNode(` ${remainder}`));
+    element.dataset.publicHeroTitle = title;
+    element.classList.add("public-hero-title-ready");
+  });
+}
+
 function applyFloatingLayout(layout: FloatingLayout) {
   const breakpoint = breakpointForWidth(window.innerWidth);
   const positions = layout[breakpoint] ?? {};
@@ -114,29 +142,36 @@ function applyFloatingLayout(layout: FloatingLayout) {
 }
 
 export default function PublicSalesCopyRuntime() {
-  const { floatingLayout } = usePublicSalesCopy();
+  const { floatingLayout, overrides, ready } = usePublicSalesCopy();
 
   useEffect(() => {
     let cancelled = false;
     let observer: MutationObserver | null = null;
     let queued = false;
 
+    const applyRuntime = () => {
+      if (cancelled) return;
+      applyHeroTitle(overrides, ready);
+      applyFloatingLayout(floatingLayout);
+    };
+
     const scheduleApply = () => {
       if (queued || cancelled) return;
       queued = true;
       window.requestAnimationFrame(() => {
         queued = false;
-        if (!cancelled) {
-          applyFloatingLayout(floatingLayout);
-        }
+        applyRuntime();
       });
     };
 
     const handleResize = () => scheduleApply();
     window.addEventListener("resize", handleResize);
 
-    scheduleApply();
-    observer = new MutationObserver(scheduleApply);
+    applyRuntime();
+    observer = new MutationObserver(() => {
+      applyHeroTitle(overrides, ready);
+      scheduleApply();
+    });
     observer.observe(document.body, { childList: true, subtree: true });
 
     return () => {
@@ -144,7 +179,7 @@ export default function PublicSalesCopyRuntime() {
       observer?.disconnect();
       window.removeEventListener("resize", handleResize);
     };
-  }, [floatingLayout]);
+  }, [floatingLayout, overrides, ready]);
 
   return null;
 }
