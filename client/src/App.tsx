@@ -12,6 +12,7 @@ import AdminEbooks from "./pages/AdminEbooks";
 import AdminAcademy from "./pages/AdminAcademy";
 import AdminMemberEdit from "./pages/AdminMemberEdit";
 import AdminMemberDeletionQueue from "./pages/AdminMemberDeletionQueue";
+import AdminManualDeploy from "./pages/AdminManualDeploy";
 import MemberPublications from "./pages/MemberPublications";
 import MemberEarnings from "./pages/MemberEarnings";
 import MemberReceiving from "./pages/MemberReceiving";
@@ -125,6 +126,7 @@ function AppRoutes() {
     <Route path="/admin/membros/exclusoes" component={AdminMemberDeletionQueue} />
     <Route path="/admin/membros/:memberId/editar" component={AdminMemberEdit} />
     <Route path="/admin/membros" component={AdminReferrals} />
+    <Route path="/admin/deploy" component={AdminManualDeploy} />
     <Route path="/admin/material-divulgacao" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
     <Route path="/admin/perguntas-frequentes" component={AdminPublications} />
