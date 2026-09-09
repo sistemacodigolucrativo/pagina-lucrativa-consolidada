@@ -26,15 +26,22 @@
 }
 
 /*
- * O editor de "Configurar Seções" persiste a copy como texto simples.
- * A cor do título pertence à identidade visual, não ao conteúdo persistido.
- * Esta regra, carregada depois de index.css, normaliza o título inteiro para
- * o mesmo token da paleta e impede que a presença/ausência do span do fallback
- * altere a cor após salvar ou reposicionar conteúdo no editor.
+ * A copy do editor é texto simples, mas a identidade do Hero mantém duas cores:
+ * a chamada principal usa o verde forte da paleta e, a partir do travessão,
+ * o complemento usa o verde claro. O título permanece invisível somente até
+ * a configuração persistida ser resolvida, impedindo o flash do fallback antigo.
  */
-.reference-page .sales-hero .sales-hero-copy > h1,
-.reference-page .sales-hero .sales-hero-copy > h1 span {
+.reference-page .sales-hero .sales-hero-copy > h1 {
   color: var(--gold-bright);
+  visibility: hidden;
+}
+
+.reference-page .sales-hero .sales-hero-copy > h1.public-hero-title-ready {
+  visibility: visible;
+}
+
+.reference-page .sales-hero .sales-hero-copy > h1 .public-hero-title-accent {
+  color: var(--gold);
 }
 
 @media (max-width: 900px) {
