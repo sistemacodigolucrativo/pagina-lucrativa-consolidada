@@ -33,11 +33,14 @@ describe("restauração do título público do Hero no deploy", () => {
     const worker = read("scripts/manual-deploy-worker.sh");
     const resetScript = read("scripts/reset-public-hero-title.ts");
     const resetService = read("server/publicHeroTitleReset.ts");
+    const publicCopyConfig = read("server/_core/publicSalesCopyConfig.ts");
 
     expect(deploy).toContain('"$PNPM_BIN" exec tsx scripts/reset-public-hero-title.ts');
     expect(deploy).toContain('write_deploy_status "deploying" 99 "Restaurando título padrão do Hero"');
     expect(worker).toContain('bash "$DEPLOY_SCRIPT" "$SHA" "$DEPLOY_ROOT" "$ARTIFACT" "$HEALTHCHECK_URL"');
-    expect(resetScript).toContain("resetPublicHeroTitleForDeploy()");
+    expect(resetScript).toContain("DEPLOY_HERO_RESET_PENDING");
+    expect(resetScript).toContain("/api/public-sales-copy");
+    expect(publicCopyConfig).toContain("processPendingPublicHeroTitleResetForDeploy");
     expect(resetService).toContain('eq(managedContent.resourceType, "hero")');
     expect(resetService).toContain("restorePublicHeroTitleBody(row.body)");
   });
