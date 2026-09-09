@@ -4,6 +4,9 @@ on:
   push:
     branches: [feat-testimonials-resource-library-pages]
     paths:
+      - client/src/App.tsx
+      - client/src/pages/AdminTestimonials.tsx
+      - client/src/pages/AdminPublications.tsx
       - .github/workflows/validate-latest-interactions.yml
 
 permissions:
@@ -62,7 +65,7 @@ jobs:
             { id: 801, kind: "material", title: "Recurso de validação", summary: "Resumo do recurso", body: "Conteúdo completo do recurso", resourceUrl: "https://drive.google.com/file/d/validacao/view", resourceCategory: "Automação", resourceType: "Ferramenta", status: "draft", createdAt: now, updatedAt: now },
             { id: 802, kind: "article", title: "Material de validação", summary: "Resumo do material", body: "Conteúdo completo do material", resourceUrl: null, resourceCategory: null, resourceType: null, status: "draft", createdAt: now, updatedAt: now },
           ];
-          const trpc = data => JSON.stringify([{ result: { data: { json: data } } }]);
+          const success = data => ({ result: { data: { json: data } } });
           const viewports = [
             { name: "mobile", width: 390, height: 844 },
             { name: "tablet", width: 768, height: 1024 },
@@ -77,15 +80,23 @@ jobs:
             const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
             await context.addCookies([{ name: "pl_demo_session", value: cookieValue, url: baseURL, httpOnly: true, sameSite: "Lax" }]);
             const page = await context.newPage();
+            page.on("console", message => console.log(`[browser:${viewport.name}] ${message.type()}: ${message.text()}`));
+            page.on("pageerror", error => console.log(`[browser:${viewport.name}:error] ${error.message}`));
 
-            await page.route("**/api/trpc/admin.testimonials*", async route => {
-              await route.fulfill({ status: 200, contentType: "application/json", body: trpc(testimonials) });
-            });
-            await page.route("**/api/trpc/admin.content*", async route => {
-              await route.fulfill({ status: 200, contentType: "application/json", body: trpc(contents) });
-            });
-            await page.route("**/api/trpc/admin.createContent*", async route => {
-              await route.fulfill({ status: 200, contentType: "application/json", body: trpc({ id: 999 }) });
+            await page.route("**/api/trpc/**", async route => {
+              const request = route.request();
+              const url = new URL(request.url());
+              const rawProcedures = url.pathname.split("/api/trpc/")[1] ?? "";
+              const procedures = rawProcedures.split(",").filter(Boolean);
+              const results = procedures.map(procedure => {
+                if (procedure === "admin.testimonials") return success(testimonials);
+                if (procedure === "admin.content") return success(contents);
+                if (procedure === "admin.createContent") return success({ id: 999 });
+                if (procedure === "admin.updateContent") return success({ success: true });
+                return success(null);
+              });
+              console.log(`[mock:${viewport.name}] ${request.method()} ${procedures.join(",")}`);
+              await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(results) });
             });
 
             const fail = async message => {
@@ -93,51 +104,58 @@ jobs:
               await page.screenshot({ path: `interaction-artifacts/${viewport.name}-failure-${errors.length}.png`, fullPage: true }).catch(() => {});
             };
 
-            await page.goto(`${baseURL}/admin/relatos`, { waitUntil: "networkidle" });
-            const testimonialParagraph = page.getByText(testimonialText, { exact: true });
-            await testimonialParagraph.waitFor({ state: "visible" });
-            const beforeClass = await testimonialParagraph.getAttribute("class");
-            if (!beforeClass?.includes("line-clamp-3")) await fail("agradecimento não iniciou limitado");
-            await page.getByText("Ver agradecimento completo", { exact: true }).click();
-            const afterClass = await testimonialParagraph.getAttribute("class");
-            if (afterClass?.includes("line-clamp-3")) await fail("agradecimento não expandiu após o clique");
-            if (!(await page.getByText("Recolher agradecimento", { exact: true }).isVisible())) await fail("ação de recolher não apareceu após expansão");
-            await page.getByText("Recolher agradecimento", { exact: true }).click();
-            if (!(await testimonialParagraph.getAttribute("class"))?.includes("line-clamp-3")) await fail("agradecimento não voltou ao estado reduzido");
-            await page.getByRole("button", { name: /Em análise/i }).click();
-            await page.waitForURL("**/admin/relatos/em-analise");
-            if (!(await page.getByText("Membro de validação", { exact: true }).isVisible())) await fail("página Em análise não exibiu o registro do status");
+            try {
+              await page.goto(`${baseURL}/admin/relatos`, { waitUntil: "networkidle" });
+              const testimonialParagraph = page.getByText(testimonialText, { exact: true });
+              await testimonialParagraph.waitFor({ state: "visible", timeout: 15000 });
+              const beforeClass = await testimonialParagraph.getAttribute("class");
+              if (!beforeClass?.includes("line-clamp-3")) await fail("agradecimento não iniciou limitado");
+              await page.getByText("Ver agradecimento completo", { exact: true }).click();
+              const afterClass = await testimonialParagraph.getAttribute("class");
+              if (afterClass?.includes("line-clamp-3")) await fail("agradecimento não expandiu após o clique");
+              if (!(await page.getByText("Recolher agradecimento", { exact: true }).isVisible())) await fail("ação de recolher não apareceu após expansão");
+              await page.getByText("Recolher agradecimento", { exact: true }).click();
+              if (!(await testimonialParagraph.getAttribute("class"))?.includes("line-clamp-3")) await fail("agradecimento não voltou ao estado reduzido");
+              await page.getByRole("button", { name: /Em análise/i }).click();
+              await page.waitForURL("**/admin/relatos/em-analise");
+              if (!(await page.getByText("Membro de validação", { exact: true }).isVisible())) await fail("página Em análise não exibiu o registro do status");
 
-            await page.goto(`${baseURL}/admin/biblioteca-recursos`, { waitUntil: "networkidle" });
-            await page.getByText("Recurso de validação", { exact: true }).click();
-            await page.waitForURL("**/admin/biblioteca-recursos/801/editar");
-            if ((await page.getByLabel("Título").inputValue()) !== "Recurso de validação") await fail("edição da Biblioteca não carregou o item selecionado");
-            await page.getByRole("button", { name: "Voltar para Biblioteca de Recursos" }).click();
-            await page.getByRole("button", { name: "Criar", exact: true }).click();
-            await page.waitForURL("**/admin/biblioteca-recursos/novo");
-            await page.getByLabel("Título").fill("Novo recurso de validação");
-            await page.getByLabel("Resumo / descrição breve").fill("Resumo criado no teste isolado");
-            await page.getByLabel("Conteúdo / descrição completa").fill("Conteúdo criado no teste isolado");
-            await page.getByRole("button", { name: "Criar", exact: true }).click();
-            await page.waitForURL("**/admin/biblioteca-recursos");
+              await page.goto(`${baseURL}/admin/biblioteca-recursos`, { waitUntil: "networkidle" });
+              await page.getByText("Recurso de validação", { exact: true }).click();
+              await page.waitForURL("**/admin/biblioteca-recursos/801/editar");
+              if ((await page.getByLabel("Título").inputValue()) !== "Recurso de validação") await fail("edição da Biblioteca não carregou o item selecionado");
+              await page.getByRole("button", { name: "Voltar para Biblioteca de Recursos" }).click();
+              await page.getByRole("button", { name: "Criar", exact: true }).click();
+              await page.waitForURL("**/admin/biblioteca-recursos/novo");
+              await page.getByLabel("Título").fill("Novo recurso de validação");
+              await page.getByLabel("Resumo / descrição breve").fill("Resumo criado no teste isolado");
+              await page.getByLabel("Conteúdo / descrição completa").fill("Conteúdo criado no teste isolado");
+              await page.getByRole("button", { name: "Criar", exact: true }).click();
+              await page.waitForURL("**/admin/biblioteca-recursos");
 
-            await page.goto(`${baseURL}/admin/material-divulgacao`, { waitUntil: "networkidle" });
-            await page.getByText("Material de validação", { exact: true }).click();
-            await page.waitForURL("**/admin/material-divulgacao/802/editar");
-            if ((await page.getByLabel("Título").inputValue()) !== "Material de validação") await fail("edição do Material de Divulgação não carregou o item selecionado");
-            await page.getByRole("button", { name: "Voltar para Material de Divulgação" }).click();
-            await page.getByRole("button", { name: "Criar", exact: true }).click();
-            await page.waitForURL("**/admin/material-divulgacao/novo");
-            await page.getByLabel("Título").fill("Novo material de validação");
-            await page.getByLabel("Resumo / descrição breve").fill("Resumo criado no teste isolado");
-            await page.getByLabel("Conteúdo / descrição completa").fill("Conteúdo criado no teste isolado");
-            await page.getByRole("button", { name: "Criar", exact: true }).click();
-            await page.waitForURL("**/admin/material-divulgacao");
+              await page.goto(`${baseURL}/admin/material-divulgacao`, { waitUntil: "networkidle" });
+              if (!(await page.getByText("Materiais cadastrados", { exact: true }).isVisible())) await fail("lista de Material de Divulgação não está priorizada");
+              await page.getByText("Material de validação", { exact: true }).click();
+              await page.waitForURL("**/admin/material-divulgacao/802/editar");
+              if ((await page.getByLabel("Título").inputValue()) !== "Material de validação") await fail("edição do Material de Divulgação não carregou o item selecionado");
+              await page.getByRole("button", { name: "Voltar para Material de Divulgação" }).click();
+              await page.getByRole("button", { name: "Adicionar novo material", exact: true }).click();
+              await page.waitForURL("**/admin/material-divulgacao/novo");
+              await page.getByLabel("Título").fill("Novo material de validação");
+              await page.getByLabel("Resumo / descrição breve").fill("Resumo criado no teste isolado");
+              await page.getByLabel("Conteúdo / descrição completa").fill("Conteúdo criado no teste isolado");
+              await page.getByRole("button", { name: "Criar", exact: true }).click();
+              await page.waitForURL("**/admin/material-divulgacao");
 
-            const dimensions = await page.evaluate(() => ({ viewport: innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth }));
-            if (Math.max(dimensions.documentWidth, dimensions.bodyWidth) > dimensions.viewport + 1) await fail("overflow horizontal após as interações");
-            await page.screenshot({ path: `interaction-artifacts/${viewport.name}-success.png`, fullPage: true });
-            await context.close();
+              const dimensions = await page.evaluate(() => ({ viewport: innerWidth, documentWidth: document.documentElement.scrollWidth, bodyWidth: document.body.scrollWidth }));
+              if (Math.max(dimensions.documentWidth, dimensions.bodyWidth) > dimensions.viewport + 1) await fail("overflow horizontal após as interações");
+              await page.screenshot({ path: `interaction-artifacts/${viewport.name}-success.png`, fullPage: true });
+            } catch (error) {
+              await fail(error instanceof Error ? `exceção no fluxo: ${error.message}` : "exceção desconhecida no fluxo");
+              console.log(`[body:${viewport.name}] ${await page.locator("body").innerText().catch(() => "")}`);
+            } finally {
+              await context.close();
+            }
           }
 
           await browser.close();
@@ -150,6 +168,10 @@ jobs:
 
       - name: Executar interações em Mobile Tablet e Desktop
         run: node scripts/validate-latest-interactions.mjs
+
+      - name: Exibir log da aplicação
+        if: always()
+        run: cat /tmp/latest-interactions-server.log || true
 
       - name: Salvar evidências
         if: always()
