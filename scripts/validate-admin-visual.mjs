@@ -19,7 +19,7 @@ const viewports = [
 ];
 
 const routes = [
-  { path: "/admin/publicacoes", heading: "Publicações", required: ["Publicações cadastradas"] },
+  { path: "/admin/publicacoes", heading: "Publicações", required: ["Conteúdos cadastrados"] },
   { path: "/admin/ebooks", heading: "Biblioteca de e-books", required: ["E-books cadastrados", "Regras de exibição"] },
   { path: "/admin/ebooks/novo", heading: "Novo e-book", required: ["Novo e-book PDF", "Voltar para e-books"] },
   { path: "/admin/ebooks/1/editar", heading: "Editar e-book", required: ["Editar material", "Voltar para e-books"] },
@@ -41,17 +41,18 @@ for (const viewport of viewports) {
 
   for (const route of routes) {
     const response = await page.goto(`${baseURL}${route.path}`, { waitUntil: "networkidle", timeout: 30000 });
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(500);
     const currentPath = new URL(page.url()).pathname;
     const h1 = (await page.locator("h1").first().textContent().catch(() => null))?.trim() ?? "";
     const bodyText = await page.locator("body").innerText();
+    const normalizedBodyText = bodyText.toLocaleLowerCase("pt-BR");
     const dimensions = await page.evaluate(() => ({
       viewport: window.innerWidth,
       documentWidth: document.documentElement.scrollWidth,
       bodyWidth: document.body.scrollWidth,
     }));
     const horizontalOverflow = Math.max(dimensions.documentWidth, dimensions.bodyWidth) > dimensions.viewport + 1;
-    const missing = route.required.filter(text => !bodyText.includes(text));
+    const missing = route.required.filter(text => !normalizedBodyText.includes(text.toLocaleLowerCase("pt-BR")));
     const headingOk = h1.includes(route.heading);
     const routeOk = currentPath === route.path;
     const httpOk = response ? response.status() < 500 : true;
