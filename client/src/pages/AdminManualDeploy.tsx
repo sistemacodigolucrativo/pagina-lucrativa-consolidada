@@ -24,12 +24,24 @@ type DeployState = {
   updatedAt?: string;
 };
 
+type ManualDeployAudit = {
+  status: "running" | "completed" | "failed";
+  sha: string;
+  requestedBy: number | null;
+  requestedAt: string | null;
+  startedAt: string | null;
+  finishedAt: string | null;
+  stage: string | null;
+  exitCode: number | null;
+};
+
 type ManualDeployInfo = {
   available: boolean;
   currentSha: string | null;
   workerActive: boolean;
   queued: boolean;
   deployStatus: DeployState;
+  lastManualDeploy: ManualDeployAudit | null;
   updates: string[];
 };
 
@@ -52,6 +64,18 @@ function statusLabel(info: ManualDeployInfo | null) {
   if (info.deployStatus.status === "failed") return "Último deploy falhou";
   if (info.deployStatus.status === "completed") return "Pronto";
   return info.available ? "Pronto" : "Indisponível";
+}
+
+function manualAuditLabel(audit: ManualDeployAudit | null) {
+  if (!audit) return "Ainda não verificado";
+  if (audit.status === "running") return "Execução manual em andamento";
+  if (audit.status === "completed") return "Execução manual confirmada";
+  return "Execução manual falhou";
+}
+
+function formatDate(value: string | null) {
+  if (!value) return "—";
+  return new Date(value).toLocaleString("pt-BR");
 }
 
 export default function AdminManualDeploy() {
@@ -87,11 +111,12 @@ export default function AdminManualDeploy() {
   const blocked = !info?.available || info?.queued || info?.deployStatus.status === "deploying" || submitting;
   const progress = Math.max(0, Math.min(100, Math.round(info?.deployStatus.progress ?? 0)));
   const shortSha = useMemo(() => info?.currentSha?.slice(0, 12) ?? "—", [info?.currentSha]);
+  const audit = info?.lastManualDeploy ?? null;
 
   async function startDeploy() {
     setSubmitting(true);
     try {
-      const result = await request<{ status: "queued"; sha: string }>("/api/admin/manual-deploy", {
+      const result = await request<{ status: "queued"; sha: string; requestedAt: string }>("/api/admin/manual-deploy", {
         method: "POST",
         body: JSON.stringify({ confirm: true }),
       });
@@ -159,6 +184,27 @@ export default function AdminManualDeploy() {
               <RefreshCw className="size-4" /> Atualizar estado
             </button>
           </article>
+        </section>
+
+        <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5 lg:p-6" aria-labelledby="manual-deploy-audit-title">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <h2 id="manual-deploy-audit-title" className="text-lg font-medium text-white">Última execução manual verificada</h2>
+              <p className="mt-1 text-sm leading-6 text-zinc-400">Este registro é gravado pelo worker da VPS. Um simples “Deploy concluído” genérico não é tratado como prova de execução manual.</p>
+            </div>
+            <span className={audit?.status === "completed" ? "w-fit shrink-0 rounded-full border border-emerald-300/25 bg-emerald-300/10 px-3 py-1 text-xs font-medium text-emerald-200" : audit?.status === "failed" ? "w-fit shrink-0 rounded-full border border-red-400/25 bg-red-400/10 px-3 py-1 text-xs font-medium text-red-200" : "w-fit shrink-0 rounded-full border border-amber-300/20 bg-amber-300/5 px-3 py-1 text-xs font-medium text-amber-100"}>{manualAuditLabel(audit)}</span>
+          </div>
+          {audit ? (
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-[11px] uppercase tracking-wider text-zinc-500">SHA manual</span><strong className="mt-1 block break-all font-mono text-xs text-zinc-200">{audit.sha.slice(0, 12)}</strong></div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-[11px] uppercase tracking-wider text-zinc-500">Solicitado</span><strong className="mt-1 block text-xs font-medium text-zinc-200">{formatDate(audit.requestedAt)}</strong></div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-[11px] uppercase tracking-wider text-zinc-500">Iniciado</span><strong className="mt-1 block text-xs font-medium text-zinc-200">{formatDate(audit.startedAt)}</strong></div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-[11px] uppercase tracking-wider text-zinc-500">Finalizado</span><strong className="mt-1 block text-xs font-medium text-zinc-200">{formatDate(audit.finishedAt)}</strong></div>
+              <div className="rounded-xl border border-white/10 bg-black/25 p-3 sm:col-span-2 lg:col-span-4"><span className="text-[11px] uppercase tracking-wider text-zinc-500">Resultado real</span><strong className={audit.status === "completed" ? "mt-1 block text-sm font-medium text-emerald-200" : audit.status === "failed" ? "mt-1 block text-sm font-medium text-red-200" : "mt-1 block text-sm font-medium text-amber-100"}>{audit.stage || "Execução registrada pelo worker"}{audit.exitCode !== null ? ` · código ${audit.exitCode}` : ""}</strong></div>
+            </div>
+          ) : (
+            <div className="mt-4 rounded-xl border border-dashed border-white/15 p-4 text-sm leading-6 text-zinc-400">Nenhuma execução manual foi comprovada pelo worker desta release ainda. Execute o deploy manual e aguarde este bloco registrar o resultado.</div>
+          )}
         </section>
 
         <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5 lg:p-6">
