@@ -57,3 +57,5 @@ jobs:
           name: admin-visual-validation
           path: visual-artifacts/*.png
           if-no-files-found: warn
+
+# Reexecução após alinhar as asserções aos rótulos realmente renderizados.
