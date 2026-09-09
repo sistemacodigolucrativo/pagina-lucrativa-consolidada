@@ -1,0 +1,57 @@
+name: Revalidar anotações administrativas
+
+on:
+  push:
+    branches: [feat-admin-content-ebooks-testimonials]
+    paths:
+      - .github/workflows/retry-admin-content-annotations.yml
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: feat-admin-content-ebooks-testimonials
+          fetch-depth: 0
+      - name: Reaplicar patch revisado existente
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path('.github/workflows/apply-admin-content-annotations.yml').read_text().splitlines()
+          start = next(i for i, line in enumerate(source) if line.strip() == "python3 - <<'PY'")
+          end = next(i for i in range(start + 1, len(source)) if source[i].strip() == 'PY')
+          block = source[start:end + 1]
+          indent = len(block[0]) - len(block[0].lstrip())
+          Path('/tmp/apply-annotations.sh').write_text('\n'.join(line[indent:] if len(line) >= indent else line for line in block) + '\n')
+          PY
+          bash /tmp/apply-annotations.sh
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Ativar pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@10.4.1 --activate
+      - name: Instalar dependências
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm check
+      - name: Testes
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+      - name: Commitar implementação validada
+        shell: bash
+        run: |
+          git config user.name "sistemacodigolucrativo"
+          git config user.email "sistemacodigolucrativo@gmail.com"
+          git add client/src/pages/AdminPublications.tsx client/src/pages/AdminEbooks.tsx client/src/pages/AdminTestimonials.tsx
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: implement admin content ebook and testimonial annotations"
+          git push origin HEAD:feat-admin-content-ebooks-testimonials
