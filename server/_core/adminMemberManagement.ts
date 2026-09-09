@@ -279,6 +279,22 @@ export function registerAdminMemberManagement(app: Express, appPrefix: string) {
       res.json({ success: true, deleteAfter: deleteAfter.toISOString() });
     });
 
+    app.post(`${path}/delete-now`, async (req, res) => {
+      if (!await requireAdmin(req, res)) return;
+      const userId = Number(req.body?.userId);
+      if (!Number.isInteger(userId) || userId <= 0) return void res.status(400).json({ error: "Membro inválido." });
+      const member = await getManagedMember(userId);
+      if (!member) return void res.status(404).json({ error: "Membro não encontrado." });
+      const control = parseControl((await getControlRow(userId))?.body);
+      if (!control?.deletionRequestedAt) return void res.status(409).json({ error: "A exclusão definitiva só pode ser executada para uma conta que esteja na área temporária de exclusão." });
+      try {
+        await purgeMember(userId);
+        res.json({ success: true });
+      } catch (error) {
+        res.status(500).json({ error: error instanceof Error ? error.message : "Falha ao excluir definitivamente o membro." });
+      }
+    });
+
     app.post(`${path}/restore`, async (req, res) => {
       const admin = await requireAdmin(req, res); if (!admin) return;
       const userId = Number(req.body?.userId);
