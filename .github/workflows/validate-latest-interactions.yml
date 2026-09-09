@@ -118,7 +118,7 @@ jobs:
               if (!(await page.getByText("Recolher agradecimento", { exact: true }).isVisible())) await fail("ação de recolher não apareceu após expansão");
               await page.getByText("Recolher agradecimento", { exact: true }).click();
               if (!(await testimonialParagraph.getAttribute("class"))?.includes("line-clamp-3")) await fail("agradecimento não voltou ao estado reduzido");
-              await page.getByRole("button", { name: /Em análise/i }).click();
+              await page.getByRole("button", { name: /^Em análise 1$/i }).click();
               await page.waitForURL("**/admin/relatos/em-analise");
               if (!(await page.getByText("Membro de validação", { exact: true }).isVisible())) await fail("página Em análise não exibiu o registro do status");
 
