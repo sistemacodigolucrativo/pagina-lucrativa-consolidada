@@ -20,7 +20,7 @@ describe("atribuição e conversões de campanhas", () => {
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     const fixes = await readFile(path.join(root, "server/criticalFlowFixes.ts"), "utf8");
     expect(router).toContain("createApplicationWithUniqueEmail(input, ctx.req)");
-    expect(fixes).toContain("return createApplication(input, request)");
+    expect(fixes).toContain("return createApplication(await resolveApplicationAffiliate(input), request)");
     expect(db).toContain('readCampaignCookie(request, "pl_visitor")');
     expect(db).toContain('readCampaignCookie(request, "pl_session")');
   });
