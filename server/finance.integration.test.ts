@@ -32,11 +32,12 @@ describe("relatório de adesões do membro", () => {
     expect(page).not.toContain("Saldo confirmado");
   });
 
-  it("remove o módulo administrativo de lançamentos sem apagar o histórico", async () => {
+  it("mantém financeiro administrativo real como leitura/auditoria sem reabrir lançamentos manuais legados", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     const schema = await readFile(path.join(root, "drizzle/schema.ts"), "utf8");
     const adminOffice = await readFile(path.join(root, "client/src/pages/AdminOffice.tsx"), "utf8");
+    const adminCommercial = await readFile(path.join(root, "server/_core/adminCommercialOperations.ts"), "utf8");
     expect(router).not.toContain("transactions: adminProcedure");
     expect(router).not.toContain("financeMembers: adminProcedure");
     expect(router).not.toContain("createTransaction: adminProcedure");
@@ -51,6 +52,8 @@ describe("relatório de adesões do membro", () => {
     expect(adminOffice).not.toContain("grossVolumeCents");
     expect(adminOffice).not.toContain("trpc.admin.transactions");
     expect(adminOffice).not.toContain("Volume confirmado");
+    expect(adminCommercial).toContain('app.get(prefix + "/finance", wrap(handleFinance))');
+    expect(adminCommercial).toContain("await requireAdmin(req, res)");
   });
 
   it("preserva campanhas e conversões sem manter escritor financeiro manual", async () => {
@@ -63,13 +66,15 @@ describe("relatório de adesões do membro", () => {
     expect(memberOperation).toContain("conversionType");
   });
 
-  it("preserva as rotas do membro e mantém a rota financeira antiga como redirecionamento", async () => {
+  it("preserva as rotas do membro e expõe financeiro administrativo consolidado", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
-    const legacy = await readFile(path.join(root, "client/src/pages/AdminOperations.tsx"), "utf8");
+    const adminFinance = await readFile(path.join(root, "client/src/pages/AdminFinance.tsx"), "utf8");
     expect(app).toContain('path="/membros/ganhos" component={MemberEarnings}');
-    expect(app).toContain('path="/admin/financeiro" component={AdminOperations}');
+    expect(app).toContain('import AdminFinance from "./pages/AdminFinance"');
+    expect(app).toContain('path="/admin/financeiro" component={AdminFinance}');
+    expect(adminFinance).toContain('fetch("/api/admin/finance"');
+    expect(adminFinance).toContain("Pedidos confirmados");
     expect(app).not.toContain("AdminTransactions");
-    expect(legacy).toContain("Módulo administrativo removido");
     await expect(access(path.join(root, "client/src/pages/AdminTransactions.tsx"))).rejects.toThrow();
   });
 
