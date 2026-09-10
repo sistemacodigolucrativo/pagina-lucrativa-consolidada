@@ -11,7 +11,7 @@ import {
 
 const affiliateSlugPattern = /^[a-z0-9-]{3,96}$/;
 const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
-const affiliateLandingPaths = new Set(["/", "/dev", "/dev/", appPrefix || null, appPrefix ? `${appPrefix}/` : null].filter((path): path is string => Boolean(path)));
+const affiliateLandingPaths = new Set(["/", "/dev", "/dev/", appPrefix || null, appPrefix ? appPrefix + "/" : null].filter((path): path is string => Boolean(path)));
 
 export function registerAffiliateLinkTracking(app: Express) {
   app.use(async (req: Request, res: Response, next: NextFunction) => {
@@ -21,16 +21,20 @@ export function registerAffiliateLinkTracking(app: Express) {
         return;
       }
 
-      const rawSlug = req.query.afiliado;
-      const hasExplicitAffiliate = Object.prototype.hasOwnProperty.call(req.query, "afiliado");
-      const explicitMemberSlug = typeof rawSlug === "string" ? rawSlug.trim().toLowerCase() : null;
-      const defaultAffiliate = !hasExplicitAffiliate ? await resolveDefaultAffiliateProfile() : null;
-      const memberSlug = explicitMemberSlug || defaultAffiliate?.slug || null;
-      if (!memberSlug || !affiliateSlugPattern.test(memberSlug)) {
+      if (req.query.pl_ref === "campaign") {
         next();
         return;
       }
-      if (req.query.pl_ref === "campaign") {
+
+      const rawSlug = req.query.afiliado;
+      const explicitMemberSlug = typeof rawSlug === "string" ? rawSlug.trim().toLowerCase() : null;
+      const defaultAffiliate = await resolveDefaultAffiliateProfile();
+      const candidateSlugs = Array.from(new Set([
+        explicitMemberSlug && affiliateSlugPattern.test(explicitMemberSlug) ? explicitMemberSlug : null,
+        defaultAffiliate?.slug && affiliateSlugPattern.test(defaultAffiliate.slug) ? defaultAffiliate.slug : null,
+      ].filter((slug): slug is string => Boolean(slug))));
+
+      if (!candidateSlugs.length) {
         next();
         return;
       }
@@ -38,7 +42,7 @@ export function registerAffiliateLinkTracking(app: Express) {
       const visitorId = getOrCreateTrackingCookie(req, res, trackingCookieNames.visitor, 365 * 24 * 60 * 60 * 1000);
       const sessionId = getOrCreateTrackingCookie(req, res, trackingCookieNames.session, 30 * 60 * 1000);
       const userAgent = req.get("user-agent") ?? "";
-      await recordPublicAffiliateLinkClick(memberSlug, {
+      const metadata = {
         visitorId,
         sessionId,
         occurredAt: new Date(),
@@ -50,9 +54,15 @@ export function registerAffiliateLinkTracking(app: Express) {
         utmCampaign: getTrackingQueryValue(req, "utm_campaign"),
         utmContent: getTrackingQueryValue(req, "utm_content"),
         landingPath: req.originalUrl.slice(0, 512),
-      }).catch(error => {
-        console.error("Falha ao registrar clique do link principal de afiliado.", error);
-      });
+      };
+
+      for (const memberSlug of candidateSlugs) {
+        const recorded = await recordPublicAffiliateLinkClick(memberSlug, metadata).catch(error => {
+          console.error("Falha ao registrar clique do link principal de afiliado.", error);
+          return null;
+        });
+        if (recorded) break;
+      }
       next();
     } catch (error) {
       next(error);
