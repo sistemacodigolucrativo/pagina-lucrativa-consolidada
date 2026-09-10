@@ -26,6 +26,7 @@ import AdminOffice from "./pages/AdminOffice";
 import AdminOperation from "./pages/AdminOperation";
 import AdminOrders from "./pages/AdminOrders";
 import AdminFinance from "./pages/AdminFinance";
+import AdminPerformance from "./pages/AdminPerformance";
 import AdminAudit from "./pages/AdminAudit";
 import AdminFutureImplementations from "./pages/AdminFutureImplementations";
 import AdminToast from "./pages/AdminToast";
@@ -124,6 +125,7 @@ function AppRoutes() {
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
     <Route path="/admin/operacao" component={AdminOperation} />
+    <Route path="/admin/pontos" component={AdminPerformance} />
     <Route path="/admin/ebooks/novo" component={AdminEbooks} />
     <Route path="/admin/ebooks/:ebookId/editar" component={AdminEbooks} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
