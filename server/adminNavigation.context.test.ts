@@ -6,22 +6,21 @@ const root = resolve(import.meta.dirname, "..");
 const read = (relativePath: string) => readFileSync(resolve(root, relativePath), "utf8");
 
 describe("navegação administrativa contextual", () => {
-  it("mantém a navegação administrativa sem módulos removidos", () => {
+  it("mantém a navegação administrativa com módulos comerciais reais e sem módulos removidos", () => {
     const navigation = read("client/src/lib/adminNavigation.ts");
     expect(navigation).toContain('label: "Dashboard", path: "/admin"');
     expect(navigation).not.toContain('label: "Comunicações"');
     expect(navigation).not.toContain('path: "/admin/comunicacoes"');
     expect(navigation).not.toContain('label: "Divulgação"');
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
+    expect(navigation).toContain('label: "Operação", path: "/admin/operacao", group: "Operação comercial"');
+    expect(navigation).toContain('label: "Pedidos", path: "/admin/pedidos", group: "Operação comercial"');
+    expect(navigation).toContain('label: "Financeiro", path: "/admin/financeiro", group: "Operação comercial"');
+    expect(navigation).toContain('label: "Pontos/Performance", path: "/admin/pontos", group: "Operação comercial"');
     expect(navigation).toContain('label: "Suporte", path: "/admin/suporte"');
     expect(navigation).toContain('label: "Preview", path: "/preview", group: "Sistema"');
     expect(navigation).not.toContain('label: "Auditoria", path: "/admin/auditoria"');
     expect(navigation).not.toContain('label: "Configurações"');
-    expect(navigation).not.toContain('label: "Pedidos"');
-    expect(navigation).not.toContain('path: "/admin/pedidos"');
-    expect(navigation).not.toContain('label: "Financeiro"');
-    expect(navigation).not.toContain('path: "/admin/financeiro"');
-    expect(navigation).not.toContain('label: "Operação"');
     expect(navigation).not.toContain('label: "Central de manutenção"');
     expect(navigation).not.toContain('label: "Relatos"');
     expect(navigation).not.toContain('label: "Pontuação"');
@@ -48,12 +47,16 @@ describe("navegação administrativa contextual", () => {
     expect(preview).toContain('href={withAppBase("/")}');
   });
 
-  it("mantém Publicações como CMS oficial e separa suporte e divulgação", () => {
+  it("mantém Publicações como CMS oficial e separa suporte, divulgação e módulos comerciais", () => {
     const app = read("client/src/App.tsx");
-    const legacyOperations = read("client/src/pages/AdminOperations.tsx");
     const adminOffice = read("client/src/pages/AdminOffice.tsx");
+    const adminCommercial = read("server/_core/adminCommercialOperations.ts");
     expect(app).toContain('path="/admin/publicacoes" component={AdminPublications}');
-    expect(app).toContain('path="/admin/divulgacao" component={AdminOperations}');
+    expect(app).toContain('path="/admin/divulgacao" component={AdminOperation}');
+    expect(app).toContain('path="/admin/operacao" component={AdminOperation}');
+    expect(app).toContain('path="/admin/pedidos" component={AdminOrders}');
+    expect(app).toContain('path="/admin/financeiro" component={AdminFinance}');
+    expect(app).toContain('path="/admin/pontos" component={AdminPerformance}');
     expect(app).not.toContain('component={AdminOutreach}');
     expect(app).not.toContain('AdminCommunications');
     expect(app).not.toContain('/admin/comunicacoes');
@@ -61,14 +64,13 @@ describe("navegação administrativa contextual", () => {
     expect(app).toContain('path="/admin/auditoria" component={AdminAudit}');
     expect(app).not.toContain("AdminSettings");
     expect(app).not.toContain('/admin/configuracoes');
-    expect(app).toContain('path="/admin/pedidos" component={AdminOperations}');
-    expect(app).toContain('path="/admin/financeiro" component={AdminOperations}');
     expect(app).not.toContain('component={AdminTransactions}');
     expect(app).not.toContain('component={AdminApplications}');
-    expect(legacyOperations).toContain("Módulo administrativo removido");
-    expect(legacyOperations).toContain('setLocation("/admin")');
-    expect(legacyOperations).not.toContain("createContent");
-    expect(legacyOperations).not.toContain("updateContentStatus");
+    expect(adminCommercial).toContain("registerAdminCommercialOperations");
+    expect(adminCommercial).toContain('app.get(prefix + "/orders"');
+    expect(adminCommercial).toContain('app.get(prefix + "/finance"');
+    expect(adminCommercial).toContain('app.get(prefix + "/operation"');
+    expect(adminCommercial).toContain('app.get(prefix + "/performance"');
     expect(adminOffice).not.toContain("trpc.admin.contacts");
     expect(adminOffice).not.toContain("capturedContacts");
     expect(adminOffice).not.toContain("/admin/divulgacao");
