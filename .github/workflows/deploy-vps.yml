@@ -1,8 +1,9 @@
 name: Validar e publicar na VPS
 
 on:
-  # Autodeploy temporariamente pausado para validação manual pelo Painel Administrativo.
-  # O workflow permanece disponível para disparo manual e mantém toda a lógica de validação/publicação.
+  push:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       ref:
