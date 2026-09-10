@@ -243,11 +243,7 @@ async function handleReceiptReview(req: Request, res: Response) {
     return;
   }
 
-  const result = await reviewPaymentReceipt(application.ownerUserId, { applicationId, receiptId, status });
-  await db
-    .update(applicationPaymentReceipts)
-    .set({ reviewedBy: admin.id, reviewedAt: new Date() })
-    .where(eq(applicationPaymentReceipts.id, receiptId));
+  const result = await reviewPaymentReceipt(application.ownerUserId, { applicationId, receiptId, status }, admin.id);
   res.json({ success: true, receipt: result });
 }
 
