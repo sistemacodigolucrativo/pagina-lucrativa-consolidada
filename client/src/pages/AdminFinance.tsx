@@ -1,7 +1,6 @@
 import DashboardLayout from "@/components/DashboardLayout";
 import { adminMenu } from "@/lib/adminNavigation";
 import { withAppBase } from "@/lib/devPath";
-import { applicationPaymentStatusLabel } from "@shared/applications";
 import { CircleDollarSign, RefreshCcw } from "lucide-react";
 import { useEffect, useState } from "react";
 
