@@ -30,7 +30,7 @@ describe("supervisão administrativa da Central de Divulgação", () => {
     expect(adminOffice).not.toContain("capturedContacts");
     expect(adminOffice).not.toContain("/admin/divulgacao");
     expect(adminOperation).toContain('fetch(withAppBase("/api/admin/operation');
-    expect(adminOperation).toContain("Campanhas ativas");
+    expect(adminOperation).toContain("Cliques de campanhas");
     expect(adminCommercial).toContain('app.get(prefix + "/operation", wrap(handleOperation))');
     expect(adminCommercial).toContain("await requireAdmin(req, res)");
     expect(router).not.toContain("contacts: adminProcedure");
