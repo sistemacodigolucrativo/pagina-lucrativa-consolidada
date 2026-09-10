@@ -6,12 +6,13 @@ const root = process.env.PROJECT_ROOT || process.cwd();
 
 const read = (relativePath: string) => readFile(path.join(root, relativePath), "utf8");
 
-describe("remoção da supervisão global de Divulgação", () => {
-  it("remove a superfície Admin sem deixar rota operacional ou tela órfã", async () => {
+describe("supervisão administrativa da Central de Divulgação", () => {
+  it("mantém Divulgação fora do menu legado e aponta a rota para Operação real", async () => {
     const app = await read("client/src/App.tsx");
     const navigation = await read("client/src/lib/adminNavigation.ts");
     const adminOffice = await read("client/src/pages/AdminOffice.tsx");
-    const legacy = await read("client/src/pages/AdminOperations.tsx");
+    const adminOperation = await read("client/src/pages/AdminOperation.tsx");
+    const adminCommercial = await read("server/_core/adminCommercialOperations.ts");
     const router = await read("server/routers.ts");
     const db = await read("server/db.ts");
 
@@ -19,15 +20,19 @@ describe("remoção da supervisão global de Divulgação", () => {
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
     expect(navigation).not.toContain('label: "Comunicações"');
     expect(navigation).not.toContain('path: "/admin/comunicacoes"');
-    expect(app).toContain('path="/admin/divulgacao" component={AdminOperations}');
+    expect(navigation).toContain('label: "Operação", path: "/admin/operacao"');
+    expect(app).toContain('path="/admin/divulgacao" component={AdminOperation}');
+    expect(app).toContain('path="/admin/operacao" component={AdminOperation}');
     expect(app).not.toContain("AdminOutreach");
     expect(app).not.toContain("AdminCommunications");
     expect(app).not.toContain('/admin/comunicacoes');
     expect(adminOffice).not.toContain("trpc.admin.contacts");
     expect(adminOffice).not.toContain("capturedContacts");
     expect(adminOffice).not.toContain("/admin/divulgacao");
-    expect(legacy).toContain("Módulo administrativo removido");
-    expect(legacy).toContain('setLocation("/admin")');
+    expect(adminOperation).toContain('fetch("/api/admin/operation');
+    expect(adminOperation).toContain("Campanhas ativas");
+    expect(adminCommercial).toContain('app.get(prefix + "/operation", wrap(handleOperation))');
+    expect(adminCommercial).toContain("await requireAdmin(req, res)");
     expect(router).not.toContain("contacts: adminProcedure");
     expect(router).not.toContain("updateContact: adminProcedure");
     expect(db).not.toContain("export async function getAdminContacts");
