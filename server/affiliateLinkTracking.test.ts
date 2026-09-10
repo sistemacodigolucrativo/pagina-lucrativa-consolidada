@@ -83,17 +83,22 @@ describe("affiliate link tracking", () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
-  it("does not replace an invalid explicit affiliate parameter with the admin default", async () => {
+  it("falls back to the admin default when the explicit affiliate parameter is invalid", async () => {
     mocks.resolveDefaultAffiliateProfile.mockResolvedValueOnce({ userId: 9, slug: "admin-global" });
+    mocks.recordPublicAffiliateLinkClick.mockResolvedValueOnce({ userId: 9 });
     const handler = getHandler();
     const response = { append: vi.fn() };
     const next = vi.fn();
 
     await handler({ ...request({ afiliado: "slug invalido" }), originalUrl: "/?afiliado=slug%20invalido" }, response, next);
 
-    expect(mocks.resolveDefaultAffiliateProfile).not.toHaveBeenCalled();
-    expect(mocks.recordPublicAffiliateLinkClick).not.toHaveBeenCalled();
-    expect(response.append).not.toHaveBeenCalled();
+    expect(mocks.resolveDefaultAffiliateProfile).toHaveBeenCalledOnce();
+    expect(mocks.recordPublicAffiliateLinkClick).toHaveBeenCalledWith("admin-global", expect.objectContaining({
+      visitorId: expect.any(String),
+      sessionId: expect.any(String),
+      landingPath: "/?afiliado=slug%20invalido",
+    }));
+    expect(response.append).toHaveBeenCalledTimes(2);
     expect(next).toHaveBeenCalledOnce();
   });
 });
