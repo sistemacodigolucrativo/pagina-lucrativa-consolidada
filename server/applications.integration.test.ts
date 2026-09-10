@@ -12,14 +12,21 @@ describe("gestão de solicitações públicas", () => {
     expect(db).toContain("eq(applications.trackingCode, trackingCode)");
     expect(router).toContain("lookup: publicProcedure.input");
   });
-  it("remove o contrato operacional global de pedidos da administração", async () => {
+  it("mantém pedidos administrativos em módulo real sem reativar o contrato tRPC antigo", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const navigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
+    const adminCommercial = await readFile(path.join(root, "server/_core/adminCommercialOperations.ts"), "utf8");
     expect(router).not.toContain("applications: adminProcedure");
     expect(router).not.toContain("updateApplication: adminProcedure");
     expect(app).not.toContain("AdminApplications");
-    expect(navigation).not.toContain('label: "Pedidos"');
+    expect(app).toContain('import AdminOrders from "./pages/AdminOrders"');
+    expect(app).toContain('path="/admin/pedidos" component={AdminOrders}');
+    expect(navigation).toContain('label: "Pedidos"');
+    expect(navigation).toContain('path: "/admin/pedidos"');
+    expect(adminCommercial).toContain('app.get(prefix + "/orders"');
+    expect(adminCommercial).toContain('app.post(prefix + "/orders/:id/receipts/:receiptId/review"');
+    expect(adminCommercial).toContain("requireAdmin");
     await expect(access(path.join(root, "client/src/pages/AdminApplications.tsx"))).rejects.toThrow();
   });
   it("mantém solicitações atribuídas apenas para pedidos que ainda exigem decisão", async () => {
@@ -27,16 +34,18 @@ describe("gestão de solicitações públicas", () => {
     expect(db).toContain('application.paymentStatus !== "confirmed"');
     expect(db).toContain("shouldHideRejectedApplication");
   });
-  it("registra o acompanhamento público e mantém a rota admin antiga como redirecionamento", async () => {
+  it("registra o acompanhamento público e mantém pedidos no backoffice real", async () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");
     const confirmation = await readFile(path.join(root, "client/src/pages/ApplicationConfirmation.tsx"), "utf8");
-    const legacy = await readFile(path.join(root, "client/src/pages/AdminOperations.tsx"), "utf8");
+    const adminCommercial = await readFile(path.join(root, "server/_core/adminCommercialOperations.ts"), "utf8");
     expect(app).toContain('path="/pedido/acompanhar" component={ApplicationTracking}');
-    expect(app).toContain('path="/admin/pedidos" component={AdminOperations}');
+    expect(app).toContain('path="/admin/pedidos" component={AdminOrders}');
+    expect(app).not.toContain('path="/admin/pedidos" component={AdminOperations}');
     expect(home).toContain("data.trackingCode");
     expect(confirmation).toContain("Acompanhar solicitação");
-    expect(legacy).toContain("Módulo administrativo removido");
+    expect(adminCommercial).toContain("async function handleOrders");
+    expect(adminCommercial).toContain("async function handleOrderDetail");
   });
 
   it("preserva os contratos público e do membro para pedido, pagamento e ativação", async () => {
@@ -59,12 +68,15 @@ describe("gestão de solicitações públicas", () => {
     expect(db).toContain("onDuplicateKeyUpdate");
   });
 
-  it("não usa patrocinador fallback quando o pedido informa afiliado explícito inválido", async () => {
-    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
-    expect(db).toContain("const hasExplicitAffiliateSlug = input.affiliateSlugProvided === true || Boolean(affiliateSlug)");
-    expect(db).toContain("if (!owner[0] && !hasExplicitAffiliateSlug)");
-    expect(db).toContain("affiliateSlug: owner[0]?.slug ?? null");
-    expect(db).toContain("ownerUserId: owner[0]?.userId ?? null");
+  it("resolve afiliado explícito inválido para o afiliado padrão antes de criar o pedido", async () => {
+    const criticalFlow = await readFile(path.join(root, "server/criticalFlowFixes.ts"), "utf8");
+    expect(criticalFlow).toContain("async function resolveApplicationAffiliate");
+    expect(criticalFlow).toContain("const candidateSlug = normalizeNullableSlug(input.affiliateSlug)");
+    expect(criticalFlow).toContain("db.select({ slug: memberProfiles.slug })");
+    expect(criticalFlow).toContain("affiliateSlugProvided: true");
+    expect(criticalFlow).toContain("const defaultAffiliate = await resolveDefaultAffiliateProfile()");
+    expect(criticalFlow).toContain("affiliateSlugProvided: false");
+    expect(criticalFlow).toContain("return createApplication(await resolveApplicationAffiliate(input), request)");
   });
 
   it("resolve o administrador global como afiliado padrão quando o pedido não informa afiliado", async () => {
@@ -88,24 +100,30 @@ describe("gestão de solicitações públicas", () => {
     expect(resolver).not.toContain('eq(users.role, "user")');
   });
 
-  it("mantém prioridade do afiliado explícito sobre o fallback administrativo", async () => {
-    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
-    const createApplication = db.slice(db.indexOf("export async function createApplication"), db.indexOf("export async function getMemberAffiliateApplications"));
-    expect(createApplication).toContain("affiliateSlug\n    ? await db.select");
-    expect(createApplication.indexOf("affiliateSlug\n    ? await db.select")).toBeLessThan(createApplication.indexOf("const defaultAffiliate = await resolveDefaultAffiliateProfile()"));
-    expect(createApplication).toContain("if (!owner[0] && !hasExplicitAffiliateSlug)");
+  it("mantém prioridade do afiliado explícito válido sobre o fallback administrativo", async () => {
+    const criticalFlow = await readFile(path.join(root, "server/criticalFlowFixes.ts"), "utf8");
+    const resolver = criticalFlow.slice(criticalFlow.indexOf("async function resolveApplicationAffiliate"), criticalFlow.indexOf("export async function createApplicationWithUniqueEmail"));
+    expect(resolver).toContain("if (candidateSlug)");
+    expect(resolver).toContain("where(eq(memberProfiles.slug, candidateSlug))");
+    expect(resolver).toContain("return { ...input, affiliateSlug: rows[0].slug, affiliateSlugProvided: true }");
+    expect(resolver.indexOf("where(eq(memberProfiles.slug, candidateSlug))")).toBeLessThan(resolver.indexOf("const defaultAffiliate = await resolveDefaultAffiliateProfile()"));
+    expect(resolver).toContain("return { ...input, affiliateSlug: defaultAffiliate.slug, affiliateSlugProvided: false }");
   });
 
-  it("resolve o perfil público padrão da Home sem query string", async () => {
+  it("resolve o perfil público padrão da Home quando não há afiliado válido carregado", async () => {
     const router = await readFile(path.join(root, "server/routers.ts"), "utf8");
     const home = await readFile(path.join(root, "client/src/pages/Home.tsx"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     expect(router).toContain("defaultAffiliateProfile: publicProcedure.query");
     expect(db).toContain("export async function getDefaultPublicAffiliateProfile()");
-    expect(home).toContain("const hasExplicitAffiliate = affiliateParams?.has(\"afiliado\") ?? false");
-    expect(home).toContain("trpc.public.defaultAffiliateProfile.useQuery(undefined, { enabled: !hasExplicitAffiliate })");
-    expect(home).toContain("const effectiveAffiliate = hasExplicitAffiliate ? affiliate.data : affiliate.data ?? defaultAffiliate.data");
-    expect(home).toContain("affiliateSlugProvided: hasExplicitAffiliate");
+    expect(home).toContain('const hasExplicitAffiliate = affiliateParams?.has("afiliado") ?? false');
+    expect(home).toContain("const affiliateLookupPending");
+    expect(home).toContain("trpc.public.defaultAffiliateProfile.useQuery(undefined, { enabled: !affiliate.data })");
+    expect(home).toContain("const isResolvedExplicitAffiliate");
+    expect(home).toContain("const isInvalidExplicitAffiliate");
+    expect(home).toContain("const effectiveAffiliate = affiliate.data ?? defaultAffiliate.data");
+    expect(home).toContain("affiliateSlug: effectiveAffiliateSlug");
+    expect(home).toContain("affiliateSlugProvided: isResolvedExplicitAffiliate");
   });
 
   it("mantém o perfil público do afiliado como fonte da identidade visual permitida", async () => {
