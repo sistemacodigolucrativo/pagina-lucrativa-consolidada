@@ -72,7 +72,7 @@ describe("relatório de adesões do membro", () => {
     expect(app).toContain('path="/membros/ganhos" component={MemberEarnings}');
     expect(app).toContain('import AdminFinance from "./pages/AdminFinance"');
     expect(app).toContain('path="/admin/financeiro" component={AdminFinance}');
-    expect(adminFinance).toContain('fetch("/api/admin/finance"');
+    expect(adminFinance).toContain('fetch(withAppBase("/api/admin/finance"');
     expect(adminFinance).toContain("Pedidos confirmados");
     expect(app).not.toContain("AdminTransactions");
     await expect(access(path.join(root, "client/src/pages/AdminTransactions.tsx"))).rejects.toThrow();
