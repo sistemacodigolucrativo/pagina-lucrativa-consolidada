@@ -12,6 +12,7 @@ import {
   memberContacts,
   memberInvitations,
   memberProfiles,
+  pointEntries,
   transactions,
   users,
 } from "../../drizzle/schema";
@@ -430,6 +431,107 @@ async function handleOperation(req: Request, res: Response) {
   });
 }
 
+
+async function handlePerformance(req: Request, res: Response) {
+  if (!await requireAdmin(req, res)) return;
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponivel.");
+
+  const members = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+      slug: memberProfiles.slug,
+    })
+    .from(users)
+    .leftJoin(memberProfiles, eq(memberProfiles.userId, users.id))
+    .where(eq(users.role, "user"))
+    .orderBy(desc(users.updatedAt))
+    .limit(5000);
+
+  const entries = await db
+    .select({
+      id: pointEntries.id,
+      userId: pointEntries.userId,
+      amount: pointEntries.amount,
+      reason: pointEntries.reason,
+      status: pointEntries.status,
+      createdBy: pointEntries.createdBy,
+      createdAt: pointEntries.createdAt,
+      updatedAt: pointEntries.updatedAt,
+      memberName: users.name,
+      memberEmail: users.email,
+      memberSlug: memberProfiles.slug,
+    })
+    .from(pointEntries)
+    .leftJoin(users, eq(users.id, pointEntries.userId))
+    .leftJoin(memberProfiles, eq(memberProfiles.userId, pointEntries.userId))
+    .orderBy(desc(pointEntries.createdAt))
+    .limit(1000);
+
+  const memberSummaries = new Map(members.map(member => [member.id, { ...member, postedPoints: 0, pendingPoints: 0, entries: 0 }]));
+  for (const entry of entries) {
+    const summary = memberSummaries.get(entry.userId);
+    if (!summary) continue;
+    summary.entries += 1;
+    if (entry.status === "posted") summary.postedPoints += entry.amount;
+    if (entry.status === "pending") summary.pendingPoints += entry.amount;
+  }
+
+  res.json({
+    totals: {
+      postedPoints: entries.filter(entry => entry.status === "posted").reduce((sum, entry) => sum + entry.amount, 0),
+      pendingPoints: entries.filter(entry => entry.status === "pending").reduce((sum, entry) => sum + entry.amount, 0),
+      voidPoints: entries.filter(entry => entry.status === "void").reduce((sum, entry) => sum + entry.amount, 0),
+      entries: entries.length,
+      membersWithPoints: Array.from(memberSummaries.values()).filter(member => member.entries > 0).length,
+    },
+    members: Array.from(memberSummaries.values()).sort((a, b) => b.postedPoints - a.postedPoints),
+    entries,
+    generatedAt: new Date().toISOString(),
+  });
+}
+
+async function handleCreatePointEntry(req: Request, res: Response) {
+  const admin = await requireAdmin(req, res);
+  if (!admin) return;
+  const userId = Number(req.body?.userId);
+  const amount = Number(req.body?.amount);
+  const reason = typeof req.body?.reason === "string" ? req.body.reason.trim() : "";
+  const status = typeof req.body?.status === "string" ? req.body.status : "posted";
+  if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(amount) || !reason || reason.length > 320 || !["pending", "posted", "void"].includes(status)) {
+    res.status(400).json({ error: "Informe membro, pontos, motivo e status validos." });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponivel.");
+  const targetRows = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, userId)).limit(1);
+  if (targetRows[0]?.role !== "user") {
+    res.status(404).json({ error: "Membro nao encontrado." });
+    return;
+  }
+
+  await db.insert(pointEntries).values({ userId, amount, reason, status: status as "pending" | "posted" | "void", createdBy: admin.id });
+  res.json({ success: true });
+}
+
+async function handleUpdatePointEntryStatus(req: Request, res: Response) {
+  if (!await requireAdmin(req, res)) return;
+  const entryId = parsePositiveInt(req.params.entryId);
+  const status = typeof req.body?.status === "string" ? req.body.status : "";
+  if (!entryId || !["pending", "posted", "void"].includes(status)) {
+    res.status(400).json({ error: "Lancamento ou status invalido." });
+    return;
+  }
+
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponivel.");
+  await db.update(pointEntries).set({ status: status as "pending" | "posted" | "void" }).where(eq(pointEntries.id, entryId));
+  res.json({ success: true });
+}
+
 export function registerAdminCommercialOperations(app: Express, appPrefix: string) {
   const prefixes = Array.from(new Set(["/api/admin", appPrefix ? appPrefix + "/api/admin" : null].filter((path): path is string => Boolean(path))));
   for (const prefix of prefixes) {
@@ -438,5 +540,8 @@ export function registerAdminCommercialOperations(app: Express, appPrefix: strin
     app.post(prefix + "/orders/:id/receipts/:receiptId/review", wrap(handleReceiptReview));
     app.get(prefix + "/finance", wrap(handleFinance));
     app.get(prefix + "/operation", wrap(handleOperation));
+    app.get(prefix + "/performance", wrap(handlePerformance));
+    app.post(prefix + "/performance", wrap(handleCreatePointEntry));
+    app.post(prefix + "/performance/:entryId/status", wrap(handleUpdatePointEntryStatus));
   }
 }
