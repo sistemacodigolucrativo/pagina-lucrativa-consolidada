@@ -8,6 +8,7 @@ import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
 import { PUBLIC_SALES_DECISION_OBJECTIONS } from "@shared/publicSalesObjections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
+import { toast } from "sonner";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
 import PublicSocialProofToast from "@/components/PublicSocialProofToast";
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
@@ -208,10 +209,13 @@ export default function Home() {
   const hasExplicitAffiliate = affiliateParams?.has("afiliado") ?? false;
   const explicitAffiliateSlug = normalizeAffiliateSlug(affiliateParams?.get("afiliado"));
   const affiliate = trpc.public.affiliateProfile.useQuery({ slug: explicitAffiliateSlug ?? "codigo-lucrativo" }, { enabled: Boolean(explicitAffiliateSlug) });
-  const defaultAffiliate = trpc.public.defaultAffiliateProfile.useQuery(undefined, { enabled: !hasExplicitAffiliate });
-  const effectiveAffiliate = hasExplicitAffiliate ? affiliate.data : affiliate.data ?? defaultAffiliate.data;
-  const effectiveAffiliateSlug = explicitAffiliateSlug ?? (!hasExplicitAffiliate ? defaultAffiliate.data?.slug ?? null : null);
-  const publicProfileName = effectiveAffiliate?.name || effectiveAffiliate?.slug || explicitAffiliateSlug || "Perfil público";
+  const affiliateLookupPending = Boolean(explicitAffiliateSlug && affiliate.isLoading);
+  const defaultAffiliate = trpc.public.defaultAffiliateProfile.useQuery(undefined, { enabled: !affiliate.data });
+  const isResolvedExplicitAffiliate = hasExplicitAffiliate && Boolean(explicitAffiliateSlug && affiliate.data?.slug);
+  const isInvalidExplicitAffiliate = hasExplicitAffiliate && !affiliateLookupPending && (!explicitAffiliateSlug || !affiliate.data);
+  const effectiveAffiliate = affiliate.data ?? defaultAffiliate.data;
+  const effectiveAffiliateSlug = effectiveAffiliate?.slug ?? null;
+  const publicProfileName = effectiveAffiliate?.name || effectiveAffiliate?.slug || "Perfil público";
   const publicSocialLinks = effectiveAffiliate ? [
     ["Website", effectiveAffiliate.websiteUrl],
     ["Facebook", effectiveAffiliate.facebookUrl],
@@ -229,13 +233,17 @@ export default function Home() {
 
   function submitApplication(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (affiliateLookupPending) {
+      toast.info("Aguarde a validação do apresentador antes de enviar o pedido.");
+      return;
+    }
     const form = new FormData(event.currentTarget);
     application.mutate({
       fullName: String(form.get("fullName") ?? ""),
       email: normalizeEmail(applicationContact.email),
       whatsapp: normalizePhone(applicationContact.whatsapp),
       affiliateSlug: effectiveAffiliateSlug,
-      affiliateSlugProvided: hasExplicitAffiliate,
+      affiliateSlugProvided: isResolvedExplicitAffiliate,
     });
   }
 
@@ -273,6 +281,20 @@ export default function Home() {
                 {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
               </div>
               <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button>
+            </div>
+          </div>
+        </div>
+      </section>
+    ) : null}
+    {isInvalidExplicitAffiliate ? (
+      <section className="affiliate-banner" aria-label="Aviso de apresentador não encontrado">
+        <div className="shell affiliate-banner-inner">
+          <div className="affiliate-profile-hero">
+            <div className="affiliate-profile-summary">
+              <div className="affiliate-profile-summary-main">
+                <strong className="affiliate-profile-presenter">Apresentador informado não encontrado</strong>
+                <span className="affiliate-profile-no-socials">O pedido seguirá com o apresentador padrão ativo para não ficar sem responsável.</span>
+              </div>
             </div>
           </div>
         </div>

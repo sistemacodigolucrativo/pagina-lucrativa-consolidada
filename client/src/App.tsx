@@ -23,7 +23,10 @@ import AdminPublications from "@/pages/AdminPublications";
 import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";
 import Preview from "@/pages/Preview";
 import AdminOffice from "./pages/AdminOffice";
-import AdminOperations from "./pages/AdminOperations";
+import AdminOperation from "./pages/AdminOperation";
+import AdminOrders from "./pages/AdminOrders";
+import AdminFinance from "./pages/AdminFinance";
+import AdminPerformance from "./pages/AdminPerformance";
 import AdminAudit from "./pages/AdminAudit";
 import AdminFutureImplementations from "./pages/AdminFutureImplementations";
 import AdminToast from "./pages/AdminToast";
@@ -121,7 +124,8 @@ function AppRoutes() {
     <Route path="/membros/curso/:courseKey" component={MemberCourses} />
     <Route path="/membros" component={MemberOffice} />
     <Route path="/membros/:section" component={MemberOffice} />
-    <Route path="/admin/operacao" component={AdminOperations} />
+    <Route path="/admin/operacao" component={AdminOperation} />
+    <Route path="/admin/pontos" component={AdminPerformance} />
     <Route path="/admin/ebooks/novo" component={AdminEbooks} />
     <Route path="/admin/ebooks/:ebookId/editar" component={AdminEbooks} />
     <Route path="/admin/ebooks" component={AdminEbooks} />
@@ -141,11 +145,11 @@ function AppRoutes() {
     <Route path="/preview" component={Preview} />
     <Route path="/admin/futuras-implementacoes" component={AdminFutureImplementations} />
     <Route path="/admin/toast" component={AdminToast} />
-    <Route path="/admin/divulgacao" component={AdminOperations} />
+    <Route path="/admin/divulgacao" component={AdminOperation} />
     <Route path="/admin/suporte" component={AdminSupport} />
     <Route path="/admin/auditoria" component={AdminAudit} />
-    <Route path="/admin/pedidos" component={AdminOperations} />
-    <Route path="/admin/financeiro" component={AdminOperations} />
+    <Route path="/admin/pedidos" component={AdminOrders} />
+    <Route path="/admin/financeiro" component={AdminFinance} />
     <Route path="/admin/relatos/em-analise" component={AdminTestimonials} />
     <Route path="/admin/relatos/aprovados" component={AdminTestimonials} />
     <Route path="/admin/relatos/necessita-ajuste" component={AdminTestimonials} />

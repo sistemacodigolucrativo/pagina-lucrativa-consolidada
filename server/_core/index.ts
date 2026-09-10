@@ -16,6 +16,7 @@ import { registerAdminManualDeploy } from "./manualDeploy";
 import { registerAdminMemberManagement } from "./adminMemberManagement";
 import { registerAdminContentManagement } from "./adminContentManagement";
 import { registerAdminRelationshipMaintenance } from "./adminRelationshipMaintenance";
+import { registerAdminCommercialOperations } from "./adminCommercialOperations";
 import { serveStatic, setupVite } from "./vite";
 import { PACKAGED_EBOOK_FILE_ROUTE } from "../staticEbooks";
 
@@ -85,6 +86,7 @@ async function startServer() {
   registerAdminMemberManagement(app, appPrefix);
   registerAdminContentManagement(app, appPrefix);
   registerAdminRelationshipMaintenance(app, appPrefix);
+  registerAdminCommercialOperations(app, appPrefix);
   for (const trpcPath of trpcPaths) {
     app.use(
       trpcPath,

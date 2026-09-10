@@ -1829,7 +1829,7 @@ export async function markMemberNotificationRead(userId: number, notificationId:
   return rows[0];
 }
 
-export async function reviewPaymentReceipt(userId: number, input: { applicationId: number; receiptId: number; status: "approved" | "rejected" }) {
+export async function reviewPaymentReceipt(userId: number, input: { applicationId: number; receiptId: number; status: "approved" | "rejected" }, reviewedByUserId = userId) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
 
@@ -1848,7 +1848,7 @@ export async function reviewPaymentReceipt(userId: number, input: { applicationI
     if (!receipt) throw new Error("Comprovante não encontrado ou já analisado.");
     assertReceiptReviewAllowed(receipt.status, application.paymentStatus);
 
-    const receiptUpdate = await tx.update(applicationPaymentReceipts).set({ status: input.status, reviewedAt: new Date(), reviewedBy: userId }).where(and(
+    const receiptUpdate = await tx.update(applicationPaymentReceipts).set({ status: input.status, reviewedAt: new Date(), reviewedBy: reviewedByUserId }).where(and(
       eq(applicationPaymentReceipts.id, input.receiptId),
       eq(applicationPaymentReceipts.status, "pending"),
     ));
@@ -1872,7 +1872,7 @@ export async function reviewPaymentReceipt(userId: number, input: { applicationI
           tokenHash: hashAccessToken(plainToken),
           encryptedToken: encryptAccessToken(plainToken),
           status: "active",
-          createdBy: userId,
+          createdBy: reviewedByUserId,
         });
       }
     }

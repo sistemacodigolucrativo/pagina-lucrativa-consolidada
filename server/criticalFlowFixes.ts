@@ -3,6 +3,7 @@ import type { ApplicationInput } from "@shared/applications";
 import {
   applicationAccessTokens,
   applications,
+  memberProfiles,
   receivingPreferences,
   userSecurityRecovery,
   users,
@@ -14,6 +15,7 @@ import {
   getApplicationPersonalizationAccess,
   getDb,
   getMemberAccount,
+  resolveDefaultAffiliateProfile,
 } from "./db";
 
 type CampaignRequestLike = { headers?: { cookie?: string | string[] } };
@@ -29,6 +31,11 @@ function normalizeEmailForLookup(value: string) {
 
 function normalizedEmailCondition(column: typeof users.email | typeof applications.email, email: string) {
   return sql<boolean>`LOWER(TRIM(${column})) = ${normalizeEmailForLookup(email)}`;
+}
+
+function normalizeNullableSlug(value: string | null | undefined) {
+  const normalized = value?.trim().toLowerCase() ?? "";
+  return normalized.length ? normalized : null;
 }
 
 function normalizeSecurityAnswer(answer: string) {
@@ -116,11 +123,26 @@ export async function emailExistsForNewRegistration(email: string) {
   return Boolean(userRows[0] || applicationRows[0]);
 }
 
+async function resolveApplicationAffiliate(input: ApplicationInput): Promise<ApplicationInput> {
+  const db = await getDb();
+  if (!db) throw new Error("O banco de dados não está disponível no momento.");
+
+  const candidateSlug = normalizeNullableSlug(input.affiliateSlug);
+  if (candidateSlug) {
+    const rows = await db.select({ slug: memberProfiles.slug }).from(memberProfiles).where(eq(memberProfiles.slug, candidateSlug)).limit(1);
+    if (rows[0]?.slug) return { ...input, affiliateSlug: rows[0].slug, affiliateSlugProvided: true };
+  }
+
+  const defaultAffiliate = await resolveDefaultAffiliateProfile();
+  if (defaultAffiliate?.slug) return { ...input, affiliateSlug: defaultAffiliate.slug, affiliateSlugProvided: false };
+  return { ...input, affiliateSlug: null, affiliateSlugProvided: false };
+}
+
 export async function createApplicationWithUniqueEmail(input: ApplicationInput, request?: CampaignRequestLike) {
   if (await emailExistsForNewRegistration(input.email)) {
     throw new Error("Este e-mail já está cadastrado. Use o acesso existente ou informe outro e-mail.");
   }
-  return createApplication(input, request);
+  return createApplication(await resolveApplicationAffiliate(input), request);
 }
 
 export async function getApplicationPaymentPageComplete(trackingCode: string, paymentAccessToken: string) {
