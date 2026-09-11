@@ -160,9 +160,11 @@ Conclusao sobre E2E: essa suite nao ficou verde e nao deve ser usada como eviden
 
 - Deploy em producao: nao executado.
 - Merge para `main`: nao executado.
-- Push remoto: pendente.
+- Push remoto: executado somente na branch `release/final-audit-launch`.
+- Commit enviado inicialmente: `f2b1936`.
+- Pull request sugerido pelo GitHub: `https://github.com/sistemacodigolucrativo/pagina-lucrativa-consolidada/pull/new/release/final-audit-launch`
 
-Motivo: apesar de `check`, `test`, `build`, banco, endpoints criticos e validacao focada terem passado, a validacao E2E visual ampla ficou falha/inconclusiva. Como o criterio final exige validacao completa antes de producao, a promocao automatica para producao foi bloqueada.
+Motivo da nao promocao para producao: apesar de `check`, `test`, `build`, banco, endpoints criticos e validacao focada terem passado, a validacao E2E visual ampla ficou falha/inconclusiva. Como o criterio final exige validacao completa antes de producao, a promocao automatica para producao foi bloqueada.
 
 ## 10. Riscos restantes
 
