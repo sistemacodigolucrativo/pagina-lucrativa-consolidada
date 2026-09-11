@@ -1,0 +1,16 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "6gnyWWPISGaBfIxOogEXI"
+uri = "file://relatorio-validacao-testes.md"
+type = "text"
+title = "Relatório de validação — Código Lucrativo 2026"
+description = "Relatório completo com os 28 cenários Playwright, resultados, comandos, ambiente do Preview, checagem TypeScript e observações finais."
+logical_id = "d860a97a-0729-4dd6-9bf0-d2c8f5467046"
+content_hash = "sha256:47057ca49844978e8552db827d6f194ba879bd396b8153f33b602d4506378939"
+size = 6408
+mtime_ms = 1789166768869
+storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:0c7b1acb-cde7-4591-9c74-8766a2b8ac3c/d860a97a-0729-4dd6-9bf0-d2c8f5467046/1f1a04c2-66a6-4463-a4bd-6198c7a19b0a"
+storage_version_token = "1789166774503671"
+content_type = "text/markdown"
