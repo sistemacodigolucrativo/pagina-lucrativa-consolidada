@@ -1,1 +1,2 @@
 - [Registry do preview Replit](replit-package-registry.md) — quando o proxy interno retorna 403, instalar localmente pelo registry público sem alterar o lockfile.
+- [Banco remoto no preview](remote-db-preview.md) — o Preview usa REMOTE_DATABASE_URL como fallback seguro; DATABASE_URL continua prioritária na VPS.

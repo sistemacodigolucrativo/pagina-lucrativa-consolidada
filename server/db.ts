@@ -93,8 +93,8 @@ export function verifyPaymentAccessToken(token: string, trackingCode: string) {
 export async function getDb() {
   if (_db) return _db;
   try {
-    if (process.env.DATABASE_URL) {
-      _db = drizzle(process.env.DATABASE_URL);
+    if (ENV.databaseUrl) {
+      _db = drizzle(ENV.databaseUrl);
     } else if (existsSync(VPS_SOCKET_PATH)) {
       _db = drizzle({
         connection: {
