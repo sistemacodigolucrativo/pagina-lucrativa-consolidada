@@ -135,7 +135,12 @@ async function resolveApplicationAffiliate(input: ApplicationInput): Promise<App
 
   const defaultAffiliate = await resolveDefaultAffiliateProfile();
   if (defaultAffiliate?.slug) return { ...input, affiliateSlug: defaultAffiliate.slug, affiliateSlugProvided: false };
-  return { ...input, affiliateSlug: null, affiliateSlugProvided: false };
+
+  if (candidateSlug) {
+    throw new Error("O link de afiliado informado é inválido e não existe um responsável padrão configurado para este cadastro.");
+  }
+
+  throw new Error("Nenhum responsável válido foi encontrado para este cadastro. Configure um afiliado padrão antes de receber novos pedidos.");
 }
 
 export async function createApplicationWithUniqueEmail(input: ApplicationInput, request?: CampaignRequestLike) {
