@@ -59,6 +59,24 @@ function wrap(handler: (req: Request, res: Response) => Promise<void>) {
   };
 }
 
+function handleReceiptReviewError(error: unknown, res: Response) {
+  const message = error instanceof Error ? error.message : "Falha ao analisar comprovante.";
+  if (message === "Pedido não encontrado.") {
+    res.status(404).json({ error: message });
+    return;
+  }
+  if (
+    message === "Comprovante não encontrado ou já analisado."
+    || message === "Pedido sem responsável."
+    || message === "Este comprovante já foi analisado por outra operação."
+    || message === "O estado do pedido mudou; atualize a página antes de concluir a análise."
+  ) {
+    res.status(409).json({ error: message });
+    return;
+  }
+  throw error;
+}
+
 async function listOrderRows() {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponivel.");
@@ -243,8 +261,12 @@ async function handleReceiptReview(req: Request, res: Response) {
     return;
   }
 
-  const result = await reviewPaymentReceipt(application.ownerUserId, { applicationId, receiptId, status }, admin.id);
-  res.json({ success: true, receipt: result });
+  try {
+    const result = await reviewPaymentReceipt(application.ownerUserId, { applicationId, receiptId, status }, admin.id);
+    res.json({ success: true, receipt: result });
+  } catch (error) {
+    handleReceiptReviewError(error, res);
+  }
 }
 
 async function handleFinance(req: Request, res: Response) {
