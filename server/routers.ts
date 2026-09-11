@@ -101,6 +101,7 @@ import {
 } from "./academyCanonical";
 import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema, paymentAccessInputSchema } from "@shared/applications";
+import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 const campaignInput = z.object({
@@ -210,6 +211,21 @@ export const receivingPreferenceInput = z.object({
   };
 });
 const ticketInput = z.object({ subject: z.string().trim().min(4).max(180), message: z.string().trim().min(10).max(8000) });
+function mapReceiptReviewTrpcError(error: unknown): never {
+  const message = error instanceof Error ? error.message : "Não foi possível analisar o comprovante.";
+  if (message === "Pedido não encontrado.") {
+    throw new TRPCError({ code: "NOT_FOUND", message });
+  }
+  if (
+    message === "Comprovante não encontrado ou já analisado."
+    || message === "Pedido sem responsável."
+    || message === "Este comprovante já foi analisado por outra operação."
+    || message === "O estado do pedido mudou; atualize a página antes de concluir a análise."
+  ) {
+    throw new TRPCError({ code: "CONFLICT", message });
+  }
+  throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message });
+}
 const courseInput = z.object({
   title: z.string().trim().min(3).max(240),
   summary: z.string().trim().max(8000).optional().nullable(),
@@ -335,7 +351,13 @@ export const appRouter = router({
     updatePaymentLinks: protectedProcedure.input(memberPaymentLinksInputSchema).mutation(({ ctx, input }) => updateMemberPaymentLinks(ctx.user.id, input)),
     affiliateApplications: protectedProcedure.query(({ ctx }) => getMemberAffiliateApplications(ctx.user.id)),
     affiliateApplication: protectedProcedure.input(z.object({ id: z.number().int().positive() })).query(({ ctx, input }) => getMemberAffiliateApplication(ctx.user.id, input.id)),
-    reviewPaymentReceipt: protectedProcedure.input(z.object({ applicationId: z.number().int().positive(), receiptId: z.number().int().positive(), status: z.enum(["approved", "rejected"]) })).mutation(({ ctx, input }) => reviewPaymentReceipt(ctx.user.id, input)),
+    reviewPaymentReceipt: protectedProcedure.input(z.object({ applicationId: z.number().int().positive(), receiptId: z.number().int().positive(), status: z.enum(["approved", "rejected"]) })).mutation(async ({ ctx, input }) => {
+      try {
+        return await reviewPaymentReceipt(ctx.user.id, input);
+      } catch (error) {
+        mapReceiptReviewTrpcError(error);
+      }
+    }),
     notifications: protectedProcedure.query(({ ctx }) => getMemberNotifications(ctx.user.id)),
     markNotificationRead: protectedProcedure.input(z.object({ id: z.number().int().positive() })).mutation(({ ctx, input }) => markMemberNotificationRead(ctx.user.id, input.id)),
     tickets: protectedProcedure.query(({ ctx }) => getMemberTickets(ctx.user.id)),

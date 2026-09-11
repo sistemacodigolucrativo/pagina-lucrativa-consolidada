@@ -61,6 +61,19 @@ describe("gestão de solicitações públicas", () => {
     expect(router).toContain("completePersonalization: publicProcedure");
   });
 
+  it("mapeia falhas previsíveis da revisão de comprovante sem expor erro interno genérico", async () => {
+    const [router, adminCommercial] = await Promise.all([
+      readFile(path.join(root, "server/routers.ts"), "utf8"),
+      readFile(path.join(root, "server/_core/adminCommercialOperations.ts"), "utf8"),
+    ]);
+    expect(router).toContain("mapReceiptReviewTrpcError");
+    expect(router).toContain('code: "NOT_FOUND"');
+    expect(router).toContain('code: "CONFLICT"');
+    expect(adminCommercial).toContain("handleReceiptReviewError");
+    expect(adminCommercial).toContain("res.status(404).json");
+    expect(adminCommercial).toContain("res.status(409).json");
+  });
+
   it("persiste pedido e conversão em uma mesma transação", async () => {
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     expect(db).toContain("const result = await db.transaction(async tx => {");
