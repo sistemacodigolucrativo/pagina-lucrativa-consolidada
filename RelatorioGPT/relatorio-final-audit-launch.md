@@ -87,6 +87,29 @@ Observacao: acesso MySQL direto como usuario shell `ubuntu` falha por permissao 
 - Resultado: ambos foram vinculados ao fallback valido `ownerUserId = 1`, `affiliateSlug = marcelo-souza`.
 - Pedidos orfaos apos os testes: `0`.
 
+### 4.5. Afiliado invalido sem fallback valido
+
+- Simulacao executada em processo isolado com `OWNER_OPEN_ID` invalido, sem alterar o `.env` real e sem remover o fallback de producao.
+- Resultado: cadastro bloqueado com a mensagem `O link de afiliado informado é inválido e não existe um responsável padrão configurado para este cadastro.`
+- Persistencia: `0` registros gravados para o e-mail de teste.
+
+### 4.6. Recusa de comprovante por afiliado responsavel
+
+- Pedido criado para teste de recusa: `28`.
+- Comprovante criado: `16`.
+- Afiliado responsavel: `userId = 30`.
+- Resultado: pedido `28` ficou com `paymentStatus = rejected`, `activationStatus = not_started`, `status = contacted`; comprovante `16` ficou `rejected` com `reviewedBy = 30`.
+
+### 4.7. Pontos administrativos
+
+- Lancamento de pontos criado via `POST /api/admin/performance`.
+- ID do lancamento: `1`.
+- Membro alvo: `userId = 30`.
+- Valor: `7`.
+- Status inicial: `pending`.
+- Alteracao testada para `posted`: OK.
+- Alteracao final para `void`: OK.
+
 ## 5. Endpoints verificados no staging local
 
 Base: `http://127.0.0.1:3100`
@@ -161,15 +184,16 @@ Conclusao sobre E2E: essa suite nao ficou verde e nao deve ser usada como eviden
 - Deploy em producao: executado posteriormente por solicitacao do usuario para validacao visual no dominio oficial.
 - Merge para `main`: nao executado.
 - Push remoto: executado somente na branch `release/final-audit-launch`.
-- Commits enviados nesta branch: consultar historico remoto de `release/final-audit-launch`; commits conhecidos desta execucao incluem `f2b1936` e `51e2f17`.
-- Pull request sugerido pelo GitHub: `https://github.com/sistemacodigolucrativo/pagina-lucrativa-consolidada/pull/new/release/final-audit-launch`
+- Pull request aberto: `https://github.com/sistemacodigolucrativo/pagina-lucrativa-consolidada/pull/14`
 
 Primeiro motivo da nao promocao automatica: apesar de `check`, `test`, `build`, banco, endpoints criticos e validacao focada terem passado, a validacao E2E visual ampla ficou falha/inconclusiva. Depois, o usuario solicitou explicitamente disponibilizar a branch na producao para visualizacao e testes.
 
 Deploy executado:
 
-- Release publicado inicialmente: `74e1a4ed5d247662541dbdaf9248910713cbadc5`.
-- Release anterior preservado: `/home/ubuntu/servicos/pagina-lucrativa/releases/20260911T161129Z-2cc30672`.
+- Commit atualmente publicado na VPS/producao: `7a31dfd2fc9950b4bf08bd836920d811f175652a`.
+- Release atual: `/home/ubuntu/servicos/pagina-lucrativa/releases/20260911T182030Z-7a31dfd2`.
+- Release anterior preservado no ultimo deploy: `/home/ubuntu/servicos/pagina-lucrativa/releases/20260911T181852Z-74e1a4ed`.
+- Release original anterior a esta validacao: `/home/ubuntu/servicos/pagina-lucrativa/releases/20260911T161129Z-2cc30672`.
 - Status do deploy: `completed`.
 - Health check local: OK em `http://127.0.0.1:3101/`.
 - Endpoint publico: OK em `https://ocodigolucrativo.site/`.
@@ -178,9 +202,9 @@ Deploy executado:
 ## 10. Riscos restantes
 
 - A suite E2E publicada parece desatualizada em relacao ao layout/copy/rotas atuais. Ela precisa ser revisada antes de ser tratada como criterio objetivo de release.
-- Os pedidos de teste `24`, `25`, `26` e `27` foram criados no banco real usado pelo staging/VPS. Nao foram apagados automaticamente.
+- Os pedidos de teste `24`, `25`, `26`, `27` e `28` foram criados no banco real usado pela VPS. Eles foram saneados apos a validacao: ficaram com `paymentStatus = rejected`, `activationStatus = not_started`, `status = contacted`; tokens de acesso dos pedidos de teste `24` e `25` foram revogados.
 - O fallback de afiliado esta ativo. Portanto afiliado invalido/ausente nao bloqueia o cadastro quando existe apresentador padrao valido; ele vincula ao fallback.
-- Nao foi feita atualizacao do servico publico oficial porque a validacao ampla nao fechou com sucesso.
+- A producao foi atualizada para validacao visual por solicitacao do usuario, mas o merge na `main` continua pendente por causa do E2E amplo falho/inconclusivo.
 
 ## 11. Pendencias
 
@@ -188,7 +212,7 @@ Deploy executado:
 
 - Revisar ou atualizar a suite E2E visual ampla para refletir a UI/copy/rotas atuais, ou documentar formalmente quais expectativas sao legadas.
 - Reexecutar E2E sem travamento no ultimo teste.
-- Somente depois promover o commit validado para producao.
+- Somente depois considerar merge na `main` como release final.
 
 ### Nao bloqueia a correcao aplicada
 
@@ -204,4 +228,4 @@ Deploy executado:
 
 A correcao cirurgica aplicada melhora a seguranca operacional e a qualidade das respostas de erro no fluxo de aprovacao de comprovantes. O banco respondeu corretamente, nao ha pedidos orfaos novos, afiliado responsavel aprova, afiliado errado e bloqueado, e admin aprova com auditoria.
 
-O sistema nao foi promovido para producao neste ciclo porque a validacao E2E visual ampla nao passou. O rollback de referencia continua sendo `45a0293dfc236512e5ea61080cbc1b84275f237c`; a producao permaneceu no commit `2cc30672f5be6923733f4d98d5bf9aa6b3aac20d`.
+Por solicitacao do usuario, a branch `release/final-audit-launch` foi publicada no dominio oficial para validacao visual. A producao esta rodando o commit `7a31dfd2fc9950b4bf08bd836920d811f175652a` e o servico esta ativo. O merge na `main` nao foi feito porque a validacao E2E visual ampla ainda nao esta verde. O rollback de referencia informado continua sendo `45a0293dfc236512e5ea61080cbc1b84275f237c`; o release imediatamente anterior ao deploy final na VPS e `/home/ubuntu/servicos/pagina-lucrativa/releases/20260911T181852Z-74e1a4ed`.
