@@ -1,0 +1,1 @@
+- [Registry do preview Replit](replit-package-registry.md) — quando o proxy interno retorna 403, instalar localmente pelo registry público sem alterar o lockfile.
