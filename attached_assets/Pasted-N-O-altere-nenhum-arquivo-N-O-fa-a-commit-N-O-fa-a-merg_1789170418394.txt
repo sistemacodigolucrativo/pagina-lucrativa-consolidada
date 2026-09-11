@@ -1,0 +1,85 @@
+NÃO altere nenhum arquivo.
+NÃO faça commit.
+NÃO faça merge ainda.
+NÃO faça push.
+NÃO faça deploy.
+NÃO acesse a VPS.
+
+Quero apenas uma verificação técnica antes de qualquer próxima ação.
+
+Contexto:
+
+A branch local/remota `replit-agent` está com o mesmo hash e o push para `origin/replit-agent` foi concluído com sucesso.
+
+Também foi gerado anteriormente um relatório de validação com:
+
+- 28 testes Playwright E2E executados
+- 28 testes aprovados
+- 0 falhas
+- `pnpm check` aprovado
+- `git diff --check` aprovado
+- preview HTTP 200
+- console sem erros
+
+Porém, esse relatório mencionava a branch:
+
+`release/final-audit-launch`
+
+Antes de fazermos qualquer merge na `main`, preciso que você verifique com precisão a relação entre essas branches.
+
+Responda:
+
+1. Qual é o hash atual da branch `replit-agent`?
+
+2. Qual é o hash atual da branch `release/final-audit-launch`?
+
+3. O código atualmente presente em `replit-agent` é exatamente o mesmo código que passou nos 28 de 28 testes?
+
+4. Todos os commits e alterações que foram validados nesses 28 testes estão contidos em `replit-agent`?
+
+5. Existe alguma alteração em `replit-agent` que NÃO fazia parte da versão validada nos 28 testes?
+
+6. Existe alguma alteração da versão validada que ainda NÃO esteja em `replit-agent`?
+
+7. Compare `replit-agent` com `main` e informe:
+   - quantos commits `replit-agent` está à frente da `main`;
+   - quantos commits está atrás;
+   - quais commits seriam incorporados à `main`;
+   - se existe risco de conflito.
+
+8. Confirme a direção correta do merge.
+
+Quero saber se o fluxo correto é:
+
+`replit-agent` → `main`
+
+9. Diga claramente se, do ponto de vista do Git e da versão validada pelos testes, é SEGURO fazer o merge de `replit-agent` para `main`.
+
+IMPORTANTE:
+Não execute nenhuma alteração.
+Faça somente leitura, comparação e auditoria.
+
+No final, responda exatamente neste formato:
+
+Branch validada pelos 28 testes:
+Hash da branch validada:
+
+Branch replit-agent:
+Hash da replit-agent:
+
+replit-agent contém exatamente a versão validada: SIM ou NÃO
+
+Existem alterações extras na replit-agent: SIM ou NÃO
+
+Faltam alterações validadas na replit-agent: SIM ou NÃO
+
+replit-agent está à frente da main por:
+replit-agent está atrás da main por:
+
+Conflitos previstos: SIM ou NÃO
+
+Direção correta do merge:
+
+Merge replit-agent → main é seguro agora: SIM ou NÃO
+
+Justificativa:
