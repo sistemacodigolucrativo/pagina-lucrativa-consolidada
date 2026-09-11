@@ -1,3 +1,5 @@
 - [Registry do preview Replit](replit-package-registry.md) — quando o proxy interno retorna 403, instalar localmente pelo registry público sem alterar o lockfile.
 - [Banco remoto no preview](remote-db-preview.md) — o Preview usa REMOTE_DATABASE_URL como fallback seguro; DATABASE_URL continua prioritária na VPS.
 - [Base de release atual](release-branch-baseline.md) — a branch release/final-audit-launch é a base local mais recente validada contra main.
+- [Ambiente de validação E2E](e2e-validation-environment.md) — confirmar Chromium e bibliotecas nativas antes de classificar falhas Playwright como falhas do produto.
+- [Drawer móvel nos testes](mobile-drawer-e2e.md) — o Sidebar móvel é desmontado fechado e fecha de forma assíncrona após navegar; escopar seletores ao drawer e aguardar o fechamento.

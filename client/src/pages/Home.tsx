@@ -11,6 +11,7 @@ import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import { toast } from "sonner";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
 import PublicSocialProofToast from "@/components/PublicSocialProofToast";
+import PublicConversionCta from "@/components/PublicConversionCta";
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
@@ -437,6 +438,7 @@ export default function Home() {
       </div>
       <div className="shell footer-bottom"><span>© 2026 · Todos os direitos reservados.</span><span className="footer-version">⭐ v2.0</span></div>
     </footer>
+    <PublicConversionCta />
     <div className="member-chat-fab-wrap"><button type="button" className="member-chat-fab" aria-label="Chat de membros" aria-disabled="true" title="Chat de membros — em breve"><MessageCircle size={30} strokeWidth={2.2} /></button></div>
   </div>;
 }

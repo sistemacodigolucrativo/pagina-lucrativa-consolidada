@@ -37,16 +37,13 @@ export default function PublicConversionCta() {
 
     let socialProofObserver: IntersectionObserver | null = null;
     let formObserver: IntersectionObserver | null = null;
-    const needsScrollFallback = !socialProofSection || typeof IntersectionObserver === "undefined";
-
     schedulePassedCheck();
 
     if (socialProofSection && typeof IntersectionObserver !== "undefined") {
       socialProofObserver = new IntersectionObserver(schedulePassedCheck, { threshold: [0, 1] });
       socialProofObserver.observe(socialProofSection);
-    } else {
-      window.addEventListener("scroll", schedulePassedCheck, { passive: true });
     }
+    window.addEventListener("scroll", schedulePassedCheck, { passive: true });
 
     if (formSection && typeof IntersectionObserver !== "undefined") {
       formObserver = new IntersectionObserver(([entry]) => setConversionFormVisible(Boolean(entry?.isIntersecting)), { threshold: 0.16 });
@@ -57,7 +54,7 @@ export default function PublicConversionCta() {
       socialProofObserver?.disconnect();
       formObserver?.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
-      if (needsScrollFallback) window.removeEventListener("scroll", schedulePassedCheck);
+      window.removeEventListener("scroll", schedulePassedCheck);
     };
   }, [location]);
 

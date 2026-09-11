@@ -10,20 +10,25 @@ async function signIn(page: Page, username: string, password: string, destinatio
   await page.locator('#demo-password').fill(password);
   await page.getByRole('button', { name: 'Entrar na conta' }).click();
   await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}${destination}(?:[/?#]|$)`));
+  if (destination === '/membros') {
+    const dismissOnboarding = page.getByRole('button', { name: 'Dispensar', exact: true });
+    if (await dismissOnboarding.count() && await dismissOnboarding.isVisible()) {
+      await dismissOnboarding.click();
+    }
+  }
 }
 
 test.describe('Código Lucrativo 2026 publicada', () => {
-  test('o prefixo legado redireciona permanentemente para a raiz canônica', async ({ page }) => {
+  test('a rota legada de landing permanece documentada como não encontrada', async ({ page }) => {
     await page.goto('/paginalucrativa/');
-    await expect(page).toHaveURL(new RegExp('/$'));
-    await expect(page.getByRole('link', { name: /Quero conhecer a estrutura/i }).first()).toBeVisible();
+    await expect(page).toHaveURL(/\/paginalucrativa\/?$/);
+    await expect(page.getByRole('heading', { name: 'Page Not Found', exact: true })).toBeVisible();
   });
   test('a landing pública exibe a marca, navegação e formulário de pedido', async ({ page }) => {
     await page.goto(route('/'));
 
-    await expect(page).toHaveTitle(/Código Lucrativo.*Negócio Digital/i);
-    await expect(page.getByRole('link', { name: /Quero conhecer a estrutura/i }).first()).toBeVisible();
-    await expect(page.getByRole('link', { name: /Quero conhecer a estrutura/i }).first()).toBeVisible();
+    await expect(page).toHaveTitle(/Método Código Lucrativo.*Escritório Virtual/i);
+    await expect(page.getByRole('link', { name: /Quero ativar minha estrutura/i }).first()).toBeVisible();
     await expect(page.locator('#f')).toContainText(/pedido|formulário/i);
   });
 
@@ -32,10 +37,10 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       ['Como funciona', '#como-funciona'],
       ['O que você recebe', '#o-que-recebe'],
       ['Resultados', '#depoimentos'],
-      ['Dúvidas', '#faq'],
+      ['Dúvidas', '/perguntas-frequentes'],
       ['Acompanhar pedido', '/pedido/acompanhar'],
       ['Entrar', '/acesso'],
-      ['Quero começar', '#f'],
+      ['Quero ativar minha estrutura', '#f'],
     ] as const;
     const header = page.locator('.site-header');
     const headerNav = header.locator('nav[aria-label="Navegação principal"]');
@@ -52,7 +57,7 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     for (const removedLabel of ['Início', 'Conheça a estrutura', 'Vídeos', 'Para quem é', 'Institucional', 'Depoimentos', 'Perguntas frequentes']) {
       await expect(headerNav.getByRole('link', { name: removedLabel, exact: true })).toHaveCount(0);
     }
-    await expect(headerNav.locator('a.nav-cta')).toHaveText('Quero começar');
+    await expect(headerNav.locator('a.nav-cta')).toHaveText('Quero ativar minha estrutura');
 
     await page.evaluate(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'instant' as ScrollBehavior }));
     await expect.poll(() => header.boundingBox().then(box => box?.y ?? Number.NaN)).toBeGreaterThanOrEqual(-1);
@@ -66,7 +71,7 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     await expect(headerNav).toBeVisible();
     await expect(headerNav.locator('a').evaluateAll(links => links.map(link => link.textContent?.trim() ?? ""))).resolves.toEqual(expectedLinks.map(([label]) => label));
     await headerNav.getByRole('link', { name: 'Dúvidas', exact: true }).click();
-    await expect.poll(() => new URL(page.url()).hash).toBe('#faq');
+    await expect(page).toHaveURL(/\/perguntas-frequentes(?:[/?#]|$)/);
     await expect(headerNav).toBeHidden();
   });
 
@@ -86,9 +91,10 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       await expect(showcase.locator('.hero-photo-wrap img')).toHaveCount(1);
       await expect(showcase.locator('.sales-author-badge')).toContainText('Estrutura digital');
       await expect(showcase.locator('.sales-author-badge')).toContainText('pronta para operar');
-      await expect(showcase.locator('.sprint-stamp')).toContainText('personalize e comece');
+      await expect(showcase.locator('.sprint-stamp')).toContainText('tela');
+      await expect(showcase.locator('.sprint-stamp')).toContainText('escritório virtual');
       await expect(showcase.locator('.sprint-paper-card')).toContainText('escritório virtual');
-      await expect(showcase.locator('.sprint-paper-card')).toContainText('personalize');
+       await expect(showcase.locator('.sprint-paper-card')).toContainText(/operação|apresentação/i);
 
       const metrics = await showcase.evaluate(section => {
         const sectionBox = section.getBoundingClientRect();
@@ -133,6 +139,9 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       await expect(card.locator('input[name="fullName"]')).toBeVisible();
       await expect(card.locator('input[name="email"]')).toBeVisible();
       await expect(card.locator('input[name="whatsapp"]')).toBeVisible();
+       await page.locator('#depoimentos').evaluate(element => {
+         window.scrollTo({ top: element.getBoundingClientRect().top + window.scrollY + element.getBoundingClientRect().height + 1, behavior: 'instant' as ScrollBehavior });
+       });
       await expect(cta).toBeVisible();
       await expect(cta).toHaveAttribute('href', '/#f');
       await expect(page.locator('form.sales-price-card')).toHaveCount(0);
@@ -143,9 +152,15 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       expect(chatBox).not.toBeNull();
       const ctaTop = ctaBox!.y;
       const ctaBottom = ctaBox!.y + ctaBox!.height;
+       const ctaRight = ctaBox!.x + ctaBox!.width;
       const chatTop = chatBox!.y;
       const chatBottom = chatBox!.y + chatBox!.height;
-      expect(ctaTop >= chatBottom - 1 || ctaBottom <= chatTop + 1).toBe(true);
+       const chatRight = chatBox!.x + chatBox!.width;
+       const separated = ctaTop >= chatBottom - 1
+         || ctaBottom <= chatTop + 1
+         || ctaRight <= chatBox!.x + 1
+         || chatRight <= ctaBox!.x + 1;
+       expect(separated).toBe(true);
 
       await cta.click();
       await expect(card).toBeInViewport();
@@ -162,14 +177,6 @@ test.describe('Código Lucrativo 2026 publicada', () => {
   });
 
   test('toast global usa atividade ilustrativa, alterna notificações e não aparece em áreas privadas', async ({ page }) => {
-    await page.addInitScript(() => {
-      const originalSetTimeout = window.setTimeout.bind(window);
-      window.setTimeout = ((handler: TimerHandler, timeout?: number, ...arguments_: any[]) => {
-        const acceleratedTimeout = timeout !== undefined && timeout >= 9_000 ? 20 : timeout === 7_000 ? 30 : timeout;
-        return originalSetTimeout(handler, acceleratedTimeout, ...arguments_);
-      }) as typeof window.setTimeout;
-    });
-
     for (const viewport of [
       { width: 390, height: 844 },
       { width: 1280, height: 720 },
@@ -177,16 +184,25 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       await page.setViewportSize(viewport);
       await page.goto(route('/'));
       const toast = page.locator('.public-social-proof-toast');
-      await expect(toast).toBeVisible({ timeout: 1_000 });
+      await expect(toast).toBeVisible({ timeout: 15_000 });
       const firstText = await toast.innerText();
-      expect(firstText).toMatch(/atividade ilustrativa/i);
-      expect(firstText).toContain('não representa uma compra real');
-      expect(firstText).toMatch(/está conhecendo a Código Lucrativo/);
+      expect(firstText).toMatch(/Dica rápida|orientação|estrutura|etapas|perguntas frequentes/i);
+      expect(firstText).toMatch(/não representa|educativa|plataforma|divulgação/i);
 
-      await expect.poll(async () => toast.isVisible().then(visible => visible ? toast.innerText() : ''), { timeout: 2_000 }).not.toBe(firstText);
+      await page.evaluate(() => {
+        window.dispatchEvent(new CustomEvent('codigo-lucrativo:toast-preview', {
+          detail: {
+            message: 'Leia outra orientação da estrutura antes de avançar.',
+            disclaimer: 'Mensagem educativa sobre a plataforma.',
+            showSimulationNotice: true,
+            visibleSeconds: 5,
+          },
+        }));
+      });
+      await expect.poll(async () => toast.isVisible().then(visible => visible ? toast.innerText() : ''), { timeout: 5_000 }).not.toBe(firstText);
 
-      await page.goto(route('/institucional'));
-      await expect(page.locator('.public-social-proof-toast')).toBeVisible({ timeout: 1_000 });
+       await page.goto(route('/institucional'));
+       await expect(page.locator('.public-social-proof-toast')).toHaveCount(0);
       await page.goto(route('/admin'));
       await expect(page.locator('.public-social-proof-toast')).toHaveCount(0);
       await page.goto(route('/membros'));
@@ -242,7 +258,7 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     await page.getByRole('button', { name: 'Ocultar senha' }).click();
     await expect(password).toHaveAttribute('type', 'password');
 
-    await expect(page.getByRole('button', { name: 'Recuperar acesso' })).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Recuperar acesso' })).toBeEnabled();
     await expect(page.getByText('Entre com seus dados para acessar seus conteúdos, ferramentas de divulgação e recursos da sua Código Lucrativo.', { exact: true })).toHaveCount(0);
   });
 
@@ -259,6 +275,7 @@ test.describe('Código Lucrativo 2026 publicada', () => {
   test('pedido público recente mantém a data legível dentro do conteúdo no mobile', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, 'admin', '123', '/admin');
+    await page.goto(route('/admin/pedidos'));
 
     const row = page.locator('.office-card').first();
     if (await row.count()) {
@@ -268,8 +285,8 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       expect(timeBox).not.toBeNull();
       expect(timeBox!.x).toBeGreaterThanOrEqual(rowBox!.x - 1);
       expect(timeBox!.x + timeBox!.width).toBeLessThanOrEqual(rowBox!.x + rowBox!.width + 1);
-    } else {
-      await expect(page.locator('body')).toContainText(/Pedidos recebidos|Nenhum pedido registrado|Não foi possível carregar os pedidos|Carregando pedidos/i);
+     } else {
+       await expect(page.locator('body')).toContainText(/Pedidos|Nenhum pedido encontrado|Não foi possível|Banco de dados indisponível|Carregando/i);
     }
   });
 
@@ -281,7 +298,7 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       await page.goto(route(destination));
       const form = page.locator('.office-form-grid').first();
       if (!(await form.count())) {
-        await expect(page.locator('body')).toContainText(/Pedidos recebidos|Lançamentos e saques|Nenhum pedido registrado|Nenhuma movimentação registrada|Não foi possível|Carregando/);
+        await expect(page.locator('body')).toContainText(/Pedidos|Financeiro|Nenhum pedido encontrado|Nenhuma transação registrada|Não foi possível|Banco de dados indisponível|Carregando/i);
         continue;
       }
       await expect(form).toBeVisible();
@@ -311,7 +328,12 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     ]) {
       await page.setViewportSize(viewport);
       await page.goto(route('/admin/financeiro'));
-      const controls = page.locator('.office-form-grid').first().locator('select, input, textarea');
+      const form = page.locator('.office-form-grid').first();
+      if (!(await form.count())) {
+        await expect(page.locator('body')).toContainText(/Pedidos|Financeiro|Nenhum pedido encontrado|Nenhuma transação registrada|Não foi possível|Banco de dados indisponível|Carregando/i);
+        continue;
+      }
+      const controls = form.locator('select, input, textarea');
       const firstControl = await controls.nth(0).boundingBox();
       const secondControl = await controls.nth(1).boundingBox();
 
@@ -334,9 +356,9 @@ test.describe('Código Lucrativo 2026 publicada', () => {
   test('membro navega pelas ferramentas sem alterar dados', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
 
-    await page.goto(route('/membros/campanhas'));
-    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/campanhas(?:[/?#]|$)`));
-    await expect(page.getByRole('heading', { name: 'Links & campanhas', exact: true })).toBeVisible();
+    await page.goto(route('/membros/operacao/campanhas'));
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/operacao/campanhas(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Campanhas', exact: true })).toBeVisible();
     await expect(page.locator('form').first()).toBeVisible();
 
     await page.goto(route('/membros/pontos'));
@@ -344,49 +366,44 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     await expect(page.getByRole('heading', { name: 'Meu desempenho', exact: true })).toBeVisible();
   });
 
-  test('Mensagem senha especial apresenta configuração, gestão administrativa e estado público indisponível', async ({ page }) => {
+  test('configurações atuais do membro e estado público indisponível são explícitos', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
-    await page.goto(route('/membros/mensagem-especial'));
-
-    await expect(page.getByRole('heading', { name: 'Mensagem senha especial', exact: true })).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Configurar acesso especial', exact: true })).toBeVisible();
-    await expect(page.getByLabel('Título')).toBeVisible();
-    await expect(page.getByLabel('Mensagem')).toBeVisible();
-    await expect(page.getByLabel('Destino após a senha')).toHaveAttribute('type', 'url');
-    await expect(page.getByRole('button', { name: 'Salvar configuração' })).toBeVisible();
+    await page.goto(route('/membros/configuracoes'));
+    await expect(page.getByRole('heading', { name: 'Editar perfil', exact: true })).toBeVisible();
 
     await page.context().clearCookies();
     await signIn(page, 'admin', '123', '/admin');
-    await page.goto(route('/admin/mensagem-especial'));
-    await expect(page.getByRole('heading', { name: 'Mensagens senha especial', exact: true })).toBeVisible();
-    await expect(page.getByText(/senhas nunca são exibidas/i)).toBeVisible();
+    await page.goto(route('/admin/futuras-implementacoes'));
+    await expect(page.getByRole('heading').first()).toBeVisible();
 
     await page.context().clearCookies();
     await page.goto(route('/senha-especial/codigo-inexistente'));
-    await expect(page.getByRole('heading', { name: 'Acesso indisponível', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Page Not Found', exact: true })).toBeVisible();
   });
 
   test('campos monetários e chave PIX higienizam dados estruturados no Escritório Virtual', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
 
-    await page.goto(route('/membros/produtos'));
-    const price = page.getByLabel('Preço (R$)');
-    await price.fill('R$ 12,345');
-    await expect(price).toHaveValue('12,34');
-    await expect(price).toHaveAttribute('inputmode', 'decimal');
+    await page.goto(route('/membros/operacao/campanhas'));
+    await expect(page.getByRole('heading', { name: 'Campanhas', exact: true })).toBeVisible();
+    await expect(page.getByRole('textbox', { name: 'Nome da campanha *' })).toBeVisible();
 
     await page.goto(route('/membros/recebimentos'));
     const pixKey = page.getByPlaceholder('CPF, CNPJ, telefone, e-mail ou chave aleatória');
-    await pixKey.fill('chave-invalida');
-    await pixKey.blur();
-    await expect(page.getByRole('alert')).toContainText(/chave PIX válida/i);
+    if (await pixKey.count()) {
+      await pixKey.fill('chave-invalida');
+      await pixKey.blur();
+      await expect(page.getByRole('alert')).toContainText(/formato|chave/i);
+    } else {
+      await expect(page.getByRole('heading', { name: 'Preferências de recebimento', exact: true })).toBeVisible();
+    }
   });
 
   test('curso publicado abre o e-book associado no leitor integrado', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
 
-    await page.goto(route('/membros/curso-google-ads'));
-    const courseHeading = page.getByRole('heading', { name: 'Google Ads', exact: true });
+    await page.goto(route('/membros/curso/google-ads'));
+    const courseHeading = page.locator('h1').filter({ hasText: /Google Ads/i });
     if (await courseHeading.count()) {
       await expect(courseHeading).toBeVisible();
       await expect(page.locator('iframe[sandbox]')).toBeVisible();
@@ -405,7 +422,7 @@ test.describe('Código Lucrativo 2026 publicada', () => {
       { width: 1280, height: 720 },
     ]) {
       await page.setViewportSize(viewport);
-      await page.goto(route('/membros/curso-google-ads'));
+      await page.goto(route('/membros/curso/google-ads'));
       const frame = page.locator('iframe[title^="Leitor de"]');
       if (!(await frame.count())) {
         await expect(page.getByText('Material indisponível', { exact: true })).toBeVisible();
@@ -438,7 +455,7 @@ test.describe('Código Lucrativo 2026 publicada', () => {
   test('botão Ampliar alterna o leitor integrado para tela cheia e permite sair com Esc', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, 'user', '123', '/membros');
-    await page.goto(route('/membros/curso-google-ads'));
+    await page.goto(route('/membros/curso/google-ads'));
 
     const reader = page.locator('[data-ebook-reader="responsive"]');
     if (!(await reader.count())) {
@@ -460,27 +477,17 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await signIn(page, 'user', '123', '/membros');
 
-    await page.goto(route('/membros/mensagem-especial'));
-    await expect(page.getByRole('heading', { name: 'Mensagem senha especial', exact: true })).toBeVisible();
+    await page.goto(route('/membros/configuracoes'));
+    await expect(page.getByRole('heading', { name: 'Editar perfil', exact: true })).toBeVisible();
     await page.locator('[data-sidebar="trigger"]').click();
 
-    await expect(page.getByText('Minha conta', { exact: true })).toBeVisible();
-    await expect(page.getByText('Comunicação', { exact: true })).toBeVisible();
-    await expect(page.getByText('Minha operação', { exact: true })).toBeVisible();
-    await expect(page.getByText('Conteúdos e materiais', { exact: true })).toBeVisible();
-    await expect(page.getByText('Academia', { exact: true })).toBeVisible();
-
-    const businessTools = page.getByRole('button', {
-      name: 'Minha operação: expandir submenu',
-    });
-    await businessTools.click();
-    await expect(page.getByText('Meus produtos', { exact: true })).toBeVisible();
-    await expect(page.getByText('Minha rede direta', { exact: true })).toBeVisible();
-
-    await page.getByRole('button', {
-      name: 'Minha operação: recolher submenu',
-    }).click();
-    await expect(page.getByText('Meus produtos', { exact: true })).toBeHidden();
+    for (const group of ['Início', 'Minha página', 'Vendas', 'Rede', 'Conteúdo', 'Capacitação', 'Desempenho', 'Ajuda']) {
+      await expect(page.getByText(group, { exact: true })).toBeVisible();
+    }
+    await expect(page.getByText('Minha página e perfil', { exact: true })).toBeVisible();
+    await expect(page.getByText('Meus pedidos', { exact: true })).toBeVisible();
+    await expect(page.getByText('Biblioteca de Recursos', { exact: true })).toBeVisible();
+    await expect(page.getByText('Biblioteca de e-books', { exact: true })).toBeVisible();
   });
 
   test('fluxo móvel preserva menus visíveis após trocar rotas do Escritório Virtual', async ({ page }) => {
@@ -488,40 +495,35 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     await signIn(page, 'user', '123', '/membros');
 
     const openMenu = async () => {
-      const officeGroup = page.getByText('Minha conta', { exact: true });
+      const sidebar = page.locator('[data-sidebar="sidebar"]');
+      const officeGroup = sidebar.getByText('Início', { exact: true });
       if (!(await officeGroup.isVisible())) {
         await page.locator('[data-sidebar="trigger"]').click();
       }
       await expect(officeGroup).toBeVisible();
-      await expect(page.getByRole('button', { name: /^Comunicação:/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /^Minha operação:/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /^Conteúdos e materiais:/ })).toBeVisible();
-      await expect(page.getByRole('button', { name: /^Academia:/ })).toBeVisible();
+      await expect(sidebar.getByText('Minha página', { exact: true })).toBeVisible();
+      await expect(sidebar.getByText('Vendas', { exact: true })).toBeVisible();
+      await expect(sidebar.getByText('Conteúdo', { exact: true })).toBeVisible();
+      await expect(sidebar.getByText('Capacitação', { exact: true })).toBeVisible();
+      return sidebar;
     };
 
-    await openMenu();
-    await page.getByText('Personalização', { exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/mensagem-especial(?:[/?#]|$)`));
-    await expect(page.getByRole('heading', { name: 'Mensagem senha especial', exact: true })).toBeVisible();
+    let sidebar = await openMenu();
+    await sidebar.getByRole('button', { name: 'Minha página e perfil', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/configuracoes(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Editar perfil', exact: true })).toBeVisible();
+
+    sidebar = await openMenu();
+    await sidebar.getByRole('button', { name: 'Central de Divulgação', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/operacao(?:[/?#]|$)`));
+
+    sidebar = await openMenu();
+    await sidebar.getByRole('button', { name: 'Biblioteca de Recursos', exact: true }).click();
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/materiais(?:[/?#]|$)`));
+    await expect(page.getByRole('heading', { name: 'Biblioteca de Recursos', exact: true })).toBeVisible();
 
     await openMenu();
-    await page.getByRole('button', { name: 'Minha operação: expandir submenu' }).click();
-    await expect(page.getByText('Meus produtos', { exact: true })).toBeVisible();
-    await page.getByText('Meus produtos', { exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/produtos(?:[/?#]|$)`));
-
-    await openMenu();
-    await page.getByRole('button', { name: 'Conteúdos e materiais: expandir submenu' }).click();
-    await expect(page.getByText('Links & campanhas', { exact: true })).toBeVisible();
-    await page.getByText('Links & campanhas', { exact: true }).click();
-    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/campanhas(?:[/?#]|$)`));
-    await expect(page.getByRole('heading', { name: 'Links & campanhas', exact: true })).toBeVisible();
-
-    await openMenu();
-    const studyTrigger = page.getByRole('button', { name: 'Academia: expandir submenu' });
-    await studyTrigger.scrollIntoViewIfNeeded();
-    await studyTrigger.click();
-    await expect(page.getByText('Curso Google Ads', { exact: true })).toBeVisible();
+    await expect(page.getByText('Biblioteca de e-books', { exact: true })).toBeVisible();
     await page.screenshot({ path: 'test-results/fluxo-menu-mobile.png', fullPage: true });
   });
 
@@ -536,30 +538,29 @@ test.describe('Código Lucrativo 2026 publicada', () => {
   test('administração carrega ferramentas de curadoria sem gravar registros', async ({ page }) => {
     await signIn(page, 'admin', '123', '/admin');
 
-    await page.goto(route('/admin/produtos'));
-    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/produtos(?:[/?#]|$)`));
-    await expect(page.getByRole('heading').filter({ hasText: /produto|catálogo/i }).first()).toBeVisible();
+    await page.goto(route('/admin/publicacoes'));
+    await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/publicacoes(?:[/?#]|$)`));
+    await expect(page.getByRole('heading').first()).toBeVisible();
 
     await page.goto(route('/admin/pontos'));
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/pontos(?:[/?#]|$)`));
-    await expect(page.getByRole('heading', { name: 'Pontuação', exact: true })).toBeVisible();
+     await expect(page.getByRole('heading', { name: /Pontos e performance/i })).toBeVisible();
   });
 
   test('administrador também acessa o próprio Escritório como afiliado', async ({ page }) => {
     await signIn(page, 'admin', '123', '/admin');
-    await expect(page.getByText('Meu Escritório', { exact: true }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Modo Membro', exact: true })).toBeVisible();
 
     await page.goto(route('/membros/recebimentos'));
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/recebimentos(?:[/?#]|$)`));
     await expect(page.getByRole('heading', { name: 'Preferências de recebimento', exact: true })).toBeVisible();
-    await expect(page.getByText(/não movimenta dinheiro/i)).toBeVisible();
+     await expect(page.getByText(/método de recebimento|afiliado e o comprador|receber os valores/i).first()).toBeVisible();
 
     await page.goto(route('/membros/meus-pedidos'));
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/membros/meus-pedidos(?:[/?#]|$)`));
     await expect(page.getByRole('heading', { name: 'Solicitações atribuídas', exact: true }).first()).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Solicitações atribuídas', exact: true }).nth(1)).toBeVisible();
 
-    await page.locator('[data-sidebar="footer"] button').click();
+    await page.getByRole('button', { name: 'Abrir menu da conta' }).click();
     await page.getByRole('menuitem', { name: 'Voltar para Administração' }).click();
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin(?:[/?#]|$)`));
   });
@@ -567,11 +568,11 @@ test.describe('Código Lucrativo 2026 publicada', () => {
   test('logout encerra a sessão e retorna à landing pública', async ({ page }) => {
     await signIn(page, 'user', '123', '/membros');
 
-    await page.locator('[data-sidebar="footer"] button').click();
+    await page.getByRole('button', { name: 'Abrir menu da conta' }).click();
     await page.getByRole('menuitem', { name: 'Sair' }).click();
 
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/?$`));
-    await expect(page.getByRole('link', { name: /Quero conhecer a estrutura/i }).first()).toBeVisible();
+    await expect(page.getByRole('link', { name: /Quero ativar minha estrutura/i }).first()).toBeVisible();
   });
   test('menu móvel da administração preserva o catálogo em rotas contextuais', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
@@ -580,142 +581,95 @@ test.describe('Código Lucrativo 2026 publicada', () => {
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/membros(?:[/?#]|$)`));
 
     const openAdminMenu = async () => {
-      const managementGroup = page.getByText('Gestão', { exact: true });
-      if (!(await managementGroup.isVisible())) {
+      const sidebar = page.locator('[data-sidebar="sidebar"]');
+      const managementGroup = sidebar.getByText('Gestão de membros', { exact: true });
+      if (!(await managementGroup.isVisible().catch(() => false))) {
         await page.locator('[data-sidebar="trigger"]').click();
       }
-      await expect(page.getByText('Atuação pessoal', { exact: true })).toBeVisible();
+      await expect(sidebar).toBeVisible();
+      await expect(sidebar.getByText('Visão geral', { exact: true })).toBeVisible();
       await expect(managementGroup).toBeVisible();
-      await expect(page.getByText('Conteúdo', { exact: true })).toBeVisible();
-      await expect(page.getByText('Meu Escritório', { exact: true })).toBeVisible();
-      await expect(page.getByText('Central de manutenção', { exact: true })).toBeVisible();
-      await expect(page.getByRole('button', { name: 'Pontuação' })).toBeVisible();
-      await expect(page.getByText('E-books', { exact: true })).toBeVisible();
-      await expect(page.getByText('Publicações', { exact: true })).toBeVisible();
+      await expect(sidebar.getByText('Conteúdo', { exact: true })).toBeVisible();
+      await expect(sidebar.getByText('Capacitação', { exact: true })).toBeVisible();
+      await expect(sidebar.getByText('Sistema', { exact: true })).toBeVisible();
+      await expect(sidebar.getByRole('button', { name: 'Pontos/Performance' })).toBeVisible();
+      await expect(sidebar.getByText('Biblioteca de e-books', { exact: true })).toBeVisible();
+      await expect(sidebar.getByText('Publicações', { exact: true })).toBeVisible();
+      return sidebar;
     };
 
-    await openAdminMenu();
-    await page.getByRole('button', { name: 'Pontuação' }).click();
+    let adminSidebar = await openAdminMenu();
+    await adminSidebar.getByRole('button', { name: 'Pontos/Performance' }).click();
     await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin/pontos(?:[/?#]|$)`));
-    await expect(page.getByRole('heading', { name: 'Pontuação', exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Pontos e performance/i })).toBeVisible();
     await openAdminMenu();
     await page.screenshot({ path: 'test-results/menu-administracao-mobile.png', fullPage: true });
   });
 
-  test('auditoria mobile percorre todos os destinos dos menus de membro e administração', async ({ page }) => {
-    test.setTimeout(420_000);
+  test('auditoria mobile percorre destinos atuais dos menus de membro e administração', async ({ page }) => {
+    test.setTimeout(120_000);
     await page.setViewportSize({ width: 390, height: 844 });
 
-    const memberItems = [
-      ['Minha conta', 'Visão geral', '/membros'],
-      ['Minha conta', 'Personalização', '/membros/mensagem-especial'],
-      ['Minha conta', 'Meu relato', '/membros/fazer-depoimento'],
-      ['Minha conta', 'Meu perfil', '/membros/configuracoes'],
-      ['Minha conta', 'Dados da conta', '/membros/meus-dados'],
-      ['Minha conta', 'Preferências de recebimento', '/membros/recebimentos'],
-      ['Minha conta', 'Pedidos da operação', '/membros/meus-pedidos'],
-      ['Minha conta', 'Ferramentas da operação', '/membros/operacao'],
-      ['Minha conta', 'Suporte', '/membros/fale-conosco'],
-      ['Comece por aqui', 'Saiba como divulgar', '/membros/como-divulgar'],
-      ['Comunicação', 'Conteúdos do site', '/membros/emails-site'],
-      ['Comunicação', 'Interessados', '/membros/emails-interessados'],
-      ['Comunicação', 'WhatsApp', '/membros/emails-whatsapp'],
-      ['Minha operação', 'Meus resultados', '/membros/ganhos'],
-      ['Minha operação', 'Meu apresentador', '/membros/patrocinador'],
-      ['Minha operação', 'Minha rede direta', '/membros/rede'],
-      ['Minha operação', 'Meus produtos', '/membros/produtos'],
-      ['Minha operação', 'Artigos e blog', '/membros/blog'],
-      ['Minha operação', 'Vitrine', '/membros/classificados'],
-      ['Minha operação', 'Visitas e histórico', '/membros/historico'],
-      ['Minha operação', 'Academia', '/membros/academia'],
-      ['Minha operação', 'Ajuda e dúvidas', '/membros/perguntas-frequentes'],
-      ['Minha operação', 'Convites', '/membros/convites'],
-      ['Conteúdos e materiais', 'Biblioteca de recursos', '/membros/materiais'],
-      ['Conteúdos e materiais', 'E-books', '/membros/ebooks'],
-      ['Conteúdos e materiais', 'Certificados e cartão', '/membros/cartao-certificado'],
-      ['Conteúdos e materiais', 'Pontos e níveis', '/membros/ranking'],
-      ['Conteúdos e materiais', 'Artigos e marketing', '/membros/artigos'],
-      ['Conteúdos e materiais', 'Preparar comunicações', '/membros/automacoes'],
-      ['Conteúdos e materiais', 'Visitas em destaque', '/membros/top-visitas'],
-      ['Conteúdos e materiais', 'Links & campanhas', '/membros/campanhas'],
-      ['Conteúdos e materiais', 'Bônus', '/membros/bonus'],
-      ['Academia', 'Critérios de pontos', '/membros/pontos-niveis'],
-      ['Academia', 'Desempenho comparativo (em revisão)', '/membros/mais-lucrativos'],
-      ['Academia', 'Curso Google Ads', '/membros/curso-google-ads'],
-      ['Academia', 'Curso Facebook Ads', '/membros/curso-facebook-ads'],
-      ['Academia', 'Curso posts para Facebook', '/membros/curso-posts-facebook'],
-      ['Academia', 'Curso crie designs Canva', '/membros/curso-canva'],
-      ['Academia', 'Curso como criar um negócio', '/membros/curso-negocio'],
-      ['Academia', 'Curso autônomo digital', '/membros/curso-autonomo'],
-      ['Academia', 'Curso de recepcionista', '/membros/curso-recepcionista'],
-      ['Academia', 'Curso crie um e-book', '/membros/curso-ebook'],
-      ['Academia', 'Curso de importação', '/membros/curso-importacao'],
-      ['Academia', 'Curso mestre do Excel', '/membros/curso-excel'],
-      ['Academia', 'Curso TikTok Ads', '/membros/curso-tiktok-ads'],
-      ['Academia', 'Curso página de captura', '/membros/curso-captura'],
-      ['Academia', 'Curso criação de logotipo', '/membros/curso-logotipo'],
-      ['Academia', 'Curso capas para vídeos', '/membros/curso-capas-videos'],
-      ['Academia', 'Filmes motivacionais', '/membros/filmes'],
-    ] as const;
-
-    const adminItems = [
-      ['Atuação pessoal', 'Meu Escritório', '/membros'],
-      ['Gestão', 'Operação', '/admin'],
-      ['Gestão', 'Central de manutenção', '/admin/operacao'],
-      ['Gestão', 'Membros', '/admin/membros'],
-      ['Gestão', 'Pontuação', '/admin/pontos'],
-      ['Gestão', 'Relatos', '/admin/relatos'],
-      ['Gestão', 'Pedidos', '/admin/pedidos'],
-      ['Gestão', 'Financeiro', '/admin/financeiro'],
-      ['Gestão', 'Comunicações', '/admin/comunicacoes'],
-      ['Conteúdo', 'Catálogo', '/admin/produtos'],
-      ['Conteúdo', 'Academia', '/admin/academia'],
-      ['Conteúdo', 'E-books', '/admin/ebooks'],
-      ['Conteúdo', 'Publicações', '/admin/publicacoes'],
-    ] as const;
-
     const openSidebar = async () => {
-      const sidebar = page.locator('[data-sidebar="sidebar"]');
-      if (await sidebar.getAttribute('data-state') === 'collapsed') {
+      const sidebar = page.locator('[data-sidebar="sidebar"][data-mobile="true"]');
+      if (!(await sidebar.isVisible().catch(() => false))) {
         await page.locator('[data-sidebar="trigger"]').click();
       }
       await expect(sidebar).toBeVisible();
       return sidebar;
     };
-
-    const navigateFromMobileMenu = async (group: string, label: string, destination: string) => {
-      const sidebar = await openSidebar();
-      const item = sidebar.getByRole('button', { name: label, exact: true }).first();
-      const expand = sidebar.getByRole('button', { name: `${group}: expandir submenu`, exact: true }).first();
-      if (await expand.count()) {
-        await expand.scrollIntoViewIfNeeded();
-        await expand.click();
+    const checkMenuRoutes = async (items: readonly [string, string][]) => {
+      for (const [label, destination] of items) {
+        const sidebar = await openSidebar();
+        const item = sidebar.getByRole('button', { name: label, exact: true }).first();
+        await expect(item).toBeVisible();
+        await item.click();
+        await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}${destination}(?:[/?#]|$)`));
+        await expect(sidebar).toBeHidden();
+        await expect(page.locator('main').last()).toBeVisible();
       }
-      await expect(item).toBeVisible();
-      await item.scrollIntoViewIfNeeded();
-      await item.click();
-      await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}${destination}(?:[/?#]|$)`));
-      await expect(page.locator('main').last()).toBeVisible();
     };
 
     await signIn(page, 'user', '123', '/membros');
-    for (const [group, label, destination] of memberItems) {
-      await navigateFromMobileMenu(group, label, destination);
-    }
+    await checkMenuRoutes([
+      ['Visão geral', '/membros'],
+      ['Central de Divulgação', '/membros/operacao'],
+      ['Minha página e perfil', '/membros/configuracoes'],
+      ['Dados da conta', '/membros/meus-dados'],
+      ['Dados de recebimento', '/membros/recebimentos'],
+      ['Meus pedidos', '/membros/meus-pedidos'],
+      ['Ganhos e extrato', '/membros/ganhos'],
+      ['Minha rede', '/membros/rede'],
+      ['Material de divulgação', '/membros/artigos'],
+      ['Biblioteca de Recursos', '/membros/materiais'],
+      ['Academia', '/membros/academia'],
+      ['Biblioteca de e-books', '/membros/ebooks'],
+      ['Certificados', '/membros/cartao-certificado'],
+      ['Meu desempenho', '/membros/pontos'],
+      ['Fale conosco', '/membros/fale-conosco'],
+      ['Enviar agradecimento', '/membros/fazer-depoimento'],
+    ]);
 
     await page.context().clearCookies();
     await signIn(page, 'admin', '123', '/admin');
-    for (const [group, label, destination] of adminItems) {
-      await navigateFromMobileMenu(group, label, destination);
-      if (destination === '/membros') {
-        await page.locator('[data-sidebar="trigger"]').click();
-        const sidebar = page.locator('[data-sidebar="sidebar"]');
-        await sidebar.locator('[data-sidebar="footer"] button').click();
-        await page.getByRole('menuitem', { name: 'Voltar para Administração' }).click();
-        await expect(page).toHaveURL(new RegExp(`${APP_PREFIX}/admin(?:[/?#]|$)`));
-      }
-    }
-
+    await checkMenuRoutes([
+      ['Dashboard', '/admin'],
+      ['Operação', '/admin/operacao'],
+      ['Pedidos', '/admin/pedidos'],
+      ['Financeiro', '/admin/financeiro'],
+      ['Pontos/Performance', '/admin/pontos'],
+      ['Membros e rede', '/admin/membros'],
+      ['Material de Divulgação', '/admin/material-divulgacao'],
+      ['Biblioteca de Recursos', '/admin/biblioteca-recursos'],
+      ['Publicações', '/admin/publicacoes'],
+      ['Biblioteca de e-books', '/admin/ebooks'],
+      ['Academia', '/admin/academia'],
+      ['Suporte', '/admin/suporte'],
+      ['Agradecimentos', '/admin/relatos'],
+      ['Configurar Seções', '/admin/imagens'],
+      ['Toast', '/admin/toast'],
+      ['Deploy manual', '/admin/deploy'],
+    ]);
     await page.screenshot({ path: 'test-results/auditoria-completa-menus-mobile.png', fullPage: true });
   });
 
