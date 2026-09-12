@@ -53,6 +53,8 @@ describe("Acervo de materiais de estudo em PDF", () => {
     const importer = await readFile(path.join(root, "scripts/import-ebooks.mjs"), "utf8");
     const deploy = await readFile(path.join(root, "scripts/deploy-vps.sh"), "utf8");
     const canonical = await readFile(path.join(root, "server/academyCanonical.ts"), "utf8");
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    const syncScript = await readFile(path.join(root, "scripts/sync-ebook-library-categories.mjs"), "utf8");
 
     expect(importer).toContain('pdf.subarray(0, 5).toString("ascii") !== "%PDF-"');
     expect(importer).toContain('path.resolve(importRoot, "fontes_importados")');
@@ -70,5 +72,20 @@ describe("Acervo de materiais de estudo em PDF", () => {
     expect(canonical).toContain("getPackagedEbookLibraryCategory");
     expect(canonical).toContain("if (!libraryCategory) return ebook;");
     expect(canonical).toContain('usage: ebook.academy?.usage ?? "library"');
+
+    expect(db).toContain('import { getPackagedEbookLibraryCategory } from "../shared/ebookLibraryCatalog"');
+    expect(db).toContain("function withCanonicalPackagedLibraryCategory");
+    expect(db).toContain('usage: metadata.usage === "both" ? "both" as const : "library" as const');
+    expect(db).toContain("libraryCategory: canonicalCategory");
+    expect(db).toContain("withCanonicalPackagedLibraryCategory(withEbookAcademyMetadata");
+    expect(db).toContain("export async function getAdminEbooks()");
+    expect(db).toContain("export async function getAdminEbook(ebookId: number)");
+
+    expect(syncScript).toContain('const apply = process.argv.includes("--apply")');
+    expect(syncScript).toContain('const mode = apply ? "apply" : "dry-run"');
+    expect(syncScript).toContain("metadata.usage = metadata.usage === \"both\" ? \"both\" : \"library\"");
+    expect(syncScript).toContain("metadata.libraryCategory = canonicalCategory");
+    expect(syncScript).toContain("UPDATE ebooks SET htmlContent = ? WHERE id = ?");
+    expect(syncScript).toContain("ebook-category-sync-");
   });
 });

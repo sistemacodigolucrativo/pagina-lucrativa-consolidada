@@ -39,6 +39,7 @@ import { hashPassword } from "./credentialHash";
 import { assertReceiptReviewAllowed, assertReceiptUploadAllowed, assertSponsorImmutable } from "./integrityGuards";
 import { getPublicSalesSection } from "../shared/publicSalesSections";
 import { getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
+import { getPackagedEbookLibraryCategory } from "../shared/ebookLibraryCatalog";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
 const PAYMENT_ACCESS_TOKEN_TTL_MS = 30 * 60 * 1000;
@@ -1330,7 +1331,22 @@ function withEbookAcademyMetadata<T extends object & { htmlContent?: string | nu
   return { ...ebook, academy: extractEbookAcademyMetadata(ebook) };
 }
 
-function isEbookVisibleInLibrary(ebook: { htmlContent?: string | null; sourcePath?: string | null }) {
+function withCanonicalPackagedLibraryCategory<T extends object & { sourceId?: string | null; htmlContent?: string | null; sourcePath?: string | null; academy?: EbookAcademyMetadata | null }>(ebook: T) {
+  const canonicalCategory = getPackagedEbookLibraryCategory(ebook.sourceId);
+  if (!canonicalCategory) return ebook;
+  const metadata = ebook.academy ?? extractEbookAcademyMetadata(ebook) ?? { usage: "library" as const };
+  return {
+    ...ebook,
+    academy: {
+      ...metadata,
+      usage: metadata.usage === "both" ? "both" as const : "library" as const,
+      libraryCategory: canonicalCategory,
+    },
+  };
+}
+
+function isEbookVisibleInLibrary(ebook: { sourceId?: string | null; htmlContent?: string | null; sourcePath?: string | null }) {
+  if (getPackagedEbookLibraryCategory(ebook.sourceId)) return true;
   return extractEbookAcademyMetadata(ebook)?.usage !== "course";
 }
 
@@ -1404,7 +1420,7 @@ function withEbookContentMetadata<T extends object & EbookContentLookupSource>(
 
 async function withPackagedEbookContentMetadata<T extends object & EbookContentLookupSource & { htmlContent?: string | null }>(ebookRows: T[]) {
   const packagedMetadataBySource = await getPackagedEbookContentMetadataBySource();
-  return ebookRows.map(ebook => withEbookAcademyMetadata(withEbookContentMetadata(ebook, packagedMetadataBySource)));
+  return ebookRows.map(ebook => withCanonicalPackagedLibraryCategory(withEbookAcademyMetadata(withEbookContentMetadata(ebook, packagedMetadataBySource))));
 }
 
 function buildAcademyCourseRouteKey(courseSlug: string) {
