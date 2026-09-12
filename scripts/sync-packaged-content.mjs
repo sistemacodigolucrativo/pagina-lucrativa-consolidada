@@ -71,6 +71,14 @@ function numericValue(value) {
   return Number.isFinite(number) ? Math.max(0, Math.round(number)) : undefined;
 }
 
+function textValue(value) {
+  return String(value ?? "").trim();
+}
+
+function academyLevel(value) {
+  return value === "pratica" || value === "avancado" ? value : "fundamentos";
+}
+
 function cleanMetadata(metadata) {
   return Object.fromEntries(Object.entries(metadata).filter(([, value]) => value !== undefined && value !== ""));
 }
@@ -124,6 +132,7 @@ function metadataFromManifest(row, canonicalCategory, academyBySourceId) {
     moduleOrder: usage !== "library" ? numericValue(academy?.moduleOrder ?? row.moduleOrder) : undefined,
     lessonOrder: usage !== "library" ? numericValue(academy?.lessonOrder ?? row.lessonOrder) ?? 0 : undefined,
     level: usage !== "library" ? academy?.level === "pratica" || academy?.level === "avancado" ? academy.level : row.level === "pratica" || row.level === "avancado" ? row.level : "fundamentos" : undefined,
+    coursePublished: usage !== "library" ? academy?.coursePublished ?? true : undefined,
   });
 }
 
@@ -142,33 +151,98 @@ async function assertPdfExists(row) {
   if (relative.startsWith("..") || path.isAbsolute(relative)) throw new Error(`Caminho de PDF invalido para ${row.sourceId}`);
   const pdfStat = await stat(resolved).catch(() => null);
   if (!pdfStat?.isFile() || pdfStat.size <= 0) throw new Error(`PDF empacotado nao encontrado para ${row.sourceId}: ${resolved}`);
+  const signature = (await readFile(resolved)).subarray(0, 5).toString("ascii");
+  if (signature !== "%PDF-") throw new Error(`Arquivo empacotado nao e PDF valido para ${row.sourceId}: ${resolved}`);
 }
 
-function normalizeAcademyManifest(raw) {
-  const entries = [];
-  const courses = Array.isArray(raw?.courses) ? raw.courses : [];
-  for (const course of courses) {
-    const modules = Array.isArray(course.modules) ? course.modules : [];
-    for (const module of modules) {
-      const lessons = Array.isArray(module.lessons) ? module.lessons : [];
-      for (const lesson of lessons) {
-        if (!lesson?.sourceId) continue;
-        entries.push({
-          sourceId: String(lesson.sourceId),
-          usage: lesson.usage === "both" ? "both" : "course",
-          courseTitle: String(course.title || ""),
-          courseSlug: String(course.slug || slugify(String(course.title || "curso"))),
-          courseCategory: String(course.category || ""),
-          courseOrder: course.courseOrder ?? course.order,
-          moduleTitle: String(module.title || ""),
-          moduleOrder: module.moduleOrder ?? module.order,
-          lessonOrder: lesson.lessonOrder ?? lesson.order,
-          level: course.level === "pratica" || course.level === "avancado" ? course.level : "fundamentos",
-        });
-      }
-    }
+function assertUniqueEbookManifestRows(rows) {
+  const sourceIds = new Set();
+  const pdfLinks = new Set();
+  const duplicateSourceIds = [];
+  const duplicatePdfLinks = [];
+
+  for (const row of rows) {
+    if (sourceIds.has(row.sourceId)) duplicateSourceIds.push(row.sourceId);
+    sourceIds.add(row.sourceId);
+
+    const pdfLink = `${row.sourceId}/${sourcePathSegments(row.sourcePath).join("/")}`;
+    if (pdfLinks.has(pdfLink)) duplicatePdfLinks.push(pdfLink);
+    pdfLinks.add(pdfLink);
   }
-  return new Map(entries.map(entry => [entry.sourceId, entry]));
+
+  if (duplicateSourceIds.length) throw new Error(`sourceId duplicado no ebook-manifest.tsv: ${duplicateSourceIds.join(", ")}`);
+  if (duplicatePdfLinks.length) throw new Error(`PDF duplicado no ebook-manifest.tsv: ${duplicatePdfLinks.join(", ")}`);
+}
+
+function normalizeAcademyManifest(raw, knownSourceIds) {
+  const entries = [];
+  const coursesOutput = [];
+  const usedCourseSlugs = new Set();
+  const usedSourceIds = new Map();
+  const courses = Array.isArray(raw?.courses) ? raw.courses : [];
+  for (const [courseIndex, course] of courses.entries()) {
+    const courseTitle = textValue(course?.title);
+    if (!courseTitle) throw new Error(`Curso padrao sem title no indice ${courseIndex}.`);
+    const courseSlug = textValue(course?.slug) || slugify(courseTitle);
+    if (usedCourseSlugs.has(courseSlug)) throw new Error(`courseSlug duplicado no manifesto da Academia: ${courseSlug}`);
+    usedCourseSlugs.add(courseSlug);
+    const courseCategory = textValue(course?.category) || "Academia";
+    const courseOrder = numericValue(course?.courseOrder ?? course?.order) ?? courseIndex + 1;
+    const level = academyLevel(course?.level);
+    const coursePublished = course?.published !== false;
+    const modules = Array.isArray(course.modules) ? course.modules : [];
+    if (!modules.length) throw new Error(`Curso padrao sem modulos: ${courseSlug}`);
+    const modulesOutput = [];
+    const usedModuleKeys = new Set();
+    for (const [moduleIndex, module] of modules.entries()) {
+      const moduleTitle = textValue(module?.title) || "Modulo unico";
+      const moduleOrder = numericValue(module?.moduleOrder ?? module?.order) ?? moduleIndex + 1;
+      const moduleKey = `${moduleOrder}:${moduleTitle}`;
+      if (usedModuleKeys.has(moduleKey)) throw new Error(`Modulo duplicado em ${courseSlug}: ${moduleKey}`);
+      usedModuleKeys.add(moduleKey);
+      const lessons = Array.isArray(module.lessons) ? module.lessons : [];
+      if (!lessons.length) throw new Error(`Modulo sem aulas em ${courseSlug}: ${moduleKey}`);
+      const lessonsOutput = [];
+      const usedLessonOrders = new Set();
+      for (const [lessonIndex, lesson] of lessons.entries()) {
+        const sourceId = textValue(lesson?.sourceId);
+        if (!sourceId) throw new Error(`Aula sem sourceId em ${courseSlug}/${moduleKey}.`);
+        if (!knownSourceIds.has(sourceId)) throw new Error(`sourceId da Academia nao existe no ebook-manifest.tsv: ${sourceId}`);
+        if (usedSourceIds.has(sourceId)) throw new Error(`sourceId repetido na Academia: ${sourceId} em ${usedSourceIds.get(sourceId)} e ${courseSlug}`);
+        const lessonOrder = numericValue(lesson?.lessonOrder ?? lesson?.order) ?? lessonIndex + 1;
+        if (usedLessonOrders.has(lessonOrder)) throw new Error(`lessonOrder duplicado em ${courseSlug}/${moduleKey}: ${lessonOrder}`);
+        usedLessonOrders.add(lessonOrder);
+        usedSourceIds.set(sourceId, courseSlug);
+        const usage = lesson.usage === "course" ? "course" : "both";
+        entries.push({
+          sourceId,
+          usage,
+          courseTitle,
+          courseSlug,
+          courseCategory,
+          courseOrder,
+          moduleTitle,
+          moduleOrder,
+          lessonOrder,
+          level,
+          coursePublished,
+        });
+        lessonsOutput.push({ sourceId, lessonOrder, usage });
+      }
+      modulesOutput.push({ title: moduleTitle, moduleOrder, lessons: lessonsOutput });
+    }
+    coursesOutput.push({ title: courseTitle, slug: courseSlug, category: courseCategory, level, courseOrder, modules: modulesOutput });
+  }
+  const stats = {
+    totalVersionedCourses: coursesOutput.length,
+    totalVersionedModules: coursesOutput.reduce((sum, course) => sum + course.modules.length, 0),
+    totalVersionedLessons: coursesOutput.reduce((sum, course) => sum + course.modules.reduce((moduleSum, module) => moduleSum + module.lessons.length, 0), 0),
+  };
+  return {
+    bySourceId: new Map(entries.map(entry => [entry.sourceId, entry])),
+    courses: coursesOutput,
+    stats,
+  };
 }
 
 async function createBackup(rows) {
@@ -197,8 +271,11 @@ const [ebookManifestText, catalogSource, academyManifestText] = await Promise.al
 ]);
 
 const manifestRows = parseTsv(ebookManifestText);
+assertUniqueEbookManifestRows(manifestRows);
 const canonicalCategories = loadCanonicalCategories(catalogSource);
-const academyBySourceId = normalizeAcademyManifest(JSON.parse(academyManifestText));
+const academyManifest = JSON.parse(academyManifestText);
+const academyManifestData = normalizeAcademyManifest(academyManifest, new Set(manifestRows.map(row => row.sourceId)));
+const academyBySourceId = academyManifestData.bySourceId;
 await Promise.all(manifestRows.map(assertPdfExists));
 
 const db = await mysql.createConnection(connectionConfig());
@@ -241,20 +318,21 @@ try {
     const nextHtmlContent = metadataDiffers ? writeMetadata(current.htmlContent || "", expectedMetadata, title) : current.htmlContent;
     const needsUpdate =
       metadataDiffers ||
-      !current.sourceFile ||
-      !current.sourcePath ||
-      !current.title ||
-      !current.summary ||
+      current.sourceFile !== row.sourceFile ||
+      current.sourcePath !== row.sourcePath ||
+      current.title !== title ||
+      (current.summary || "") !== summary ||
+      current.status !== "published" ||
       !current.publishedAt;
 
     if (needsUpdate) {
       plannedUpdates.push({
         id: current.id,
         sourceId: row.sourceId,
-        sourceFile: current.sourceFile || row.sourceFile,
-        sourcePath: current.sourcePath || row.sourcePath,
-        title: current.title || title,
-        summary: current.summary || summary,
+        sourceFile: row.sourceFile,
+        sourcePath: row.sourcePath,
+        title,
+        summary,
         htmlContent: nextHtmlContent,
       });
     }
@@ -273,7 +351,7 @@ try {
     }
     for (const row of plannedUpdates) {
       await db.execute(
-        "UPDATE ebooks SET sourceFile = ?, sourcePath = ?, title = ?, summary = ?, htmlContent = ?, publishedAt = COALESCE(publishedAt, NOW()) WHERE id = ?",
+        "UPDATE ebooks SET sourceFile = ?, sourcePath = ?, title = ?, summary = ?, htmlContent = ?, status = 'published', publishedAt = COALESCE(publishedAt, NOW()) WHERE id = ?",
         [row.sourceFile, row.sourcePath, row.title, row.summary, row.htmlContent, row.id],
       );
     }
@@ -293,8 +371,11 @@ try {
     totalIgnoredDatabaseRows: existingRows.filter(row => !seen.has(row.sourceId)).length,
     totalDuplicateSourceIds: duplicateSourceIds.length,
     duplicateSourceIds,
-    totalVersionedCourses: JSON.parse(academyManifestText).courses?.length ?? 0,
+    totalVersionedCourses: academyManifestData.stats.totalVersionedCourses,
+    totalVersionedModules: academyManifestData.stats.totalVersionedModules,
+    totalVersionedLessons: academyManifestData.stats.totalVersionedLessons,
     totalVersionedAcademyMaterials: academyMaterials,
+    totalVersionedAcademySourceIds: academyBySourceId.size,
     backupPath,
     finalLibraryDistribution: Object.fromEntries([...distribution.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"))),
   };

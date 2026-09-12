@@ -83,7 +83,9 @@ Esse script executa a geração e a aplicação das migrações configuradas pel
 
 ## Conteúdo padrão da Biblioteca e Academia
 
-Os e-books padrão, suas categorias e os manifestos da Academia são versionados no repositório. Em uma VPS nova, depois de configurar o banco e aplicar o schema, use o bootstrap controlado:
+Os e-books padrão, suas categorias e os cursos padrão da Academia são versionados no repositório. A fonte da verdade é o GitHub: `ebook-import/ebook-manifest.tsv`, `shared/ebookLibraryCatalog.ts`, os PDFs em `ebook-import/fontes_importados/` e `content-seeds/academy-courses.json`.
+
+O acervo padrão atual contém 87 e-books empacotados. A Academia usa 29 desses materiais em 11 cursos e 16 módulos progressivos, mantendo `usage: "both"` para que o mesmo PDF possa aparecer na Biblioteca e dentro do curso. Em uma VPS nova, depois de configurar o banco e aplicar o schema, use o bootstrap controlado:
 
 ```bash
 node scripts/sync-packaged-content.mjs --dry-run

@@ -50,6 +50,7 @@ describe("Acervo de materiais de estudo em PDF", () => {
   });
 
   it("sincroniza o catálogo pelo backend sem exigir credenciais de banco no script de deploy", async () => {
+    const rows = await readManifestRows();
     const importer = await readFile(path.join(root, "scripts/import-ebooks.mjs"), "utf8");
     const deploy = await readFile(path.join(root, "scripts/deploy-vps.sh"), "utf8");
     const canonical = await readFile(path.join(root, "server/academyCanonical.ts"), "utf8");
@@ -98,9 +99,37 @@ describe("Acervo de materiais de estudo em PDF", () => {
     expect(packagedSync).toContain("ON DUPLICATE KEY UPDATE sourceId = VALUES(sourceId)");
     expect(packagedSync).toContain("packaged-content-sync-");
     expect(packagedSync).toContain("totalSourceIdsSynced");
+    expect(packagedSync).toContain("totalVersionedModules");
+    expect(packagedSync).toContain("totalVersionedLessons");
     expect(packagedSync).toContain("totalVersionedAcademyMaterials");
+    expect(packagedSync).toContain("status = 'published'");
 
-    expect(academyManifest).toContain('"courses": []');
+    const academy = JSON.parse(academyManifest) as {
+      courses: Array<{
+        slug: string;
+        modules: Array<{ lessons: Array<{ sourceId: string; usage: string }> }>;
+      }>;
+    };
+    const academyLessons = academy.courses.flatMap(course => course.modules.flatMap(module => module.lessons));
+    expect(academy.courses).toHaveLength(11);
+    expect(academy.courses.map(course => course.slug)).toEqual([
+      "preparacao-mentalidade-execucao",
+      "negocio-digital-pronto-para-operar",
+      "marca-e-posicionamento",
+      "produto-digital-oferta-inicial",
+      "conteudo-criativos-autoridade",
+      "captacao-e-funis",
+      "seo-descoberta-organica",
+      "email-e-relacionamento",
+      "trafego-e-divulgacao",
+      "vendas-e-conversao",
+      "marketing-de-rede-e-escala",
+    ]);
+    expect(academy.courses.reduce((sum, course) => sum + course.modules.length, 0)).toBe(16);
+    expect(academyLessons).toHaveLength(29);
+    expect(new Set(academyLessons.map(lesson => lesson.sourceId)).size).toBe(29);
+    expect(academyLessons.every(lesson => rows.some(row => row.sourceId === lesson.sourceId))).toBe(true);
+    expect(academyLessons.every(lesson => lesson.usage === "both")).toBe(true);
     expect(contentBootstrapDocs).toContain("node scripts/sync-packaged-content.mjs --dry-run");
     expect(contentBootstrapDocs).toContain("node scripts/sync-packaged-content.mjs --apply");
   });

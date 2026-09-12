@@ -11,6 +11,15 @@ Este projeto trata o GitHub como fonte da verdade para os conteudos padrao da Bi
 
 Dados de usuarios, pagamentos, afiliados, progresso de leitura, progresso de curso, tickets, metricas e configuracoes individuais nao entram em seed global.
 
+## Conteudo padrao atual
+
+- E-books empacotados: 87.
+- Cursos padrao da Academia: 11.
+- Modulos padrao da Academia: 16.
+- Aulas/materiais padrao da Academia: 29.
+
+Os cursos seguem a progressao: fundamentos, negocio digital, marca, produto, conteudo, funis, SEO, e-mail, trafego, vendas e escala. Cada aula da Academia aponta para um `sourceId` existente no manifesto de e-books. Materiais usados em curso ficam com `usage: "both"` para continuarem disponiveis tambem na Biblioteca.
+
 ## VPS nova
 
 Depois de clonar o repositorio, instalar dependencias, configurar `.env` e aplicar o schema/migrations existentes, rode:
@@ -32,7 +41,16 @@ database: pagina_lucrativa
 
 O sync pode ser executado mais de uma vez. A chave de e-book e `sourceId`; cursos da Academia sao descritos por `courseSlug`, modulos por `moduleTitle/moduleOrder` e aulas/materiais por `lessonOrder` e `sourceId`.
 
-Em registros ja existentes, o script preserva curadoria administrativa sempre que possivel e atualiza somente o necessario para manter metadata canonica, campos vazios e `publishedAt` ausente. Novos e-books padrao entram como `published`.
+Em registros ja existentes, o script atualiza o conteudo empacotado para os valores canonicos do repositorio: `sourceFile`, `sourcePath`, `title`, `summary`, `status`, `publishedAt` e o metadata `codigo-lucrativo-academy`. Quando ja existe corpo HTML, o script troca apenas o `<meta>` controlado e preserva o restante do HTML. Novos e-books padrao entram como `published`.
+
+O script valida antes de escrever:
+
+- `sourceId` unico no manifesto de e-books.
+- PDF empacotado existente e com assinatura `%PDF-`.
+- `sourceId` de cada aula da Academia presente no manifesto de e-books.
+- `courseSlug` unico.
+- `moduleTitle/moduleOrder` unico dentro do curso.
+- `lessonOrder` unico dentro do modulo.
 
 ## Backup e rollback
 
@@ -66,8 +84,12 @@ git diff --check
 node scripts/sync-packaged-content.mjs --dry-run
 ```
 
+O dry-run informa os totais de e-books do manifesto, e-books no banco, `sourceIds` sincronizados, categorias corrigiveis, cursos/modulos/aulas versionados, materiais de Academia e operacoes planejadas. Ele nao altera usuarios, progresso, pagamentos, afiliados, tickets, metricas ou configuracoes individuais.
+
 Em VPS de producao, aplique apenas depois de conferir o dry-run:
 
 ```bash
 node scripts/sync-packaged-content.mjs --apply
 ```
+
+O `--apply` cria backup JSON antes de atualizar os registros empacotados afetados. O deploy normal continua publicando apenas o codigo; este bootstrap deve ser executado como etapa operacional controlada.
