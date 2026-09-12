@@ -55,6 +55,9 @@ describe("Acervo de materiais de estudo em PDF", () => {
     const canonical = await readFile(path.join(root, "server/academyCanonical.ts"), "utf8");
     const db = await readFile(path.join(root, "server/db.ts"), "utf8");
     const syncScript = await readFile(path.join(root, "scripts/sync-ebook-library-categories.mjs"), "utf8");
+    const packagedSync = await readFile(path.join(root, "scripts/sync-packaged-content.mjs"), "utf8");
+    const academyManifest = await readFile(path.join(root, "content-seeds/academy-courses.json"), "utf8");
+    const contentBootstrapDocs = await readFile(path.join(root, "docs/CONTENT_BOOTSTRAP.md"), "utf8");
 
     expect(importer).toContain('pdf.subarray(0, 5).toString("ascii") !== "%PDF-"');
     expect(importer).toContain('path.resolve(importRoot, "fontes_importados")');
@@ -87,5 +90,18 @@ describe("Acervo de materiais de estudo em PDF", () => {
     expect(syncScript).toContain("metadata.libraryCategory = canonicalCategory");
     expect(syncScript).toContain("UPDATE ebooks SET htmlContent = ? WHERE id = ?");
     expect(syncScript).toContain("ebook-category-sync-");
+
+    expect(packagedSync).toContain('const mode = apply ? "apply" : "dry-run"');
+    expect(packagedSync).toContain("ebook-manifest.tsv");
+    expect(packagedSync).toContain("shared/ebookLibraryCatalog.ts");
+    expect(packagedSync).toContain("content-seeds/academy-courses.json");
+    expect(packagedSync).toContain("ON DUPLICATE KEY UPDATE sourceId = VALUES(sourceId)");
+    expect(packagedSync).toContain("packaged-content-sync-");
+    expect(packagedSync).toContain("totalSourceIdsSynced");
+    expect(packagedSync).toContain("totalVersionedAcademyMaterials");
+
+    expect(academyManifest).toContain('"courses": []');
+    expect(contentBootstrapDocs).toContain("node scripts/sync-packaged-content.mjs --dry-run");
+    expect(contentBootstrapDocs).toContain("node scripts/sync-packaged-content.mjs --apply");
   });
 });

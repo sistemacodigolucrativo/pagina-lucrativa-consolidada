@@ -109,6 +109,7 @@ temp/
 # Webdev artifacts (checkpoint zips, migrations, etc.)
 .webdev/
 backups/ebook-category-sync-*.json
+backups/packaged-content-sync-*.json
 
 # Manus version file (auto-generated, not part of source)
 client/public/__manus__/version.json

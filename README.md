@@ -81,6 +81,17 @@ pnpm db:push
 
 Esse script executa a geração e a aplicação das migrações configuradas pelo Drizzle. Em produção, faça backup do banco antes de aplicar alterações e execute o comando com a versão do código que será colocada em serviço. Não substitua regras financeiras, tabelas ou migrações manualmente sem revisar o schema e o histórico SQL.
 
+## Conteúdo padrão da Biblioteca e Academia
+
+Os e-books padrão, suas categorias e os manifestos da Academia são versionados no repositório. Em uma VPS nova, depois de configurar o banco e aplicar o schema, use o bootstrap controlado:
+
+```bash
+node scripts/sync-packaged-content.mjs --dry-run
+node scripts/sync-packaged-content.mjs --apply
+```
+
+Esse fluxo é idempotente e usa `sourceId` para não duplicar e-books. O deploy normal não executa importação destrutiva automaticamente. Detalhes de operação, backup, rollback e exportação de cursos estão em `docs/CONTENT_BOOTSTRAP.md`.
+
 ## Testes e build
 
 Os comandos oficiais usados nesta entrega são:
