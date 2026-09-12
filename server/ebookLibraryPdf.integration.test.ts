@@ -5,7 +5,7 @@ import { PACKAGED_EBOOK_LIBRARY_CATEGORIES } from "../shared/ebookLibraryCatalog
 
 const root = process.env.PROJECT_ROOT || process.cwd();
 
-type ManifestRow = { sourceId: string; title: string; sourceFile: string; sourcePath: string };
+type ManifestRow = { sourceId: string; title: string; sourceFile: string; sourcePath: string; libraryCategory: string };
 
 async function readManifestRows() {
   const manifest = await readFile(path.join(root, "ebook-import/ebook-manifest.tsv"), "utf8");
@@ -14,8 +14,8 @@ async function readManifestRows() {
     .slice(1)
     .filter(Boolean)
     .map<ManifestRow>(line => {
-      const [sourceId, title, sourceFile, sourcePath] = line.split("\t");
-      return { sourceId, title, sourceFile, sourcePath };
+      const [sourceId, title, sourceFile, sourcePath, , , libraryCategory] = line.split("\t");
+      return { sourceId, title, sourceFile, sourcePath, libraryCategory };
     });
 }
 
@@ -23,10 +23,27 @@ describe("Acervo de materiais de estudo em PDF", () => {
   it("mantém os e-books empacotados como PDFs reais e categorizados", async () => {
     const rows = await readManifestRows();
     expect(rows).toHaveLength(87);
-    expect(Object.keys(PACKAGED_EBOOK_LIBRARY_CATEGORIES)).toHaveLength(29);
+    expect(Object.keys(PACKAGED_EBOOK_LIBRARY_CATEGORIES)).toHaveLength(87);
+
+    const categories = new Set(rows.map(row => row.libraryCategory));
+    expect(categories).toEqual(new Set([
+      "Negócio digital",
+      "Marca e posicionamento",
+      "Produto digital",
+      "Conteúdo e criativos",
+      "SEO e descoberta",
+      "Captação e funis",
+      "E-mail e relacionamento",
+      "Tráfego e divulgação",
+      "Vendas e conversão",
+      "Marketing de rede",
+      "Ferramentas e modelos",
+      "Desenvolvimento pessoal e financeiro",
+    ]));
 
     for (const row of rows) {
       expect(row.sourcePath.toLowerCase().endsWith(".pdf")).toBe(true);
+      expect(PACKAGED_EBOOK_LIBRARY_CATEGORIES[row.sourceId as keyof typeof PACKAGED_EBOOK_LIBRARY_CATEGORIES]).toBe(row.libraryCategory);
       const pdf = await readFile(path.join(root, "ebook-import/fontes_importados", row.sourceId, row.sourcePath));
       expect(pdf.subarray(0, 5).toString("ascii"), row.title).toBe("%PDF-");
     }
