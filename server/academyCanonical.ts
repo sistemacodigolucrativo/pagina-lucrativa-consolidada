@@ -49,7 +49,7 @@ let packagedLibrarySyncPromise: Promise<void> | null = null;
 
 function withPackagedLibraryCategory<T extends LibraryCategorizedEbook>(ebook: T) {
   const libraryCategory = getPackagedEbookLibraryCategory(ebook.sourceId);
-  if (!libraryCategory || ebook.academy?.libraryCategory?.trim()) return ebook;
+  if (!libraryCategory) return ebook;
   return {
     ...ebook,
     academy: {
