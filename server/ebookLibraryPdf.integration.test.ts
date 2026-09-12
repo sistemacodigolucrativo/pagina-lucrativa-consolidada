@@ -68,7 +68,7 @@ describe("Acervo de materiais de estudo em PDF", () => {
     expect(canonical).toContain("onDuplicateKeyUpdate({ set: { sourceId: ebook.sourceId } })");
     expect(canonical).toContain("await ensurePackagedLibraryEbooks()");
     expect(canonical).toContain("getPackagedEbookLibraryCategory");
-    expect(canonical).toContain("ebook.academy?.libraryCategory?.trim()");
+    expect(canonical).toContain("if (!libraryCategory) return ebook;");
     expect(canonical).toContain('usage: ebook.academy?.usage ?? "library"');
   });
 });
