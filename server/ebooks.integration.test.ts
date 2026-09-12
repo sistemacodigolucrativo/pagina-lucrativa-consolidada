@@ -33,9 +33,11 @@ describe("módulo canônico de e-books e Academia", () => {
   it("organiza a biblioteca por categoria persistida e mantém fallback local apenas como contingência", async () => {
     const memberReader = await read("client/src/pages/EbookReader.tsx");
     expect(memberReader).toContain("const libraryShelves = [");
-    for (const label of ["Copy e anúncios", "Vendas e oferta", "Tráfego e divulgação", "Produto digital", "Ferramentas e modelos", "Negócio digital", "Produtividade"]) {
+    for (const label of ["Negócio digital", "Marca e posicionamento", "Produto digital", "Conteúdo e criativos", "SEO e descoberta", "Captação e funis", "E-mail e relacionamento", "Tráfego e divulgação", "Vendas e conversão", "Marketing de rede", "Ferramentas e modelos", "Desenvolvimento pessoal e financeiro"]) {
       expect(memberReader).toContain(`label: \"${label}\"`);
     }
+    expect(memberReader).toContain("order: 1");
+    expect(memberReader).toContain("a.order ?? 999");
     expect(memberReader).toContain("normalizeSearchText");
     expect(memberReader).toContain("classifyEbook");
     expect(memberReader).toContain("shelfFromPersistedCategory");
@@ -121,8 +123,8 @@ describe("módulo canônico de e-books e Academia", () => {
     expect(reader).toContain('readerVariant?: "default" | "tech-futuristic"');
     expect(reader).toContain('data-reader-variant="tech-futuristic"');
     expect(reader).toContain("fitStudioOriginalContent");
-    expect(memberReader).toContain('selectedCatalog?.shelf.id === "copy"');
-    expect(memberReader).toContain('selectedCatalog?.shelf.id === "vendas"');
+    expect(memberReader).toContain('selectedCatalog?.shelf.id === "conteudo-criativos"');
+    expect(memberReader).toContain('selectedCatalog?.shelf.id === "vendas-conversao"');
     expect(memberReader).toContain('readerVariant={usesTechFuturisticReader ? "tech-futuristic" : "default"}');
   });
 });

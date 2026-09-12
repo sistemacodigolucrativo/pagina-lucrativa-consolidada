@@ -9,11 +9,78 @@ const mysqlUser = process.env.MYSQL_USER || "ubuntu";
 const mysqlDatabase = process.env.MYSQL_DATABASE || "pagina_lucrativa";
 const manifestPath = path.join(importRoot, "ebook-manifest.tsv");
 const manifest = await readFile(manifestPath, "utf8");
-const rows = manifest.split(/\r?\n/).slice(1).filter(Boolean).map(line => {
-  const [sourceId, title, sourceFile, sourcePath] = line.split("\t");
+const [headerLine, ...manifestLines] = manifest.split(/\r?\n/);
+const header = headerLine.split("\t");
+const headerIndex = new Map(header.map((name, index) => [name, index]));
+const valueAt = (columns, name, fallbackIndex) => columns[headerIndex.get(name) ?? fallbackIndex] ?? "";
+const rows = manifestLines.filter(Boolean).map(line => {
+  const columns = line.split("\t");
+  const sourceId = valueAt(columns, "id", 0);
+  const title = valueAt(columns, "title", 1);
+  const sourceFile = valueAt(columns, "source_file", 2);
+  const sourcePath = valueAt(columns, "source_path", 3);
   if (!sourceId || !sourceFile || !sourcePath) throw new Error(`Linha inválida no manifesto de e-books: ${line}`);
-  return { sourceId, title, sourceFile, sourcePath };
+  return {
+    sourceId,
+    title,
+    sourceFile,
+    sourcePath,
+    usage: valueAt(columns, "usage", 5),
+    libraryCategory: valueAt(columns, "libraryCategory", 6),
+    courseTitle: valueAt(columns, "courseTitle", 7),
+    courseSlug: valueAt(columns, "courseSlug", 8),
+    courseCategory: valueAt(columns, "courseCategory", 9),
+    courseOrder: valueAt(columns, "courseOrder", 10),
+    moduleTitle: valueAt(columns, "moduleTitle", 11),
+    moduleOrder: valueAt(columns, "moduleOrder", 12),
+    lessonOrder: valueAt(columns, "lessonOrder", 13),
+    level: valueAt(columns, "level", 14),
+    summary: valueAt(columns, "summary", 15),
+  };
 });
+
+const ACADEMY_METADATA_NAME = "codigo-lucrativo-academy";
+
+function slugify(value) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+}
+
+function numericValue(value) {
+  if (value === "" || value === null || value === undefined) return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : undefined;
+}
+
+function academyMetadata(row) {
+  const usage = row.usage === "course" || row.usage === "both" ? row.usage : "library";
+  const metadata = {
+    usage,
+    libraryCategory: row.libraryCategory || undefined,
+  };
+  if (usage !== "library") {
+    metadata.courseTitle = row.courseTitle || undefined;
+    metadata.courseSlug = row.courseSlug || (row.courseTitle ? slugify(row.courseTitle) : undefined);
+    metadata.courseCategory = row.courseCategory || undefined;
+    metadata.courseOrder = numericValue(row.courseOrder);
+    metadata.moduleTitle = row.moduleTitle || undefined;
+    metadata.moduleOrder = numericValue(row.moduleOrder);
+    metadata.lessonOrder = numericValue(row.lessonOrder) ?? 0;
+    metadata.level = row.level === "pratica" || row.level === "avancado" ? row.level : "fundamentos";
+  }
+  return Object.fromEntries(Object.entries(metadata).filter(([, value]) => value !== undefined && value !== ""));
+}
+
+function fallbackHtml(title, row) {
+  const safeTitle = title.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
+  const encodedMetadata = encodeURIComponent(JSON.stringify(academyMetadata(row)));
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="${ACADEMY_METADATA_NAME}" content="${encodedMetadata}"><title>${safeTitle}</title></head><body><main><h1>${safeTitle}</h1></main></body></html>`;
+}
 
 function displayTitle(title, sourceFile) {
   if (title && title.toLowerCase() !== "source") return title;
@@ -46,12 +113,12 @@ const connection = await mysql.createConnection({ socketPath: mysqlSocket, user:
 try {
   for (const row of rows) {
     const title = displayTitle(row.title, row.sourceFile);
-    const summary = `PDF atualizado no layout Tech Futuristic do Código Lucrativo: ${title}.`;
+    const summary = row.summary?.trim() || `PDF atualizado no layout Tech Futuristic do Código Lucrativo: ${title}.`;
     await connection.execute(
       `INSERT INTO ebooks (sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, createdBy, publishedAt)
-       VALUES (?, ?, ?, ?, ?, '', 'published', 1, NOW())
-       ON DUPLICATE KEY UPDATE sourceFile = VALUES(sourceFile), sourcePath = VALUES(sourcePath), publishedAt = COALESCE(publishedAt, NOW())`,
-      [row.sourceId, row.sourceFile, row.sourcePath, title, summary],
+       VALUES (?, ?, ?, ?, ?, ?, 'published', 1, NOW())
+       ON DUPLICATE KEY UPDATE sourceFile = VALUES(sourceFile), sourcePath = VALUES(sourcePath), summary = COALESCE(NULLIF(summary, ''), VALUES(summary)), htmlContent = COALESCE(NULLIF(htmlContent, ''), VALUES(htmlContent)), publishedAt = COALESCE(publishedAt, NOW())`,
+      [row.sourceId, row.sourceFile, row.sourcePath, title, summary, fallbackHtml(title, row)],
     );
   }
   console.log(`Sincronizados ${rows.length} e-books em PDF sem sobrescrever a curadoria administrativa existente.`);

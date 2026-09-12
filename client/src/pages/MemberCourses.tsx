@@ -19,6 +19,11 @@ type CourseEbook = {
   summary?: string | null;
   htmlContent: string;
   pdfUrl?: string | null;
+  academy?: {
+    moduleTitle?: string;
+    moduleOrder?: number;
+    lessonOrder?: number;
+  } | null;
 };
 
 export default function MemberCourses() {
@@ -38,6 +43,25 @@ export default function MemberCourses() {
   }, [course]);
   const courseEbookKey = courseEbooks.map(ebook => ebook.id).join(",");
   const activeEbook = courseEbooks.find(ebook => ebook.id === activeEbookId) ?? courseEbooks[0] ?? null;
+  const moduleGroups = useMemo(() => {
+    const groups = new Map<string, { title: string; order: number; items: CourseEbook[] }>();
+    for (const ebook of courseEbooks) {
+      const moduleTitle = ebook.academy?.moduleTitle?.trim() || "Materiais do curso";
+      const moduleOrder = Number.isFinite(Number(ebook.academy?.moduleOrder)) ? Number(ebook.academy?.moduleOrder) : 0;
+      const key = `${moduleOrder}:${moduleTitle}`;
+      const current = groups.get(key) ?? { title: moduleTitle, order: moduleOrder, items: [] };
+      current.items.push(ebook);
+      groups.set(key, current);
+    }
+    return Array.from(groups.values()).sort((a, b) => a.order - b.order || a.title.localeCompare(b.title, "pt-BR")).map(group => ({
+      ...group,
+      items: [...group.items].sort((a, b) => {
+        const orderA = Number.isFinite(Number(a.academy?.lessonOrder)) ? Number(a.academy?.lessonOrder) : 0;
+        const orderB = Number.isFinite(Number(b.academy?.lessonOrder)) ? Number(b.academy?.lessonOrder) : 0;
+        return orderA - orderB || a.title.localeCompare(b.title, "pt-BR");
+      }),
+    }));
+  }, [courseEbooks]);
 
   const readingProgress = trpc.member.ebookReadingProgress.useQuery(
     { ebookId: activeEbook?.id ?? 0 },
@@ -101,17 +125,24 @@ export default function MemberCourses() {
                 </div>
               </header>
               {courseEbooks.length > 1 ? (
-                <nav className="flex gap-2 overflow-x-auto border-b border-white/10 bg-black/20 p-3" aria-label="Materiais do curso">
-                  {courseEbooks.map((ebook, index) => (
-                    <button
-                      key={ebook.id}
-                      type="button"
-                      onClick={() => setActiveEbookId(ebook.id)}
-                      className={`shrink-0 rounded-lg border px-3 py-2 text-left text-sm transition ${activeEbook?.id === ebook.id ? "border-emerald-300/70 bg-emerald-300/15 text-emerald-100" : "border-white/10 bg-white/5 text-zinc-300 hover:border-emerald-300/40"}`}
-                    >
-                      <span className="block text-xs text-zinc-500">{String(index + 1).padStart(2, "0")}</span>
-                      <span className="block max-w-56 truncate">{ebook.title}</span>
-                    </button>
+                <nav className="space-y-3 overflow-x-auto border-b border-white/10 bg-black/20 p-3" aria-label="Materiais do curso">
+                  {moduleGroups.map((module, moduleIndex) => (
+                    <section key={`${module.order}-${module.title}`} className="min-w-max">
+                      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-500">{module.title === "Materiais do curso" ? module.title : `Módulo ${module.order || moduleIndex}: ${module.title}`}</p>
+                      <div className="flex gap-2">
+                        {module.items.map((ebook, index) => (
+                          <button
+                            key={ebook.id}
+                            type="button"
+                            onClick={() => setActiveEbookId(ebook.id)}
+                            className={`shrink-0 rounded-lg border px-3 py-2 text-left text-sm transition ${activeEbook?.id === ebook.id ? "border-emerald-300/70 bg-emerald-300/15 text-emerald-100" : "border-white/10 bg-white/5 text-zinc-300 hover:border-emerald-300/40"}`}
+                          >
+                            <span className="block text-xs text-zinc-500">Aula {ebook.academy?.lessonOrder || index + 1}</span>
+                            <span className="block max-w-56 truncate">{ebook.title}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
                   ))}
                 </nav>
               ) : null}

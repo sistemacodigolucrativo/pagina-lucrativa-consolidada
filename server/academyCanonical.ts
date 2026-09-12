@@ -25,6 +25,9 @@ type RawAcademyMetadata = {
   courseSlug?: string;
   courseCategory?: string;
   libraryCategory?: string;
+  courseOrder?: number;
+  moduleTitle?: string;
+  moduleOrder?: number;
   lessonOrder?: number;
   level?: "fundamentos" | "pratica" | "avancado";
   coursePublished?: boolean;
@@ -70,7 +73,7 @@ async function ensurePackagedLibraryEbooks() {
           sourcePath: ebook.sourcePath,
           title: ebook.title,
           summary: ebook.summary,
-          htmlContent: "",
+          htmlContent: ebook.htmlContent,
           status: "published",
           createdBy: null,
           publishedAt: new Date(),
@@ -187,6 +190,22 @@ function courseIsPublishedAsGroup(course: Awaited<ReturnType<typeof getLegacyMem
   return Boolean(items.length && items.every(item => readAcademyMetadata(item.htmlContent, item.sourcePath)?.coursePublished !== false));
 }
 
+function courseOrderValue(course: Awaited<ReturnType<typeof getLegacyMemberCourses>>[number]) {
+  const items = courseEbooks(course);
+  const orders = items
+    .map(item => readAcademyMetadata(item.htmlContent, item.sourcePath)?.courseOrder)
+    .filter((value): value is number => Number.isFinite(Number(value)) && Number(value) > 0);
+  return orders.length ? Math.min(...orders) : Number.MAX_SAFE_INTEGER;
+}
+
+function courseLevelOrder(course: Awaited<ReturnType<typeof getLegacyMemberCourses>>[number]) {
+  const level = course.level;
+  if (level === "fundamentos") return 0;
+  if (level === "pratica") return 1;
+  if (level === "avancado") return 2;
+  return 3;
+}
+
 async function getReadableEbookIds(userId: number) {
   const [libraryEbooks, academyCourses] = await Promise.all([getPublishedEbooks(), getLegacyMemberCourses(userId)]);
   const ids = new Set(libraryEbooks.map(item => item.id));
@@ -254,6 +273,14 @@ export async function getMemberCourses(userId: number) {
       progressPercent: hasGranularProgress ? granularPercent : fallbackProgress?.progressPercent ?? course.progressPercent,
       lastAccessedAt: latestGranularAccess ?? fallbackProgress?.lastAccessedAt ?? course.lastAccessedAt,
     };
+  }).sort((a, b) => {
+    const orderA = courseOrderValue(a);
+    const orderB = courseOrderValue(b);
+    if (orderA !== orderB) return orderA - orderB;
+    const levelA = courseLevelOrder(a);
+    const levelB = courseLevelOrder(b);
+    if (levelA !== levelB) return levelA - levelB;
+    return a.title.localeCompare(b.title, "pt-BR");
   });
 }
 

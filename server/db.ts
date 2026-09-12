@@ -1152,6 +1152,9 @@ type EbookAcademyMetadata = {
   courseSlug?: string;
   courseCategory?: string;
   libraryCategory?: string;
+  courseOrder?: number;
+  moduleTitle?: string;
+  moduleOrder?: number;
   lessonOrder?: number;
   level?: CourseLevel;
 };
@@ -1290,6 +1293,9 @@ function normalizeEbookAcademyMetadata(value: unknown): EbookAcademyMetadata | n
   const libraryCategory = typeof data.libraryCategory === "string" ? data.libraryCategory.trim() : "";
   if (usage !== "library" && !courseTitle) return { usage, libraryCategory };
   const courseCategory = typeof data.courseCategory === "string" ? data.courseCategory.trim() : "";
+  const courseOrder = Number.isFinite(Number(data.courseOrder)) ? Math.max(0, Math.round(Number(data.courseOrder))) : 0;
+  const moduleTitle = typeof data.moduleTitle === "string" ? data.moduleTitle.trim() : "";
+  const moduleOrder = Number.isFinite(Number(data.moduleOrder)) ? Math.max(0, Math.round(Number(data.moduleOrder))) : 0;
   const lessonOrder = Number.isFinite(Number(data.lessonOrder)) ? Math.max(0, Math.round(Number(data.lessonOrder))) : 0;
   const level: CourseLevel = data.level === "pratica" || data.level === "avancado" ? data.level : "fundamentos";
   if (usage === "library") return { usage, libraryCategory };
@@ -1299,6 +1305,9 @@ function normalizeEbookAcademyMetadata(value: unknown): EbookAcademyMetadata | n
     courseSlug: typeof data.courseSlug === "string" && data.courseSlug.trim() ? data.courseSlug.trim() : slugifyAcademyCourseTitle(courseTitle),
     courseCategory,
     libraryCategory,
+    courseOrder,
+    moduleTitle,
+    moduleOrder,
     lessonOrder,
     level,
   };
@@ -1408,6 +1417,9 @@ function buildAcademyCourseId(firstEbookId: number) {
 
 function sortAcademyEbooks<T extends { title: string; createdAt?: Date | string | null; academy: EbookAcademyMetadata | null }>(items: T[]) {
   return [...items].sort((a, b) => {
+    const moduleOrderA = a.academy?.moduleOrder ?? 0;
+    const moduleOrderB = b.academy?.moduleOrder ?? 0;
+    if (moduleOrderA !== moduleOrderB) return moduleOrderA - moduleOrderB;
     const orderA = a.academy?.lessonOrder ?? 0;
     const orderB = b.academy?.lessonOrder ?? 0;
     if (orderA !== orderB) return orderA - orderB;
@@ -1453,7 +1465,16 @@ function buildAcademyCoursesFromEbooks(
       ebook: first,
       ebooks: sorted,
     };
-  }).sort((a, b) => a.title.localeCompare(b.title, "pt-BR"));
+  }).sort((a, b) => {
+    const orderA = a.ebook.academy?.courseOrder && a.ebook.academy.courseOrder > 0 ? a.ebook.academy.courseOrder : Number.MAX_SAFE_INTEGER;
+    const orderB = b.ebook.academy?.courseOrder && b.ebook.academy.courseOrder > 0 ? b.ebook.academy.courseOrder : Number.MAX_SAFE_INTEGER;
+    if (orderA !== orderB) return orderA - orderB;
+    const levelOrder = { fundamentos: 0, pratica: 1, avancado: 2 } as const;
+    const levelA = levelOrder[a.level as keyof typeof levelOrder] ?? 3;
+    const levelB = levelOrder[b.level as keyof typeof levelOrder] ?? 3;
+    if (levelA !== levelB) return levelA - levelB;
+    return a.title.localeCompare(b.title, "pt-BR");
+  });
 }
 
 async function getAcademyEbookCourses(userId: number) {

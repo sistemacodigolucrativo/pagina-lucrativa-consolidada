@@ -31,6 +31,8 @@ type AcademyMetadata = {
   courseCategory?: string;
   libraryCategory?: string;
   lessonOrder?: number;
+  moduleTitle?: string;
+  moduleOrder?: number;
   courseOrder?: number;
   level?: AcademyLevel;
   coursePublished?: boolean;
@@ -384,7 +386,7 @@ export default function AdminAcademy() {
           archived,
           deleted,
           storedCourse: stored,
-          items: [...match.items].sort((a, b) => (a.metadata.lessonOrder ?? 0) - (b.metadata.lessonOrder ?? 0) || a.ebook.title.localeCompare(b.ebook.title, "pt-BR")),
+          items: [...match.items].sort((a, b) => ((a.metadata.moduleOrder ?? 0) - (b.metadata.moduleOrder ?? 0)) || ((a.metadata.lessonOrder ?? 0) - (b.metadata.lessonOrder ?? 0)) || a.ebook.title.localeCompare(b.ebook.title, "pt-BR")),
         });
       } else {
         result.push({
@@ -409,7 +411,7 @@ export default function AdminAcademy() {
       if (!group) continue;
       result.push({
         ...group,
-        items: [...group.items].sort((a, b) => (a.metadata.lessonOrder ?? 0) - (b.metadata.lessonOrder ?? 0) || a.ebook.title.localeCompare(b.ebook.title, "pt-BR")),
+        items: [...group.items].sort((a, b) => ((a.metadata.moduleOrder ?? 0) - (b.metadata.moduleOrder ?? 0)) || ((a.metadata.lessonOrder ?? 0) - (b.metadata.lessonOrder ?? 0)) || a.ebook.title.localeCompare(b.ebook.title, "pt-BR")),
       });
     }
 

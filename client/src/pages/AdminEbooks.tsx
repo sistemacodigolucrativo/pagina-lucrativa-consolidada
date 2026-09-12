@@ -16,6 +16,9 @@ type AcademyMetadata = {
   courseSlug?: string;
   courseCategory?: string;
   libraryCategory?: string;
+  courseOrder?: number;
+  moduleTitle?: string;
+  moduleOrder?: number;
   lessonOrder?: number;
   level?: AcademyLevel;
 };
@@ -94,6 +97,9 @@ function normalizeAcademyMetadata(value: unknown): AcademyMetadata | null {
   const libraryCategory = typeof data.libraryCategory === "string" ? data.libraryCategory.trim() : "";
   const courseTitle = typeof data.courseTitle === "string" ? data.courseTitle.trim() : "";
   const courseCategory = typeof data.courseCategory === "string" ? data.courseCategory.trim() : "";
+  const courseOrder = Number.isFinite(Number(data.courseOrder)) ? Math.max(0, Math.round(Number(data.courseOrder))) : 0;
+  const moduleTitle = typeof data.moduleTitle === "string" ? data.moduleTitle.trim() : "";
+  const moduleOrder = Number.isFinite(Number(data.moduleOrder)) ? Math.max(0, Math.round(Number(data.moduleOrder))) : 0;
   const lessonOrder = Number.isFinite(Number(data.lessonOrder)) ? Math.max(0, Math.round(Number(data.lessonOrder))) : 0;
   const level: AcademyLevel = data.level === "pratica" || data.level === "avancado" ? data.level : "fundamentos";
   if (usage === "library") return { usage, libraryCategory };
@@ -104,6 +110,9 @@ function normalizeAcademyMetadata(value: unknown): AcademyMetadata | null {
     courseTitle,
     courseSlug: typeof data.courseSlug === "string" && data.courseSlug.trim() ? data.courseSlug.trim() : slugifyCourseTitle(courseTitle),
     courseCategory,
+    courseOrder,
+    moduleTitle,
+    moduleOrder,
     lessonOrder,
     level,
   };

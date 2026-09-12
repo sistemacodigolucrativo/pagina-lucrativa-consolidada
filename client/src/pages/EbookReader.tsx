@@ -20,16 +20,21 @@ const menu: DashboardMenuItem[] = [
 const recentEbooksStorageKey = "codigo-lucrativo-recent-ebooks";
 
 const libraryShelves = [
-  { id: "copy", label: "Copy e anúncios", shortLabel: "Copy", description: "Textos, anúncios, headlines, persuasão e comunicação de venda.", keywords: ["copy", "anuncio", "anuncios", "headline", "headlines", "persuas", "texto de venda", "carta de venda"] },
-  { id: "vendas", label: "Vendas e oferta", shortLabel: "Vendas", description: "Oferta, precificação, argumentos, fechamento e conversão.", keywords: ["venda", "vendas", "oferta", "preco", "precificacao", "checkout", "conversao", "fechamento", "cliente"] },
-  { id: "trafego", label: "Tráfego e divulgação", shortLabel: "Tráfego", description: "Campanhas, redes sociais, tráfego pago, leads e divulgação.", keywords: ["trafego", "divulgacao", "campanha", "campanhas", "facebook", "instagram", "google", "ads", "rede social", "redes sociais", "lead", "leads"] },
-  { id: "produto", label: "Produto digital", shortLabel: "Produto", description: "Criação, estruturação e organização de e-books, cursos e infoprodutos.", keywords: ["ebook", "e-book", "livro", "produto digital", "infoproduto", "curso", "conteudo", "criar", "criacao"] },
-  { id: "modelos", label: "Ferramentas e modelos", shortLabel: "Modelos", description: "Templates, checklists, roteiros, guias rápidos e materiais de apoio.", keywords: ["template", "templates", "checklist", "checklists", "modelo", "modelos", "planilha", "guia", "roteiro", "script"] },
-  { id: "estrategia", label: "Negócio digital", shortLabel: "Estratégia", description: "Estratégia, funil, posicionamento, operação e visão do negócio.", keywords: ["negocio", "funil", "posicionamento", "estrategia", "marketing", "mercado", "operacao", "empreendedorismo"] },
-  { id: "produtividade", label: "Produtividade", shortLabel: "Produtividade", description: "Foco, disciplina, organização, rotina e desenvolvimento pessoal.", keywords: ["produtividade", "disciplina", "foco", "mentalidade", "organizacao", "rotina", "habito", "habitos"] },
+  { id: "negocio-digital", label: "Negócio digital", shortLabel: "Negócio", order: 1, description: "Estratégia, operação, presença online e visão do negócio.", keywords: ["negocio", "estrategia", "marketing", "mercado", "operacao", "empreendedorismo", "ecommerce", "importar"] },
+  { id: "marca-posicionamento", label: "Marca e posicionamento", shortLabel: "Marca", order: 2, description: "Construção de marca, autoridade e diferenciação.", keywords: ["marca", "branding", "posicionamento", "autoridade"] },
+  { id: "produto-digital", label: "Produto digital", shortLabel: "Produto", order: 3, description: "Criação, estruturação e organização de e-books, cursos e infoprodutos.", keywords: ["ebook", "e-book", "livro", "produto digital", "infoproduto", "curso", "conteudo", "criar", "criacao"] },
+  { id: "conteudo-criativos", label: "Conteúdo e criativos", shortLabel: "Conteúdo", order: 4, description: "Textos, vídeos, design, comunicação e criativos de venda.", keywords: ["conteudo", "criativo", "criativos", "video", "videos", "artigo", "artigos", "linguagem"] },
+  { id: "seo-descoberta", label: "SEO e descoberta", shortLabel: "SEO", order: 5, description: "Busca, palavras-chave, Google e descoberta orgânica.", keywords: ["seo", "google", "busca", "palavra chave", "palavras chave", "reputacao"] },
+  { id: "captacao-funis", label: "Captação e funis", shortLabel: "Funis", order: 6, description: "Leads, páginas de captura, iscas e ciclos de conversão.", keywords: ["funil", "captura", "lead", "leads", "conversao", "contactos", "isca"] },
+  { id: "email-relacionamento", label: "E-mail e relacionamento", shortLabel: "E-mail", order: 7, description: "Lista, newsletter, relacionamento e nutrição por e-mail.", keywords: ["email", "e-mail", "newsletter", "newsletters", "relacional", "relacionamento"] },
+  { id: "trafego-divulgacao", label: "Tráfego e divulgação", shortLabel: "Tráfego", order: 8, description: "Campanhas, redes sociais, tráfego pago, leads e divulgação.", keywords: ["trafego", "divulgacao", "campanha", "campanhas", "facebook", "instagram", "google", "ads", "rede social", "redes sociais"] },
+  { id: "vendas-conversao", label: "Vendas e conversão", shortLabel: "Vendas", order: 9, description: "Oferta, precificação, argumentos, fechamento e conversão.", keywords: ["venda", "vendas", "oferta", "preco", "precificacao", "checkout", "conversao", "fechamento", "cliente"] },
+  { id: "marketing-rede", label: "Marketing de rede", shortLabel: "Rede", order: 10, description: "Marketing de rede, liderança, equipe, mentoria e duplicação.", keywords: ["rede", "network", "upline", "lideranca", "equipa", "mentoria"] },
+  { id: "ferramentas-modelos", label: "Ferramentas e modelos", shortLabel: "Modelos", order: 11, description: "Templates, checklists, roteiros, guias rápidos e materiais de apoio.", keywords: ["template", "templates", "checklist", "checklists", "modelo", "modelos", "planilha", "guia", "roteiro", "script", "receita", "catalogo"] },
+  { id: "desenvolvimento-financeiro", label: "Desenvolvimento pessoal e financeiro", shortLabel: "Desenvolv.", order: 12, description: "Produtividade, renda extra, carreira, finanças e habilidades complementares.", keywords: ["produtividade", "disciplina", "foco", "mentalidade", "organizacao", "financ", "renda", "profissao", "trabalho"] },
 ] as const;
 
-type LibraryShelf = { id: string; label: string; shortLabel: string; description: string; keywords: readonly string[] };
+type LibraryShelf = { id: string; label: string; shortLabel: string; description: string; keywords: readonly string[]; order?: number };
 type FilterId = "todos" | string;
 type SortMode = "recentes" | "az" | "za";
 
@@ -48,7 +53,7 @@ type EbookSummary = {
 };
 
 type CatalogedEbook = { ebook: EbookSummary; shelf: LibraryShelf; searchableText: string };
-const fallbackLibraryShelf = libraryShelves.find(shelf => shelf.id === "estrategia") ?? libraryShelves[0];
+const fallbackLibraryShelf = libraryShelves.find(shelf => shelf.id === "negocio-digital") ?? libraryShelves[0];
 
 function normalizeSearchText(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -69,7 +74,7 @@ function shelfFromPersistedCategory(value: string): LibraryShelf | null {
   const normalizedCategory = normalizeSearchText(category);
   const knownShelf = libraryShelves.find(item => normalizeSearchText(item.label) === normalizedCategory || item.id === normalizedCategory);
   if (knownShelf) return knownShelf;
-  return { id: shelfIdFromLabel(category), label: category, shortLabel: category.split(/\s+/).slice(0, 2).join(" "), description: "Categoria cadastrada pela administração.", keywords: [] };
+  return { id: shelfIdFromLabel(category), label: category, shortLabel: category.split(/\s+/).slice(0, 2).join(" "), description: "Categoria cadastrada pela administração.", keywords: [], order: 999 };
 }
 
 function isTechFuturisticCatalog(item: CatalogedEbook | null) {
@@ -158,7 +163,7 @@ export default function EbookReader() {
   const availableShelves = useMemo(() => {
     const shelves = new Map<string, LibraryShelf>();
     catalogedEbooks.forEach(item => shelves.set(item.shelf.id, item.shelf));
-    return Array.from(shelves.values()).sort((a, b) => a.label.localeCompare(b.label, "pt-BR"));
+    return Array.from(shelves.values()).sort((a, b) => (a.order ?? 999) - (b.order ?? 999) || a.label.localeCompare(b.label, "pt-BR"));
   }, [catalogedEbooks]);
   const filterOptions = useMemo<Array<{ id: FilterId; label: string; shortLabel: string }>>(() => [{ id: "todos", label: "Todos", shortLabel: "Todos" }, ...availableShelves.map(shelf => ({ id: shelf.id, label: shelf.label, shortLabel: shelf.shortLabel }))], [availableShelves]);
   const shelfCounts = useMemo(() => {
@@ -191,7 +196,7 @@ export default function EbookReader() {
   const selectedSummary = ebooks.data?.find(ebook => ebook.id === selectedId);
   const readerTitle = selected.data?.title ?? selectedSummary?.title ?? "Abrindo e-book";
   const readerSummary = selected.data?.summary ?? selectedSummary?.summary ?? "Aguarde enquanto o material é carregado.";
-  const usesTechFuturisticReader = selected.data?.htmlContent.includes("codigo-lucrativo-tech-shell") || selectedCatalog?.shelf.id === "copy" || selectedCatalog?.shelf.id === "vendas" || isTechFuturisticCatalog(selectedCatalog);
+  const usesTechFuturisticReader = selected.data?.htmlContent.includes("codigo-lucrativo-tech-shell") || selectedCatalog?.shelf.id === "conteudo-criativos" || selectedCatalog?.shelf.id === "vendas-conversao" || isTechFuturisticCatalog(selectedCatalog);
 
   const rememberEbook = (ebookId: number) => {
     setLocalRecentIds(previous => {

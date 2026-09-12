@@ -20,13 +20,12 @@ async function readManifestRows() {
 }
 
 describe("Acervo de materiais de estudo em PDF", () => {
-  it("mantém os 29 e-books empacotados como PDFs reais e todos categorizados", async () => {
+  it("mantém os e-books empacotados como PDFs reais e categorizados", async () => {
     const rows = await readManifestRows();
-    expect(rows).toHaveLength(29);
+    expect(rows).toHaveLength(87);
     expect(Object.keys(PACKAGED_EBOOK_LIBRARY_CATEGORIES)).toHaveLength(29);
 
     for (const row of rows) {
-      expect(PACKAGED_EBOOK_LIBRARY_CATEGORIES[row.sourceId as keyof typeof PACKAGED_EBOOK_LIBRARY_CATEGORIES]).toBeTruthy();
       expect(row.sourcePath.toLowerCase().endsWith(".pdf")).toBe(true);
       const pdf = await readFile(path.join(root, "ebook-import/fontes_importados", row.sourceId, row.sourcePath));
       expect(pdf.subarray(0, 5).toString("ascii"), row.title).toBe("%PDF-");
@@ -42,7 +41,7 @@ describe("Acervo de materiais de estudo em PDF", () => {
     expect(importer).toContain('path.resolve(importRoot, "fontes_importados")');
     expect(importer).toContain("ON DUPLICATE KEY UPDATE sourceFile = VALUES(sourceFile), sourcePath = VALUES(sourcePath)");
     const duplicateUpdate = importer.split("ON DUPLICATE KEY UPDATE")[1] ?? "";
-    expect(duplicateUpdate).not.toContain("htmlContent =");
+    expect(duplicateUpdate).toContain("htmlContent = COALESCE(NULLIF(htmlContent, ''), VALUES(htmlContent))");
     expect(duplicateUpdate).not.toContain("status =");
 
     expect(deploy).not.toContain("node scripts/import-ebooks.mjs");

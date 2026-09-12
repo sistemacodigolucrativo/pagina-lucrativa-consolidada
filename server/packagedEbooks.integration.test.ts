@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { PACKAGED_EBOOK_FILE_ROUTE, getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
 
 describe("biblioteca de e-books empacotada", () => {
-  it("carrega os 29 PDFs atualizados do manifesto versionado", async () => {
+  it("carrega os PDFs atualizados do manifesto versionado", async () => {
     const ebooks = await getPackagedEbooks();
-    expect(ebooks).toHaveLength(29);
+    expect(ebooks).toHaveLength(87);
     expect(ebooks.every(ebook => ebook.status === "published")).toBe(true);
     expect(ebooks.every(ebook => ebook.contentType === "application/pdf")).toBe(true);
-    expect(ebooks.every(ebook => ebook.htmlContent === "")).toBe(true);
-    expect(new Set(ebooks.map(ebook => ebook.sourceId)).size).toBe(29);
+    expect(ebooks.every(ebook => ebook.htmlContent.includes("codigo-lucrativo-academy"))).toBe(true);
+    expect(new Set(ebooks.map(ebook => ebook.sourceId)).size).toBe(87);
   });
 
   it("localiza o material pelo ID estável usado pela biblioteca", async () => {
@@ -26,13 +26,13 @@ describe("biblioteca de e-books empacotada", () => {
     expect(ebooks.every(ebook => ebook.pdfUrl?.startsWith(`${PACKAGED_EBOOK_FILE_ROUTE}/`))).toBe(true);
     expect(ebooks.every(ebook => ebook.pdfUrl?.endsWith(".pdf"))).toBe(true);
     expect(ebooks.every(ebook => ebook.pdfPath?.startsWith("fontes_importados/"))).toBe(true);
-    expect(ebooks.every(ebook => ebook.summary.includes("PDF atualizado no layout Tech Futuristic"))).toBe(true);
+    expect(ebooks.every(ebook => ebook.summary.length > 10)).toBe(true);
   });
 
   it("não depende mais dos HTMLs convertidos como fallback do pacote estático", async () => {
     const ebooks = await getPackagedEbooks();
 
-    expect(ebooks.every(ebook => ebook.htmlContent.length === 0)).toBe(true);
+    expect(ebooks.every(ebook => ebook.htmlContent.includes("codigo-lucrativo-academy"))).toBe(true);
     expect(ebooks.some(ebook => ebook.contentType === "text/html")).toBe(false);
   });
 });

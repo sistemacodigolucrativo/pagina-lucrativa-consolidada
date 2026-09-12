@@ -19,6 +19,7 @@ type PackagedEbook = {
   publishedAt: Date;
   createdAt: Date;
   updatedAt: Date;
+  academy: AcademyManifestMetadata;
 };
 
 type ManifestRow = {
@@ -27,6 +28,30 @@ type ManifestRow = {
   sourceFile: string;
   sourcePath: string;
   htmlFile?: string;
+  usage?: string;
+  libraryCategory?: string;
+  courseTitle?: string;
+  courseSlug?: string;
+  courseCategory?: string;
+  courseOrder?: string;
+  moduleTitle?: string;
+  moduleOrder?: string;
+  lessonOrder?: string;
+  level?: string;
+  summary?: string;
+};
+
+type AcademyManifestMetadata = {
+  usage: "library" | "course" | "both";
+  libraryCategory?: string;
+  courseTitle?: string;
+  courseSlug?: string;
+  courseCategory?: string;
+  courseOrder?: number;
+  moduleTitle?: string;
+  moduleOrder?: number;
+  lessonOrder?: number;
+  level?: "fundamentos" | "pratica" | "avancado";
 };
 
 type SourceManifestRow = {
@@ -48,6 +73,47 @@ function displayTitle(title: string, sourceFile: string) {
     .replace(/[_-]+/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function slugify(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 96);
+}
+
+function numericValue(value: string | undefined) {
+  if (!value) return undefined;
+  const number = Number(value);
+  return Number.isFinite(number) ? Math.max(0, Math.round(number)) : undefined;
+}
+
+function academyMetadata(row: ManifestRow): AcademyManifestMetadata {
+  const usage = row.usage === "course" || row.usage === "both" ? row.usage : "library";
+  const metadata: AcademyManifestMetadata = {
+    usage,
+    libraryCategory: row.libraryCategory?.trim() || undefined,
+  };
+  if (usage !== "library") {
+    metadata.courseTitle = row.courseTitle?.trim() || undefined;
+    metadata.courseSlug = row.courseSlug?.trim() || (metadata.courseTitle ? slugify(metadata.courseTitle) : undefined);
+    metadata.courseCategory = row.courseCategory?.trim() || undefined;
+    metadata.courseOrder = numericValue(row.courseOrder);
+    metadata.moduleTitle = row.moduleTitle?.trim() || undefined;
+    metadata.moduleOrder = numericValue(row.moduleOrder);
+    metadata.lessonOrder = numericValue(row.lessonOrder) ?? 0;
+    metadata.level = row.level === "pratica" || row.level === "avancado" ? row.level : "fundamentos";
+  }
+  return Object.fromEntries(Object.entries(metadata).filter(([, value]) => value !== undefined && value !== "")) as AcademyManifestMetadata;
+}
+
+function fallbackHtml(title: string, metadata: AcademyManifestMetadata) {
+  const safeTitle = title.replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char] ?? char);
+  const encodedMetadata = encodeURIComponent(JSON.stringify(metadata));
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="codigo-lucrativo-academy" content="${encodedMetadata}"><title>${safeTitle}</title></head><body><main><h1>${safeTitle}</h1></main></body></html>`;
 }
 
 function sourcePathSegments(sourcePath: string) {
@@ -172,20 +238,47 @@ async function loadPackagedEbooks() {
   const manifestText = await readFile(path.join(root, "ebook-manifest.tsv"), "utf8");
   const sourceRows = await readSourceManifest(root);
   const pdfLookup = buildPdfLookup(sourceRows);
+  const [headerLine, ...manifestLines] = manifestText.split(/\r?\n/);
+  const header = headerLine.split("\t");
+  const headerIndex = new Map(header.map((name, index) => [name, index]));
+  const valueAt = (columns: string[], name: string, fallbackIndex: number) => columns[headerIndex.get(name) ?? fallbackIndex] ?? "";
   const rows: ManifestRow[] = manifestText
-    .split(/\r?\n/)
-    .slice(1)
+    ? manifestLines
     .filter(Boolean)
     .map(line => {
-      const [sourceId, title, sourceFile, sourcePath, htmlFile] = line.split("\t");
+      const columns = line.split("\t");
+      const sourceId = valueAt(columns, "id", 0);
+      const title = valueAt(columns, "title", 1);
+      const sourceFile = valueAt(columns, "source_file", 2);
+      const sourcePath = valueAt(columns, "source_path", 3);
+      const htmlFile = valueAt(columns, "html_file", 4);
       if (!sourceId || !sourceFile || !sourcePath) throw new Error(`Linha inválida no manifesto de e-books: ${line}`);
-      return { sourceId, title, sourceFile, sourcePath, htmlFile };
-    });
+      return {
+        sourceId,
+        title,
+        sourceFile,
+        sourcePath,
+        htmlFile,
+        usage: valueAt(columns, "usage", 5),
+        libraryCategory: valueAt(columns, "libraryCategory", 6),
+        courseTitle: valueAt(columns, "courseTitle", 7),
+        courseSlug: valueAt(columns, "courseSlug", 8),
+        courseCategory: valueAt(columns, "courseCategory", 9),
+        courseOrder: valueAt(columns, "courseOrder", 10),
+        moduleTitle: valueAt(columns, "moduleTitle", 11),
+        moduleOrder: valueAt(columns, "moduleOrder", 12),
+        lessonOrder: valueAt(columns, "lessonOrder", 13),
+        level: valueAt(columns, "level", 14),
+        summary: valueAt(columns, "summary", 15),
+      };
+    })
+    : [];
   const publishedAt = new Date(0);
   return Promise.all(rows.map(async (row, index) => {
     const title = displayTitle(row.title, row.sourceFile);
     const pdfSource = await resolvePdfSource(root, row, pdfLookup);
     if (!pdfSource) throw new Error(`PDF empacotado não encontrado para o e-book: ${title}`);
+    const academy = academyMetadata(row);
 
     return {
       id: index + 1,
@@ -193,8 +286,8 @@ async function loadPackagedEbooks() {
       sourceFile: row.sourceFile,
       sourcePath: row.sourcePath,
       title,
-      summary: `PDF atualizado no layout Tech Futuristic do Código Lucrativo: ${title}.`,
-      htmlContent: "",
+      summary: row.summary?.trim() || `PDF atualizado no layout Tech Futuristic do Código Lucrativo: ${title}.`,
+      htmlContent: fallbackHtml(title, academy),
       contentType: "application/pdf" as const,
       pdfPath: pdfSource.pdfPath,
       pdfUrl: pdfSource.pdfUrl,
@@ -203,6 +296,7 @@ async function loadPackagedEbooks() {
       publishedAt,
       createdAt: publishedAt,
       updatedAt: publishedAt,
+      academy,
     };
   }));
 }
