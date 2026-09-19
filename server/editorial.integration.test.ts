@@ -24,6 +24,7 @@ describe("central editorial", () => {
   it("valida recursos da Biblioteca de Recursos com link HTTPS", () => {
     const procedure = procedures["admin.createContent"] as { _def: { inputs: Array<{ parse: (input: unknown) => unknown }> } };
     expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação de divulgação", summary: "Recurso externo", body: "Tutorial completo", resourceCategory: "Automação", resourceType: "Ferramenta", resourceUrl: "https://example.com/file.zip", status: "published" })).toMatchObject({ kind: "material", resourceCategory: "Automação", resourceType: "Ferramenta" });
+    expect(procedure._def.inputs[0].parse({ kind: "material", title: "Banner sem link", summary: "Recurso visual", resourceCategory: "Divulgação", resourceType: "Imagem / Banner", status: "published" })).toMatchObject({ kind: "material", status: "published" });
     expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "http://example.com/file.zip" })).toThrow("Use uma URL HTTPS válida para o recurso.");
     expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "javascript:alert(1)" })).toThrow();
     expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "draft" })).toMatchObject({ kind: "material", status: "draft" });
@@ -41,7 +42,8 @@ describe("central editorial", () => {
     expect(migration).toContain("ADD COLUMN `resourceUrl`");
     expect(admin).toContain('"/admin/biblioteca-recursos": { kind: "material", title: "Biblioteca de Recursos"');
     expect(admin).toContain("Use uma URL HTTPS válida para o recurso.");
-    expect(admin).toContain("Link do recurso");
+    expect(admin).toContain("Link de download");
+    expect(admin).not.toContain('required={form.status === "published"}');
     expect(admin).toContain("normalizeHttpsUrl");
     expect(member).toContain("Recursos disponibilizados para apoiar sua divulgação e sua rotina.");
     expect(member).toContain("LibraryResourcesPremium");
@@ -49,6 +51,9 @@ describe("central editorial", () => {
     expect(library).toContain("const ITEMS_PER_PAGE = 10");
     expect(library).toContain("aria-expanded={expanded}");
     expect(library).toContain("Acessar recurso");
+    expect(library).toContain("Baixar imagem");
+    expect(library).not.toContain("{items.length}");
+    expect(library).not.toContain("Categorias</span>");
     expect(library).toContain('target="_blank"');
     expect(member).toContain('item.kind === "faq"');
   });

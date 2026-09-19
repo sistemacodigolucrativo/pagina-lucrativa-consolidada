@@ -21,7 +21,6 @@ const routeConfig: Record<string, PublicationConfig> = {
 const resourceCategories = ["Automação", "Divulgação", "Produtividade", "Redes sociais", "Outros"];
 const resourceTypes = ["Aplicativo", "Ferramenta", "Pacote de arquivos", "Material complementar", "Imagem / Banner", "Texto / Copy", "Vídeo", "Áudio"];
 const resourceUrlMessage = "Use uma URL HTTPS válida para o recurso.";
-const missingResourceUrlMessage = "Informe o link do recurso antes de publicar.";
 const promotionalImageUrlMessage = "Use um link HTTPS direto para uma imagem JPG, JPEG, PNG, WEBP, GIF, SVG ou AVIF.";
 const SYSTEM_CONTENT_CATEGORIES = new Set(["public-sales-copy", "public-sales-layout", "member-admin-control", "public-toast-config"]);
 
@@ -48,7 +47,7 @@ function normalizeHttpsUrl(value: string) {
   if (!clean || /^[a-z][a-z0-9+.-]*:\/\//i.test(clean)) return clean;
   return `https://${clean}`;
 }
-function friendlyPublicationError(message: string) { if (message.includes("resourceUrl") || message.includes("invalid_string") || message.includes("URL HTTPS")) return message.includes("Informe o link") ? missingResourceUrlMessage : resourceUrlMessage; return message; }
+function friendlyPublicationError(message: string) { if (message.includes("resourceUrl") || message.includes("invalid_string") || message.includes("URL HTTPS")) return resourceUrlMessage; return message; }
 function statusLabel(status: ContentStatus) { return status === "published" ? "Publicado" : status === "archived" ? "Arquivado" : "Rascunho"; }
 function FormTitle({ editing, title }: { editing: boolean; title: string }) {
   return (
@@ -184,7 +183,6 @@ export default function AdminPublications() {
     setFormError(null);
     const resourceUrl = form.resourceUrl.trim();
     const imageUrl = form.imageUrl.trim();
-    if (config.kind === "material" && form.status === "published" && !resourceUrl) { setFormError(missingResourceUrlMessage); toast.error(missingResourceUrlMessage); return; }
     if (config.kind === "material" && resourceUrl && !isHttpsUrl(resourceUrl)) { setFormError(resourceUrlMessage); toast.error(resourceUrlMessage); return; }
     if (isResourceLibrary && imageUrl && !isDirectImageUrl(imageUrl)) { setFormError(promotionalImageUrlMessage); toast.error(promotionalImageUrlMessage); return; }
 
@@ -223,7 +221,7 @@ export default function AdminPublications() {
           </div>
           <label className="block text-sm text-zinc-200">Link da imagem<input type="url" value={form.imageUrl} onBlur={event => setForm({ ...form, imageUrl: normalizeHttpsUrl(event.target.value) })} onChange={event => setForm({ ...form, imageUrl: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://exemplo.com/banner.jpg" /></label>
           {imagePreviewUrl ? <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30"><img src={imagePreviewUrl} alt="Prévia do recurso" loading="lazy" className="aspect-video w-full object-cover sm:max-h-80" /></div> : form.imageUrl.trim() ? <p className="text-xs leading-5 text-zinc-400">A miniatura aparecerá quando o link HTTPS apontar diretamente para JPG, JPEG, PNG, WEBP, GIF, SVG ou AVIF.</p> : null}
-          <label className="block text-sm text-zinc-200">Link do recurso<input type="url" value={form.resourceUrl} onBlur={event => setForm({ ...form, resourceUrl: normalizeHttpsUrl(event.target.value) })} onChange={event => setForm({ ...form, resourceUrl: event.target.value })} required={form.status === "published"} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://exemplo.com/recurso" /></label>
+          <label className="block text-sm text-zinc-200">Link de download<input type="url" value={form.resourceUrl} onBlur={event => setForm({ ...form, resourceUrl: normalizeHttpsUrl(event.target.value) })} onChange={event => setForm({ ...form, resourceUrl: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://exemplo.com/recurso" /></label>
           {formError ? <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{formError}</p> : null}
         </section>
       ) : formError ? <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{formError}</p> : null}

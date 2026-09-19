@@ -263,10 +263,6 @@ const validateMaterialResource = (input: z.infer<typeof contentInputBase>, ctx: 
   const isMaterial = input.kind === "material";
   const resourceUrl = input.resourceUrl?.trim() ?? "";
   if (!isMaterial) return;
-  if (input.status === "published" && !resourceUrl) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Informe o link do recurso antes de publicar." });
-    return;
-  }
   if (resourceUrl && !isHttpsUrl(resourceUrl)) {
     ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Use uma URL HTTPS válida para o recurso." });
   }

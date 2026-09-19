@@ -89,7 +89,6 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
     eyebrow: "Biblioteca de recursos",
     title: "Biblioteca de Recursos",
     description: "Materiais práticos para acelerar sua divulgação, organização e operação digital em um só lugar.",
-    countLabel: "Recursos",
     searchPlaceholder: "Buscar recursos...",
     sectionTitle: "Recursos disponíveis",
     emptyTitle: "Nenhum recurso encontrado",
@@ -130,25 +129,12 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
 
       <div className="relative z-10 p-5 sm:p-7 lg:p-9">
         <header className="mb-8 border-b border-white/10 pb-7">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
-                <Sparkles className="size-4" /> {copy.eyebrow}
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">{copy.title}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-400 sm:text-base">{copy.description}</p>
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
+              <Sparkles className="size-4" /> {copy.eyebrow}
             </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:flex">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
-                <span className="block text-[10px] uppercase tracking-[0.18em] text-neutral-500">{copy.countLabel}</span>
-                <strong className="mt-1 block text-xl text-white">{items.length}</strong>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
-                <span className="block text-[10px] uppercase tracking-[0.18em] text-neutral-500">Categorias</span>
-                <strong className="mt-1 block text-xl text-white">{Math.max(categories.length - 1, 0)}</strong>
-              </div>
-            </div>
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">{copy.title}</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-400 sm:text-base">{copy.description}</p>
           </div>
         </header>
 
@@ -272,6 +258,9 @@ export default function LibraryResourcesPremium({ items, isLoading }: Props) {
             </div>
             <div className="overflow-y-auto bg-black p-3 sm:p-5">
               <img src={previewImage.imageUrl} alt={`Imagem de ${previewImage.title}`} className="mx-auto max-h-[78vh] w-auto max-w-full rounded-xl object-contain" />
+              <a href={previewImage.imageUrl} download target="_blank" rel="noreferrer" className="mx-auto mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-black text-neutral-950 transition hover:bg-emerald-300 sm:w-auto">
+                Baixar imagem
+              </a>
             </div>
           </section>
         </div>

@@ -53,7 +53,7 @@ type EbookSummary = {
 };
 
 type CatalogedEbook = { ebook: EbookSummary; shelf: LibraryShelf; searchableText: string };
-const fallbackLibraryShelf = libraryShelves.find(shelf => shelf.id === "negocio-digital") ?? libraryShelves[0];
+const uncategorizedShelf: LibraryShelf = { id: "outros", label: "Outros", shortLabel: "Outros", description: "E-books sem categoria definida.", keywords: [], order: 1000 };
 
 function normalizeSearchText(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -65,7 +65,7 @@ function buildSearchableEbookText(ebook: EbookSummary) {
 
 function shelfIdFromLabel(value: string) {
   const normalized = normalizeSearchText(value).replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 56);
-  return normalized ? `custom-${normalized}` : fallbackLibraryShelf.id;
+  return normalized ? `custom-${normalized}` : uncategorizedShelf.id;
 }
 
 function shelfFromPersistedCategory(value: string): LibraryShelf | null {
@@ -87,7 +87,7 @@ function classifyEbook(ebook: EbookSummary) {
   const searchableText = buildSearchableEbookText(ebook);
   const persistedCategory = ebook.academy?.libraryCategory?.trim() || ebook.academy?.courseCategory?.trim();
   const persistedShelf = persistedCategory ? shelfFromPersistedCategory(persistedCategory) : null;
-  const shelf = persistedShelf ?? libraryShelves.find(item => item.keywords.some(keyword => searchableText.includes(keyword))) ?? fallbackLibraryShelf;
+  const shelf = persistedShelf ?? uncategorizedShelf;
   return { ebook, shelf, searchableText };
 }
 
@@ -267,7 +267,7 @@ export default function EbookReader() {
                 <div className="min-w-0">
                   <p className="break-words text-xs font-medium uppercase tracking-wider text-zinc-500">{filteredEbooks.length} de {catalogedEbooks.length} materiais encontrados</p>
                   <h2 className="mt-1 break-words text-lg font-semibold leading-snug text-white">Prateleiras da biblioteca</h2>
-                  <p className="mt-1 max-w-2xl break-words text-xs leading-5 text-zinc-400">Os e-books usam a categoria cadastrada na administração. Materiais antigos ainda recebem agrupamento automático quando necessário.</p>
+                  <p className="mt-1 max-w-2xl break-words text-xs leading-5 text-zinc-400">Os e-books usam a categoria cadastrada na administração. Materiais sem categoria definida aparecem automaticamente em Outros.</p>
                 </div>
                 <div className="grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_180px] lg:min-w-[520px]">
                   <label className="relative min-w-0"><Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-zinc-500" aria-hidden="true" /><input value={searchTerm} onChange={event => setSearchTerm(event.target.value)} placeholder="Buscar por título ou assunto" aria-label="Buscar e-books por título ou assunto" className="h-11 w-full min-w-0 rounded-xl border border-white/10 bg-black/30 pl-9 pr-3 text-sm text-white outline-none transition placeholder:text-zinc-600 focus:border-emerald-300/60 focus:ring-2 focus:ring-emerald-300/20" /></label>
