@@ -1,7 +1,8 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
-import { Route, Router as WouterRouter, Switch } from "wouter";
+import { useEffect } from "react";
+import { Route, Router as WouterRouter, Switch, useLocation } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
@@ -50,8 +51,21 @@ import { CommercialRulesPage, ContactPage, FaqPage, InstitutionalPage, PrivacyPa
 import { DEV_PREFIX } from "./lib/devPath";
 import AdminDeployStatus from "./components/AdminDeployStatus";
 
+function RouteScrollReset() {
+  const [location] = useLocation();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelector<HTMLElement>(".dashboard-main")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    document.querySelector<HTMLElement>(".dashboard-inset")?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location]);
+
+  return null;
+}
+
 function AppRoutes() {
-  return <><AdminDeployStatus /><Switch>
+  return <><RouteScrollReset /><AdminDeployStatus /><Switch>
     <Route path="/" component={Home} />
     <Route path="/pedido/confirmacao" component={ApplicationConfirmation} />
     <Route path="/pedido/:trackingCode/pagamento/instrucoes" component={ApplicationPayment} />
@@ -140,6 +154,7 @@ function AppRoutes() {
     <Route path="/admin/biblioteca-recursos/:contentId/editar" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
     <Route path="/admin/perguntas-frequentes" component={AdminPublications} />
+    <Route path="/admin/publicacoes/rascunhos" component={AdminPublications} />
     <Route path="/admin/publicacoes" component={AdminPublications} />
     <Route path="/admin/imagens" component={AdminSalesSectionsPage} />
     <Route path="/preview" component={Preview} />

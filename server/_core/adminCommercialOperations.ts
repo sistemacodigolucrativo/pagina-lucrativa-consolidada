@@ -181,7 +181,7 @@ async function handleOrders(req: Request, res: Response) {
     ].some(value => value.toLowerCase().includes(query));
   });
 
-  res.json({ items, totals: orderTotals(items), generatedAt: new Date().toISOString() });
+  res.json({ items, totals: orderTotals(rows), generatedAt: new Date().toISOString() });
 }
 
 async function handleOrderDetail(req: Request, res: Response) {

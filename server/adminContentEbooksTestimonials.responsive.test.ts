@@ -12,7 +12,7 @@ describe("anotações administrativas — publicações, e-books e agradecimento
     expect(source).toContain('"public-sales-layout"');
     expect(source).toContain('"member-admin-control"');
     expect(source).toContain('"public-toast-config"');
-    expect(source).toContain('config.kind !== "notice" || !SYSTEM_CONTENT_CATEGORIES.has(item.resourceCategory ?? "")');
+    expect(source).toContain('if (config.kind === "notice" && SYSTEM_CONTENT_CATEGORIES.has(item.resourceCategory ?? "")) return false;');
     expect(source).toContain("p-4 sm:p-6 lg:p-8");
     expect(source).toContain("min-w-0");
     expect(source).toContain("overflow-x-clip");

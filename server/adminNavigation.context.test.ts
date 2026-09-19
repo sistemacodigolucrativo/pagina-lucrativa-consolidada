@@ -13,10 +13,10 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('path: "/admin/comunicacoes"');
     expect(navigation).not.toContain('label: "Divulgação"');
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
-    expect(navigation).toContain('label: "Operação", path: "/admin/operacao", group: "Operação comercial"');
-    expect(navigation).toContain('label: "Pedidos", path: "/admin/pedidos", group: "Operação comercial"');
-    expect(navigation).toContain('label: "Financeiro", path: "/admin/financeiro", group: "Operação comercial"');
-    expect(navigation).toContain('label: "Pontos/Performance", path: "/admin/pontos", group: "Operação comercial"');
+    expect(navigation).toContain('label: "Campanhas", path: "/admin/operacao", group: "Campanhas comerciais"');
+    expect(navigation).toContain('label: "Pedidos", path: "/admin/pedidos", group: "Campanhas comerciais"');
+    expect(navigation).toContain('label: "Financeiro", path: "/admin/financeiro", group: "Campanhas comerciais"');
+    expect(navigation).toContain('label: "Pontos/Performance", path: "/admin/pontos", group: "Campanhas comerciais"');
     expect(navigation).toContain('label: "Suporte", path: "/admin/suporte"');
     expect(navigation).toContain('label: "Preview", path: "/preview", group: "Sistema"');
     expect(navigation).not.toContain('label: "Auditoria", path: "/admin/auditoria"');

@@ -140,8 +140,8 @@ export default function AdminOffice() {
                 label="Rascunhos"
                 value={draftContent}
                 detail="Conteúdos que exigem revisão"
-                ariaLabel="Abrir Publicações em revisão"
-                onActivate={() => openCard("/admin/publicacoes")}
+                ariaLabel="Abrir Rascunhos"
+                onActivate={() => openCard("/admin/publicacoes/rascunhos")}
               />
             </section>
 
@@ -149,7 +149,7 @@ export default function AdminOffice() {
               <ObsidianCard
                 className="obsidian-card-wide"
                 eyebrow="Panorama real"
-                title="Conteúdo em operação"
+                title="Conteúdo em campanha"
                 description="Resumo calculado a partir das consultas administrativas atuais, sem série temporal simulada."
               >
                 <div className="grid gap-3 sm:grid-cols-3">
@@ -157,7 +157,7 @@ export default function AdminOffice() {
                     <span className="text-xs uppercase tracking-wider text-zinc-500">Publicados</span>
                     <strong className="mt-2 block text-2xl text-white">{publishedContent}</strong>
                   </button>
-                  <button type="button" onClick={() => openCard("/admin/publicacoes")} className="rounded-xl border border-white/10 bg-black/25 p-4 text-left transition hover:border-emerald-300/40">
+                  <button type="button" onClick={() => openCard("/admin/publicacoes/rascunhos")} className="rounded-xl border border-white/10 bg-black/25 p-4 text-left transition hover:border-emerald-300/40">
                     <span className="text-xs uppercase tracking-wider text-zinc-500">Rascunhos</span>
                     <strong className="mt-2 block text-2xl text-white">{draftContent}</strong>
                   </button>

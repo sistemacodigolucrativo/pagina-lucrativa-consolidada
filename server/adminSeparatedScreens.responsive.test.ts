@@ -14,6 +14,28 @@ describe("telas administrativas separadas e responsivas", () => {
     expect(source).toContain("sm:w-auto");
   });
 
+  it("mantém o formulário de Publicações fechado até o clique em Criar Conteúdo", () => {
+    const source = read("client/src/pages/AdminPublications.tsx");
+    expect(source).toContain("const [showInlineForm, setShowInlineForm] = useState(false)");
+    expect(source).toContain("Criar Conteúdo");
+    expect(source).toContain("!config.splitFlow && isPublicationManager && !isPublicationDraftScreen");
+    expect(source).toContain("showInlineForm ? <section");
+    expect(source).toContain("else setShowInlineForm(false)");
+  });
+
+  it("abre rascunhos em tela própria e reposiciona rotas administrativas no topo", () => {
+    const app = read("client/src/App.tsx");
+    const adminOffice = read("client/src/pages/AdminOffice.tsx");
+    const publications = read("client/src/pages/AdminPublications.tsx");
+    expect(app).toContain("function RouteScrollReset()");
+    expect(app).toContain('document.querySelector<HTMLElement>(".dashboard-main")?.scrollTo');
+    expect(app).toContain('path="/admin/publicacoes/rascunhos" component={AdminPublications}');
+    expect(adminOffice).toContain('openCard("/admin/publicacoes/rascunhos")');
+    expect(publications).toContain('normalizedLocation === "/admin/publicacoes/rascunhos"');
+    expect(publications).toContain("Rascunhos — Publicações");
+    expect(publications).toContain("Nenhum rascunho salvo no momento.");
+  });
+
   it("abre criação e edição de e-books em rotas independentes", () => {
     const app = read("client/src/App.tsx");
     const ebooks = read("client/src/pages/AdminEbooks.tsx");

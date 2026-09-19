@@ -139,7 +139,7 @@ export default function AdminPerformance() {
       <main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Operação comercial</span>
+            <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Campanhas comerciais</span>
             <h1 className="text-3xl font-semibold text-white">Pontos e performance</h1>
             <p className="max-w-3xl text-sm leading-6 text-zinc-300">Gerencie lançamentos de pontos que o membro visualiza no painel de desempenho.</p>
           </div>

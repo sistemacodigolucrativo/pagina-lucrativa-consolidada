@@ -3,10 +3,10 @@ import { Bell, BookOpenCheck, CalendarClock, ChartNoAxesCombined, CircleDollarSi
 
 export const adminMenu: DashboardMenuItem[] = [
   { icon: ChartNoAxesCombined, label: "Dashboard", path: "/admin", group: "Visão geral" },
-  { icon: ChartNoAxesCombined, label: "Operação", path: "/admin/operacao", group: "Operação comercial" },
-  { icon: ClipboardList, label: "Pedidos", path: "/admin/pedidos", group: "Operação comercial" },
-  { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Operação comercial" },
-  { icon: Trophy, label: "Pontos/Performance", path: "/admin/pontos", group: "Operação comercial" },
+  { icon: ChartNoAxesCombined, label: "Campanhas", path: "/admin/operacao", group: "Campanhas comerciais" },
+  { icon: ClipboardList, label: "Pedidos", path: "/admin/pedidos", group: "Campanhas comerciais" },
+  { icon: CircleDollarSign, label: "Financeiro", path: "/admin/financeiro", group: "Campanhas comerciais" },
+  { icon: Trophy, label: "Pontos/Performance", path: "/admin/pontos", group: "Campanhas comerciais" },
   { icon: UsersRound, label: "Membros e rede", path: "/admin/membros", group: "Gestão de membros" },
   { icon: Megaphone, label: "Material de Divulgação", path: "/admin/material-divulgacao", group: "Conteúdo" },
   { icon: Library, label: "Biblioteca de Recursos", path: "/admin/biblioteca-recursos", group: "Conteúdo" },

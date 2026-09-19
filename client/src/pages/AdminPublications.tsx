@@ -63,6 +63,8 @@ export default function AdminPublications() {
   const [location, setLocation] = useLocation();
   const config = currentConfig(location);
   const normalizedLocation = location.replace(/\/$/, "");
+  const isPublicationManager = config.basePath === "/admin/publicacoes";
+  const isPublicationDraftScreen = normalizedLocation === "/admin/publicacoes/rascunhos";
   const editMatch = config.splitFlow ? normalizedLocation.match(new RegExp(`^${config.basePath}/(\\d+)/editar$`)) : null;
   const editRouteId = editMatch ? Number(editMatch[1]) : null;
   const isCreateScreen = Boolean(config.splitFlow && normalizedLocation === `${config.basePath}/novo`);
@@ -70,21 +72,27 @@ export default function AdminPublications() {
   const isListScreen = Boolean(config.splitFlow && !isCreateScreen && !isEditScreen);
   const isMaterialDisclosure = config.basePath === "/admin/material-divulgacao";
   const hasResourceFields = config.kind === "material" || isMaterialDisclosure;
-  const listTitle = isMaterialDisclosure ? "Materiais cadastrados" : "Conteúdos cadastrados";
+  const listTitle = isPublicationDraftScreen ? "Rascunhos salvos" : isMaterialDisclosure ? "Materiais cadastrados" : "Conteúdos cadastrados";
   const createActionLabel = isMaterialDisclosure ? "Adicionar novo material" : "Criar";
   const utils = trpc.useUtils();
   const content = trpc.admin.content.useQuery();
   const [editingId, setEditingId] = useState<number | null>(() => editRouteId);
+  const [showInlineForm, setShowInlineForm] = useState(false);
   const [form, setForm] = useState<PublicationForm>(() => blankForm(config.kind));
   const [formError, setFormError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const refresh = () => utils.admin.content.invalidate();
   const goToList = () => setLocation(config.basePath);
   const resetLocalForm = () => { setEditingId(null); setFormError(null); setForm(blankForm(config.kind)); };
-  const reset = () => { resetLocalForm(); if (config.splitFlow) goToList(); };
-  const create = trpc.admin.createContent.useMutation({ onSuccess: () => { void refresh(); toast.success("Conteúdo registrado."); if (config.splitFlow) goToList(); else resetLocalForm(); }, onError: error => { const message = friendlyPublicationError(error.message); setFormError(message); toast.error(message); } });
-  const update = trpc.admin.updateContent.useMutation({ onSuccess: () => { void refresh(); toast.success("Conteúdo atualizado."); if (config.splitFlow) goToList(); else resetLocalForm(); }, onError: error => { const message = friendlyPublicationError(error.message); setFormError(message); toast.error(message); } });
-  const managedItems = useMemo(() => (content.data ?? []).filter(item => item.kind === config.kind && (config.kind !== "notice" || !SYSTEM_CONTENT_CATEGORIES.has(item.resourceCategory ?? ""))), [content.data, config.kind]);
+  const reset = () => { resetLocalForm(); if (config.splitFlow) goToList(); else setShowInlineForm(false); };
+  const create = trpc.admin.createContent.useMutation({ onSuccess: () => { void refresh(); toast.success("Conteúdo registrado."); if (config.splitFlow) goToList(); else { resetLocalForm(); setShowInlineForm(false); } }, onError: error => { const message = friendlyPublicationError(error.message); setFormError(message); toast.error(message); } });
+  const update = trpc.admin.updateContent.useMutation({ onSuccess: () => { void refresh(); toast.success("Conteúdo atualizado."); if (config.splitFlow) goToList(); else { resetLocalForm(); setShowInlineForm(false); } }, onError: error => { const message = friendlyPublicationError(error.message); setFormError(message); toast.error(message); } });
+  const managedItems = useMemo(() => (content.data ?? []).filter(item => {
+    if (item.kind !== config.kind) return false;
+    if (config.kind === "notice" && SYSTEM_CONTENT_CATEGORIES.has(item.resourceCategory ?? "")) return false;
+    if (isPublicationDraftScreen) return item.status === "draft";
+    return true;
+  }), [content.data, config.kind, isPublicationDraftScreen]);
   const busy = create.isPending || update.isPending || deletingId !== null;
   const editingItemExists = editRouteId === null || managedItems.some(item => item.id === editRouteId);
 
@@ -93,6 +101,7 @@ export default function AdminPublications() {
     if (!config.splitFlow) {
       setEditingId(null);
       setForm(blankForm(config.kind));
+      setShowInlineForm(false);
       return;
     }
     if (isCreateScreen) {
@@ -121,7 +130,7 @@ export default function AdminPublications() {
     }
     setEditingId(null);
     setForm(blankForm(config.kind));
-  }, [config.kind, config.splitFlow, content.data, editRouteId, isCreateScreen, isMaterialDisclosure]);
+  }, [config.kind, config.splitFlow, content.data, editRouteId, isCreateScreen, isMaterialDisclosure, isPublicationDraftScreen]);
 
   function openCreate() {
     if (config.splitFlow) {
@@ -129,6 +138,7 @@ export default function AdminPublications() {
       return;
     }
     resetLocalForm();
+    setShowInlineForm(true);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -139,6 +149,7 @@ export default function AdminPublications() {
     }
     const promotional = isMaterialDisclosure ? splitPromotionalMaterialBody(item.body) : { body: item.body ?? "", imageUrl: "" };
     setEditingId(item.id);
+    setShowInlineForm(true);
     setForm({
       kind: config.kind,
       title: item.title,
@@ -192,7 +203,8 @@ export default function AdminPublications() {
     if (editingId) update.mutate({ id: editingId, ...payload }); else create.mutate(payload);
   }
 
-  const pageTitle = isCreateScreen ? `Novo conteúdo — ${config.title}` : isEditScreen ? `Editar conteúdo — ${config.title}` : config.title;
+  const pageTitle = isPublicationDraftScreen ? "Rascunhos — Publicações" : isCreateScreen ? `Novo conteúdo — ${config.title}` : isEditScreen ? `Editar conteúdo — ${config.title}` : config.title;
+  const pageDescription = isPublicationDraftScreen ? "Revise conteúdos salvos como rascunho antes de publicar ou arquivar." : config.description;
   const imagePreviewUrl = isMaterialDisclosure && isDirectImageUrl(form.imageUrl.trim()) ? form.imageUrl.trim() : "";
 
   const formPanel = (
@@ -221,7 +233,7 @@ export default function AdminPublications() {
           {formError ? <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{formError}</p> : null}
         </section>
       ) : formError ? <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{formError}</p> : null}
-      <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:gap-3"><button disabled={busy} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60 sm:w-auto"><PlusCircle className="size-4" />{create.isPending || update.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Criar"}</button>{editingId || config.splitFlow ? <button type="button" onClick={reset} className="min-h-11 w-full rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-200 sm:w-auto">Cancelar</button> : null}</div>
+      <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:gap-3"><button disabled={busy} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60 sm:w-auto"><PlusCircle className="size-4" />{create.isPending || update.isPending ? "Salvando..." : editingId ? "Salvar alterações" : "Criar"}</button>{editingId || config.splitFlow || showInlineForm ? <button type="button" onClick={reset} className="min-h-11 w-full rounded-lg border border-white/15 px-4 py-2 text-sm text-zinc-200 sm:w-auto">Cancelar</button> : null}</div>
     </form>
   );
 
@@ -230,19 +242,20 @@ export default function AdminPublications() {
       <div className="mb-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="min-w-0"><h2 className="break-words font-medium text-white">{listTitle}</h2><span className="mt-1 block text-xs uppercase tracking-wider text-zinc-500">{managedItems.length} itens</span></div>
         {config.splitFlow ? <button type="button" onClick={openCreate} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] sm:w-auto"><PlusCircle className="size-4" />{createActionLabel}</button> : null}
+        {!config.splitFlow && isPublicationManager && !isPublicationDraftScreen ? <button type="button" onClick={openCreate} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] sm:w-auto"><PlusCircle className="size-4" />Criar Conteúdo</button> : null}
       </div>
       {content.isLoading ? <p className="text-sm text-zinc-400">Carregando...</p> : managedItems.length ? <div className="space-y-3">{managedItems.map(item => {
         const displayBody = isMaterialDisclosure ? splitPromotionalMaterialBody(item.body).body : item.body;
         return <article key={item.id} role={config.splitFlow ? "button" : undefined} tabIndex={config.splitFlow ? 0 : undefined} onClick={config.splitFlow ? () => edit(item) : undefined} onKeyDown={config.splitFlow ? event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); edit(item); } } : undefined} className={`min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25 p-3 sm:p-4 ${config.splitFlow ? "cursor-pointer transition hover:border-emerald-300/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60" : ""}`}><div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0 flex-1"><span className="text-xs uppercase tracking-wider text-emerald-200">{statusLabel(item.status)}</span><h3 className="mt-1 font-medium text-white [overflow-wrap:anywhere]">{item.title}</h3><p className="mt-1 line-clamp-2 text-sm text-zinc-400 [overflow-wrap:anywhere]">{item.summary || displayBody || "Sem descrição."}</p></div><div className="grid w-full min-w-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:w-auto sm:flex"><button type="button" onClick={event => { event.stopPropagation(); edit(item); }} className="inline-flex min-h-10 w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 sm:w-auto"><PencilLine className="size-4" />Editar</button><button type="button" disabled={deletingId === item.id} onClick={event => { event.stopPropagation(); void removeItem(item); }} className="inline-flex min-h-10 w-full items-center justify-center gap-1 rounded-lg border border-red-400/25 px-3 py-2 text-sm text-red-200 disabled:opacity-60 sm:w-auto"><Trash2 className="size-4" />{deletingId === item.id ? "Excluindo..." : "Excluir"}</button></div></div></article>;
-      })}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-zinc-400">Nenhum conteúdo registrado ainda.</p>}
+      })}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-zinc-400">{isPublicationDraftScreen ? "Nenhum rascunho salvo no momento." : "Nenhum conteúdo registrado ainda."}</p>}
     </section>
   );
 
   return <DashboardLayout menuItems={adminMenu} title="Administração"><main className="mx-auto w-full min-w-0 max-w-7xl space-y-7 overflow-x-clip p-4 sm:p-6 lg:p-8">
-    <header className="min-w-0 space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{config.eyebrow}</span><h1 className="break-words text-2xl font-semibold text-white sm:text-3xl">{pageTitle}</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">{config.description}</p></header>
+    <header className="min-w-0 space-y-2"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">{config.eyebrow}</span><h1 className="break-words text-2xl font-semibold text-white sm:text-3xl">{pageTitle}</h1><p className="max-w-3xl text-sm leading-6 text-zinc-300">{pageDescription}</p></header>
     {config.splitFlow && !isListScreen ? <button type="button" onClick={goToList} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition hover:border-emerald-300/40 hover:text-emerald-100 sm:w-auto"><ArrowLeft className="size-4" />Voltar para {config.title}</button> : null}
     {config.splitFlow ? (
       isListScreen ? listPanel : isEditScreen && content.isLoading ? <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 text-sm text-zinc-400">Carregando conteúdo para edição...</section> : isEditScreen && !editingItemExists ? <section className="space-y-3 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-5"><h2 className="font-medium text-amber-100">Conteúdo não encontrado</h2><p className="text-sm leading-6 text-amber-50/80">O item solicitado não existe nesta área ou não está mais disponível.</p></section> : formPanel
-    ) : <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">{formPanel}{listPanel}</section>}
+    ) : !isPublicationManager || showInlineForm ? <section className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">{formPanel}{listPanel}</section> : listPanel}
   </main></DashboardLayout>;
 }
