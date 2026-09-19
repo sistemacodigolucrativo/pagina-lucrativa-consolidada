@@ -7,7 +7,7 @@ const root = process.env.PROJECT_ROOT || process.cwd();
 const read = (relativePath: string) => readFile(path.join(root, relativePath), "utf8");
 
 describe("supervisão administrativa da Central de Divulgação", () => {
-  it("mantém Divulgação fora do menu legado e aponta a rota para Operação real", async () => {
+  it("mantém Divulgação fora do menu legado e aponta a rota para Campanhas reais", async () => {
     const app = await read("client/src/App.tsx");
     const navigation = await read("client/src/lib/adminNavigation.ts");
     const adminOffice = await read("client/src/pages/AdminOffice.tsx");
@@ -20,7 +20,7 @@ describe("supervisão administrativa da Central de Divulgação", () => {
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
     expect(navigation).not.toContain('label: "Comunicações"');
     expect(navigation).not.toContain('path: "/admin/comunicacoes"');
-    expect(navigation).toContain('label: "Operação", path: "/admin/operacao"');
+    expect(navigation).toContain('label: "Campanhas", path: "/admin/operacao"');
     expect(app).toContain('path="/admin/divulgacao" component={AdminOperation}');
     expect(app).toContain('path="/admin/operacao" component={AdminOperation}');
     expect(app).not.toContain("AdminOutreach");

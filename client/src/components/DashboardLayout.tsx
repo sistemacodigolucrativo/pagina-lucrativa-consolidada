@@ -427,7 +427,7 @@ function DashboardLayoutContent({
           </div>
           <div className="dashboard-topbar-meta">
             <span className="dashboard-mode-pill">{memberOfficeNavigation ? "Modo Membro" : "Modo Administrativo"}</span>
-            <span className="dashboard-live-indicator"><i aria-hidden="true" /> Operação protegida</span>
+            <span className="dashboard-live-indicator"><i aria-hidden="true" /> Ambiente protegido</span>
             <span className="dashboard-shortcut">CTRL B</span>
           </div>
         </header>

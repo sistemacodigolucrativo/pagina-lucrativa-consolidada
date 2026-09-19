@@ -6,7 +6,7 @@ import {
   applicationPaymentStatusLabel,
   applicationStatusLabel,
 } from "@shared/applications";
-import { CheckCircle2, ClipboardList, ExternalLink, RefreshCcw, Search, XCircle } from "lucide-react";
+import { CheckCircle2, ChevronLeft, ChevronRight, ClipboardList, ExternalLink, RefreshCcw, Search, X, XCircle } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -83,6 +83,7 @@ type OrdersResponse = {
 };
 
 const paymentStatusOptions: Array<"all" | ApplicationPaymentStatus> = ["all", "awaiting_payment", "receipt_received", "confirmed", "rejected"];
+const ORDERS_PER_PAGE = 10;
 
 function formatMoney(value: number) {
   return new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value / 100);
@@ -116,10 +117,13 @@ export default function AdminOrders() {
   const [paymentStatus, setPaymentStatus] = useState<"all" | ApplicationPaymentStatus>("all");
   const [query, setQuery] = useState("");
   const [selectedId, setSelectedId] = useState<number | null>(null);
+  const [showOrderQueue, setShowOrderQueue] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [detail, setDetail] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadOrders() {
@@ -168,17 +172,48 @@ export default function AdminOrders() {
     }
   }
 
+  async function deleteOrder(item: OrderItem) {
+    if (!window.confirm(`Excluir definitivamente o pedido de ${item.fullName}?\n\nComprovantes e tokens vinculados a este pedido também serão removidos.`)) return;
+    setDeletingId(item.id);
+    try {
+      await fetchJson("/api/admin/orders/" + item.id, { method: "DELETE" });
+      if (selectedId === item.id) {
+        setSelectedId(null);
+        setDetail(null);
+      }
+      await loadOrders();
+      toast.success("Pedido excluído.");
+    } catch (deleteError) {
+      toast.error(deleteError instanceof Error ? deleteError.message : "Falha ao excluir pedido.");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   useEffect(() => {
     void loadOrders();
   }, [paymentStatus]);
 
   const visibleItems = useMemo(() => data?.items ?? [], [data]);
+  const totalPages = Math.max(1, Math.ceil(visibleItems.length / ORDERS_PER_PAGE));
+  const paginatedItems = useMemo(() => {
+    const firstItem = (currentPage - 1) * ORDERS_PER_PAGE;
+    return visibleItems.slice(firstItem, firstItem + ORDERS_PER_PAGE);
+  }, [currentPage, visibleItems]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [paymentStatus, query]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
 
   return (
     <DashboardLayout menuItems={adminMenu} title="Administração">
       <main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8">
         <header className="space-y-2">
-          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Operação comercial</span>
+          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Campanhas comerciais</span>
           <h1 className="text-3xl font-semibold text-white">Pedidos</h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">Audite pedidos, afiliado responsavel, comprovantes enviados e status de liberacao de acesso.</p>
         </header>
@@ -188,21 +223,35 @@ export default function AdminOrders() {
             <span className="text-xs uppercase tracking-wider text-zinc-400">Aguardando pagamento</span>
             <strong className="mt-1 block text-2xl text-white">{data?.totals.awaitingPayment ?? 0}</strong>
           </button>
-          <button type="button" onClick={() => setPaymentStatus("receipt_received")} className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-left">
-            <span className="text-xs uppercase tracking-wider text-zinc-400">Comprovante recebido</span>
+          <button type="button" onClick={() => { setPaymentStatus("receipt_received"); setShowOrderQueue(true); }} className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-left">
+            <span className="text-xs uppercase tracking-wider text-zinc-400">Comprovantes recebidos</span>
             <strong className="mt-1 block text-2xl text-white">{data?.totals.receiptReceived ?? 0}</strong>
           </button>
-          <button type="button" onClick={() => setPaymentStatus("confirmed")} className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-left">
+          <button type="button" onClick={() => { setPaymentStatus("confirmed"); setShowOrderQueue(true); }} className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-left">
             <span className="text-xs uppercase tracking-wider text-zinc-400">Confirmados</span>
             <strong className="mt-1 block text-2xl text-white">{data?.totals.confirmed ?? 0}</strong>
           </button>
-          <button type="button" onClick={() => setPaymentStatus("all")} className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-left">
+          <button type="button" onClick={() => { setPaymentStatus("all"); setShowOrderQueue(true); }} className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-left">
             <span className="text-xs uppercase tracking-wider text-zinc-400">Pedidos sem afiliado</span>
             <strong className="mt-1 block text-2xl text-white">{data?.totals.orphaned ?? 0}</strong>
           </button>
         </section>
 
-        <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6">
+        {!showOrderQueue ? (
+          <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <span className="text-xs uppercase tracking-wider text-zinc-500">Fila administrativa</span>
+                <h2 className="mt-1 text-xl font-semibold text-white">A lista completa fica recolhida por padrão.</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-400">Abra a fila somente quando for revisar pedidos, buscar cadastros ou auditar comprovantes.</p>
+              </div>
+              <button type="button" onClick={() => setShowOrderQueue(true)} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98]">
+                <ClipboardList className="size-4" />
+                Exibir fila de pedidos
+              </button>
+            </div>
+          </section>
+        ) : <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6">
           <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-center gap-2 text-white">
               <ClipboardList className="size-5 text-emerald-300" />
@@ -217,6 +266,7 @@ export default function AdminOrders() {
                 {paymentStatusOptions.map(status => <option key={status} value={status}>{status === "all" ? "Todos os status" : applicationPaymentStatusLabel[status]}</option>)}
               </select>
               <button type="button" onClick={() => void loadOrders()} className="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-white/15 px-3 text-sm text-white"><RefreshCcw className="size-4" />Atualizar</button>
+              <button type="button" onClick={() => setShowOrderQueue(false)} className="inline-flex h-10 items-center justify-center rounded-lg border border-white/15 px-3 text-sm text-zinc-200">Recolher fila</button>
             </div>
           </div>
 
@@ -225,54 +275,67 @@ export default function AdminOrders() {
           ) : error ? (
             <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">{error}</p>
           ) : visibleItems.length ? (
+            <>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-white/10 text-sm">
                 <thead className="text-left text-xs uppercase tracking-wider text-zinc-500">
                   <tr>
-                    <th className="py-3 pr-4">Pedido</th>
-                    <th className="py-3 pr-4">Afiliado</th>
-                    <th className="py-3 pr-4">Pagamento</th>
-                    <th className="py-3 pr-4">Comprovante</th>
-                    <th className="py-3 pr-4">Criado em</th>
-                    <th className="py-3 pr-4">Ação</th>
+                    <th className="py-2.5 pr-3">Pedido</th>
+                    <th className="py-2.5 pr-3">Afiliado</th>
+                    <th className="py-2.5 pr-3">Pagamento</th>
+                    <th className="py-2.5 pr-3">Comprovante</th>
+                    <th className="py-2.5 pr-3">Criado em</th>
+                    <th className="py-2.5 pr-3">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
-                  {visibleItems.map(item => (
+                  {paginatedItems.map(item => (
                     <tr key={item.id} className="align-top">
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <strong className="block text-white">{item.fullName}</strong>
                         <span className="block text-zinc-400">{item.email}</span>
                         <span className="block text-xs text-zinc-500">{item.trackingCode ?? "Sem codigo"}</span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <span className={item.ownerUserId ? "text-zinc-200" : "text-red-200"}>{item.sponsorName ?? item.affiliateSlug ?? "Sem apresentador"}</span>
                         <span className="block text-xs text-zinc-500">{item.sponsorSlug ?? item.sponsorEmail ?? "Sem vinculo"}</span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <span className="text-zinc-200">{applicationPaymentStatusLabel[item.paymentStatus]}</span>
                         <span className="block text-xs text-zinc-500">{formatMoney(item.offerAmountCents)}</span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <span className="text-zinc-200">{item.latestReceiptStatus ?? "Sem comprovante"}</span>
                         <span className="block text-xs text-zinc-500">{item.receiptCount} arquivo(s)</span>
                       </td>
-                      <td className="py-4 pr-4 text-zinc-400">{formatDate(item.createdAt)}</td>
-                      <td className="py-4 pr-4">
-                        <button type="button" onClick={() => void loadDetail(item.id)} className="rounded-lg border border-emerald-300/30 px-3 py-2 text-xs font-medium text-emerald-100">Auditar</button>
+                      <td className="py-3 pr-3 text-zinc-400">{formatDate(item.createdAt)}</td>
+                      <td className="py-3 pr-3">
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <button type="button" onClick={() => void loadDetail(item.id)} className="rounded-lg border border-emerald-300/30 px-3 py-2 text-xs font-medium text-emerald-100">Auditar</button>
+                          <button type="button" disabled={deletingId === item.id} onClick={() => void deleteOrder(item)} className="rounded-lg border border-red-400/25 px-3 py-2 text-xs font-medium text-red-200 disabled:opacity-50">{deletingId === item.id ? "Excluindo..." : "Excluir"}</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            <div className="mt-4 flex flex-col gap-3 border-t border-white/10 pt-4 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+              <span>Exibindo {paginatedItems.length} de {visibleItems.length} pedido(s). Página {currentPage} de {totalPages}.</span>
+              <div className="flex gap-2">
+                <button type="button" disabled={currentPage <= 1} onClick={() => setCurrentPage(page => Math.max(1, page - 1))} className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/15 px-3 text-zinc-200 disabled:cursor-not-allowed disabled:opacity-45"><ChevronLeft className="size-4" />Anterior</button>
+                <button type="button" disabled={currentPage >= totalPages} onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))} className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/15 px-3 text-zinc-200 disabled:cursor-not-allowed disabled:opacity-45">Próxima<ChevronRight className="size-4" /></button>
+              </div>
+            </div>
+            </>
           ) : (
             <p className="rounded-xl border border-white/10 p-4 text-sm text-zinc-400">Nenhum pedido encontrado para o filtro atual.</p>
           )}
-        </section>
+        </section>}
 
         {selectedId ? (
-          <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:p-6">
+          <section className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-black/78 p-3 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label="Auditoria do pedido">
+            <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
             {detailLoading || !detail ? (
               <p className="text-sm text-zinc-400">Carregando auditoria do pedido...</p>
             ) : (
@@ -283,7 +346,7 @@ export default function AdminOrders() {
                     <h2 className="mt-1 text-2xl font-semibold text-white">{detail.fullName}</h2>
                     <p className="text-sm text-zinc-400">{detail.email} · {detail.whatsapp}</p>
                   </div>
-                  <button type="button" onClick={() => { setSelectedId(null); setDetail(null); }} className="rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200">Fechar</button>
+                  <button type="button" onClick={() => { setSelectedId(null); setDetail(null); }} className="inline-flex size-10 items-center justify-center rounded-lg border border-white/15 text-zinc-200" aria-label="Fechar auditoria"><X className="size-4" /></button>
                 </div>
 
                 <div className="grid gap-3 md:grid-cols-3">
@@ -331,6 +394,7 @@ export default function AdminOrders() {
                 </div>
               </div>
             )}
+            </div>
           </section>
         ) : null}
       </main>

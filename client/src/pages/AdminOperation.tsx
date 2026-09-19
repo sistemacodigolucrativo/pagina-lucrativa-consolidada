@@ -60,7 +60,7 @@ async function loadOperation(period: Period) {
   const response = await fetch(withAppBase("/api/admin/operation?period=" + encodeURIComponent(period)), { credentials: "include" });
   if (!response.ok) {
     const body = await response.json().catch(() => null);
-    throw new Error(typeof body?.error === "string" ? body.error : "Falha ao carregar operacao.");
+    throw new Error(typeof body?.error === "string" ? body.error : "Falha ao carregar campanhas.");
   }
   return response.json() as Promise<OperationResponse>;
 }
@@ -77,7 +77,7 @@ export default function AdminOperation() {
     try {
       setData(await loadOperation(nextPeriod));
     } catch (refreshError) {
-      setError(refreshError instanceof Error ? refreshError.message : "Falha ao carregar operacao.");
+      setError(refreshError instanceof Error ? refreshError.message : "Falha ao carregar campanhas.");
     } finally {
       setLoading(false);
     }
@@ -92,8 +92,8 @@ export default function AdminOperation() {
       <main className="mx-auto w-full max-w-7xl space-y-7 p-5 sm:p-8">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div className="space-y-2">
-            <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Operação comercial</span>
-            <h1 className="text-3xl font-semibold text-white">Operação</h1>
+            <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Campanhas comerciais</span>
+            <h1 className="text-3xl font-semibold text-white">Campanhas</h1>
             <p className="max-w-3xl text-sm leading-6 text-zinc-300">Visao administrativa das campanhas, trafego, contatos, conversoes e pedidos gerados pelos membros.</p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -105,7 +105,7 @@ export default function AdminOperation() {
         </header>
 
         {loading ? (
-          <p className="text-sm text-zinc-400">Carregando operacao...</p>
+          <p className="text-sm text-zinc-400">Carregando campanhas...</p>
         ) : error ? (
           <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">{error}</p>
         ) : data ? (

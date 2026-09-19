@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
-import { Archive, ArrowLeft, BookOpenCheck, Eye, EyeOff, FileText, LoaderCircle, PlusCircle, Save, Trash2 } from "lucide-react";
+import { Archive, ArrowLeft, BookOpenCheck, ChevronLeft, ChevronRight, Eye, EyeOff, FileText, LoaderCircle, PlusCircle, Save, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AdminEbooks from "./AdminEbooks";
@@ -21,6 +21,7 @@ const ACADEMY_METADATA_NAME = "codigo-lucrativo-academy";
 const COURSE_ORDER_MARKER = "codigo-lucrativo-academy-course-order";
 const COURSE_ARCHIVED_MARKER = "codigo-lucrativo-academy-course-archived";
 const COURSE_DELETED_MARKER = "codigo-lucrativo-academy-course-deleted";
+const COURSES_PER_PAGE = 10;
 
 type AcademyLevel = "fundamentos" | "pratica" | "avancado";
 type AcademyMetadata = {
@@ -321,6 +322,7 @@ export default function AdminAcademy() {
   const [materialEditor, setMaterialEditor] = useState<MaterialEditorState>(null);
   const [materialsVisible, setMaterialsVisible] = useState(false);
   const [courseAction, setCourseAction] = useState<{ key: string; action: CourseManagementAction } | null>(null);
+  const [coursesPage, setCoursesPage] = useState(1);
   const linkingMaterialIds = useRef(new Set<number>());
 
   const courses = useMemo<CourseView[]>(() => {
@@ -426,6 +428,12 @@ export default function AdminAcademy() {
     const maxStoredOrder = courses.reduce((max, course) => Math.max(max, course.order), 0);
     return Math.min(999, Math.max(courses.length, maxStoredOrder) + 1);
   }, [courses]);
+  const courseTotalPages = Math.max(1, Math.ceil(courses.length / COURSES_PER_PAGE));
+  const paginatedCourses = courses.slice((coursesPage - 1) * COURSES_PER_PAGE, coursesPage * COURSES_PER_PAGE);
+
+  useEffect(() => {
+    if (coursesPage > courseTotalPages) setCoursesPage(courseTotalPages);
+  }, [coursesPage, courseTotalPages]);
 
   const selectedCourse = useMemo(() => {
     if (!courseEditor || courseEditor.creating) return null;
@@ -935,11 +943,12 @@ export default function AdminAcademy() {
           {ebooksQuery.isLoading || storedCoursesQuery.isLoading ? (
             <p className="flex items-center gap-2 py-8 text-sm text-zinc-400"><LoaderCircle className="size-4 animate-spin" />Carregando cursos...</p>
           ) : courses.length ? (
-            <div className="divide-y divide-white/10 border-y border-white/10">
-              {courses.map(course => {
-                const actionPending = courseAction?.key === course.key;
-                return (
-                  <div key={course.key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
+            <>
+              <div className="divide-y divide-white/10 border-y border-white/10">
+                {paginatedCourses.map(course => {
+                  const actionPending = courseAction?.key === course.key;
+                  return (
+                    <div key={course.key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
                     <button type="button" onClick={() => openCourse(course)} className="min-w-0 flex-1 text-left">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="font-medium text-white [overflow-wrap:anywhere]">{course.title}</p>
@@ -1004,10 +1013,34 @@ export default function AdminAcademy() {
                         </button>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="mt-4 flex flex-col gap-3 text-sm text-zinc-400 sm:flex-row sm:items-center sm:justify-between">
+                <span>Exibindo {paginatedCourses.length} de {courses.length} curso(s). Página {coursesPage} de {courseTotalPages}.</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={coursesPage <= 1}
+                    onClick={() => setCoursesPage(page => Math.max(1, page - 1))}
+                    className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/15 px-3 text-zinc-200 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    <ChevronLeft className="size-4" />
+                    Anterior
+                  </button>
+                  <button
+                    type="button"
+                    disabled={coursesPage >= courseTotalPages}
+                    onClick={() => setCoursesPage(page => Math.min(courseTotalPages, page + 1))}
+                    className="inline-flex h-10 items-center gap-1 rounded-lg border border-white/15 px-3 text-zinc-200 disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    Próxima
+                    <ChevronRight className="size-4" />
+                  </button>
+                </div>
+              </div>
+            </>
           ) : (
             <div className="border-y border-dashed border-white/15 py-10 text-center">
               <BookOpenCheck className="mx-auto size-8 text-zinc-600" />

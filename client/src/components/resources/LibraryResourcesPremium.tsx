@@ -1,13 +1,14 @@
 import {
   BookOpen,
   CheckSquare,
-  Download,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ChevronUp,
   ExternalLink,
   FileText,
-  Grid2X2,
   Layers3,
   LayoutTemplate,
-  List,
   Megaphone,
   Search,
   Sparkles,
@@ -16,7 +17,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type LibraryResource = {
   id: number;
@@ -32,7 +33,6 @@ type LibraryResource = {
 type Props = {
   items: LibraryResource[];
   isLoading: boolean;
-  variant?: "library" | "promotional";
 };
 
 type TypeConfig = {
@@ -76,36 +76,23 @@ function getTypeConfig(resourceType?: string | null): TypeConfig {
   return { icon: Layers3, label: resourceType?.trim().toUpperCase() || "RECURSO", badge: "border-indigo-500/30 bg-indigo-500/15 text-indigo-300", hover: "hover:border-indigo-400/45", glow: "bg-indigo-500/10" };
 }
 
-export default function LibraryResourcesPremium({ items, isLoading, variant = "library" }: Props) {
+const ITEMS_PER_PAGE = 10;
+
+export default function LibraryResourcesPremium({ items, isLoading }: Props) {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Todos");
-  const [selected, setSelected] = useState<LibraryResource | null>(null);
-  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const isPromotional = variant === "promotional";
+  const [activeId, setActiveId] = useState<number | null>(null);
+  const [page, setPage] = useState(1);
+  const [previewImage, setPreviewImage] = useState<LibraryResource | null>(null);
 
-  const copy = isPromotional ? {
-    eyebrow: "Central de divulgação",
-    title: "Material de divulgação",
-    description: "Imagens, banners, textos e outros materiais preparados para apoiar suas divulgações em um só lugar.",
-    countLabel: "Materiais",
-    searchPlaceholder: "Buscar materiais...",
-    sectionTitle: "Materiais disponíveis",
-    emptyTitle: "Nenhum material encontrado",
-    emptyDescription: "Tente outro termo de busca ou selecione uma categoria diferente.",
-    detailsLabel: "Ver material",
-    backLabel: "← Voltar aos materiais",
-    actionLabel: "Baixar material",
-  } : {
-    eyebrow: "Central de conhecimento",
+  const copy = {
+    eyebrow: "Biblioteca de recursos",
     title: "Biblioteca de Recursos",
     description: "Materiais práticos para acelerar sua divulgação, organização e operação digital em um só lugar.",
-    countLabel: "Recursos",
     searchPlaceholder: "Buscar recursos...",
     sectionTitle: "Recursos disponíveis",
     emptyTitle: "Nenhum recurso encontrado",
     emptyDescription: "Tente outro termo de busca ou selecione uma categoria diferente.",
-    detailsLabel: "Ver detalhes",
-    backLabel: "← Voltar à Biblioteca",
     actionLabel: "Acessar recurso",
   };
 
@@ -123,6 +110,18 @@ export default function LibraryResourcesPremium({ items, isLoading, variant = "l
     });
   }, [category, items, query]);
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+  const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+
+  useEffect(() => {
+    setPage(1);
+    setActiveId(null);
+  }, [category, query]);
+
+  useEffect(() => {
+    if (page > totalPages) setPage(totalPages);
+  }, [page, totalPages]);
+
   return (
     <div className="relative min-h-[calc(100vh-2rem)] overflow-hidden rounded-[28px] border border-white/10 bg-neutral-950 text-white shadow-[0_30px_90px_rgba(0,0,0,0.35)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_12%_0%,rgba(16,185,129,.12),transparent_32%),radial-gradient(circle_at_88%_8%,rgba(6,182,212,.10),transparent_28%)]" />
@@ -130,25 +129,12 @@ export default function LibraryResourcesPremium({ items, isLoading, variant = "l
 
       <div className="relative z-10 p-5 sm:p-7 lg:p-9">
         <header className="mb-8 border-b border-white/10 pb-7">
-          <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-            <div className="max-w-3xl">
-              <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
-                <Sparkles className="size-4" /> {copy.eyebrow}
-              </div>
-              <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">{copy.title}</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-400 sm:text-base">{copy.description}</p>
+          <div className="max-w-3xl">
+            <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.22em] text-emerald-300">
+              <Sparkles className="size-4" /> {copy.eyebrow}
             </div>
-
-            <div className="grid grid-cols-2 gap-2 sm:flex">
-              <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
-                <span className="block text-[10px] uppercase tracking-[0.18em] text-neutral-500">{copy.countLabel}</span>
-                <strong className="mt-1 block text-xl text-white">{items.length}</strong>
-              </div>
-              <div className="rounded-2xl border border-white/10 bg-white/[0.035] px-4 py-3">
-                <span className="block text-[10px] uppercase tracking-[0.18em] text-neutral-500">Categorias</span>
-                <strong className="mt-1 block text-xl text-white">{Math.max(categories.length - 1, 0)}</strong>
-              </div>
-            </div>
+            <h1 className="text-3xl font-black tracking-tight text-white sm:text-4xl">{copy.title}</h1>
+            <p className="mt-3 max-w-2xl text-sm leading-7 text-neutral-400 sm:text-base">{copy.description}</p>
           </div>
         </header>
 
@@ -165,10 +151,7 @@ export default function LibraryResourcesPremium({ items, isLoading, variant = "l
               {query ? <button type="button" onClick={() => setQuery("")} aria-label="Limpar busca" className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-neutral-500 transition hover:bg-white/5 hover:text-white"><X className="size-4" /></button> : null}
             </label>
 
-            <div className="flex items-center gap-2 self-end lg:self-auto">
-              <button type="button" onClick={() => setViewMode("grid")} aria-label="Visualização em grade" className={`grid size-11 place-items-center rounded-xl border transition ${viewMode === "grid" ? "border-emerald-400/35 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-neutral-900/70 text-neutral-500 hover:text-white"}`}><Grid2X2 className="size-4" /></button>
-              <button type="button" onClick={() => setViewMode("list")} aria-label="Visualização em lista" className={`grid size-11 place-items-center rounded-xl border transition ${viewMode === "list" ? "border-emerald-400/35 bg-emerald-500/10 text-emerald-300" : "border-white/10 bg-neutral-900/70 text-neutral-500 hover:text-white"}`}><List className="size-4" /></button>
-            </div>
+            <span className="self-end rounded-xl border border-white/10 bg-neutral-900/70 px-3 py-2 text-xs font-semibold text-neutral-400 lg:self-auto">Lista paginada</span>
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
@@ -188,43 +171,73 @@ export default function LibraryResourcesPremium({ items, isLoading, variant = "l
         <div className="mb-4 flex items-center justify-between gap-4">
           <div>
             <h2 className="text-sm font-bold text-white">{copy.sectionTitle}</h2>
-            <p className="mt-1 text-xs text-neutral-500">{filtered.length} {filtered.length === 1 ? "resultado" : "resultados"}</p>
+          <p className="mt-1 text-xs text-neutral-500">{filtered.length} {filtered.length === 1 ? "resultado" : "resultados"} · Página {page} de {totalPages}</p>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-56 animate-pulse rounded-2xl border border-white/10 bg-white/[0.035]" />)}
+          <div className="space-y-3">
+            {Array.from({ length: 6 }).map((_, index) => <div key={index} className="h-14 animate-pulse rounded-2xl border border-white/10 bg-white/[0.035]" />)}
           </div>
         ) : filtered.length ? (
-          <div className={viewMode === "grid" ? "grid gap-4 md:grid-cols-2 xl:grid-cols-3" : "space-y-3"}>
-            {filtered.map(resource => {
+          <>
+          <div className="space-y-3">
+            {paginated.map(resource => {
               const config = getTypeConfig(resource.resourceType);
               const Icon = config.icon;
+              const expanded = activeId === resource.id;
+              const panelId = `resource-panel-${resource.id}`;
               return (
                 <article
                   key={resource.id}
-                  onClick={() => setSelected(resource)}
-                  className={`group relative cursor-pointer overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-neutral-900/90 via-neutral-900/65 to-neutral-950/95 p-5 transition duration-300 ${config.hover} hover:-translate-y-1 hover:shadow-2xl ${viewMode === "list" ? "sm:flex sm:items-center sm:gap-5" : "min-h-56"}`}
+                  className={`overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/80 transition ${expanded ? "border-emerald-400/35 shadow-[0_0_30px_rgba(16,185,129,.08)]" : config.hover}`}
                 >
-                  <div className={`pointer-events-none absolute -right-20 -top-20 size-44 rounded-full blur-3xl transition duration-500 ${config.glow} group-hover:scale-125`} />
-                  {resource.imageUrl ? <div className={`relative z-10 overflow-hidden rounded-xl border border-white/10 bg-black/30 ${viewMode === "list" ? "mb-4 aspect-video sm:mb-0 sm:w-44 sm:shrink-0" : "mb-5 aspect-video"}`}><img src={resource.imageUrl} alt={`Prévia de ${resource.title}`} loading="lazy" className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]" /></div> : null}
-                  <div className={`relative z-10 ${viewMode === "list" ? "sm:flex-1" : "flex h-full flex-col"}`}>
-                    <div className="mb-5 flex items-center justify-between gap-3">
-                      <span className={`inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] font-black tracking-[0.08em] ${config.badge}`}><Icon className="size-3.5" />{config.label}</span>
-                      <span className="max-w-[45%] truncate text-[10px] uppercase tracking-[0.12em] text-neutral-600">{resource.resourceCategory || "Outros"}</span>
+                  <button
+                    type="button"
+                    aria-expanded={expanded}
+                    aria-controls={panelId}
+                    onClick={() => setActiveId(expanded ? null : resource.id)}
+                    className="flex min-h-14 w-full items-center justify-between gap-3 px-4 py-3 text-left transition hover:bg-white/[0.025] sm:px-5"
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <span className={`grid size-9 shrink-0 place-items-center rounded-xl border ${config.badge}`}><Icon className="size-4" /></span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-sm font-bold text-white sm:text-base">{resource.title}</span>
+                        <span className="mt-0.5 block truncate text-xs uppercase tracking-[0.12em] text-neutral-500">{resource.resourceCategory || "Outros"} · {config.label}</span>
+                      </span>
+                    </span>
+                    {expanded ? <ChevronUp className="size-5 shrink-0 text-emerald-300" /> : <ChevronDown className="size-5 shrink-0 text-neutral-500" />}
+                  </button>
+
+                  {expanded ? (
+                    <div id={panelId} className="border-t border-white/10 px-4 py-4 sm:px-5">
+                      <div className="grid gap-4 md:grid-cols-[minmax(0,160px)_minmax(0,1fr)] md:items-start">
+                        {resource.imageUrl ? (
+                          <button type="button" onClick={() => setPreviewImage(resource)} className="group/image overflow-hidden rounded-xl border border-white/10 bg-black/30 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/70">
+                            <img src={resource.imageUrl} alt={`Miniatura de ${resource.title}`} loading="lazy" className="aspect-video w-full object-cover transition group-hover/image:scale-[1.02] md:h-24" />
+                            <span className="block px-3 py-2 text-xs font-semibold text-emerald-200">Ampliar imagem</span>
+                          </button>
+                        ) : null}
+                        <div className="min-w-0">
+                          {resource.summary ? <p className="text-sm leading-6 text-neutral-300">{resource.summary}</p> : null}
+                          {resource.body ? <div className="mt-3 whitespace-pre-wrap text-sm leading-6 text-neutral-400">{resource.body}</div> : !resource.summary ? <p className="text-sm leading-6 text-neutral-500">Sem descrição adicional.</p> : null}
+                          {resource.resourceUrl ? <a href={resource.resourceUrl} target="_blank" rel="noreferrer" className="mt-5 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 px-4 py-2.5 text-sm font-black text-neutral-950 shadow-[0_0_30px_rgba(16,185,129,.18)] transition hover:from-emerald-400 hover:to-emerald-300 sm:w-auto"><ExternalLink className="size-4" />{copy.actionLabel}</a> : null}
+                        </div>
+                      </div>
                     </div>
-                    <h3 className="text-lg font-bold leading-snug text-white transition group-hover:text-emerald-200">{resource.title}</h3>
-                    {resource.summary ? <p className="mt-3 line-clamp-3 text-sm leading-6 text-neutral-400">{resource.summary}</p> : <p className="mt-3 text-sm leading-6 text-neutral-600">Abra os detalhes para conhecer este {isPromotional ? "material" : "recurso"}.</p>}
-                    <div className={`mt-auto flex items-center justify-between gap-3 ${viewMode === "grid" ? "pt-6" : "pt-4 sm:pt-3"}`}>
-                      <span className="text-xs font-semibold text-emerald-300">{copy.detailsLabel}</span>
-                      <span className="grid size-8 place-items-center rounded-full border border-white/10 bg-white/[0.035] text-neutral-400 transition group-hover:border-emerald-400/30 group-hover:text-emerald-300"><ExternalLink className="size-3.5" /></span>
-                    </div>
-                  </div>
+                  ) : null}
                 </article>
               );
             })}
           </div>
+          <div className="mt-6 flex flex-col gap-3 text-sm text-neutral-400 sm:flex-row sm:items-center sm:justify-between">
+            <span>Exibindo {paginated.length} de {filtered.length} recurso(s).</span>
+            <div className="flex gap-2">
+              <button type="button" disabled={page <= 1} onClick={() => setPage(current => Math.max(1, current - 1))} className="inline-flex h-10 items-center gap-1 rounded-xl border border-white/15 px-3 text-neutral-200 disabled:cursor-not-allowed disabled:opacity-45"><ChevronLeft className="size-4" />Anterior</button>
+              <button type="button" disabled={page >= totalPages} onClick={() => setPage(current => Math.min(totalPages, current + 1))} className="inline-flex h-10 items-center gap-1 rounded-xl border border-white/15 px-3 text-neutral-200 disabled:cursor-not-allowed disabled:opacity-45">Próxima<ChevronRight className="size-4" /></button>
+            </div>
+          </div>
+          </>
         ) : (
           <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.025] px-6 py-14 text-center">
             <Search className="mx-auto size-8 text-neutral-700" />
@@ -235,27 +248,19 @@ export default function LibraryResourcesPremium({ items, isLoading, variant = "l
         )}
       </div>
 
-      {selected ? (
-        <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/80 p-3 backdrop-blur-md sm:p-6" role="dialog" aria-modal="true" aria-label={`Detalhes de ${selected.title}`}>
-          <button type="button" className="fixed inset-0 cursor-default" onClick={() => setSelected(null)} aria-label="Fechar detalhes" />
-          <section className="relative z-10 my-auto flex max-h-[92vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950 shadow-[0_30px_90px_rgba(0,0,0,.75)]">
+      {previewImage?.imageUrl ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center overflow-y-auto bg-black/80 p-3 backdrop-blur-md sm:p-6" role="dialog" aria-modal="true" aria-label={`Imagem de ${previewImage.title}`}>
+          <button type="button" className="fixed inset-0 cursor-default" onClick={() => setPreviewImage(null)} aria-label="Fechar imagem" />
+          <section className="relative z-10 my-auto flex max-h-[92vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-white/10 bg-neutral-950 shadow-[0_30px_90px_rgba(0,0,0,.75)]">
             <div className="flex items-center justify-between border-b border-white/10 bg-neutral-950/95 px-5 py-4 backdrop-blur sm:px-7">
-              <button type="button" onClick={() => setSelected(null)} className="text-xs font-semibold text-neutral-400 transition hover:text-white">{copy.backLabel}</button>
-              <button type="button" onClick={() => setSelected(null)} className="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-neutral-400 transition hover:text-white" aria-label="Fechar"><X className="size-4" /></button>
+              <span className="min-w-0 truncate text-sm font-semibold text-white">{previewImage.title}</span>
+              <button type="button" onClick={() => setPreviewImage(null)} className="grid size-9 place-items-center rounded-xl border border-white/10 bg-white/[0.035] text-neutral-400 transition hover:text-white" aria-label="Fechar"><X className="size-4" /></button>
             </div>
-            <div className="overflow-y-auto p-5 sm:p-8">
-              {(() => {
-                const config = getTypeConfig(selected.resourceType);
-                const Icon = config.icon;
-                return <>
-                  {selected.imageUrl ? <div className="mb-6 overflow-hidden rounded-2xl border border-white/10 bg-black/30"><img src={selected.imageUrl} alt={`Imagem de ${selected.title}`} loading="lazy" className="max-h-[52vh] w-full object-contain" /></div> : null}
-                  <div className="mb-5 flex flex-wrap items-center gap-2"><span className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-[10px] font-black tracking-[0.08em] ${config.badge}`}><Icon className="size-3.5" />{config.label}</span><span className="rounded-md border border-white/10 bg-white/[0.035] px-2.5 py-1 text-[10px] uppercase tracking-[0.1em] text-neutral-500">{selected.resourceCategory || "Outros"}</span></div>
-                  <h2 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{selected.title}</h2>
-                  {selected.summary ? <p className="mt-4 text-sm leading-7 text-neutral-400 sm:text-base">{selected.summary}</p> : null}
-                  {selected.body ? <div className="mt-7 whitespace-pre-wrap border-t border-white/10 pt-6 text-sm leading-7 text-neutral-300">{selected.body}</div> : null}
-                  {selected.resourceUrl ? <a href={selected.resourceUrl} target="_blank" rel="noreferrer" download={isPromotional ? "" : undefined} className="mt-8 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 px-5 py-3 text-sm font-black text-neutral-950 shadow-[0_0_30px_rgba(16,185,129,.24)] transition hover:from-emerald-400 hover:to-emerald-300 sm:w-auto">{isPromotional ? <Download className="size-4" /> : <ExternalLink className="size-4" />}{copy.actionLabel}</a> : null}
-                </>;
-              })()}
+            <div className="overflow-y-auto bg-black p-3 sm:p-5">
+              <img src={previewImage.imageUrl} alt={`Imagem de ${previewImage.title}`} className="mx-auto max-h-[78vh] w-auto max-w-full rounded-xl object-contain" />
+              <a href={previewImage.imageUrl} download target="_blank" rel="noreferrer" className="mx-auto mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-400 px-4 py-2.5 text-sm font-black text-neutral-950 transition hover:bg-emerald-300 sm:w-auto">
+                Baixar imagem
+              </a>
             </div>
           </section>
         </div>

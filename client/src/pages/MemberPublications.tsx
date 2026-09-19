@@ -2,15 +2,13 @@ import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardL
 import LibraryResourcesPremium from "@/components/resources/LibraryResourcesPremium";
 import { splitPromotionalMaterialBody } from "@/lib/promotionalMaterialMetadata";
 import { trpc } from "@/lib/trpc";
-import { BookOpenText, FileText, Inbox, LayoutDashboard, LibraryBig, Mail, MessageCircleQuestion } from "lucide-react";
+import { BookOpenText, Inbox, LayoutDashboard, LibraryBig, Mail, MessageCircleQuestion } from "lucide-react";
 import { useLocation } from "wouter";
 
 type ContentKind = "material" | "article" | "faq" | "notice";
-type EditorialView = { eyebrow: string; title: string; description: string; kind?: ContentKind; icon: typeof FileText };
+type EditorialView = { eyebrow: string; title: string; description: string; kind?: ContentKind; icon: typeof LibraryBig };
 
 const views: Record<string, EditorialView> = {
-  "/membros/blog": { eyebrow: "Material de divulgação", title: "Material de divulgação", description: "Encontre imagens, banners, textos e outros materiais preparados para apoiar suas divulgações.", kind: "article", icon: FileText },
-  "/membros/artigos": { eyebrow: "Material de divulgação", title: "Material de divulgação", description: "Encontre imagens, banners, textos e outros materiais preparados para apoiar suas divulgações.", kind: "article", icon: FileText },
   "/membros/classificados": { eyebrow: "Conteúdo publicado", title: "Classificados", description: "Publicações e oportunidades liberadas pela administração da plataforma.", kind: "article", icon: Inbox },
   "/membros/materiais": { eyebrow: "Biblioteca de Recursos", title: "Biblioteca de Recursos", description: "Recursos disponibilizados para apoiar sua divulgação e sua rotina.", kind: "material", icon: LibraryBig },
   "/membros/bonus": { eyebrow: "Biblioteca de Recursos", title: "Biblioteca de Recursos", description: "Recursos disponibilizados para apoiar sua divulgação e sua rotina.", kind: "material", icon: LibraryBig },
@@ -22,7 +20,6 @@ const views: Record<string, EditorialView> = {
 
 const menu: DashboardMenuItem[] = [
   { icon: LayoutDashboard, label: "Visão geral", path: "/membros", group: "Navegação" },
-  { icon: FileText, label: "Material de divulgação", path: "/membros/artigos", group: "Conteúdos e materiais" },
   { icon: LibraryBig, label: "Biblioteca de Recursos", path: "/membros/materiais", group: "Conteúdos e materiais" },
   { icon: MessageCircleQuestion, label: "Ajuda e dúvidas", path: "/membros/perguntas-frequentes", group: "Conteúdos e materiais" },
 ];
@@ -35,8 +32,7 @@ export default function MemberPublications() {
   const Icon = view.icon;
   const content = trpc.member.content.useQuery();
   const items = (content.data ?? []).filter(item => !view.kind || item.kind === view.kind);
-  const promotionalItems = items.map(item => {
-    if (item.kind !== "article") return { ...item, imageUrl: null };
+  const resourceItems = (content.data ?? []).filter(item => item.kind === "material" || item.kind === "article").map(item => {
     const promotional = splitPromotionalMaterialBody(item.body);
     return { ...item, body: promotional.body, imageUrl: promotional.imageUrl || null };
   });
@@ -44,15 +40,7 @@ export default function MemberPublications() {
   if (location === "/membros/materiais") {
     return (
       <DashboardLayout menuItems={menu} title="Escritório Virtual">
-        <LibraryResourcesPremium items={items} isLoading={content.isLoading} />
-      </DashboardLayout>
-    );
-  }
-
-  if (location === "/membros/artigos" || location === "/membros/blog") {
-    return (
-      <DashboardLayout menuItems={menu} title="Escritório Virtual">
-        <LibraryResourcesPremium items={promotionalItems} isLoading={content.isLoading} variant="promotional" />
+        <LibraryResourcesPremium items={resourceItems} isLoading={content.isLoading} />
       </DashboardLayout>
     );
   }
@@ -73,21 +61,21 @@ export default function MemberPublications() {
 
         <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5">
           <div className="mb-5 flex items-center justify-between gap-3">
-            <h2 className="font-medium text-white">{location === "/membros/artigos" ? "Materiais prontos para divulgação" : "Recursos publicados para você"}</h2>
-            <span className="text-xs uppercase tracking-wider text-zinc-500">{promotionalItems.length} publicações</span>
+            <h2 className="font-medium text-white">Recursos publicados para você</h2>
+            <span className="text-xs uppercase tracking-wider text-zinc-500">{items.length} publicações</span>
           </div>
-          {content.isLoading ? <p className="text-sm text-zinc-400">Carregando publicações...</p> : promotionalItems.length ? (
+          {content.isLoading ? <p className="text-sm text-zinc-400">Carregando publicações...</p> : items.length ? (
             <div className="grid gap-4 lg:grid-cols-2">
-              {promotionalItems.map(item => (
+              {items.map(item => (
                 <article key={item.id} className="rounded-xl border border-white/10 bg-black/25 p-5">
-                  <span className="text-xs uppercase tracking-wider text-emerald-200">{item.kind === "faq" ? "Pergunta frequente" : item.kind === "material" ? "Biblioteca de Recursos" : item.kind === "notice" ? "Comunicação" : location === "/membros/artigos" ? "Material de divulgação" : "Publicação"}</span>
+                  <span className="text-xs uppercase tracking-wider text-emerald-200">{item.kind === "faq" ? "Pergunta frequente" : item.kind === "material" ? "Biblioteca de Recursos" : item.kind === "notice" ? "Comunicação" : "Publicação"}</span>
                   <h3 className="mt-2 text-lg font-medium text-white">{item.title}</h3>
                   {item.summary && <p className="mt-2 text-sm leading-6 text-zinc-300">{item.summary}</p>}
                   {item.body && <div className="mt-4 whitespace-pre-wrap border-t border-white/10 pt-4 text-sm leading-6 text-zinc-400">{item.body}</div>}
                 </article>
               ))}
             </div>
-          ) : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">{location === "/membros/artigos" ? "Ainda não há materiais de divulgação publicados. Quando a administração liberar banners, textos, copies ou outros conteúdos promocionais, eles aparecerão aqui." : "Ainda não há conteúdo publicado nesta categoria. Consulte outra área do Escritório Virtual ou volte quando novos recursos forem liberados."}</p>}
+          ) : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">Ainda não há conteúdo publicado nesta categoria. Consulte outra área do Escritório Virtual ou volte quando novos recursos forem liberados.</p>}
         </section>
       </main>
     </DashboardLayout>

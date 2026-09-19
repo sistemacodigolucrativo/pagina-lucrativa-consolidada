@@ -14,7 +14,6 @@ import {
   LoadingPanel,
   MetricCard,
   ObsidianBadge,
-  ObsidianCard,
   SectionHeader,
   StatePanel,
 } from "@/components/dashboard/PanelPrimitives";
@@ -43,6 +42,8 @@ export default function AdminOffice() {
   const publicationRate = totalContent > 0 ? (publishedContent / totalContent) * 100 : 0;
   const openTickets = ticketItems?.filter(ticket => ticket.status === "open").length ?? 0;
   const pendingTestimonials = testimonialItems?.filter(item => item.status === "pending").length ?? 0;
+  const hasAttentionQueue = openTickets > 0 || pendingTestimonials > 0;
+  const hasOperationalLog = !activities.isLoading && Boolean(activities.data?.length);
 
   const openCard = (path: string) => setLocation(path);
 
@@ -65,13 +66,13 @@ export default function AdminOffice() {
           detail="Indicadores reais do sistema, conteúdo publicado e filas que exigem decisão administrativa."
           action={
             <div className="obsidian-action-row" aria-label="Atalhos administrativos reais">
-              <button type="button" className="obsidian-button is-secondary" onClick={() => openCard("/admin/publicacoes")}>
-                <FileText aria-hidden="true" />
-                Publicações
-              </button>
               <button type="button" className="obsidian-button is-primary" onClick={() => openCard("/admin/academia")}>
                 <BookOpenCheck aria-hidden="true" />
                 Academia
+              </button>
+              <button type="button" className="obsidian-button is-secondary" disabled aria-disabled="true">
+                <FileText aria-hidden="true" />
+                Publicações
               </button>
             </div>
           }
@@ -83,6 +84,23 @@ export default function AdminOffice() {
           <StatePanel error title="Área exclusiva da administração." message="Esta rota só é liberada para contas com permissão administrativa no projeto." />
         ) : (
           <>
+            {hasAttentionQueue ? (
+              <section className="office-next">
+                <div>
+                  <span className="office-eyebrow">Precisa de atenção</span>
+                  <h2>Filas administrativas abertas.</h2>
+                  <p>
+                    {openTickets} {attentionLabel(openTickets, "ticket aberto", "tickets abertos")} e {pendingTestimonials} {attentionLabel(pendingTestimonials, "depoimento em análise", "depoimentos em análise")}.
+                  </p>
+                  <div className="obsidian-status-row">
+                    {openTickets ? <ObsidianBadge variant="warning">Suporte pendente</ObsidianBadge> : null}
+                    {pendingTestimonials ? <ObsidianBadge variant="warning">Moderação pendente</ObsidianBadge> : null}
+                  </div>
+                </div>
+                <ClipboardList size={34} />
+              </section>
+            ) : null}
+
             <section className="office-stat-grid office-overview-stats">
               <MetricCard
                 icon={UsersRound}
@@ -113,8 +131,6 @@ export default function AdminOffice() {
                 label="Taxa de publicação"
                 value={`${publicationRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
                 detail="Publicados / conteúdos cadastrados"
-                ariaLabel="Abrir Publicações"
-                onActivate={() => openCard("/admin/publicacoes")}
               />
             </section>
 
@@ -140,73 +156,36 @@ export default function AdminOffice() {
                 label="Rascunhos"
                 value={draftContent}
                 detail="Conteúdos que exigem revisão"
-                ariaLabel="Abrir Publicações em revisão"
-                onActivate={() => openCard("/admin/publicacoes")}
+                ariaLabel="Abrir Rascunhos"
+                onActivate={() => openCard("/admin/publicacoes/rascunhos")}
               />
             </section>
 
-            <section className="obsidian-dashboard-grid" aria-label="Blocos visuais Obsidian integrados ao painel administrativo">
-              <ObsidianCard
-                className="obsidian-card-wide"
-                eyebrow="Panorama real"
-                title="Conteúdo em operação"
-                description="Resumo calculado a partir das consultas administrativas atuais, sem série temporal simulada."
-              >
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <button type="button" onClick={() => openCard("/admin/publicacoes")} className="rounded-xl border border-white/10 bg-black/25 p-4 text-left transition hover:border-emerald-300/40">
-                    <span className="text-xs uppercase tracking-wider text-zinc-500">Publicados</span>
-                    <strong className="mt-2 block text-2xl text-white">{publishedContent}</strong>
-                  </button>
-                  <button type="button" onClick={() => openCard("/admin/publicacoes")} className="rounded-xl border border-white/10 bg-black/25 p-4 text-left transition hover:border-emerald-300/40">
-                    <span className="text-xs uppercase tracking-wider text-zinc-500">Rascunhos</span>
-                    <strong className="mt-2 block text-2xl text-white">{draftContent}</strong>
-                  </button>
-                  <button type="button" onClick={() => openCard("/admin/academia")} className="rounded-xl border border-white/10 bg-black/25 p-4 text-left transition hover:border-emerald-300/40">
-                    <span className="text-xs uppercase tracking-wider text-zinc-500">Cursos</span>
-                    <strong className="mt-2 block text-2xl text-white">{data?.publishedCourseCount ?? 0}</strong>
-                  </button>
-                </div>
-              </ObsidianCard>
-
-              <ObsidianCard
-                eyebrow="Log operacional"
-                title="Atividades recentes"
-              >
-                {activities.isLoading ? (
-                  <p className="obsidian-muted">Carregando atividades...</p>
-                ) : activities.data?.length ? (
-                  <div className="obsidian-activity-list">
-                    {activities.data.slice(0, 5).map(activity => (
-                      <article key={activity.id}>
-                        <span className="obsidian-activity-dot" aria-hidden="true" />
-                        <div>
-                          <p>{activity.description}</p>
-                          <time>{new Date(activity.createdAt).toLocaleString("pt-BR")}</time>
-                        </div>
-                      </article>
-                    ))}
+            {hasOperationalLog ? (
+              <section className="obsidian-dashboard-grid" aria-label="Log operacional integrado ao painel administrativo">
+                <div className="obsidian-card">
+                  <div className="obsidian-card-header">
+                    <div>
+                      <span className="obsidian-eyebrow">Log operacional</span>
+                      <h2>Atividades recentes</h2>
+                    </div>
                   </div>
-                ) : (
-                  <p className="obsidian-muted">Nenhuma atividade recente registrada.</p>
-                )}
-              </ObsidianCard>
-            </section>
-
-
-            <section className="office-next">
-              <div>
-                <span className="office-eyebrow">Precisa de atenção</span>
-                <h2>Filas administrativas abertas.</h2>
-                <p>
-                  {openTickets} {attentionLabel(openTickets, "ticket aberto", "tickets abertos")}, {pendingTestimonials} {attentionLabel(pendingTestimonials, "depoimento em análise", "depoimentos em análise")} e {draftContent} {attentionLabel(draftContent, "rascunho", "rascunhos")}.
-                </p>
-                <div className="obsidian-status-row">
-                  <ObsidianBadge variant={openTickets ? "warning" : "success"}>{openTickets ? "Suporte pendente" : "Suporte em dia"}</ObsidianBadge>
-                  <ObsidianBadge variant={pendingTestimonials ? "warning" : "success"}>{pendingTestimonials ? "Moderação pendente" : "Moderação em dia"}</ObsidianBadge>
+                  <div className="obsidian-card-content">
+                    <div className="obsidian-activity-list">
+                      {activities.data?.slice(0, 5).map(activity => (
+                        <article key={activity.id}>
+                          <span className="obsidian-activity-dot" aria-hidden="true" />
+                          <div>
+                            <p>{activity.description}</p>
+                            <time>{new Date(activity.createdAt).toLocaleString("pt-BR")}</time>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <ClipboardList size={34} />
-            </section>
+              </section>
+            ) : null}
           </>
         )}
       </div>

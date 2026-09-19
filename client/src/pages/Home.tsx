@@ -122,14 +122,12 @@ const virtualOfficeSlides = [
   { title: "Campanhas de divulgação", caption: "Links e canais organizados para divulgar com mais clareza." },
   { title: "Pedidos e acompanhamento", caption: "Solicitações, pagamento, comprovante e status reunidos no fluxo existente." },
   { title: "Biblioteca e Academia", caption: "Materiais e conteúdos de apoio para aprender e executar." },
-  { title: "Dados de recebimento", caption: "Área para organizar os meios de recebimento usados na operação." },
 ];
 
 function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; imageAlt: string }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const touchStartX = useRef<number | null>(null);
   const { overrides } = usePublicSalesCopy();
-  const currentSlide = virtualOfficeSlides[activeSlide] ?? virtualOfficeSlides[0];
   const sectionCopy = (key: string, fallback: string) => publicCopy(overrides, "structure_showcase", key, fallback);
   const previousSlide = () => setActiveSlide(current => current === 0 ? virtualOfficeSlides.length - 1 : current - 1);
   const nextSlide = () => setActiveSlide(current => current === virtualOfficeSlides.length - 1 ? 0 : current + 1);
@@ -172,8 +170,6 @@ function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; i
           </div>
         </div>
         <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
-        <div className="sprint-stamp" aria-live="polite"><span>tela</span><strong>{currentSlide.title}</strong><small>escritório virtual</small></div>
-        <div className="sprint-paper-card"><span className="mono">escritório virtual</span><strong>{currentSlide.caption}</strong><div className="paper-lines"><i /><i /><i /></div><span className="paper-sign">página · campanhas · pedidos</span></div>
       </div>
     </div>
   </section>;
@@ -182,6 +178,7 @@ function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; i
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
+  const [openObjectionIndex, setOpenObjectionIndex] = useState<number | null>(null);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
   const sectionImages = trpc.public.salesSectionImages.useQuery();
   const socialProof = trpc.public.salesSocialProof.useQuery();
@@ -301,6 +298,7 @@ export default function Home() {
         </div>
       </section>
     ) : null}
+    <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite"><PublicSocialProofToast /></div>
     {effectiveAffiliate && profileDetailsOpen ? <div className="affiliate-profile-modal-backdrop" role="presentation" onMouseDown={event => { if (event.target === event.currentTarget) setProfileDetailsOpen(false); }}>
       <section className="affiliate-profile-modal" role="dialog" aria-modal="true" aria-labelledby="affiliate-profile-modal-title">
         <button type="button" className="affiliate-profile-modal-close" aria-label="Fechar perfil público" onClick={() => setProfileDetailsOpen(false)}>×</button>
@@ -318,14 +316,13 @@ export default function Home() {
       </section>
     </div> : null}
 
-     <main>
+    <main>
       <section className="sales-hero" id="inicio">
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            <div id="public-social-proof-toast-slot" className="public-social-proof-toast-slot" aria-live="polite"><PublicSocialProofToast /></div>
-             {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer entrar no digital com <span className="sales-kicker-tail">método pronto</span></div>}
-             {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
+            {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer entrar no digital com <span className="sales-kicker-tail">método pronto</span></div>}
+            {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
             <TopPromoBanner />
              <p>{publicCopy(overrides, "hero", "description", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.")}</p>
             <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
@@ -400,8 +397,21 @@ export default function Home() {
              <div><Eyebrow>{publicCopy(overrides, "objections", "eyebrow", "DÚVIDAS COMUNS")}</Eyebrow><h2>{publicCopy(overrides, "objections", "title", "Tudo o que você precisa saber antes de ativar sua estrutura.")}</h2></div>
              <p>{publicCopy(overrides, "objections", "description", "Confira as respostas para as principais dúvidas sobre o Método Código Lucrativo, a estrutura e o processo de ativação.")}</p>
           </div>
-           <div className="objection-grid">{objectionItems.map(([question, answer], index) => <article key={question}><strong>{publicCopy(overrides, "objections", `q${index + 1}`, question)}</strong><p>{publicCopy(overrides, "objections", `a${index + 1}`, answer)}</p></article>)}</div>
-          <p className="offer-closing">Ainda quer consultar tudo com calma? <a href={withAppBase("/perguntas-frequentes")}>Ver perguntas frequentes completas</a>.</p>
+          <div className="objection-grid objection-accordion">{objectionItems.map(([question, answer], index) => {
+            const isOpen = openObjectionIndex === index;
+            const answerId = `objection-answer-${index}`;
+            return <article key={question} className={isOpen ? "is-open" : ""}>
+              <button type="button" aria-expanded={isOpen} aria-controls={answerId} onClick={() => setOpenObjectionIndex(current => current === index ? null : index)}>
+                <strong>{publicCopy(overrides, "objections", `q${index + 1}`, question)}</strong>
+                <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
+              </button>
+              <p id={answerId} hidden={!isOpen}>{publicCopy(overrides, "objections", `a${index + 1}`, answer)}</p>
+            </article>;
+          })}</div>
+          <section className="offer-closing faq-compact-cta" aria-label="Perguntas frequentes completas">
+            <h3>Ainda quer ver tudo com calma?</h3>
+            <a href={withAppBase("/perguntas-frequentes")}>Ver perguntas frequentes</a>
+          </section>
         </div>
       </section>
 

@@ -26,8 +26,9 @@ export default function VioletaNeonActivationCard({
   onWhatsappChange,
 }: VioletaNeonActivationCardProps) {
   return <form className="violeta-neon-activation-card application-form" onSubmit={onSubmit}>
+    <span className="violeta-neon-border-glow" aria-hidden="true" />
     <div className="violeta-neon-topline"><i /></div>
-    <div className="violeta-neon-seal" aria-hidden="true"><span>CL</span><small>ativação</small></div>
+    <div className="violeta-neon-seal" aria-label="Promoção de ativação"><span>Promoção</span><small>de ativação</small></div>
     <div className="violeta-neon-price">R$ 50,00 <small>pagamento único</small></div>
     <h3>Solicite sua ativação</h3>
     <p>Preencha seus dados para ativar o Método Código Lucrativo com estrutura pronta para operar.</p>

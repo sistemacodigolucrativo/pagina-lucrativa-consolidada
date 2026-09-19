@@ -30,7 +30,7 @@ describe("módulo canônico de e-books e Academia", () => {
     expect(adminNavigation).toContain('label: "Biblioteca de e-books", path: "/admin/ebooks"');
   });
 
-  it("organiza a biblioteca por categoria persistida e mantém fallback local apenas como contingência", async () => {
+  it("organiza a biblioteca por categorias reais e agrupa e-books sem categoria em Outros", async () => {
     const memberReader = await read("client/src/pages/EbookReader.tsx");
     expect(memberReader).toContain("const libraryShelves = [");
     for (const label of ["Negócio digital", "Marca e posicionamento", "Produto digital", "Conteúdo e criativos", "SEO e descoberta", "Captação e funis", "E-mail e relacionamento", "Tráfego e divulgação", "Vendas e conversão", "Marketing de rede", "Ferramentas e modelos", "Desenvolvimento pessoal e financeiro"]) {
@@ -41,6 +41,9 @@ describe("módulo canônico de e-books e Academia", () => {
     expect(memberReader).toContain("normalizeSearchText");
     expect(memberReader).toContain("classifyEbook");
     expect(memberReader).toContain("shelfFromPersistedCategory");
+    expect(memberReader).toContain('label: "Outros"');
+    expect(memberReader).toContain("const shelf = persistedShelf ?? uncategorizedShelf");
+    expect(memberReader).not.toContain("keywords.some(keyword => searchableText.includes(keyword))");
     expect(memberReader).not.toContain("ebookShelfOverrides");
     expect(memberReader).toContain('placeholder="Buscar por título ou assunto"');
     expect(memberReader).toContain('aria-label="Ordenar e-books"');
@@ -58,6 +61,7 @@ describe("módulo canônico de e-books e Academia", () => {
     expect(memberReader).toContain("snap-start");
     expect(memberReader).toContain("Prateleiras da biblioteca");
     expect(memberReader).toContain("categoria cadastrada na administração");
+    expect(memberReader).toContain("sem categoria definida aparecem automaticamente em Outros");
   });
 
   it("renderiza PDF internamente, restaura página e informa progresso", async () => {
