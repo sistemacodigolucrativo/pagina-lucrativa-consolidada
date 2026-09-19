@@ -64,6 +64,16 @@ function RouteScrollReset() {
   return null;
 }
 
+function RedirectRoute({ to }: { to: string }) {
+  const [, setLocation] = useLocation();
+
+  useEffect(() => {
+    setLocation(to);
+  }, [setLocation, to]);
+
+  return null;
+}
+
 function AppRoutes() {
   return <><RouteScrollReset /><AdminDeployStatus /><Switch>
     <Route path="/" component={Home} />
@@ -91,7 +101,7 @@ function AppRoutes() {
     <Route path="/membros/rede" component={MemberReferrals} />
     <Route path="/membros/classificados" component={MemberPublications} />
     <Route path="/membros/materiais" component={MemberPublications} />
-    <Route path="/membros/artigos" component={MemberPublications} />
+    <Route path="/membros/artigos">{() => <RedirectRoute to="/membros/materiais" />}</Route>
     <Route path="/membros/perguntas-frequentes" component={MemberPublications} />
     <Route path="/membros/fazer-depoimento" component={MemberTestimonial} />
     <Route path="/membros/meus-dados" component={MemberAccount} />
@@ -147,9 +157,9 @@ function AppRoutes() {
     <Route path="/admin/membros/:memberId/editar" component={AdminMemberEdit} />
     <Route path="/admin/membros" component={AdminReferrals} />
     <Route path="/admin/deploy" component={AdminManualDeploy} />
-    <Route path="/admin/material-divulgacao/novo" component={AdminPublications} />
-    <Route path="/admin/material-divulgacao/:contentId/editar" component={AdminPublications} />
-    <Route path="/admin/material-divulgacao" component={AdminPublications} />
+    <Route path="/admin/material-divulgacao/novo">{() => <RedirectRoute to="/admin/biblioteca-recursos/novo" />}</Route>
+    <Route path="/admin/material-divulgacao/:contentId/editar">{() => <RedirectRoute to="/admin/biblioteca-recursos" />}</Route>
+    <Route path="/admin/material-divulgacao">{() => <RedirectRoute to="/admin/biblioteca-recursos" />}</Route>
     <Route path="/admin/biblioteca-recursos/novo" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos/:contentId/editar" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />

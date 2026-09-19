@@ -20,7 +20,7 @@ describe("anotações administrativas — publicações, e-books e agradecimento
     expect(source).toContain("grid w-full min-w-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:w-auto sm:flex");
   });
 
-  it("padroniza Biblioteca de Recursos e Material de Divulgação com listagem e formulários independentes", () => {
+  it("mantém Biblioteca de Recursos como gestor único de recursos", () => {
     const source = read("client/src/pages/AdminPublications.tsx");
     const routes = read("client/src/App.tsx");
     expect(source).toContain('splitFlow: true');
@@ -32,8 +32,8 @@ describe("anotações administrativas — publicações, e-books e agradecimento
     expect(source).toContain('onClick={openCreate}');
     expect(source).toContain('Voltar para {config.title}');
     expect(source).toContain('overflow-x-clip p-4 sm:p-6 lg:p-8');
-    expect(routes).toContain('/admin/material-divulgacao/novo');
-    expect(routes).toContain('/admin/material-divulgacao/:contentId/editar');
+    expect(source).not.toContain('"/admin/material-divulgacao": { kind: "article"');
+    expect(routes).toContain('to="/admin/biblioteca-recursos"');
     expect(routes).toContain('/admin/biblioteca-recursos/novo');
     expect(routes).toContain('/admin/biblioteca-recursos/:contentId/editar');
   });

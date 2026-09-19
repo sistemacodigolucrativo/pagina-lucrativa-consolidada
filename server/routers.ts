@@ -241,11 +241,10 @@ const publicSalesSectionImageInput = z.object({
   contentType: z.enum(["image/jpeg", "image/png", "image/gif"]),
   originalName: z.string().trim().max(255).optional().nullable(),
 });
-const googleDriveHosts = new Set(["drive.google.com", "docs.google.com", "drive.usercontent.google.com"]);
-const isAllowedGoogleDriveUrl = (value: string) => {
+const isHttpsUrl = (value: string) => {
   try {
     const url = new URL(value);
-    return url.protocol === "https:" && googleDriveHosts.has(url.hostname.toLowerCase());
+    return url.protocol === "https:";
   } catch {
     return false;
   }
@@ -265,11 +264,11 @@ const validateMaterialResource = (input: z.infer<typeof contentInputBase>, ctx: 
   const resourceUrl = input.resourceUrl?.trim() ?? "";
   if (!isMaterial) return;
   if (input.status === "published" && !resourceUrl) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Informe o link do Google Drive antes de publicar o recurso." });
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Informe o link do recurso antes de publicar." });
     return;
   }
-  if (resourceUrl && !isAllowedGoogleDriveUrl(resourceUrl)) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Use uma URL HTTPS válida do Google Drive." });
+  if (resourceUrl && !isHttpsUrl(resourceUrl)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["resourceUrl"], message: "Use uma URL HTTPS válida para o recurso." });
   }
 };
 const contentInput = contentInputBase.superRefine(validateMaterialResource);

@@ -14,7 +14,8 @@ const redirects: Record<string, string> = {
   "/membros/pontos-niveis": "/membros/pontos",
   "/membros/ranking": "/membros/pontos",
   "/membros/mais-lucrativos": "/membros/pontos",
-  "/membros/blog": "/membros/artigos",
+  "/membros/blog": "/membros/materiais",
+  "/membros/artigos": "/membros/materiais",
   "/membros/bonus": "/membros/materiais",
   "/membros/produtos": "/membros",
 };

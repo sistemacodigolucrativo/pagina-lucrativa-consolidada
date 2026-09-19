@@ -18,17 +18,18 @@ describe("Membros e Rede — organização e exclusão temporária", () => {
     expect(source.match(/trpc\.admin\.referralLinks\.useQuery\(\)/g)?.length).toBe(1);
   });
 
-  it("mantém uma única contagem dinâmica, abaixo do título, com o rótulo Exclusões aguardando", () => {
+  it("mostra a área temporária de exclusão somente quando existe fila pendente", () => {
     const source = read("client/src/pages/AdminReferrals.tsx");
     const queueTitle = source.indexOf(">Área temporária de exclusão<");
     const queueLabel = source.indexOf(">Exclusões aguardando<");
     const retentionCopy = source.indexOf("Contas permanecem aqui por 7 dias antes da remoção definitiva.");
     expect(source).not.toContain(">Exclusão em 7 dias<");
+    expect(source).toContain("!loadingMembers && management.deletionQueue.length ? (");
     expect(queueTitle).toBeGreaterThan(-1);
     expect(queueLabel).toBeGreaterThan(queueTitle);
     expect(retentionCopy).toBeGreaterThan(queueLabel);
     expect(source).toContain("management.deletionQueue.length");
-    expect(source.match(/management\.deletionQueue\.length/g)?.length).toBe(1);
+    expect(source.match(/management\.deletionQueue\.length/g)?.length).toBe(2);
     expect(source).toContain('href={withAppBase("/admin/membros/exclusoes")}');
     expect(source).not.toContain("management.deletionQueue.map");
   });

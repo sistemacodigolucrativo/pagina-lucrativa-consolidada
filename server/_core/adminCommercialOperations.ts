@@ -234,6 +234,28 @@ async function handleOrderDetail(req: Request, res: Response) {
   res.json({ ...row, receipts, accessTokens });
 }
 
+async function handleOrderDelete(req: Request, res: Response) {
+  if (!await requireAdmin(req, res)) return;
+  const applicationId = parsePositiveInt(req.params.id);
+  if (!applicationId) {
+    res.status(400).json({ error: "Pedido invalido." });
+    return;
+  }
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponivel.");
+  const rows = await db.select({ id: applications.id }).from(applications).where(eq(applications.id, applicationId)).limit(1);
+  if (!rows.length) {
+    res.status(404).json({ error: "Pedido nao encontrado." });
+    return;
+  }
+  await db.transaction(async tx => {
+    await tx.delete(applicationAccessTokens).where(eq(applicationAccessTokens.applicationId, applicationId));
+    await tx.delete(applicationPaymentReceipts).where(eq(applicationPaymentReceipts.applicationId, applicationId));
+    await tx.delete(applications).where(eq(applications.id, applicationId));
+  });
+  res.json({ ok: true, id: applicationId });
+}
+
 async function handleReceiptReview(req: Request, res: Response) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -555,6 +577,7 @@ export function registerAdminCommercialOperations(app: Express, appPrefix: strin
   for (const prefix of prefixes) {
     app.get(prefix + "/orders", wrap(handleOrders));
     app.get(prefix + "/orders/:id", wrap(handleOrderDetail));
+    app.delete(prefix + "/orders/:id", wrap(handleOrderDelete));
     app.post(prefix + "/orders/:id/receipts/:receiptId/review", wrap(handleReceiptReview));
     app.get(prefix + "/finance", wrap(handleFinance));
     app.get(prefix + "/operation", wrap(handleOperation));

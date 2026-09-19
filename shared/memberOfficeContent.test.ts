@@ -4,16 +4,11 @@ import { memberOfficeModuleCount, memberOfficeNavigation } from "./memberOfficeC
 describe("catálogo do Escritório Virtual", () => {
   it("mantém uma navegação enxuta, sem ferramentas duplicadas", () => {
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
-    expect(memberOfficeModuleCount).toBe(17);
+    expect(memberOfficeModuleCount).toBe(16);
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "operation",
       label: "Central de Divulgação",
       path: "/membros/operacao",
-    });
-    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
-      icon: "articles",
-      label: "Material de divulgação",
-      path: "/membros/artigos",
     });
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "materials",
@@ -32,5 +27,6 @@ describe("catálogo do Escritório Virtual", () => {
     expect(paths).not.toContain("/membros/patrocinador");
     const labels = memberOfficeNavigation.flatMap(group => group.items.map(item => item.label));
     expect(labels).not.toContain("Materiais e downloads");
+    expect(labels).not.toContain("Material de divulgação");
   });
 });

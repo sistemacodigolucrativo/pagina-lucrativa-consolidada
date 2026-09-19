@@ -18,7 +18,7 @@ describe("memberOfficeNavigation", () => {
       "Desempenho",
       "Ajuda",
     ]);
-    expect(memberOfficeModuleCount).toBe(17);
+    expect(memberOfficeModuleCount).toBe(16);
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
     expect(new Set(paths).size).toBe(paths.length);
     expect(itemsFor("Início")).toEqual(["/membros", "/membros/como-divulgar", "/membros/operacao"]);
@@ -27,11 +27,6 @@ describe("memberOfficeNavigation", () => {
       icon: "operation",
       label: "Central de Divulgação",
       path: "/membros/operacao",
-    });
-    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
-      icon: "articles",
-      label: "Material de divulgação",
-      path: "/membros/artigos",
     });
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "materials",

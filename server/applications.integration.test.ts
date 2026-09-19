@@ -17,6 +17,7 @@ describe("gestão de solicitações públicas", () => {
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const navigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
     const adminCommercial = await readFile(path.join(root, "server/_core/adminCommercialOperations.ts"), "utf8");
+    const adminOrders = await readFile(path.join(root, "client/src/pages/AdminOrders.tsx"), "utf8");
     expect(router).not.toContain("applications: adminProcedure");
     expect(router).not.toContain("updateApplication: adminProcedure");
     expect(app).not.toContain("AdminApplications");
@@ -25,7 +26,14 @@ describe("gestão de solicitações públicas", () => {
     expect(navigation).toContain('label: "Pedidos"');
     expect(navigation).toContain('path: "/admin/pedidos"');
     expect(adminCommercial).toContain('app.get(prefix + "/orders"');
+    expect(adminCommercial).toContain('app.delete(prefix + "/orders/:id"');
     expect(adminCommercial).toContain('app.post(prefix + "/orders/:id/receipts/:receiptId/review"');
+    expect(adminCommercial).toContain("async function handleOrderDelete");
+    expect(adminOrders).toContain("const ORDERS_PER_PAGE = 10");
+    expect(adminOrders).toContain("Exibir fila de pedidos");
+    expect(adminOrders).toContain("void deleteOrder(item)");
+    expect(adminOrders).toContain('role="dialog"');
+    expect(adminOrders).toContain("max-h-[calc(100dvh-1.5rem)]");
     expect(adminCommercial).toContain("requireAdmin");
     await expect(access(path.join(root, "client/src/pages/AdminApplications.tsx"))).rejects.toThrow();
   });
@@ -46,6 +54,7 @@ describe("gestão de solicitações públicas", () => {
     expect(confirmation).toContain("Acompanhar solicitação");
     expect(adminCommercial).toContain("async function handleOrders");
     expect(adminCommercial).toContain("async function handleOrderDetail");
+    expect(adminCommercial).toContain("orderTotals(rows)");
   });
 
   it("preserva os contratos público e do membro para pedido, pagamento e ativação", async () => {

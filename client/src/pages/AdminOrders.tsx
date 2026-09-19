@@ -123,6 +123,7 @@ export default function AdminOrders() {
   const [loading, setLoading] = useState(true);
   const [detailLoading, setDetailLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   async function loadOrders() {
@@ -168,6 +169,24 @@ export default function AdminOrders() {
       toast.error(reviewError instanceof Error ? reviewError.message : "Falha ao analisar comprovante.");
     } finally {
       setActionLoading(false);
+    }
+  }
+
+  async function deleteOrder(item: OrderItem) {
+    if (!window.confirm(`Excluir definitivamente o pedido de ${item.fullName}?\n\nComprovantes e tokens vinculados a este pedido também serão removidos.`)) return;
+    setDeletingId(item.id);
+    try {
+      await fetchJson("/api/admin/orders/" + item.id, { method: "DELETE" });
+      if (selectedId === item.id) {
+        setSelectedId(null);
+        setDetail(null);
+      }
+      await loadOrders();
+      toast.success("Pedido excluído.");
+    } catch (deleteError) {
+      toast.error(deleteError instanceof Error ? deleteError.message : "Falha ao excluir pedido.");
+    } finally {
+      setDeletingId(null);
     }
   }
 
@@ -261,37 +280,40 @@ export default function AdminOrders() {
               <table className="min-w-full divide-y divide-white/10 text-sm">
                 <thead className="text-left text-xs uppercase tracking-wider text-zinc-500">
                   <tr>
-                    <th className="py-3 pr-4">Pedido</th>
-                    <th className="py-3 pr-4">Afiliado</th>
-                    <th className="py-3 pr-4">Pagamento</th>
-                    <th className="py-3 pr-4">Comprovante</th>
-                    <th className="py-3 pr-4">Criado em</th>
-                    <th className="py-3 pr-4">Ação</th>
+                    <th className="py-2.5 pr-3">Pedido</th>
+                    <th className="py-2.5 pr-3">Afiliado</th>
+                    <th className="py-2.5 pr-3">Pagamento</th>
+                    <th className="py-2.5 pr-3">Comprovante</th>
+                    <th className="py-2.5 pr-3">Criado em</th>
+                    <th className="py-2.5 pr-3">Ação</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-white/10">
                   {paginatedItems.map(item => (
                     <tr key={item.id} className="align-top">
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <strong className="block text-white">{item.fullName}</strong>
                         <span className="block text-zinc-400">{item.email}</span>
                         <span className="block text-xs text-zinc-500">{item.trackingCode ?? "Sem codigo"}</span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <span className={item.ownerUserId ? "text-zinc-200" : "text-red-200"}>{item.sponsorName ?? item.affiliateSlug ?? "Sem apresentador"}</span>
                         <span className="block text-xs text-zinc-500">{item.sponsorSlug ?? item.sponsorEmail ?? "Sem vinculo"}</span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <span className="text-zinc-200">{applicationPaymentStatusLabel[item.paymentStatus]}</span>
                         <span className="block text-xs text-zinc-500">{formatMoney(item.offerAmountCents)}</span>
                       </td>
-                      <td className="py-4 pr-4">
+                      <td className="py-3 pr-3">
                         <span className="text-zinc-200">{item.latestReceiptStatus ?? "Sem comprovante"}</span>
                         <span className="block text-xs text-zinc-500">{item.receiptCount} arquivo(s)</span>
                       </td>
-                      <td className="py-4 pr-4 text-zinc-400">{formatDate(item.createdAt)}</td>
-                      <td className="py-4 pr-4">
-                        <button type="button" onClick={() => void loadDetail(item.id)} className="rounded-lg border border-emerald-300/30 px-3 py-2 text-xs font-medium text-emerald-100">Auditar</button>
+                      <td className="py-3 pr-3 text-zinc-400">{formatDate(item.createdAt)}</td>
+                      <td className="py-3 pr-3">
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                          <button type="button" onClick={() => void loadDetail(item.id)} className="rounded-lg border border-emerald-300/30 px-3 py-2 text-xs font-medium text-emerald-100">Auditar</button>
+                          <button type="button" disabled={deletingId === item.id} onClick={() => void deleteOrder(item)} className="rounded-lg border border-red-400/25 px-3 py-2 text-xs font-medium text-red-200 disabled:opacity-50">{deletingId === item.id ? "Excluindo..." : "Excluir"}</button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -312,8 +334,8 @@ export default function AdminOrders() {
         </section>}
 
         {selectedId ? (
-          <section className="fixed inset-0 z-[90] flex items-center justify-center overflow-y-auto bg-black/78 p-3 backdrop-blur-sm sm:p-6" role="dialog" aria-modal="true" aria-label="Auditoria do pedido">
-            <div className="w-full max-w-5xl rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-2xl sm:p-6">
+          <section className="fixed inset-0 z-[90] flex items-start justify-center overflow-y-auto bg-black/78 p-3 backdrop-blur-sm sm:items-center sm:p-6" role="dialog" aria-modal="true" aria-label="Auditoria do pedido">
+            <div className="max-h-[calc(100dvh-1.5rem)] w-full max-w-5xl overflow-y-auto rounded-2xl border border-white/10 bg-zinc-950 p-4 shadow-2xl sm:max-h-[calc(100dvh-3rem)] sm:p-6">
             {detailLoading || !detail ? (
               <p className="text-sm text-zinc-400">Carregando auditoria do pedido...</p>
             ) : (

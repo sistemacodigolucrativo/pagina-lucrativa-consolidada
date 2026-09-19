@@ -14,18 +14,15 @@ type PublicationForm = { kind: ContentKind; title: string; summary: string; body
 type PublicationConfig = { kind: ContentKind; title: string; eyebrow: string; description: string; splitFlow?: boolean };
 
 const routeConfig: Record<string, PublicationConfig> = {
-  "/admin/material-divulgacao": { kind: "article", title: "Material de Divulgação", eyebrow: "Conteúdo", description: "Crie, revise, publique, arquive e exclua os materiais de divulgação disponibilizados pelo projeto.", splitFlow: true },
-  "/admin/biblioteca-recursos": { kind: "material", title: "Biblioteca de Recursos", eyebrow: "Conteúdo", description: "Gerencie os recursos e ferramentas disponibilizados aos membros, preservando os arquivos e registros existentes.", splitFlow: true },
+  "/admin/biblioteca-recursos": { kind: "material", title: "Biblioteca de Recursos", eyebrow: "Conteúdo", description: "Cadastre, organize, publique, arquive e exclua os recursos disponibilizados aos membros.", splitFlow: true },
   "/admin/perguntas-frequentes": { kind: "faq", title: "Perguntas Frequentes", eyebrow: "Landing Page", description: "Gerencie as perguntas e respostas exibidas na página pública de vendas." },
   "/admin/publicacoes": { kind: "notice", title: "Publicações", eyebrow: "Conteúdo", description: "Gerencie as comunicações existentes. Esta seção permanece no local atual até sua revisão específica." },
 };
 const resourceCategories = ["Automação", "Divulgação", "Produtividade", "Redes sociais", "Outros"];
 const resourceTypes = ["Aplicativo", "Ferramenta", "Pacote de arquivos", "Material complementar", "Imagem / Banner", "Texto / Copy", "Vídeo", "Áudio"];
-const googleDriveHosts = new Set(["drive.google.com", "docs.google.com", "drive.usercontent.google.com"]);
-const googleDriveUrlMessage = "Use uma URL HTTPS válida do Google Drive.";
-const missingGoogleDriveUrlMessage = "Informe o link do Google Drive antes de publicar o recurso.";
+const resourceUrlMessage = "Use uma URL HTTPS válida para o recurso.";
+const missingResourceUrlMessage = "Informe o link do recurso antes de publicar.";
 const promotionalImageUrlMessage = "Use um link HTTPS direto para uma imagem JPG, JPEG, PNG, WEBP, GIF, SVG ou AVIF.";
-const promotionalDownloadUrlMessage = "Use uma URL HTTPS válida no link de download.";
 const SYSTEM_CONTENT_CATEGORIES = new Set(["public-sales-copy", "public-sales-layout", "member-admin-control", "public-toast-config"]);
 
 function currentConfig(pathname: string) {
@@ -46,8 +43,12 @@ function blankForm(kind: ContentKind): PublicationForm {
     status: "draft",
   };
 }
-function isGoogleDriveUrl(value: string) { try { const url = new URL(value); return url.protocol === "https:" && googleDriveHosts.has(url.hostname.toLowerCase()); } catch { return false; } }
-function friendlyPublicationError(message: string) { if (message.includes("Google Drive") || message.includes("resourceUrl") || message.includes("invalid_string")) return message.includes("Informe o link") ? missingGoogleDriveUrlMessage : googleDriveUrlMessage; return message; }
+function normalizeHttpsUrl(value: string) {
+  const clean = value.trim();
+  if (!clean || /^[a-z][a-z0-9+.-]*:\/\//i.test(clean)) return clean;
+  return `https://${clean}`;
+}
+function friendlyPublicationError(message: string) { if (message.includes("resourceUrl") || message.includes("invalid_string") || message.includes("URL HTTPS")) return message.includes("Informe o link") ? missingResourceUrlMessage : resourceUrlMessage; return message; }
 function statusLabel(status: ContentStatus) { return status === "published" ? "Publicado" : status === "archived" ? "Arquivado" : "Rascunho"; }
 function FormTitle({ editing, title }: { editing: boolean; title: string }) {
   return (
@@ -70,10 +71,10 @@ export default function AdminPublications() {
   const isCreateScreen = Boolean(config.splitFlow && normalizedLocation === `${config.basePath}/novo`);
   const isEditScreen = Boolean(config.splitFlow && editRouteId !== null);
   const isListScreen = Boolean(config.splitFlow && !isCreateScreen && !isEditScreen);
-  const isMaterialDisclosure = config.basePath === "/admin/material-divulgacao";
-  const hasResourceFields = config.kind === "material" || isMaterialDisclosure;
-  const listTitle = isPublicationDraftScreen ? "Rascunhos salvos" : isMaterialDisclosure ? "Materiais cadastrados" : "Conteúdos cadastrados";
-  const createActionLabel = isMaterialDisclosure ? "Adicionar novo material" : "Criar";
+  const isResourceLibrary = config.basePath === "/admin/biblioteca-recursos";
+  const hasResourceFields = config.kind === "material";
+  const listTitle = isPublicationDraftScreen ? "Rascunhos salvos" : isResourceLibrary ? "Recursos cadastrados" : "Conteúdos cadastrados";
+  const createActionLabel = isResourceLibrary ? "Criar Conteúdo" : "Criar";
   const utils = trpc.useUtils();
   const content = trpc.admin.content.useQuery();
   const [editingId, setEditingId] = useState<number | null>(() => editRouteId);
@@ -88,11 +89,11 @@ export default function AdminPublications() {
   const create = trpc.admin.createContent.useMutation({ onSuccess: () => { void refresh(); toast.success("Conteúdo registrado."); if (config.splitFlow) goToList(); else { resetLocalForm(); setShowInlineForm(false); } }, onError: error => { const message = friendlyPublicationError(error.message); setFormError(message); toast.error(message); } });
   const update = trpc.admin.updateContent.useMutation({ onSuccess: () => { void refresh(); toast.success("Conteúdo atualizado."); if (config.splitFlow) goToList(); else { resetLocalForm(); setShowInlineForm(false); } }, onError: error => { const message = friendlyPublicationError(error.message); setFormError(message); toast.error(message); } });
   const managedItems = useMemo(() => (content.data ?? []).filter(item => {
-    if (item.kind !== config.kind) return false;
+    if (isResourceLibrary ? !(item.kind === "material" || item.kind === "article") : item.kind !== config.kind) return false;
     if (config.kind === "notice" && SYSTEM_CONTENT_CATEGORIES.has(item.resourceCategory ?? "")) return false;
     if (isPublicationDraftScreen) return item.status === "draft";
     return true;
-  }), [content.data, config.kind, isPublicationDraftScreen]);
+  }), [content.data, config.kind, isPublicationDraftScreen, isResourceLibrary]);
   const busy = create.isPending || update.isPending || deletingId !== null;
   const editingItemExists = editRouteId === null || managedItems.some(item => item.id === editRouteId);
 
@@ -111,9 +112,9 @@ export default function AdminPublications() {
     }
     if (editRouteId !== null) {
       setEditingId(editRouteId);
-      const item = (content.data ?? []).find(candidate => candidate.id === editRouteId && candidate.kind === config.kind);
+      const item = (content.data ?? []).find(candidate => candidate.id === editRouteId && (isResourceLibrary ? (candidate.kind === "material" || candidate.kind === "article") : candidate.kind === config.kind));
       if (item) {
-        const promotional = isMaterialDisclosure ? splitPromotionalMaterialBody(item.body) : { body: item.body ?? "", imageUrl: "" };
+        const promotional = isResourceLibrary ? splitPromotionalMaterialBody(item.body) : { body: item.body ?? "", imageUrl: "" };
         setForm({
           kind: config.kind,
           title: item.title,
@@ -121,8 +122,8 @@ export default function AdminPublications() {
           body: promotional.body,
           imageUrl: promotional.imageUrl,
           resourceUrl: item.resourceUrl ?? "",
-          resourceCategory: item.resourceCategory ?? (isMaterialDisclosure ? "Divulgação" : "Automação"),
-          resourceType: item.resourceType ?? (isMaterialDisclosure ? "Imagem / Banner" : "Ferramenta"),
+          resourceCategory: item.resourceCategory ?? "Automação",
+          resourceType: item.resourceType ?? "Ferramenta",
           status: item.status,
         });
       }
@@ -130,7 +131,7 @@ export default function AdminPublications() {
     }
     setEditingId(null);
     setForm(blankForm(config.kind));
-  }, [config.kind, config.splitFlow, content.data, editRouteId, isCreateScreen, isMaterialDisclosure, isPublicationDraftScreen]);
+  }, [config.kind, config.splitFlow, content.data, editRouteId, isCreateScreen, isPublicationDraftScreen, isResourceLibrary]);
 
   function openCreate() {
     if (config.splitFlow) {
@@ -147,7 +148,7 @@ export default function AdminPublications() {
       setLocation(`${config.basePath}/${item.id}/editar`);
       return;
     }
-    const promotional = isMaterialDisclosure ? splitPromotionalMaterialBody(item.body) : { body: item.body ?? "", imageUrl: "" };
+    const promotional = isResourceLibrary ? splitPromotionalMaterialBody(item.body) : { body: item.body ?? "", imageUrl: "" };
     setEditingId(item.id);
     setShowInlineForm(true);
     setForm({
@@ -157,8 +158,8 @@ export default function AdminPublications() {
       body: promotional.body,
       imageUrl: promotional.imageUrl,
       resourceUrl: item.resourceUrl ?? "",
-      resourceCategory: item.resourceCategory ?? (isMaterialDisclosure ? "Divulgação" : "Automação"),
-      resourceType: item.resourceType ?? (isMaterialDisclosure ? "Imagem / Banner" : "Ferramenta"),
+      resourceCategory: item.resourceCategory ?? "Automação",
+      resourceType: item.resourceType ?? "Ferramenta",
       status: item.status,
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -183,12 +184,11 @@ export default function AdminPublications() {
     setFormError(null);
     const resourceUrl = form.resourceUrl.trim();
     const imageUrl = form.imageUrl.trim();
-    if (config.kind === "material" && form.status === "published" && !resourceUrl) { setFormError(missingGoogleDriveUrlMessage); toast.error(missingGoogleDriveUrlMessage); return; }
-    if (config.kind === "material" && resourceUrl && !isGoogleDriveUrl(resourceUrl)) { setFormError(googleDriveUrlMessage); toast.error(googleDriveUrlMessage); return; }
-    if (isMaterialDisclosure && imageUrl && !isDirectImageUrl(imageUrl)) { setFormError(promotionalImageUrlMessage); toast.error(promotionalImageUrlMessage); return; }
-    if (isMaterialDisclosure && resourceUrl && !isHttpsUrl(resourceUrl)) { setFormError(promotionalDownloadUrlMessage); toast.error(promotionalDownloadUrlMessage); return; }
+    if (config.kind === "material" && form.status === "published" && !resourceUrl) { setFormError(missingResourceUrlMessage); toast.error(missingResourceUrlMessage); return; }
+    if (config.kind === "material" && resourceUrl && !isHttpsUrl(resourceUrl)) { setFormError(resourceUrlMessage); toast.error(resourceUrlMessage); return; }
+    if (isResourceLibrary && imageUrl && !isDirectImageUrl(imageUrl)) { setFormError(promotionalImageUrlMessage); toast.error(promotionalImageUrlMessage); return; }
 
-    const storedBody = isMaterialDisclosure ? composePromotionalMaterialBody(form.body, imageUrl) : form.body.trim() || null;
+    const storedBody = isResourceLibrary ? composePromotionalMaterialBody(form.body, imageUrl) : form.body.trim() || null;
     const payload = {
       ...form,
       kind: config.kind,
@@ -205,7 +205,7 @@ export default function AdminPublications() {
 
   const pageTitle = isPublicationDraftScreen ? "Rascunhos — Publicações" : isCreateScreen ? `Novo conteúdo — ${config.title}` : isEditScreen ? `Editar conteúdo — ${config.title}` : config.title;
   const pageDescription = isPublicationDraftScreen ? "Revise conteúdos salvos como rascunho antes de publicar ou arquivar." : config.description;
-  const imagePreviewUrl = isMaterialDisclosure && isDirectImageUrl(form.imageUrl.trim()) ? form.imageUrl.trim() : "";
+  const imagePreviewUrl = isResourceLibrary && isDirectImageUrl(form.imageUrl.trim()) ? form.imageUrl.trim() : "";
 
   const formPanel = (
     <form onSubmit={submit} className="min-w-0 space-y-4 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
@@ -216,20 +216,14 @@ export default function AdminPublications() {
       <label className="block text-sm text-zinc-200">{config.kind === "faq" ? "Resposta" : "Conteúdo / descrição completa"}<textarea value={form.body} onChange={event => setForm({ ...form, body: event.target.value })} className="mt-1 min-h-44 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" /></label>
       {hasResourceFields ? (
         <section className="min-w-0 space-y-4 rounded-xl border border-emerald-300/20 bg-emerald-300/5 p-3 sm:p-4">
-          <p className="text-sm leading-6 text-emerald-50">{isMaterialDisclosure ? "Configure a apresentação e o acesso do material. Links de imagem válidos geram uma prévia automática para conferência." : "O arquivo precisa estar compartilhado no Google Drive com permissão adequada para os membros."}</p>
+          <p className="text-sm leading-6 text-emerald-50">Configure a apresentação e o acesso do recurso. Se o link for digitado sem protocolo, o sistema adiciona https:// automaticamente ao sair do campo.</p>
           <div className="grid min-w-0 gap-4 sm:grid-cols-2">
             <label className="min-w-0 text-sm text-zinc-200">Categoria do recurso<select value={form.resourceCategory} onChange={event => setForm({ ...form, resourceCategory: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white">{resourceCategories.map(category => <option key={category}>{category}</option>)}</select></label>
             <label className="min-w-0 text-sm text-zinc-200">Tipo do recurso<select value={form.resourceType} onChange={event => setForm({ ...form, resourceType: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white">{resourceTypes.map(type => <option key={type}>{type}</option>)}</select></label>
           </div>
-          {isMaterialDisclosure ? (
-            <>
-              <label className="block text-sm text-zinc-200">Link da imagem<input type="url" value={form.imageUrl} onChange={event => setForm({ ...form, imageUrl: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://exemplo.com/banner.jpg" /></label>
-              {imagePreviewUrl ? <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30"><img src={imagePreviewUrl} alt="Prévia do material de divulgação" loading="lazy" className="aspect-video w-full object-cover sm:max-h-80" /></div> : form.imageUrl.trim() ? <p className="text-xs leading-5 text-zinc-400">A miniatura aparecerá quando o link HTTPS apontar diretamente para JPG, JPEG, PNG, WEBP, GIF, SVG ou AVIF.</p> : null}
-              <label className="block text-sm text-zinc-200">Link de download<input type="url" value={form.resourceUrl} onChange={event => setForm({ ...form, resourceUrl: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://exemplo.com/arquivo" /></label>
-            </>
-          ) : (
-            <label className="block text-sm text-zinc-200">Link do Google Drive<input type="url" value={form.resourceUrl} onChange={event => setForm({ ...form, resourceUrl: event.target.value })} required={form.status === "published"} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://drive.google.com/..." /></label>
-          )}
+          <label className="block text-sm text-zinc-200">Link da imagem<input type="url" value={form.imageUrl} onBlur={event => setForm({ ...form, imageUrl: normalizeHttpsUrl(event.target.value) })} onChange={event => setForm({ ...form, imageUrl: event.target.value })} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://exemplo.com/banner.jpg" /></label>
+          {imagePreviewUrl ? <div className="overflow-hidden rounded-xl border border-white/10 bg-black/30"><img src={imagePreviewUrl} alt="Prévia do recurso" loading="lazy" className="aspect-video w-full object-cover sm:max-h-80" /></div> : form.imageUrl.trim() ? <p className="text-xs leading-5 text-zinc-400">A miniatura aparecerá quando o link HTTPS apontar diretamente para JPG, JPEG, PNG, WEBP, GIF, SVG ou AVIF.</p> : null}
+          <label className="block text-sm text-zinc-200">Link do recurso<input type="url" value={form.resourceUrl} onBlur={event => setForm({ ...form, resourceUrl: normalizeHttpsUrl(event.target.value) })} onChange={event => setForm({ ...form, resourceUrl: event.target.value })} required={form.status === "published"} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white" placeholder="https://exemplo.com/recurso" /></label>
           {formError ? <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{formError}</p> : null}
         </section>
       ) : formError ? <p role="alert" className="rounded-lg border border-red-400/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">{formError}</p> : null}
@@ -245,7 +239,7 @@ export default function AdminPublications() {
         {!config.splitFlow && isPublicationManager && !isPublicationDraftScreen ? <button type="button" onClick={openCreate} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] sm:w-auto"><PlusCircle className="size-4" />Criar Conteúdo</button> : null}
       </div>
       {content.isLoading ? <p className="text-sm text-zinc-400">Carregando...</p> : managedItems.length ? <div className="space-y-3">{managedItems.map(item => {
-        const displayBody = isMaterialDisclosure ? splitPromotionalMaterialBody(item.body).body : item.body;
+        const displayBody = isResourceLibrary ? splitPromotionalMaterialBody(item.body).body : item.body;
         return <article key={item.id} role={config.splitFlow ? "button" : undefined} tabIndex={config.splitFlow ? 0 : undefined} onClick={config.splitFlow ? () => edit(item) : undefined} onKeyDown={config.splitFlow ? event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); edit(item); } } : undefined} className={`min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25 p-3 sm:p-4 ${config.splitFlow ? "cursor-pointer transition hover:border-emerald-300/35 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60" : ""}`}><div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"><div className="min-w-0 flex-1"><span className="text-xs uppercase tracking-wider text-emerald-200">{statusLabel(item.status)}</span><h3 className="mt-1 font-medium text-white [overflow-wrap:anywhere]">{item.title}</h3><p className="mt-1 line-clamp-2 text-sm text-zinc-400 [overflow-wrap:anywhere]">{item.summary || displayBody || "Sem descrição."}</p></div><div className="grid w-full min-w-0 grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:w-auto sm:flex"><button type="button" onClick={event => { event.stopPropagation(); edit(item); }} className="inline-flex min-h-10 w-full items-center justify-center gap-1 rounded-lg border border-white/15 px-3 py-2 text-sm text-zinc-200 sm:w-auto"><PencilLine className="size-4" />Editar</button><button type="button" disabled={deletingId === item.id} onClick={event => { event.stopPropagation(); void removeItem(item); }} className="inline-flex min-h-10 w-full items-center justify-center gap-1 rounded-lg border border-red-400/25 px-3 py-2 text-sm text-red-200 disabled:opacity-60 sm:w-auto"><Trash2 className="size-4" />{deletingId === item.id ? "Excluindo..." : "Excluir"}</button></div></div></article>;
       })}</div> : <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm text-zinc-400">{isPublicationDraftScreen ? "Nenhum rascunho salvo no momento." : "Nenhum conteúdo registrado ainda."}</p>}
     </section>

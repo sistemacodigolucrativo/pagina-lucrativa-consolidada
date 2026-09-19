@@ -12,6 +12,17 @@ describe("AdminOffice — visão administrativa sem fila global de pedidos", () 
     expect(source).toContain('aria-label="Abrir Suporte"');
     expect(source).toContain('onClick={() => openCard("/admin/suporte")}');
     expect(source).toContain("trpc.admin.overview.useQuery");
+    expect(source).toContain("hasAttentionQueue ? (");
+    expect(source).toContain("const hasAttentionQueue = openTickets > 0 || pendingTestimonials > 0");
+    expect(source).toContain("const hasOperationalLog = !activities.isLoading && Boolean(activities.data?.length)");
+    expect(source).toContain("disabled aria-disabled");
+    expect(source).not.toContain("trpc.admin.academy.list.useQuery");
+    expect(source).not.toContain("const COURSES_PER_PAGE = 10");
+    expect(source).not.toContain("Trilhas ativas na Academia");
+    expect(source).not.toContain("setCoursesPage");
+    expect(source).not.toContain('eyebrow="Panorama real"');
+    expect(source).not.toContain("Nenhuma atividade recente registrada.");
+    expect(source).not.toContain("draftContent} {attentionLabel(draftContent");
     expect(source).not.toContain("office-workspace");
     expect(source).not.toContain("trpc.admin.applications.useQuery");
     expect(source).not.toContain("Pedidos recentes");

@@ -118,17 +118,19 @@ export default function AdminReferrals() {
           <article className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:col-span-2 lg:col-span-1"><p className="text-xs uppercase tracking-wider text-zinc-400">Bloqueados</p><strong className="mt-2 block text-3xl text-white">{management.members.filter(member => member.blocked && !member.deletionRequestedAt).length}</strong></article>
         </section>
 
-        <a href={withAppBase("/admin/membros/exclusoes")} className="block rounded-2xl border border-amber-300/25 bg-amber-300/5 p-4 transition hover:border-amber-300/45 hover:bg-amber-300/[0.08] focus:outline-none focus:ring-2 focus:ring-amber-300/30 sm:p-5" aria-label="Abrir Área temporária de exclusão">
-          <div className="flex items-center gap-2 text-white"><Clock3 className="size-5 shrink-0 text-amber-300" /><h2 className="font-medium">Área temporária de exclusão</h2></div>
-          <div className="mt-3 flex w-full items-center justify-between gap-4 rounded-xl border border-amber-300/20 bg-black/20 px-4 py-3" aria-label="Exclusões aguardando">
-            <span className="text-xs uppercase tracking-wider text-amber-200">Exclusões aguardando</span>
-            <strong className="shrink-0 text-2xl text-white sm:text-3xl">{loadingMembers ? "..." : management.deletionQueue.length}</strong>
-          </div>
-          <div className="mt-3 min-w-0">
-            <p className="text-sm leading-6 text-zinc-300">Contas permanecem aqui por 7 dias antes da remoção definitiva.</p>
-            <p className="text-sm leading-6 text-zinc-300">Os indicados do membro excluído são preservados e passam a ficar órfãos.</p>
-          </div>
-        </a>
+        {!loadingMembers && management.deletionQueue.length ? (
+          <a href={withAppBase("/admin/membros/exclusoes")} className="block rounded-2xl border border-amber-300/25 bg-amber-300/5 p-4 transition hover:border-amber-300/45 hover:bg-amber-300/[0.08] focus:outline-none focus:ring-2 focus:ring-amber-300/30 sm:p-5" aria-label="Abrir Área temporária de exclusão">
+            <div className="flex items-center gap-2 text-white"><Clock3 className="size-5 shrink-0 text-amber-300" /><h2 className="font-medium">Área temporária de exclusão</h2></div>
+            <div className="mt-3 flex w-full items-center justify-between gap-4 rounded-xl border border-amber-300/20 bg-black/20 px-4 py-3" aria-label="Exclusões aguardando">
+              <span className="text-xs uppercase tracking-wider text-amber-200">Exclusões aguardando</span>
+              <strong className="shrink-0 text-2xl text-white sm:text-3xl">{management.deletionQueue.length}</strong>
+            </div>
+            <div className="mt-3 min-w-0">
+              <p className="text-sm leading-6 text-zinc-300">Contas permanecem aqui por 7 dias antes da remoção definitiva.</p>
+              <p className="text-sm leading-6 text-zinc-300">Os indicados do membro excluído são preservados e passam a ficar órfãos.</p>
+            </div>
+          </a>
+        ) : null}
 
         <section className="rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2 text-white"><UsersRound className="size-5 text-emerald-300" /><h2 className="font-medium">Contas de membros</h2></div>

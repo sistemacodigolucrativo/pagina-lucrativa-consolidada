@@ -21,10 +21,10 @@ describe("central editorial", () => {
     expect(() => procedure._def.inputs[0].parse({ id: 7, kind: "article", title: "x", status: "published" })).toThrow();
   });
 
-  it("valida recursos da Biblioteca de Recursos com link Google Drive", () => {
+  it("valida recursos da Biblioteca de Recursos com link HTTPS", () => {
     const procedure = procedures["admin.createContent"] as { _def: { inputs: Array<{ parse: (input: unknown) => unknown }> } };
-    expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação de divulgação", summary: "Recurso externo", body: "Tutorial completo", resourceCategory: "Automação", resourceType: "Ferramenta", resourceUrl: "https://drive.google.com/file/d/abc/view", status: "published" })).toMatchObject({ kind: "material", resourceCategory: "Automação", resourceType: "Ferramenta" });
-    expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "https://example.com/file.zip" })).toThrow("Use uma URL HTTPS válida do Google Drive.");
+    expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação de divulgação", summary: "Recurso externo", body: "Tutorial completo", resourceCategory: "Automação", resourceType: "Ferramenta", resourceUrl: "https://example.com/file.zip", status: "published" })).toMatchObject({ kind: "material", resourceCategory: "Automação", resourceType: "Ferramenta" });
+    expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "http://example.com/file.zip" })).toThrow("Use uma URL HTTPS válida para o recurso.");
     expect(() => procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "published", resourceUrl: "javascript:alert(1)" })).toThrow();
     expect(procedure._def.inputs[0].parse({ kind: "material", title: "Automação", status: "draft" })).toMatchObject({ kind: "material", status: "draft" });
   });
@@ -40,19 +40,20 @@ describe("central editorial", () => {
     expect(schema).toContain('resourceType: varchar("resourceType"');
     expect(migration).toContain("ADD COLUMN `resourceUrl`");
     expect(admin).toContain('"/admin/biblioteca-recursos": { kind: "material", title: "Biblioteca de Recursos"');
-    expect(admin).toContain("Use uma URL HTTPS válida do Google Drive.");
-    expect(admin).toContain("Link do Google Drive");
-    expect(admin).toContain("O arquivo precisa estar compartilhado no Google Drive");
+    expect(admin).toContain("Use uma URL HTTPS válida para o recurso.");
+    expect(admin).toContain("Link do recurso");
+    expect(admin).toContain("normalizeHttpsUrl");
     expect(member).toContain("Recursos disponibilizados para apoiar sua divulgação e sua rotina.");
     expect(member).toContain("LibraryResourcesPremium");
     expect(library).toContain("Recursos disponíveis");
-    expect(library).toContain("Ver detalhes");
+    expect(library).toContain("const ITEMS_PER_PAGE = 10");
+    expect(library).toContain("aria-expanded={expanded}");
     expect(library).toContain("Acessar recurso");
     expect(library).toContain('target="_blank"');
     expect(member).toContain('item.kind === "faq"');
   });
 
-  it("separa Material e Biblioteca e incorpora FAQ ao Configurar Seções", async () => {
+  it("unifica Material de divulgação na Biblioteca de Recursos e preserva redirects legados", async () => {
     const member = await readFile(path.join(root, "client/src/pages/MemberPublications.tsx"), "utf8");
     const admin = await readFile(path.join(root, "client/src/pages/AdminPublications.tsx"), "utf8");
     const faqManager = await readFile(path.join(root, "client/src/components/AdminFaqManager.tsx"), "utf8");
@@ -61,12 +62,13 @@ describe("central editorial", () => {
     const adminNavigation = await readFile(path.join(root, "client/src/lib/adminNavigation.ts"), "utf8");
     const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
     const legacyRedirect = await readFile(path.join(root, "client/src/pages/MemberLegacyRedirect.tsx"), "utf8");
-    expect(navigation).toContain('label: "Material de divulgação", path: "/membros/artigos"');
     expect(navigation).toContain('label: "Biblioteca de Recursos", path: "/membros/materiais"');
-    expect(member).toContain('title: "Material de divulgação"');
+    expect(navigation).not.toContain('label: "Material de divulgação"');
+    expect(member).not.toContain('title: "Material de divulgação"');
     expect(member).toContain('title: "Biblioteca de Recursos"');
-    expect(admin).toContain('"/admin/material-divulgacao": { kind: "article"');
-    expect(adminNavigation).toContain('label: "Material de Divulgação", path: "/admin/material-divulgacao"');
+    expect(admin).not.toContain('"/admin/material-divulgacao": { kind: "article"');
+    expect(admin).toContain('item.kind === "material" || item.kind === "article"');
+    expect(adminNavigation).not.toContain('label: "Material de Divulgação"');
     expect(adminNavigation).toContain('label: "Biblioteca de Recursos", path: "/admin/biblioteca-recursos"');
     expect(adminNavigation).not.toContain('label: "Perguntas Frequentes"');
     expect(adminNavigation).toContain('label: "Configurar Seções", path: "/admin/imagens", group: "Sistema"');
@@ -74,9 +76,11 @@ describe("central editorial", () => {
     expect(faqManager).toContain('item.kind === "faq"');
     expect(operations).toContain('setLocation("/admin")');
     expect(operations).not.toContain("createContent");
-    expect(app).toContain('path="/admin/material-divulgacao" component={AdminPublications}');
+    expect(app).toContain('path="/admin/material-divulgacao"');
+    expect(app).toContain('to="/admin/biblioteca-recursos"');
     expect(app).toContain('path="/admin/biblioteca-recursos" component={AdminPublications}');
-    expect(legacyRedirect).toContain('"/membros/blog": "/membros/artigos"');
+    expect(legacyRedirect).toContain('"/membros/blog": "/membros/materiais"');
+    expect(legacyRedirect).toContain('"/membros/artigos": "/membros/materiais"');
     expect(legacyRedirect).toContain('"/membros/bonus": "/membros/materiais"');
   });
 });
