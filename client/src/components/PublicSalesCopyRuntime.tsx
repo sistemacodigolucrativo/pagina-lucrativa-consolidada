@@ -123,6 +123,10 @@ function applyFloatingLayout(layout: FloatingLayout) {
 
   (Object.keys(selectors) as Array<keyof typeof selectors>).forEach(id => {
     document.querySelectorAll<HTMLElement>(selectors[id]).forEach(element => {
+      if (id === "fab" || id === "cta") {
+        resetFloatingPosition(element);
+        return;
+      }
       if (element.classList.contains("public-social-proof-toast-inline")) return;
       const point = positions[id];
       if (typeof point?.x !== "number" || typeof point?.y !== "number") {

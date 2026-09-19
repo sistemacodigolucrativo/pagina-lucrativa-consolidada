@@ -4,61 +4,86 @@ import { useLocation } from "wouter";
 import { withAppBase } from "@/lib/devPath";
 import { isPublicConversionRoute } from "@shared/publicRoutes";
 
-const SOCIAL_PROOF_SECTION_ID = "depoimentos";
+const PACKAGE_SECTION_ID = "o-que-recebe";
 const FORM_SECTION_ID = "f";
 
-function hasScrolledPast(element: HTMLElement) {
-  return element.getBoundingClientRect().bottom <= 0;
+function hasReachedViewportTop(element: HTMLElement) {
+  return element.getBoundingClientRect().top <= 0;
+}
+
+function hasEnteredViewport(element: HTMLElement) {
+  const rect = element.getBoundingClientRect();
+  return rect.top < window.innerHeight && rect.bottom > 0;
+}
+
+function pointsToActivationSection(anchor: HTMLAnchorElement) {
+  const href = anchor.getAttribute("href") ?? "";
+  return href === "#f" || href.endsWith("/#f");
 }
 
 export default function PublicConversionCta() {
   const [location] = useLocation();
-  const [conversionFormVisible, setConversionFormVisible] = useState(false);
-  const [hasPassedSocialProof, setHasPassedSocialProof] = useState(false);
+  const [showFloatingCta, setShowFloatingCta] = useState(false);
+  const [dismissedByActivationClick, setDismissedByActivationClick] = useState(false);
 
   useEffect(() => {
-    setConversionFormVisible(false);
-    setHasPassedSocialProof(false);
+    setShowFloatingCta(false);
+    setDismissedByActivationClick(false);
     if (location !== "/") return;
 
-    const socialProofSection = document.getElementById(SOCIAL_PROOF_SECTION_ID);
+    const packageSection = document.getElementById(PACKAGE_SECTION_ID);
     const formSection = document.getElementById(FORM_SECTION_ID);
     let frame = 0;
 
-    const updatePassedSocialProof = () => {
+    const updateVisibility = () => {
       frame = 0;
-      if (socialProofSection) setHasPassedSocialProof(hasScrolledPast(socialProofSection));
+      const packageReachedTop = packageSection ? hasReachedViewportTop(packageSection) : false;
+      const activationVisible = formSection ? hasEnteredViewport(formSection) : false;
+      if (!packageReachedTop) setDismissedByActivationClick(false);
+      setShowFloatingCta(packageReachedTop && !activationVisible);
     };
 
-    const schedulePassedCheck = () => {
+    const scheduleVisibilityCheck = () => {
       if (frame) return;
-      frame = window.requestAnimationFrame(updatePassedSocialProof);
+      frame = window.requestAnimationFrame(updateVisibility);
     };
 
-    let socialProofObserver: IntersectionObserver | null = null;
-    let formObserver: IntersectionObserver | null = null;
-    schedulePassedCheck();
+    const hideOnActivationLinkClick = (event: MouseEvent) => {
+      const anchor = (event.target as Element | null)?.closest<HTMLAnchorElement>("a[href]");
+      if (anchor && pointsToActivationSection(anchor)) {
+        setDismissedByActivationClick(true);
+        setShowFloatingCta(false);
+      }
+    };
 
-    if (socialProofSection && typeof IntersectionObserver !== "undefined") {
-      socialProofObserver = new IntersectionObserver(schedulePassedCheck, { threshold: [0, 1] });
-      socialProofObserver.observe(socialProofSection);
+    let packageObserver: IntersectionObserver | null = null;
+    let formObserver: IntersectionObserver | null = null;
+    scheduleVisibilityCheck();
+
+    if (packageSection && typeof IntersectionObserver !== "undefined") {
+      packageObserver = new IntersectionObserver(scheduleVisibilityCheck, { threshold: [0, 1] });
+      packageObserver.observe(packageSection);
     }
-    window.addEventListener("scroll", schedulePassedCheck, { passive: true });
 
     if (formSection && typeof IntersectionObserver !== "undefined") {
-      formObserver = new IntersectionObserver(([entry]) => setConversionFormVisible(Boolean(entry?.isIntersecting)), { threshold: 0.16 });
+      formObserver = new IntersectionObserver(scheduleVisibilityCheck, { threshold: [0, 0.01] });
       formObserver.observe(formSection);
     }
+    window.addEventListener("scroll", scheduleVisibilityCheck, { passive: true });
+    window.addEventListener("resize", scheduleVisibilityCheck);
+    document.addEventListener("click", hideOnActivationLinkClick);
 
     return () => {
-      socialProofObserver?.disconnect();
+      packageObserver?.disconnect();
       formObserver?.disconnect();
       if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", schedulePassedCheck);
+      window.removeEventListener("scroll", scheduleVisibilityCheck);
+      window.removeEventListener("resize", scheduleVisibilityCheck);
+      document.removeEventListener("click", hideOnActivationLinkClick);
     };
   }, [location]);
 
-  if (!isPublicConversionRoute(location) || location !== "/" || !hasPassedSocialProof || conversionFormVisible) return null;
+  if (!isPublicConversionRoute(location) || location !== "/" || !showFloatingCta || dismissedByActivationClick) return null;
 
   return (
     <a

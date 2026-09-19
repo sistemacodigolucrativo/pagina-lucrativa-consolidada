@@ -46,6 +46,10 @@ describe("melhorias da página pública", () => {
     expect(publicInfo).toContain("public-info-faq-list");
     expect(publicInfo).toContain("public-info-faq-item");
     expect(publicInfo).toContain("<summary><span>{title}</span></summary>");
+    expect(css).toContain(".public-info-cta { display: flex;");
+    expect(css).toContain("gap: 18px 20px;");
+    expect(css).toContain(".public-info-faq-content { padding-bottom: 76px; }");
+    expect(css).toContain(".public-info-cta { display: grid; gap: 18px; padding-top: 38px; }");
     const publicFaq = read("shared/publicSalesFaq.ts");
     expect(publicFaq).toContain("O que exatamente estou comprando?");
     expect(publicFaq).toContain("Existe suporte?");

@@ -55,6 +55,45 @@ function colorizedMessage(message: string, displayName: string, nameColor: strin
   return <>{before}<span className="public-social-proof-toast-name" style={{ color: nameColor }}>{displayName}</span>{rest.join(displayName)}</>;
 }
 
+function isVisibleElement(element: HTMLElement | null) {
+  if (!element) return false;
+  const rect = element.getBoundingClientRect();
+  const style = window.getComputedStyle(element);
+  return rect.width > 0 && rect.height > 0 && style.visibility !== "hidden" && style.display !== "none" && style.opacity !== "0";
+}
+
+function getFloatingAnchor() {
+  const mobileMenu = document.querySelector<HTMLElement>(".mobile-menu-button");
+  if (mobileMenu && isVisibleElement(mobileMenu) && window.getComputedStyle(mobileMenu).position === "fixed") return mobileMenu;
+  const conversionCta = document.querySelector<HTMLElement>(".public-conversion-cta");
+  if (isVisibleElement(conversionCta)) return conversionCta;
+  return null;
+}
+
+function hasFloatingAnchor() {
+  if (typeof window === "undefined" || typeof document === "undefined") return false;
+  return Boolean(getFloatingAnchor());
+}
+
+function positionToastInPageFlow() {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+  window.requestAnimationFrame(() => {
+    const anchor = getFloatingAnchor();
+    if (!anchor) return;
+    const anchorRect = anchor.getBoundingClientRect();
+    const gap = window.innerWidth <= 650 ? 10 : 14;
+    const viewportMargin = window.innerWidth <= 650 ? 8 : 18;
+    const availableWidth = Math.max(0, anchorRect.left - viewportMargin - gap);
+    const toastWidth = Math.min(360, availableWidth);
+    if (toastWidth < 220) return;
+    const viewportTop = anchorRect.top + (anchorRect.height / 2) - 32;
+    const viewportLeft = anchorRect.left - gap - toastWidth;
+    document.documentElement.style.setProperty("--public-toast-page-top", `${Math.round(Math.max(viewportMargin, viewportTop))}px`);
+    document.documentElement.style.setProperty("--public-toast-page-left", `${Math.round(Math.max(viewportMargin, viewportLeft))}px`);
+    document.documentElement.style.setProperty("--public-toast-page-width", `${Math.round(toastWidth)}px`);
+  });
+}
+
 export default function PublicSocialProofToast() {
   const [location] = useLocation();
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
@@ -62,6 +101,29 @@ export default function PublicSocialProofToast() {
   const [settings, setSettings] = useState<PublicToastSettings>(publicToastDefaultSettings);
   const historyRef = useRef<number[]>([]);
   const previewDismissRef = useRef<number | undefined>(undefined);
+  const floatingAnchorReadyRef = useRef(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    let frame = 0;
+    const updateAnchorState = () => {
+      frame = 0;
+      floatingAnchorReadyRef.current = hasFloatingAnchor();
+      if (!notice) positionToastInPageFlow();
+    };
+    const scheduleAnchorState = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateAnchorState);
+    };
+    scheduleAnchorState();
+    window.addEventListener("scroll", scheduleAnchorState, { passive: true });
+    window.addEventListener("resize", scheduleAnchorState);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleAnchorState);
+      window.removeEventListener("resize", scheduleAnchorState);
+    };
+  }, [notice]);
 
   useEffect(() => {
     if (!isPublicSocialProofRoute(location)) {
@@ -138,6 +200,10 @@ export default function PublicSocialProofToast() {
     const scheduleNext = (delay: number) => {
       nextTimer = window.setTimeout(() => {
         if (cancelled) return;
+        if (!floatingAnchorReadyRef.current) {
+          scheduleNext(1000);
+          return;
+        }
         const index = chooseIndex();
         const template = templates[index];
         if (!template) return;
@@ -155,6 +221,11 @@ export default function PublicSocialProofToast() {
     scheduleNext(Math.min(settings.initialDelaySeconds * 1000, 4_000));
     return () => { cancelled = true; clearTimers(); };
   }, [location, settings, templates]);
+
+  useEffect(() => {
+    if (!notice) return;
+    positionToastInPageFlow();
+  }, [notice]);
 
   if (!notice) return null;
   const showSimulationNotice = notice.forceSimulationNotice ?? settings.showSimulationNotice;

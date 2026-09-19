@@ -8,6 +8,7 @@ const publicMobileCssSource = readFileSync(resolve(process.cwd(), "client/src/pu
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 const socialProofSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicSocialProofToast.tsx"), "utf8");
 const violetaSource = readFileSync(resolve(process.cwd(), "client/src/components/VioletaNeonActivationCard.tsx"), "utf8");
+const conversionCtaSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicConversionCta.tsx"), "utf8");
 const previewSource = readFileSync(resolve(process.cwd(), "client/src/pages/Preview.tsx"), "utf8");
 const operationsSource = readFileSync(resolve(process.cwd(), "client/src/pages/MemberOperations.tsx"), "utf8");
 const internalLinkSources = [
@@ -72,21 +73,19 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain("Campanhas de divulgação");
     expect(homeSource).toContain("Pedidos e acompanhamento");
     expect(homeSource).toContain("Biblioteca e Academia");
-    expect(homeSource).toContain("Dados de recebimento");
     expect(homeSource).toContain('className="sales-author-badge"');
-    expect(homeSource).toContain('className="sprint-stamp"');
-    expect(homeSource).toContain('className="sprint-paper-card"');
-    expect(homeSource).toContain("{currentSlide.title}");
-    expect(homeSource).toContain("{currentSlide.caption}");
+    expect(homeSource).not.toContain('className="sprint-stamp"');
+    expect(homeSource).not.toContain('className="sprint-paper-card"');
+    expect(homeSource).not.toContain("currentSlide");
+    expect(homeSource).not.toContain("Área para organizar os meios de recebimento usados na operação.");
     expect(homeSource).not.toContain('className="sales-hero-side');
     expect(cssSource).toContain('.structure-showcase { position: relative;');
     expect(cssSource).toContain('.structure-showcase > .shell { position: relative;');
     expect(cssSource).toContain('.structure-showcase-stage { position: relative;');
     expect(cssSource).toContain('.virtual-office-carousel { display: grid;');
     expect(cssSource).toContain('.virtual-office-carousel-dots button[aria-selected="true"]');
-    expect(cssSource).toContain('.sprint-stamp { container-type: inline-size;');
-    expect(cssSource).toContain('.sprint-paper-card { container-type: inline-size;');
-    expect(cssSource).toContain('font: 700 clamp(16px, 9cqw, 22px)/.98');
+    expect(cssSource).not.toContain('.sprint-stamp {');
+    expect(cssSource).not.toContain('.sprint-paper-card {');
   });
 
   it("uses natural social proof heading and copy", () => {
@@ -126,11 +125,39 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).not.toContain('document.getElementById("public-social-proof-toast-slot")');
     expect(socialProofSource).not.toContain('toastSlot');
     expect(socialProofSource).toContain('public-social-proof-toast-inline');
+    expect(socialProofSource).toContain('positionToastInPageFlow');
+    expect(socialProofSource).toContain('getFloatingAnchor');
+    expect(socialProofSource).toContain('floatingAnchorReadyRef');
+    expect(socialProofSource).toContain('scheduleNext(1000)');
+    expect(socialProofSource).toContain('--public-toast-page-top');
+    expect(socialProofSource).toContain('--public-toast-page-left');
+    expect(socialProofSource).toContain('--public-toast-page-width');
+    expect(socialProofSource).toContain('".mobile-menu-button"');
+    expect(socialProofSource).toContain('".public-conversion-cta"');
     expect(homeSource).toContain('id="public-social-proof-toast-slot"');
     expect(cssSource).toContain('.public-social-proof-toast-slot { position: fixed;');
-    expect(cssSource).toContain('top: calc(env(safe-area-inset-top, 0px) + 92px);');
+    expect(cssSource).toContain('top: var(--public-toast-page-top, 118px);');
+    expect(cssSource).toContain('left: var(--public-toast-page-left, 50%);');
+    expect(cssSource).toContain('width: min(var(--public-toast-page-width, 360px)');
     expect(cssSource).toContain('pointer-events: none;');
     expect(cssSource).toContain('.public-social-proof-toast { position: static;');
+  });
+
+  it("renders decision questions as a single-open accordion", () => {
+    expect(homeSource).toContain("openObjectionIndex");
+    expect(homeSource).toContain('className="objection-grid objection-accordion"');
+    expect(homeSource).toContain("aria-expanded={isOpen}");
+    expect(homeSource).toContain("hidden={!isOpen}");
+    expect(homeSource).toContain("current === index ? null : index");
+    expect(cssSource).toContain(".objection-accordion button");
+    expect(cssSource).toContain(".objection-accordion article.is-open");
+    expect(homeSource).toContain("Ainda quer ver tudo com calma?");
+    expect(homeSource).toContain(">Ver perguntas frequentes</a>");
+    expect(homeSource).not.toContain("Ver perguntas frequentes completas");
+    expect(cssSource).toContain(".faq-compact-cta { display: grid;");
+    expect(cssSource).toContain("border: 0;");
+    expect(cssSource).toContain("background: transparent;");
+    expect(cssSource).toContain("color: #ead08a;");
   });
 
   it("keeps the public social proof toast floating on mobile", () => {
@@ -146,6 +173,9 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('<VioletaNeonActivationCard');
     expect(homeSource).not.toContain('<form className="sales-price-card application-form"');
     expect(violetaSource).toContain('className="violeta-neon-activation-card application-form"');
+    expect(violetaSource).toContain('Promoção de ativação');
+    expect(cssSource).toContain('.violeta-neon-border-glow');
+    expect(cssSource).toContain('.violeta-neon-seal { position: absolute; top: 36px;');
     expect(violetaSource).toContain('onSubmit={onSubmit}');
   });
 
@@ -155,6 +185,12 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('<div className="sales-actions"><JoinButton />');
     expect(homeSource).toContain('className="member-chat-fab"');
     expect(homeSource).toContain('id="f"');
+    expect(conversionCtaSource).toContain('const PACKAGE_SECTION_ID = "o-que-recebe";');
+    expect(conversionCtaSource).toContain('const FORM_SECTION_ID = "f";');
+    expect(conversionCtaSource).toContain("hasReachedViewportTop(packageSection)");
+    expect(conversionCtaSource).toContain("hasEnteredViewport(formSection)");
+    expect(conversionCtaSource).toContain("pointsToActivationSection(anchor)");
+    expect(conversionCtaSource).not.toContain('const SOCIAL_PROOF_SECTION_ID = "depoimentos";');
   });
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {
@@ -171,6 +207,8 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('margin-left: auto;');
     expect(cssSource).toContain('  .mobile-menu-button { display: inline-flex; }');
     expect(cssSource).toContain('  .sales-hero { min-height: auto; padding: 30px 0 70px; }');
+    expect(cssSource).toContain('#como-funciona, #o-que-recebe, #depoimentos, #f { scroll-margin-top: -112px; }');
+    expect(cssSource).toContain('#como-funciona, #o-que-recebe, #depoimentos, #f { scroll-margin-top: -68px; }');
   });
 
   it("loads the edited promo banner through the environment-aware app base", () => {
