@@ -1056,7 +1056,17 @@ export async function createMemberTicket(userId: number, input: { subject: strin
 export async function getPublicSalesSectionImages() {
   const db = await getDb();
   if (!db) return [];
-  return db.select({ sectionId: publicSalesSectionImages.sectionId, imageUrl: publicSalesSectionImages.imageUrl, contentType: publicSalesSectionImages.contentType, status: publicSalesSectionImages.status, originalName: publicSalesSectionImages.originalName, updatedAt: publicSalesSectionImages.updatedAt }).from(publicSalesSectionImages).orderBy(desc(publicSalesSectionImages.updatedAt));
+  const rows = await db.select({
+    sectionId: publicSalesSectionImages.sectionId,
+    status: publicSalesSectionImages.status,
+    imageUrl: sql<string | null>`CASE WHEN ${publicSalesSectionImages.status} = 'active' THEN ${publicSalesSectionImages.imageUrl} ELSE NULL END`,
+  }).from(publicSalesSectionImages).where(inArray(publicSalesSectionImages.status, ["active", "removed"])).orderBy(desc(publicSalesSectionImages.updatedAt));
+  // A removal marker hides the bundled default image too. Never return its old URL.
+  return rows.filter(row => row.status === "active" || row.status === "removed").map(row => ({
+    sectionId: row.sectionId,
+    status: row.status,
+    imageUrl: row.status === "active" ? row.imageUrl : null,
+  }));
 }
 
 export async function getPublicSalesSocialProof() {

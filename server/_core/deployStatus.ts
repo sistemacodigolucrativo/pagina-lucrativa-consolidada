@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { LOCAL_STORAGE_DIR } from "../storage";
+import { parse as parseCookieHeader } from "cookie";
+import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 
 type DeployState = {
   status: "idle" | "deploying" | "completed" | "failed";
@@ -44,9 +46,19 @@ export function registerDeployStatus(app: Express, appPrefix = "") {
   ].filter((value): value is string => Boolean(value))));
 
   for (const routePath of paths) {
-    app.get(routePath, async (_req, res) => {
+    app.get(routePath, async (req, res) => {
       res.setHeader("Cache-Control", "no-store, max-age=0");
-      res.json(await readDeployState());
+      try {
+        const cookies = parseCookieHeader(req.headers.cookie ?? "");
+        const user = await resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+        if (!user || user.role !== "admin") {
+          res.status(403).json({ error: "Acesso administrativo necessário." });
+          return;
+        }
+        res.json(await readDeployState());
+      } catch {
+        res.status(503).json({ error: "Status indisponível." });
+      }
     });
   }
 }

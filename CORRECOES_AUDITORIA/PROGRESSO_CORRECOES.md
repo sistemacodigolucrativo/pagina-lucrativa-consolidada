@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T11:05:51+00:00
+Última atualização: 2026-09-20T11:06:45+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -253,36 +253,36 @@ Commit relacionado: fix: preservar publicacao na exportacao da academia; SHA no 
 ### MED-05
 
 ID: MED-05
-Status: Pendente
+Status: Corrigido
 Gravidade: Medio
 Área: Exposicao de informacao operacional
 Arquivo(s) auditado(s): server/_core/deployStatus.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: O status de deploy e SHA podem ser consultados publicamente.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. /api/deploy-status retornava SHA/stage sem autenticação.
+Evidência no código atual: Rota e variante com prefixo agora resolvem a sessão pelo autenticador existente e exigem papel admin atual antes de ler/retornar estado; respostas sem cache.
+Correção aplicada: 403 para visitante/membro; 503 sanitizado em falha; administrador mantém o contrato detalhado usado pelo componente existente.
+Arquivos alterados: server/_core/deployStatus.ts; server/securityAudit.publicSurface.test.ts; este progresso.
+Testes executados: pnpm exec vitest run server/securityAudit.publicSurface.test.ts server/securityAudit.integrity.test.ts server/securityAudit.academyExport.test.ts.
+Resultado dos testes: 6/6 na rodada; teste HTTP local confirma visitante/membro recusados, admin autorizado e ausência de detalhes em erro. Sessão/driver simulados; autenticação real já coberta pela suíte de segurança existente.
+Pendências: Confirmar visualização do status por administrador real no ambiente de homologação/VPS quando autorizado.
+Próximo passo: Validação global; não expor novamente o endpoint para contornar falhas de sessão.
+Commit relacionado: fix: restringir status de deploy e sanitizar imagens removidas; SHA no checkpoint seguinte.
 
 ### MED-06
 
 ID: MED-06
-Status: Pendente
+Status: Corrigido preservando o contrato de remoção da Home
 Gravidade: Medio
 Área: Biblioteca publica / status de imagens
 Arquivo(s) auditado(s): server/db.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: A consulta de imagens da secao publica retorna registros sem filtro evidente de status ativo.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Parcialmente: API devolvia URL/metadados de imagens removidas, mas a Home já ocultava essas imagens ao ver status removed.
+Evidência no código atual: Home.tsx resolveSectionImage retorna null para removed. Filtrar a linha inteira reativaria a imagem padrão do pacote. Essa recomendação da auditoria exigiu adaptação ao código real.
+Correção aplicada: SQL retorna URL apenas de active; removed devolve somente sectionId/status/imageUrl null. Removidos originalName, contentType e updatedAt da projeção pública. Consulta admin mantém histórico completo.
+Arquivos alterados: server/db.ts; server/securityAudit.publicSurface.test.ts; este progresso.
+Testes executados: Suíte focada dos médios; teste usa projeção SQL real/driver simulado e verifica retorno público/admin.
+Resultado dos testes: 6/6 na rodada; imagem ativa visível, URL removida ausente, marcador removed preservado, dados administrativos omitidos da API pública e histórico mantido no admin.
+Pendências: Não houve inspeção visual no domínio real; esta correção não apaga fisicamente arquivos previamente públicos no storage.
+Próximo passo: Validar comportamento final com dados reais em etapa autorizada; preservar o marcador de remoção ao evoluir a API.
+Commit relacionado: fix: restringir status de deploy e sanitizar imagens removidas; SHA no checkpoint seguinte.
 
 
 ## Continuidade em 2026-09-20 — retomada em 1ffbc55
