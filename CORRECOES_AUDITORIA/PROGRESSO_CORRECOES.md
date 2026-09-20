@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T03:22:36+00:00
+Última atualização: 2026-09-20T03:24:57+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -100,19 +100,19 @@ Commit relacionado: Mesmo bloco de segurança.
 ### HIGH-03
 
 ID: HIGH-03
-Status: Pendente
+Status: Corrigido no código; comprovação de paridade na VPS bloqueada
 Gravidade: Alto
 Área: Banco de dados / sincronizacao de conteudo
 Arquivo(s) auditado(s): .github/workflows/deploy-vps.yml; scripts/deploy-vps.sh; scripts/sync-packaged-content.mjs; server/academyCanonical.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: O deploy de codigo nao garante que o banco da VPS seja sincronizado com manifestos, PDFs e Academia versionados.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim, desacoplamento no código confirmado. Divergência real do banco da VPS não foi afirmada: não houve acesso autorizado ao ambiente.
+Evidência no código atual: deploy-vps.sh não chamava sync; ensurePackagedLibraryEbooks fazia inserções durante leituras e só atualizava sourceId em duplicatas. Sync aceitava ausência do manifesto da Academia como lista vazia e sobrescrevia resumo curado.
+Correção aplicada: Sync exporta fluxo testável, oferece --validate-only sem banco e --check READ ONLY com saída 3 em divergência. Manifestos/PDFs obrigatórios e duplicidade no banco bloqueiam. Apply exige InnoDB, backup privado, leitura FOR UPDATE e transação SERIALIZABLE; rollback em erro, sem DDL. Preserva resumo e corpo HTML curados/metadados extras. Deploy verifica --check antes de ativar e depois, usa ambiente persistente e health de banco. Leitura de membro não insere conteúdo em produção.
+Arquivos alterados: scripts/sync-packaged-content.mjs; scripts/deploy-vps.sh; scripts/manual-deploy-worker.sh; server/academyCanonical.ts; server/securityAudit.sync.test.ts; docs/CONTENT_BOOTSTRAP.md; este progresso.
+Testes executados: pnpm exec vitest run server/securityAudit.sync.test.ts server/securityAudit.backup.test.ts server/packagedEbooks.integration.test.ts server/ebookLibraryPdf.integration.test.ts server/adminManualDeploy.integration.test.ts server/publicHeroTitleDeploy.integration.test.ts; node scripts/sync-packaged-content.mjs --validate-only; bash -n scripts/deploy-vps.sh scripts/manual-deploy-worker.sh; git diff --check.
+Resultado dos testes: Suíte focada aprovada (contagem registrada no checkpoint global). 6 cenários do sync usam arquivos temporários e driver transacional simulado: read-only, idempotência, backup anterior à escrita, preservação de curadoria, rollback e recusa de dados inválidos. Manifestos/PDFs reais: 88 e-books, 11 cursos, 16 módulos, 29 aulas, sem conexão. Bash e diff válidos. Não foi executado deploy nem sync contra banco real.
+Pendências: Somente responsável autorizado pode conferir env do serviço/deploy, banco/schema real, dry-run da candidata, exportações e janela de sync; depois aprovar apply, exigir check zerado e validar health/conteúdo em VPS. O gate pode bloquear o próximo deploy até essa preparação. Rollback de código não reverte um sync previamente aprovado.
+Próximo passo: Corrigir guard de schema/SHA (HIGH-06), avaliar médios e executar suíte/build final. Paridade de produção continua não comprovada.
+Commit relacionado: fix: bloquear ativacao com conteudo divergente e tornar sync transacional; SHA no checkpoint seguinte.
 
 ### HIGH-04
 

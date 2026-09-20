@@ -4,10 +4,10 @@ set -Eeuo pipefail
 TARGET_SHA="${1:-}"
 DEPLOY_ROOT="${2:-}"
 ARTIFACT_PATH="${3:-}"
-HEALTHCHECK_URL="${4:-http://127.0.0.1:3101/}"
+HEALTHCHECK_URL="${4:-http://127.0.0.1:3101/api/healthz}"
 SERVICE_NAME="${SERVICE_NAME:-pagina-lucrativa.service}"
 SMOKE_PORT="${SMOKE_PORT:-3199}"
-PUBLIC_HEALTHCHECK_URL="${PUBLIC_HEALTHCHECK_URL:-https://ocodigolucrativo.site/}"
+PUBLIC_HEALTHCHECK_URL="${PUBLIC_HEALTHCHECK_URL:-https://ocodigolucrativo.site/api/healthz}"
 PNPM_BIN="${PNPM_BIN:-}"
 DEPLOY_INVOCATION="${DEPLOY_INVOCATION:-auto}"
 
@@ -18,6 +18,8 @@ fail() { printf '[deploy] ERRO: %s\n' "$*" >&2; exit 1; }
 [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "SHA alvo inválido."
 [[ -n "$DEPLOY_ROOT" && "$DEPLOY_ROOT" = /* ]] || fail "DEPLOY_ROOT deve ser absoluto."
 [[ -f "$ARTIFACT_PATH" ]] || fail "Artefato não encontrado: $ARTIFACT_PATH"
+RUNTIME_ENV_FILE="${DEPLOY_RUNTIME_ENV_FILE:-$DEPLOY_ROOT/.env}"
+[[ "$RUNTIME_ENV_FILE" = /* && -r "$RUNTIME_ENV_FILE" ]] || fail "Arquivo persistente de ambiente não está legível. Configure DEPLOY_RUNTIME_ENV_FILE."
 
 STATUS_FILE="${DEPLOY_STATUS_FILE:-$DEPLOY_ROOT/deploy-status.json}"
 write_deploy_status() {
@@ -170,15 +172,21 @@ log "Gerando build de produção"
 "$PNPM_BIN" build
 [[ -f dist/index.js ]] || fail "Build não gerou dist/index.js."
 
+# A divergência exige revisão e sync separado autorizado. Deploy nunca aplica sync.
+write_deploy_status "deploying" 65 "Conferindo conteúdo versionado no banco"
+NODE_ENV=production DEPLOY_ROOT="$DEPLOY_ROOT" \
+  EBOOK_IMPORT_ROOT="$NEW_RELEASE/ebook-import" ACADEMY_MANIFEST_PATH="$NEW_RELEASE/content-seeds/academy-courses.json" \
+  node --env-file="$RUNTIME_ENV_FILE" scripts/sync-packaged-content.mjs --check
+
 write_deploy_status "deploying" 70 "Validando nova versão"
 log "Smoke test isolado na porta $SMOKE_PORT"
 SMOKE_LOG="$NEW_RELEASE/.smoke.log"
-NODE_ENV=production PORT="$SMOKE_PORT" node dist/index.js >"$SMOKE_LOG" 2>&1 &
+NODE_ENV=production PORT="$SMOKE_PORT" node --env-file="$RUNTIME_ENV_FILE" dist/index.js >"$SMOKE_LOG" 2>&1 &
 SMOKE_PID=$!
 cleanup_smoke() { kill "$SMOKE_PID" >/dev/null 2>&1 || true; wait "$SMOKE_PID" >/dev/null 2>&1 || true; }
 SMOKE_OK=0
 for _ in $(seq 1 30); do
-  if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$SMOKE_PORT/" >/dev/null 2>&1; then SMOKE_OK=1; break; fi
+  if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$SMOKE_PORT/api/healthz" >/dev/null 2>&1; then SMOKE_OK=1; break; fi
   if ! kill -0 "$SMOKE_PID" >/dev/null 2>&1; then break; fi
   sleep 2
 done
@@ -212,6 +220,11 @@ fi
 write_deploy_status "deploying" 99 "Restaurando título padrão do Hero"
 log "Restaurando somente o título do Hero salvo pelo editor"
 DEPLOY_ROOT="$DEPLOY_ROOT" "$PNPM_BIN" exec tsx scripts/reset-public-hero-title.ts
+
+# Confirma conteúdo após ativação. Uma falha aciona o rollback de código existente.
+NODE_ENV=production DEPLOY_ROOT="$DEPLOY_ROOT" \
+  EBOOK_IMPORT_ROOT="$NEW_RELEASE/ebook-import" ACADEMY_MANIFEST_PATH="$NEW_RELEASE/content-seeds/academy-courses.json" \
+  node --env-file="$RUNTIME_ENV_FILE" scripts/sync-packaged-content.mjs --check
 
 trap - ERR INT TERM
 SWITCHED=0

@@ -13,7 +13,7 @@ Dados de usuarios, pagamentos, afiliados, progresso de leitura, progresso de cur
 
 ## Conteudo padrao atual
 
-- E-books empacotados: 87.
+- E-books empacotados: 88.
 - Cursos padrao da Academia: 11.
 - Modulos padrao da Academia: 16.
 - Aulas/materiais padrao da Academia: 29.
@@ -29,19 +29,13 @@ node scripts/sync-packaged-content.mjs --dry-run
 node scripts/sync-packaged-content.mjs --apply
 ```
 
-O script usa `DATABASE_URL` quando existir. Se ela nao estiver configurada, usa o socket local da VPS:
-
-```text
-/run/mysqld/mysqld.sock
-user: ubuntu
-database: pagina_lucrativa
-```
+O servidor e os scripts usam a mesma seleção explícita de banco: `DATABASE_URL`, ou `ALLOW_VPS_SOCKET_DB=true` com `MYSQL_SOCKET`, `MYSQL_USER` e `MYSQL_DATABASE` conferidos pelo operador. Produção não aceita `REMOTE_DATABASE_URL` como substituto. Ausência de configuração bloqueia a execução. O socket nunca é escolhido apenas por existir no disco.
 
 ## Idempotencia
 
 O sync pode ser executado mais de uma vez. A chave de e-book e `sourceId`; cursos da Academia sao descritos por `courseSlug`, modulos por `moduleTitle/moduleOrder` e aulas/materiais por `lessonOrder` e `sourceId`.
 
-Em registros ja existentes, o script atualiza o conteudo empacotado para os valores canonicos do repositorio: `sourceFile`, `sourcePath`, `title`, `summary`, `status`, `publishedAt` e o metadata `codigo-lucrativo-academy`. Quando ja existe corpo HTML, o script troca apenas o `<meta>` controlado e preserva o restante do HTML. Novos e-books padrao entram como `published`.
+Em registros ja existentes, o script atualiza o conteudo empacotado para os valores canonicos do repositorio: `sourceFile`, `sourcePath`, `title`, `status`, `publishedAt` e o metadata `codigo-lucrativo-academy`. Quando ja existe corpo HTML, o script troca apenas o `<meta>` controlado e preserva o restante do HTML. Resumo existente não vazio e corpo HTML são curadoria preservada; o resumo versionado preenche apenas registros novos/vazios. Metadados extras fora dos campos canônicos também são preservados. Novos e-books padrao entram como `published`, sem inventar um administrador `createdBy=1`.
 
 O script valida antes de escrever:
 
@@ -54,13 +48,13 @@ O script valida antes de escrever:
 
 ## Backup e rollback
 
-Antes de `--apply`, o script gera backup JSON em:
+Em produção, `CONTENT_SYNC_BACKUP_DIR` deve apontar para diretório absoluto privado (0700), fora de todas as releases e do storage servido pela aplicação. Exemplo: `/var/lib/pagina-lucrativa/content-backups`. Diretório inseguro, symlink para release/storage ou ausência da variável bloqueiam `--apply` antes de conectar. Não use `DEPLOY_ROOT/storage/backups`: esse storage pode ser acessível pelo proxy HTTP.
 
-```text
-backups/packaged-content-sync-YYYYMMDD-HHMMSS.json
-```
+Backups JSON v2 têm nomes únicos, criação exclusiva e permissão 0600. O arquivo é sincronizado em disco antes da primeira escrita. Contém `rows` anteriores e `plannedInsertedSourceIds`; não contém URL/credenciais de conexão. A release pode ser removida sem apagar o backup.
 
-Rollback manual: use o backup para restaurar `htmlContent`, `sourceFile`, `sourcePath`, `title`, `summary`, `status` e `publishedAt` dos registros afetados.
+O apply exige InnoDB, usa transação SERIALIZABLE e lê os registros com `FOR UPDATE`. Falha antes do commit reverte todas as escritas. Não são executados DDL ou migrations. Mantenha edições administrativas de conteúdo suspensas durante a janela revisada de sync; locks podem atrasar temporariamente essas edições.
+
+Rollback após commit é uma operação separada, expressamente autorizada: copie primeiro o estado atual, confronte o backup com alterações posteriores, restaure apenas os registros afetados e avalie individualmente os IDs inseridos. Não exclua automaticamente linhas com progresso/referências. Backups antigos eram uma lista simples; v2 usa `rows`. Nunca publique backups no Git. Rollback do symlink de código não reverte o banco.
 
 ## Exportacao da Academia atual
 
@@ -92,4 +86,17 @@ Em VPS de producao, aplique apenas depois de conferir o dry-run:
 node scripts/sync-packaged-content.mjs --apply
 ```
 
-O `--apply` cria backup JSON antes de atualizar os registros empacotados afetados. O deploy normal continua publicando apenas o codigo; este bootstrap deve ser executado como etapa operacional controlada.
+O `--apply` cria backup JSON antes de atualizar os registros empacotados afetados. O deploy verifica `--check` antes de ativar e após a ativação, e nunca executa `--apply`. Divergência bloqueia a ativação; na verificação posterior, aciona o rollback de código. O estado real da VPS ainda precisa ser validado em janela autorizada.
+
+## Gate obrigatório e operação revisada
+
+- `--validate-only`: confere manifestos, sourceIds e assinatura dos PDFs, sem conexão com banco; usado pelo CI.
+- `--dry-run` (padrão): transação READ ONLY, relatório, sem escrita de dados ou backup.
+- `--check`: mesmo relatório de leitura; sai com 0 quando não há mudanças e 3 quando há divergência. Outros erros saem com 1.
+- `--apply`: somente por comando autorizado separado; backup persistente e transação. Não autoriza schema, migrations ou deploy.
+
+Em uma implantação futura autorizada: validar a release candidata, conferir a SHA e o schema em relação à release ativa, provisionar as configurações persistentes, fazer dry-run da candidata, revisar/exportar curadoria administrativa e aprovar o sync. Após apply, executar `--check` novamente e exigir zero inserções/atualizações. Só então a ativação pode continuar; verificar `/api/healthz` local/público e os conteúdos esperados no navegador. Se os metadados novos forem incompatíveis com o código ativo, planejar manutenção e rollback do banco antes do apply.
+
+O deploy carrega o arquivo persistente `DEPLOY_ROOT/.env` com `node --env-file`, sem executar o conteúdo como shell. Pode ser indicado outro caminho absoluto via `DEPLOY_RUNTIME_ENV_FILE`. Esse arquivo e as variáveis herdadas precisam corresponder à configuração do serviço systemd; conferir também eventuais overrides `EBOOK_IMPORT_ROOT`/`ACADEMY_MANIFEST_PATH`. O processo de smoke deve conseguir ler os segredos e gravar o diretório de auditoria, sem relaxar permissões para passar na checagem.
+
+`--check` confirma os campos canônicos definidos pelo sync; não comprova ausência de órfãos, validade de credenciais, renderização visual, igualdade de resumos curados ou equivalência de todo o banco. A aplicação em produção deixa de inserir e-books ao atender leituras de membros.

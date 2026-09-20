@@ -1,20 +1,14 @@
 import { resolveDatabaseConfig } from "../shared/databaseConfig.mjs";
 import mysql from "mysql2/promise";
 import "dotenv/config";
-import { readFile, stat } from "node:fs/promises";
+import { open, readFile, realpath } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
+import { parseArgs } from "node:util";
 import { createContentBackup, resolveContentBackupDir } from "./lib/content-sync-backup.mjs";
 import path from "node:path";
 import process from "node:process";
 
-const apply = process.argv.includes("--apply");
-const mode = apply ? "apply" : "dry-run";
 const metadataName = "codigo-lucrativo-academy";
-const projectRoot = process.cwd();
-const ebookImportRoot = process.env.EBOOK_IMPORT_ROOT || path.resolve(projectRoot, "ebook-import");
-const ebookManifestPath = path.join(ebookImportRoot, "ebook-manifest.tsv");
-const academyManifestPath = process.env.ACADEMY_MANIFEST_PATH || path.resolve(projectRoot, "content-seeds/academy-courses.json");
-const catalogPath = path.resolve(projectRoot, "shared/ebookLibraryCatalog.ts");
-const pdfRoot = path.resolve(ebookImportRoot, "fontes_importados");
 
 function parseTsv(text) {
   const [headerLine, ...lines] = text.split(/\r?\n/);
@@ -48,9 +42,6 @@ function loadCanonicalCategories(source) {
   return new Map([...source.matchAll(/"([0-9a-f]{16})"\s*:\s*"([^"]+)"/g)].map(match => [match[1], match[2]]));
 }
 
-function connectionConfig() {
-  return resolveDatabaseConfig().connection;
-}
 
 function slugify(value) {
   return value
@@ -141,15 +132,18 @@ function equivalentMetadata(current, expected) {
   return true;
 }
 
-async function assertPdfExists(row) {
+async function assertPdfExists(row, pdfRoot) {
+  if (!/^[0-9a-f]{16}$/.test(row.sourceId) || !row.sourceFile) throw new Error("Registro inválido no manifesto de e-books.");
   if (!row.sourcePath.toLowerCase().endsWith(".pdf")) throw new Error(`Fonte nao e PDF para ${row.sourceId}: ${row.sourcePath}`);
   const resolved = path.resolve(pdfRoot, row.sourceId, ...sourcePathSegments(row.sourcePath));
-  const relative = path.relative(pdfRoot, resolved);
+  const relative = path.relative(path.join(pdfRoot, row.sourceId), await realpath(resolved));
   if (relative.startsWith("..") || path.isAbsolute(relative)) throw new Error(`Caminho de PDF invalido para ${row.sourceId}`);
-  const pdfStat = await stat(resolved).catch(() => null);
-  if (!pdfStat?.isFile() || pdfStat.size <= 0) throw new Error(`PDF empacotado nao encontrado para ${row.sourceId}: ${resolved}`);
-  const signature = (await readFile(resolved)).subarray(0, 5).toString("ascii");
-  if (signature !== "%PDF-") throw new Error(`Arquivo empacotado nao e PDF valido para ${row.sourceId}: ${resolved}`);
+  const file = await open(resolved, "r");
+  try {
+    const signature = Buffer.alloc(5);
+    await file.read(signature, 0, 5, 0);
+    if (signature.toString("ascii") !== "%PDF-") throw new Error(`Arquivo empacotado nao e PDF valido para ${row.sourceId}`);
+  } finally { await file.close(); }
 }
 
 function assertUniqueEbookManifestRows(rows) {
@@ -172,6 +166,7 @@ function assertUniqueEbookManifestRows(rows) {
 }
 
 function normalizeAcademyManifest(raw, knownSourceIds) {
+  if (!raw || !Array.isArray(raw.courses)) throw new Error("Manifesto da Academia inválido: courses deve ser uma lista.");
   const entries = [];
   const coursesOutput = [];
   const usedCourseSlugs = new Set();
@@ -242,127 +237,179 @@ function normalizeAcademyManifest(raw, knownSourceIds) {
   };
 }
 
-async function createBackup(rows, insertedSourceIds) {
-  return createContentBackup(rows, insertedSourceIds);
+export async function runContentSync({
+  apply = false, check = false, validateOnly = false,
+  projectRoot = process.cwd(), env = process.env, connect = mysql.createConnection,
+} = {}) {
+  if ([apply, check, validateOnly].filter(Boolean).length > 1) throw new Error("Modos de sync incompatíveis.");
+  const mode = apply ? "apply" : validateOnly ? "validate-only" : check ? "check" : "dry-run";
+  const ebookImportRoot = env.EBOOK_IMPORT_ROOT || path.resolve(projectRoot, "ebook-import");
+  const ebookManifestPath = path.join(ebookImportRoot, "ebook-manifest.tsv");
+  const academyManifestPath = env.ACADEMY_MANIFEST_PATH || path.resolve(projectRoot, "content-seeds/academy-courses.json");
+  const catalogPath = path.resolve(projectRoot, "shared/ebookLibraryCatalog.ts");
+  const pdfRoot = await realpath(path.resolve(ebookImportRoot, "fontes_importados"));
+  const [ebookManifestText, catalogSource, academyManifestText] = await Promise.all([
+    readFile(ebookManifestPath, "utf8"),
+    readFile(catalogPath, "utf8"),
+    readFile(academyManifestPath, "utf8"),
+  ]);
+
+  const manifestRows = parseTsv(ebookManifestText);
+  if (!manifestRows.length) throw new Error("Manifesto de e-books vazio.");
+  assertUniqueEbookManifestRows(manifestRows);
+  const canonicalCategories = loadCanonicalCategories(catalogSource);
+  const academyManifest = JSON.parse(academyManifestText);
+  const academyManifestData = normalizeAcademyManifest(academyManifest, new Set(manifestRows.map(row => row.sourceId)));
+  const academyBySourceId = academyManifestData.bySourceId;
+  await Promise.all(manifestRows.map(row => assertPdfExists(row, pdfRoot)));
+  if (validateOnly) return { mode, totalManifestEbooks: manifestRows.length, ...academyManifestData.stats };
+  const config = resolveDatabaseConfig(env);
+  if (apply) await resolveContentBackupDir(env, projectRoot);
+
+  const db = await connect(config.connection);
+  let transactionOpen = false;
+  try {
+    if (apply) {
+      const [tables] = await db.execute("SELECT ENGINE AS engine FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'ebooks'");
+      if (tables[0]?.engine?.toUpperCase() !== "INNODB") throw new Error("Apply exige tabela ebooks InnoDB para rollback transacional.");
+    }
+    await db.execute(apply ? "SET TRANSACTION ISOLATION LEVEL SERIALIZABLE" : "SET TRANSACTION ISOLATION LEVEL REPEATABLE READ");
+    await db.execute(apply ? "START TRANSACTION" : "START TRANSACTION READ ONLY");
+    transactionOpen = true;
+    const [existingRows] = await db.execute("SELECT id, sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, publishedAt FROM ebooks ORDER BY id" + (apply ? " FOR UPDATE" : ""));
+    const knownSourceIds = new Set(manifestRows.map(row => row.sourceId));
+    const existingIds = new Set();
+    for (const row of existingRows) {
+      if (knownSourceIds.has(row.sourceId) && existingIds.has(row.sourceId)) throw new Error("sourceId duplicado no banco; reconciliar antes do sync.");
+      existingIds.add(row.sourceId);
+    }
+    const existingBySourceId = new Map(existingRows.map(row => [row.sourceId, row]));
+    const plannedInserts = [];
+    const plannedUpdates = [];
+    const seen = new Set();
+    const duplicateSourceIds = [];
+    const distribution = new Map();
+    let mappedCategories = 0;
+    let categoryCorrections = 0;
+    let academyMaterials = 0;
+
+    for (const row of manifestRows) {
+      if (seen.has(row.sourceId)) duplicateSourceIds.push(row.sourceId);
+      seen.add(row.sourceId);
+      const canonicalCategory = canonicalCategories.get(row.sourceId) || row.libraryCategory;
+      if (canonicalCategory) {
+        mappedCategories++;
+        distribution.set(canonicalCategory, (distribution.get(canonicalCategory) || 0) + 1);
+      }
+      const expectedMetadata = metadataFromManifest(row, canonicalCategory, academyBySourceId);
+      if (expectedMetadata.usage === "course" || expectedMetadata.usage === "both") academyMaterials++;
+      const title = displayTitle(row.title, row.sourceFile);
+      const current = existingBySourceId.get(row.sourceId);
+      const summary = current?.summary?.trim() ? current.summary : row.summary?.trim() || `PDF empacotado da biblioteca Codigo Lucrativo: ${title}.`;
+      const fallbackHtml = writeMetadata("", expectedMetadata, title);
+
+      if (!current) {
+        plannedInserts.push({ ...row, title, summary, htmlContent: fallbackHtml });
+        continue;
+      }
+
+      const currentMetadata = readMetadata(current.htmlContent || "");
+      // Preserve extra admin metadata; replace only fields owned by the manifests.
+      const reconciledMetadata = { ...(currentMetadata ?? {}) };
+      for (const key of ["usage", "libraryCategory", "courseTitle", "courseSlug", "courseCategory", "courseOrder", "moduleTitle", "moduleOrder", "lessonOrder", "level", "coursePublished"]) delete reconciledMetadata[key];
+      Object.assign(reconciledMetadata, expectedMetadata);
+      const metadataDiffers = !equivalentMetadata(currentMetadata, reconciledMetadata);
+      const currentCategory = currentMetadata?.libraryCategory || "";
+      if (canonicalCategory && currentCategory !== canonicalCategory) categoryCorrections++;
+      const nextHtmlContent = metadataDiffers ? writeMetadata(current.htmlContent || "", reconciledMetadata, title) : current.htmlContent;
+      const needsUpdate =
+        metadataDiffers ||
+        current.sourceFile !== row.sourceFile ||
+        current.sourcePath !== row.sourcePath ||
+        current.title !== title ||
+        (current.summary || "") !== summary ||
+        current.status !== "published" ||
+        !current.publishedAt;
+
+      if (needsUpdate) {
+        plannedUpdates.push({
+          id: current.id,
+          sourceId: row.sourceId,
+          sourceFile: row.sourceFile,
+          sourcePath: row.sourcePath,
+          title,
+          summary,
+          htmlContent: nextHtmlContent,
+        });
+      }
+    }
+
+    let backupPath = null;
+    if (apply && (plannedInserts.length || plannedUpdates.length)) {
+      backupPath = await createContentBackup(existingRows.filter(row => seen.has(row.sourceId)), plannedInserts.map(row => row.sourceId), { env, projectRoot });
+      for (const row of plannedInserts) {
+        await db.execute(
+          `INSERT INTO ebooks (sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, createdBy, publishedAt)
+           VALUES (?, ?, ?, ?, ?, ?, 'published', NULL, NOW())`,
+          [row.sourceId, row.sourceFile, row.sourcePath, row.title, row.summary, row.htmlContent],
+        );
+      }
+      for (const row of plannedUpdates) {
+        await db.execute(
+          "UPDATE ebooks SET sourceFile = ?, sourcePath = ?, title = ?, summary = ?, htmlContent = ?, status = 'published', publishedAt = COALESCE(publishedAt, NOW()) WHERE id = ?",
+          [row.sourceFile, row.sourcePath, row.title, row.summary, row.htmlContent, row.id],
+        );
+      }
+    }
+
+    if (apply) await db.commit();
+    else await db.rollback();
+    transactionOpen = false;
+    const result = {
+      mode,
+      databaseMode: config.mode,
+      hasChanges: Boolean(plannedInserts.length || plannedUpdates.length),
+      totalManifestEbooks: manifestRows.length,
+      totalDatabaseEbooks: existingRows.length + (apply ? plannedInserts.length : 0),
+      totalSourceIdsSynced: manifestRows.length,
+      totalCanonicalCategories: canonicalCategories.size,
+      totalMappedCategories: mappedCategories,
+      totalCategoryCorrections: categoryCorrections,
+      totalPlannedInserts: plannedInserts.length,
+      totalPlannedUpdates: plannedUpdates.length,
+      totalUpdated: apply ? plannedInserts.length + plannedUpdates.length : 0,
+      totalIgnoredDatabaseRows: existingRows.filter(row => !seen.has(row.sourceId)).length,
+      totalDuplicateSourceIds: duplicateSourceIds.length,
+      duplicateSourceIds,
+      totalVersionedCourses: academyManifestData.stats.totalVersionedCourses,
+      totalVersionedModules: academyManifestData.stats.totalVersionedModules,
+      totalVersionedLessons: academyManifestData.stats.totalVersionedLessons,
+      totalVersionedAcademyMaterials: academyMaterials,
+      totalVersionedAcademySourceIds: academyBySourceId.size,
+      backupPath,
+      finalLibraryDistribution: Object.fromEntries([...distribution.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"))),
+    };
+    return result;
+  } finally {
+    try { if (transactionOpen) await db.rollback(); }
+    finally { await db.end(); }
+  }
 }
 
-const [ebookManifestText, catalogSource, academyManifestText] = await Promise.all([
-  readFile(ebookManifestPath, "utf8"),
-  readFile(catalogPath, "utf8"),
-  readFile(academyManifestPath, "utf8").catch(() => '{"courses":[]}'),
-]);
-
-const manifestRows = parseTsv(ebookManifestText);
-assertUniqueEbookManifestRows(manifestRows);
-const canonicalCategories = loadCanonicalCategories(catalogSource);
-const academyManifest = JSON.parse(academyManifestText);
-const academyManifestData = normalizeAcademyManifest(academyManifest, new Set(manifestRows.map(row => row.sourceId)));
-const academyBySourceId = academyManifestData.bySourceId;
-await Promise.all(manifestRows.map(assertPdfExists));
-
-if (apply) await resolveContentBackupDir();
-const db = await mysql.createConnection(connectionConfig());
-try {
-  const [existingRows] = await db.execute("SELECT id, sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, publishedAt FROM ebooks ORDER BY id");
-  const existingBySourceId = new Map(existingRows.map(row => [row.sourceId, row]));
-  const plannedInserts = [];
-  const plannedUpdates = [];
-  const seen = new Set();
-  const duplicateSourceIds = [];
-  const distribution = new Map();
-  let mappedCategories = 0;
-  let categoryCorrections = 0;
-  let academyMaterials = 0;
-
-  for (const row of manifestRows) {
-    if (seen.has(row.sourceId)) duplicateSourceIds.push(row.sourceId);
-    seen.add(row.sourceId);
-    const canonicalCategory = canonicalCategories.get(row.sourceId) || row.libraryCategory;
-    if (canonicalCategory) {
-      mappedCategories++;
-      distribution.set(canonicalCategory, (distribution.get(canonicalCategory) || 0) + 1);
-    }
-    const expectedMetadata = metadataFromManifest(row, canonicalCategory, academyBySourceId);
-    if (expectedMetadata.usage === "course" || expectedMetadata.usage === "both") academyMaterials++;
-    const title = displayTitle(row.title, row.sourceFile);
-    const summary = row.summary?.trim() || `PDF empacotado da biblioteca Codigo Lucrativo: ${title}.`;
-    const current = existingBySourceId.get(row.sourceId);
-    const fallbackHtml = writeMetadata("", expectedMetadata, title);
-
-    if (!current) {
-      plannedInserts.push({ ...row, title, summary, htmlContent: fallbackHtml });
-      continue;
-    }
-
-    const currentMetadata = readMetadata(current.htmlContent || "");
-    const metadataDiffers = !equivalentMetadata(currentMetadata, expectedMetadata);
-    const currentCategory = currentMetadata?.libraryCategory || "";
-    if (canonicalCategory && currentCategory !== canonicalCategory) categoryCorrections++;
-    const nextHtmlContent = metadataDiffers ? writeMetadata(current.htmlContent || "", expectedMetadata, title) : current.htmlContent;
-    const needsUpdate =
-      metadataDiffers ||
-      current.sourceFile !== row.sourceFile ||
-      current.sourcePath !== row.sourcePath ||
-      current.title !== title ||
-      (current.summary || "") !== summary ||
-      current.status !== "published" ||
-      !current.publishedAt;
-
-    if (needsUpdate) {
-      plannedUpdates.push({
-        id: current.id,
-        sourceId: row.sourceId,
-        sourceFile: row.sourceFile,
-        sourcePath: row.sourcePath,
-        title,
-        summary,
-        htmlContent: nextHtmlContent,
-      });
-    }
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  try {
+    const { values } = parseArgs({ options: {
+      apply: { type: "boolean" }, "dry-run": { type: "boolean" },
+      check: { type: "boolean" }, "validate-only": { type: "boolean" },
+    } });
+    if (Object.values(values).filter(Boolean).length > 1) throw new Error("Selecione apenas um modo de sync.");
+    const result = await runContentSync({ apply: values.apply, check: values.check, validateOnly: values["validate-only"] });
+    console.log(JSON.stringify(result, null, 2));
+    if (values.check && result.hasChanges) process.exitCode = 3;
+  } catch (error) {
+    // Driver errors may contain SQL/data or connection secrets. Only print our safe errors.
+    const message = error instanceof Error && !error.code && !error.sql ? error.message : "Falha de configuração, arquivo ou banco; confira o ambiente e os manifestos.";
+    console.error(`[Content sync] ${message}`);
+    process.exitCode = 1;
   }
-
-  let backupPath = null;
-  if (apply && (plannedInserts.length || plannedUpdates.length)) {
-    backupPath = await createBackup(existingRows.filter(row => seen.has(row.sourceId)), plannedInserts.map(row => row.sourceId));
-    for (const row of plannedInserts) {
-      await db.execute(
-        `INSERT INTO ebooks (sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, createdBy, publishedAt)
-         VALUES (?, ?, ?, ?, ?, ?, 'published', 1, NOW())
-         ON DUPLICATE KEY UPDATE sourceId = VALUES(sourceId)`,
-        [row.sourceId, row.sourceFile, row.sourcePath, row.title, row.summary, row.htmlContent],
-      );
-    }
-    for (const row of plannedUpdates) {
-      await db.execute(
-        "UPDATE ebooks SET sourceFile = ?, sourcePath = ?, title = ?, summary = ?, htmlContent = ?, status = 'published', publishedAt = COALESCE(publishedAt, NOW()) WHERE id = ?",
-        [row.sourceFile, row.sourcePath, row.title, row.summary, row.htmlContent, row.id],
-      );
-    }
-  }
-
-  const result = {
-    mode,
-    totalManifestEbooks: manifestRows.length,
-    totalDatabaseEbooks: existingRows.length + (apply ? plannedInserts.length : 0),
-    totalSourceIdsSynced: manifestRows.length,
-    totalCanonicalCategories: canonicalCategories.size,
-    totalMappedCategories: mappedCategories,
-    totalCategoryCorrections: categoryCorrections,
-    totalPlannedInserts: plannedInserts.length,
-    totalPlannedUpdates: plannedUpdates.length,
-    totalUpdated: apply ? plannedInserts.length + plannedUpdates.length : 0,
-    totalIgnoredDatabaseRows: existingRows.filter(row => !seen.has(row.sourceId)).length,
-    totalDuplicateSourceIds: duplicateSourceIds.length,
-    duplicateSourceIds,
-    totalVersionedCourses: academyManifestData.stats.totalVersionedCourses,
-    totalVersionedModules: academyManifestData.stats.totalVersionedModules,
-    totalVersionedLessons: academyManifestData.stats.totalVersionedLessons,
-    totalVersionedAcademyMaterials: academyMaterials,
-    totalVersionedAcademySourceIds: academyBySourceId.size,
-    backupPath,
-    finalLibraryDistribution: Object.fromEntries([...distribution.entries()].sort((a, b) => a[0].localeCompare(b[0], "pt-BR"))),
-  };
-  console.log(JSON.stringify(result, null, 2));
-} finally {
-  await db.end();
 }

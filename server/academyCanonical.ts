@@ -61,6 +61,8 @@ function withPackagedLibraryCategory<T extends LibraryCategorizedEbook>(ebook: T
 }
 
 async function ensurePackagedLibraryEbooks() {
+  // Production content is reconciled by the reviewed sync, never during a member read.
+  if (process.env.NODE_ENV === "production") return;
   if (!packagedLibrarySyncPromise) {
     packagedLibrarySyncPromise = (async () => {
       const db = await getDb();
