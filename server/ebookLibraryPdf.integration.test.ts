@@ -119,10 +119,10 @@ describe("Acervo de materiais de estudo em PDF", () => {
       "produto-digital-oferta-inicial",
       "conteudo-criativos-autoridade",
       "captacao-e-funis",
-      "seo-descoberta-organica",
       "email-e-relacionamento",
-      "trafego-e-divulgacao",
       "vendas-e-conversao",
+      "seo-descoberta-organica",
+      "trafego-e-divulgacao",
       "marketing-de-rede-e-escala",
     ]);
     expect(academy.courses.reduce((sum, course) => sum + course.modules.length, 0)).toBe(16);
