@@ -4,11 +4,11 @@ import { PACKAGED_EBOOK_FILE_ROUTE, getPackagedEbook, getPackagedEbooks } from "
 describe("biblioteca de e-books empacotada", () => {
   it("carrega os PDFs atualizados do manifesto versionado", async () => {
     const ebooks = await getPackagedEbooks();
-    expect(ebooks).toHaveLength(87);
+    expect(ebooks).toHaveLength(88);
     expect(ebooks.every(ebook => ebook.status === "published")).toBe(true);
     expect(ebooks.every(ebook => ebook.contentType === "application/pdf")).toBe(true);
     expect(ebooks.every(ebook => ebook.htmlContent.includes("codigo-lucrativo-academy"))).toBe(true);
-    expect(new Set(ebooks.map(ebook => ebook.sourceId)).size).toBe(87);
+    expect(new Set(ebooks.map(ebook => ebook.sourceId)).size).toBe(88);
   });
 
   it("localiza o material pelo ID estável usado pela biblioteca", async () => {
@@ -18,6 +18,15 @@ describe("biblioteca de e-books empacotada", () => {
     expect(first?.contentType).toBe("application/pdf");
     expect(first?.pdfUrl).toBe(`${PACKAGED_EBOOK_FILE_ROUTE}/1d8e16d1223794d3/source.pdf`);
     expect(await getPackagedEbook(0)).toBeNull();
+  });
+
+  it("inclui o glossário operacional como material empacotado", async () => {
+    const ebooks = await getPackagedEbooks();
+    const glossary = ebooks.find(ebook => ebook.sourceId === "a7f2c9e31b6d4a80");
+
+    expect(glossary).not.toBeUndefined();
+    expect(glossary?.title).toBe("Termos essenciais para começar");
+    expect(glossary?.pdfUrl).toBe(`${PACKAGED_EBOOK_FILE_ROUTE}/a7f2c9e31b6d4a80/source.pdf`);
   });
 
   it("usa PDF real como fonte única dos materiais empacotados", async () => {
