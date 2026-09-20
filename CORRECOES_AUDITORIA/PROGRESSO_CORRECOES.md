@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T11:06:45+00:00
+Última atualização: 2026-09-20T11:09:37+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -106,12 +106,12 @@ Gravidade: Alto
 Arquivo(s) auditado(s): .github/workflows/deploy-vps.yml; scripts/deploy-vps.sh; scripts/sync-packaged-content.mjs; server/academyCanonical.ts
 Problema confirmado?: Sim, desacoplamento no código confirmado. Divergência real do banco da VPS não foi afirmada: não houve acesso autorizado ao ambiente.
 Evidência no código atual: deploy-vps.sh não chamava sync; ensurePackagedLibraryEbooks fazia inserções durante leituras e só atualizava sourceId em duplicatas. Sync aceitava ausência do manifesto da Academia como lista vazia e sobrescrevia resumo curado.
-Correção aplicada: Sync exporta fluxo testável, oferece --validate-only sem banco e --check READ ONLY com saída 3 em divergência. Manifestos/PDFs obrigatórios e duplicidade no banco bloqueiam. Apply exige InnoDB, backup privado, leitura FOR UPDATE e transação SERIALIZABLE; rollback em erro, sem DDL. Preserva resumo e corpo HTML curados/metadados extras. Deploy verifica --check antes de ativar e depois, usa ambiente persistente e health de banco. Leitura de membro não insere conteúdo em produção.
+Correção aplicada: Sync com --validate-only e --check READ ONLY (saída 3 em divergência), manifestos/PDFs obrigatórios e recusa de duplicatas no banco. Apply InnoDB transacional/SERIALIZABLE/FOR UPDATE com backup privado anterior ao DML e curadoria preservada. Gate antes/depois da ativação, arquivo de ambiente persistente e health SELECT 1. Leituras em produção não inserem e-books. Na revisão final, fail() passou de exit 1 para return 1, permitindo disparar trap ERR/rollback nas falhas de health.
 Arquivos alterados: scripts/sync-packaged-content.mjs; scripts/deploy-vps.sh; scripts/manual-deploy-worker.sh; server/academyCanonical.ts; server/securityAudit.sync.test.ts; docs/CONTENT_BOOTSTRAP.md; este progresso.
 Testes executados: pnpm exec vitest run server/securityAudit.sync.test.ts server/securityAudit.backup.test.ts server/packagedEbooks.integration.test.ts server/ebookLibraryPdf.integration.test.ts server/adminManualDeploy.integration.test.ts server/publicHeroTitleDeploy.integration.test.ts; node scripts/sync-packaged-content.mjs --validate-only; bash -n scripts/deploy-vps.sh scripts/manual-deploy-worker.sh; git diff --check.
-Resultado dos testes: Correção do registro deste campo em 5cc5e4b: a rodada ampla NÃO passou integralmente. Foram 24 aprovados e 1 falho em 6 arquivos. Falha: server/ebookLibraryPdf.integration.test.ts esperava string ebook-category-sync- e contrato antigo do sync; causada pela mudança desta etapa, não preexistente. Os 6 testes funcionais do sync e 3 do backup passaram. --validate-only nos arquivos reais retornou 88 e-books, 11 cursos, 17 módulos e 30 aulas (corrige a contagem antiga 16/29 da auditoria). Bash e diff válidos. Sem banco real/deploy.
+Resultado dos testes: Validação final: pnpm check e pnpm build aprovados; pnpm test com 87 arquivos / 341 testes aprovados. Sync/backup testados com arquivos reais temporários e driver simulado; --validate-only nos PDFs/manifestos reais: 88 e-books, 11 cursos, 17 módulos e 30 aulas. Falha intermediária de assert textual obsoleto foi corrigida e reexecutada (ver histórico abaixo). Nenhum deploy, sync ou banco real utilizado.
 Pendências: Somente responsável autorizado pode conferir env do serviço/deploy, banco/schema real, dry-run da candidata, exportações e janela de sync; depois aprovar apply, exigir check zerado e validar health/conteúdo em VPS. O gate pode bloquear o próximo deploy até essa preparação. Rollback de código não reverte um sync previamente aprovado.
-Próximo passo: Ajustar assert textual obsoleto ao contrato atual, corrigir documentação pela contagem real e repetir a rodada; seguir HIGH-06 e médios.
+Próximo passo: Validação operacional autorizada: conferir env/schema/banco, exportar curadoria, revisar dry-run e aprovar eventual apply; exigir check zerado e health real antes de liberar produção.
 Commit relacionado: fix: bloquear ativacao com conteudo divergente e tornar sync transacional; SHA no checkpoint seguinte.
 
 ### HIGH-04
@@ -313,3 +313,11 @@ Próximo passo: Responsável autorizar e executar tratamento da credencial fora 
 Commit relacionado: fix: remover chave privada versionada; SHA registrado no próximo checkpoint.
 
 Nota de correção de evidência: o texto inicial do commit 5cc5e4b registrou incorretamente aprovação integral e contagem 16/29 antes de incorporar o resultado da rodada ampla. Corrigido explicitamente nesta continuidade: 24 passaram/1 falhou e contagem real 17 módulos/30 aulas. O histórico não foi reescrito; não houve execução na VPS.
+
+## Complemento confirmado de HIGH-03 — propagação de falha no deploy
+
+- Evidência: `fail()` no deploy usava `exit 1`, que encerra o shell sem disparar o trap ERR. Falha pós-ativação de health podia, portanto, pular o rollback definido no próprio script.
+- Correção cirúrgica: `return 1` preserva código de erro e deixa `set -e`/trap ERR encaminhar ao rollback.
+- Teste real de Bash isolado usa somente a declaração de fail() extraída do arquivo; erro simulado retorna 1 e dispara trap, sem executar deploy-vps.sh, systemctl, SSH ou VPS.
+- Validação após a mudança: suíte completa 87 arquivos / 341 testes aprovada. O typecheck e build haviam passado no mesmo código TypeScript; esta mudança adicional afeta apenas shell/teste. `bash -n` aprovado.
+- Startup do artefato compilado em NODE_ENV=production, sem DATABASE_URL/socket opt-in: recusado com exit 1 antes de abrir listener. Nenhuma tentativa de conexão real.

@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } from "node:fs";
 import path from "node:path";
 import os from "node:os";
 import { assertReleaseSchemaUnchanged } from "../scripts/check-release-schema.mjs";
@@ -21,6 +21,13 @@ function fixture() {
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });
 
 describe("HIGH-06: intervalo completo e schema da release ativa", () => {
+  it("propaga falha para o trap de rollback sem executar o script de deploy", () => {
+    const failDeclaration = readFileSync(path.resolve("scripts/deploy-vps.sh"), "utf8").split("\n").find(line => line.startsWith("fail()"));
+    expect(failDeclaration).toBeDefined();
+    const result = spawnSync("bash", ["-c", `set -Eeuo pipefail\n${failDeclaration}\ntrap 'echo rollback-invoked' ERR\nfalse || fail 'simulated health failure'\necho unreachable`], { encoding: "utf8" });
+    expect(result.status).toBe(1);
+    expect(result.stdout.trim()).toBe("rollback-invoked");
+  });
   it("aceita mudanças apenas de código e recusa base ausente/zero/desconhecida", () => {
     const f = fixture(); writeFileSync(path.join(f.root, "app.txt"), "code"); const target = f.commit();
     expect(f.check(f.base, target)).toBe(0);

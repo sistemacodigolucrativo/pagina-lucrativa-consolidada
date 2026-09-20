@@ -12,7 +12,7 @@ PNPM_BIN="${PNPM_BIN:-}"
 DEPLOY_INVOCATION="${DEPLOY_INVOCATION:-auto}"
 
 log() { printf '[deploy] %s\n' "$*"; }
-fail() { printf '[deploy] ERRO: %s\n' "$*" >&2; exit 1; }
+fail() { printf '[deploy] ERRO: %s\n' "$*" >&2; return 1; }
 
 [[ -n "$TARGET_SHA" ]] || fail "Informe o SHA alvo."
 [[ "$TARGET_SHA" =~ ^[0-9a-f]{40}$ ]] || fail "SHA alvo inválido."
