@@ -1,3 +1,4 @@
+import { resolveDatabaseConfig } from "../shared/databaseConfig.mjs";
 import mysql from "mysql2/promise";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -41,12 +42,7 @@ function writeMetadata(htmlContent, metadata) {
 }
 
 function connectionConfig() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  return {
-    socketPath: process.env.MYSQL_SOCKET || "/run/mysqld/mysqld.sock",
-    user: process.env.MYSQL_USER || "ubuntu",
-    database: process.env.MYSQL_DATABASE || "pagina_lucrativa",
-  };
+  return resolveDatabaseConfig().connection;
 }
 
 async function createBackup(rows) {

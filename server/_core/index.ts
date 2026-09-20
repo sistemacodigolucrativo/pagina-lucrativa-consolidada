@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { resolveDatabaseConfig } from "../../shared/databaseConfig.mjs";
+import { registerDatabaseHealth } from "./databaseHealth";
 import { assertAuditConfiguration } from "./adminAudit";
 import { assertCsrfConfiguration, csrfProtection } from "./csrf";
 import { assertProductionAuthConfig } from "./authConfig";
@@ -73,6 +75,8 @@ function registerPackagedEbookFiles(app: express.Express, appPrefix: string) {
 }
 
 async function startServer() {
+  const databaseConfig = resolveDatabaseConfig(process.env, { allowDisabled: true });
+  console.log(`[Database] Modo configurado: ${databaseConfig.mode}`);
   assertProductionAuthConfig();
   assertCsrfConfiguration();
   assertAuditConfiguration();
@@ -89,6 +93,7 @@ async function startServer() {
   registerPublicToastConfig(app, appPrefix);
   registerPublicSalesCopyConfig(app, appPrefix);
   registerDeployStatus(app, appPrefix);
+  registerDatabaseHealth(app, appPrefix);
   registerAdminManualDeploy(app, appPrefix);
   registerAdminMemberManagement(app, appPrefix);
   registerAdminContentManagement(app, appPrefix);

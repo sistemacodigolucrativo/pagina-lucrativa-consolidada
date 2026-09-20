@@ -1,7 +1,7 @@
 import { and, inArray, notInArray, desc, eq, gte, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
-import { existsSync } from "node:fs";
+import { resolveDatabaseConfig } from "../shared/databaseConfig.mjs";
 import {
   applications,
   applicationAccessTokens,
@@ -43,7 +43,6 @@ import { getPackagedEbookLibraryCategory } from "../shared/ebookLibraryCatalog";
 
 import { INTERNAL_CONTENT_CATEGORIES, MEMBER_CONTENT_KINDS, isMemberVisibleContent } from "./memberContentPolicy";
 
-const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
 const PAYMENT_ACCESS_TOKEN_TTL_MS = 30 * 60 * 1000;
 let _db: ReturnType<typeof drizzle> | null = null;
 type DbExecutor = Pick<ReturnType<typeof drizzle>, "select" | "insert" | "update">;
@@ -95,22 +94,16 @@ export function verifyPaymentAccessToken(token: string, trackingCode: string) {
 
 export async function getDb() {
   if (_db) return _db;
+  const config = resolveDatabaseConfig({ ...process.env, DATABASE_URL: ENV.databaseUrl }, { allowDisabled: true });
+  if (!config.connection) return null;
   try {
-    if (ENV.databaseUrl) {
-      _db = drizzle(ENV.databaseUrl);
-    } else if (existsSync(VPS_SOCKET_PATH)) {
-      _db = drizzle({
-        connection: {
-          socketPath: VPS_SOCKET_PATH,
-          user: "ubuntu",
-          database: "pagina_lucrativa",
-          connectionLimit: 5,
-        },
-      });
-    }
-  } catch (error) {
-    console.warn("[Database] Failed to connect:", error);
+    _db = typeof config.connection === "string"
+      ? drizzle(config.connection)
+      : drizzle({ connection: { ...config.connection, connectionLimit: 5 } });
+  } catch {
     _db = null;
+    if (ENV.isProduction) throw new Error("Não foi possível inicializar o banco configurado.");
+    console.warn("[Database] Não foi possível inicializar o banco configurado.");
   }
   return _db;
 }

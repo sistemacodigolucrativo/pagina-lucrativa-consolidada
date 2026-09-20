@@ -1,12 +1,11 @@
+import "dotenv/config";
+import { resolveDatabaseConfig } from "../shared/databaseConfig.mjs";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import mysql from "mysql2/promise";
 
 const importRoot = process.env.EBOOK_IMPORT_ROOT || path.resolve(process.cwd(), "ebook-import");
 const pdfRoot = path.resolve(importRoot, "fontes_importados");
-const mysqlSocket = process.env.MYSQL_SOCKET || "/run/mysqld/mysqld.sock";
-const mysqlUser = process.env.MYSQL_USER || "ubuntu";
-const mysqlDatabase = process.env.MYSQL_DATABASE || "pagina_lucrativa";
 const manifestPath = path.join(importRoot, "ebook-manifest.tsv");
 const manifest = await readFile(manifestPath, "utf8");
 const [headerLine, ...manifestLines] = manifest.split(/\r?\n/);
@@ -109,7 +108,7 @@ async function assertRealPackagedPdf(row) {
 
 await Promise.all(rows.map(assertRealPackagedPdf));
 
-const connection = await mysql.createConnection({ socketPath: mysqlSocket, user: mysqlUser, database: mysqlDatabase });
+const connection = await mysql.createConnection(resolveDatabaseConfig().connection);
 try {
   for (const row of rows) {
     const title = displayTitle(row.title, row.sourceFile);

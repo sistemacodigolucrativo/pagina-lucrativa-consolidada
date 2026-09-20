@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T03:09:51+00:00
+Última atualização: 2026-09-20T03:17:50+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -134,19 +134,19 @@ Commit relacionado: Registro inicial no commit que adiciona este arquivo; consul
 ### HIGH-05
 
 ID: HIGH-05
-Status: Pendente
+Status: Corrigido no código; validação operacional pendente
 Gravidade: Alto
 Área: Banco de dados / configuracao de ambiente
 Arquivo(s) auditado(s): server/db.ts; scripts/sync-packaged-content.mjs; drizzle.config.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: Parte do codigo aceita fallback para banco MySQL via socket local quando DATABASE_URL nao esta definido.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. getDb inferia socket pela existência do arquivo; sync/export/category sync faziam fallback e import usava socket diretamente.
+Evidência no código atual: shared/databaseConfig.mjs centraliza a escolha: DATABASE_URL explícita, ou ALLOW_VPS_SOCKET_DB=true. REMOTE_DATABASE_URL permanece apenas como compatibilidade de desenvolvimento. Startup de produção valida configuração antes de servir rotas.
+Correção aplicada: Removido fallback implícito em servidor e quatro scripts de conteúdo; erro de configuração não inclui credenciais; /api/healthz executa SELECT 1 e retorna apenas saúde/modo, 503 na falha.
+Arquivos alterados: shared/databaseConfig.mjs e .d.mts; server/db.ts; server/_core/env.ts, index.ts, databaseHealth.ts; scripts/sync-packaged-content.mjs, export-academy-content.mjs, sync-ebook-library-categories.mjs, import-ebooks.mjs; .env.example; server/securityAudit.database.test.ts; este progresso.
+Testes executados: pnpm install --frozen-lockfile; pnpm check; pnpm exec vitest run server/securityAudit.database.test.ts server/securityAudit.backup.test.ts server/securityAudit.credentials.test.ts server/securityAudit.content.test.ts.
+Resultado dos testes: Instalação concluída com pnpm 10.4.1, sem mudar lockfile; aviso de scripts de build de dependências ignorados. Typecheck aprovado. 17/17 testes aprovados em 4 arquivos; 9 cenários específicos de configuração/HTTP. Consultas com driver simulado, não banco real.
+Pendências: Configurar DATABASE_URL ou opt-in de socket no ambiente real, inclusive processo de deploy. Ainda não verificado na VPS, cujo acesso está proibido nesta etapa.
+Próximo passo: Concluir gate de conteúdo e validação global; validar conexão real apenas em etapa operacional autorizada.
+Commit relacionado: fix: exigir selecao explicita do banco; SHA registrado no checkpoint seguinte.
 
 ### HIGH-06
 

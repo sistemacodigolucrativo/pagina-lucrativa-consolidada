@@ -1,4 +1,4 @@
-const databaseUrl = process.env.DATABASE_URL ?? process.env.REMOTE_DATABASE_URL ?? "";
+const databaseUrl = process.env.DATABASE_URL || (process.env.NODE_ENV !== "production" ? process.env.REMOTE_DATABASE_URL : "") || "";
 
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",

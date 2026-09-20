@@ -1,3 +1,4 @@
+import { resolveDatabaseConfig } from "../shared/databaseConfig.mjs";
 import mysql from "mysql2/promise";
 import "dotenv/config";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -11,12 +12,7 @@ const outputPath = process.argv.includes("--output")
   : defaultOutput;
 
 function connectionConfig() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL;
-  return {
-    socketPath: process.env.MYSQL_SOCKET || "/run/mysqld/mysqld.sock",
-    user: process.env.MYSQL_USER || "ubuntu",
-    database: process.env.MYSQL_DATABASE || "pagina_lucrativa",
-  };
+  return resolveDatabaseConfig().connection;
 }
 
 function readMetadata(htmlContent) {
