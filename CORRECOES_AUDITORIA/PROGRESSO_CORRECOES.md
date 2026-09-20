@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T03:31:21+00:00
+Última atualização: 2026-09-20T11:04:45+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -185,36 +185,36 @@ Commit relacionado: Mesmo bloco de segurança; não houve execução financeira/
 ### MED-01
 
 ID: MED-01
-Status: Pendente
+Status: Corrigido
 Gravidade: Medio
 Área: Documentacao / operacao de conteudo
 Arquivo(s) auditado(s): README.md; docs/CONTENT_BOOTSTRAP.md; server/packagedEbooks.integration.test.ts; ebook-import/ebook-manifest.tsv
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: A documentacao ainda informa 87 e-books, enquanto o estado real testado e versionado esta em 88.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim; README/docs diziam 87 e-books e 16 módulos/29 aulas. A auditoria recebida também estava desatualizada nos totais da Academia.
+Evidência no código atual: --validate-only nos manifestos e PDFs da branch: 88 e-books, 11 cursos, 17 módulos e 30 aulas; o glossário acrescenta módulo/aula e os testes existentes já esperavam 17/30.
+Correção aplicada: Atualizadas contagens operacionais com base nos arquivos reais, além das instruções de banco, gate, backup e rollback.
+Arquivos alterados: README.md; docs/CONTENT_BOOTSTRAP.md; este progresso.
+Testes executados: node scripts/sync-packaged-content.mjs --validate-only; testes de catálogo e integridade empacotada.
+Resultado dos testes: Validação de arquivos sem banco aprovada; 21/21 na rodada schema/conteúdo que inclui ambos os testes de catálogo.
+Pendências: As contagens documentadas devem ser revisadas ao alterar manifestos; não são contagens observadas na VPS.
+Próximo passo: Manter --validate-only no CI e incluir contagens na revisão de mudanças de conteúdo.
+Commit relacionado: test: alinhar validacao do catalogo e documentacao operacional; SHA no checkpoint seguinte.
 
 ### MED-02
 
 ID: MED-02
-Status: Pendente
+Status: Corrigido
 Gravidade: Medio
 Área: Testes / manutencao
 Arquivo(s) auditado(s): server/packagedEbooks.integration.test.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: Testes usam numeros fixos para total de materiais.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim; packagedEbooks.integration.test.ts fixava 88 em dois asserts.
+Evidência no código atual: Teste agora lê o TSV independentemente e compara conjuntos completos de sourceIds/quantidade, exige manifesto não vazio e sem duplicatas, mantendo os materiais críticos e contrato PDF.
+Correção aplicada: Contagem derivada do manifesto e assert de correspondência integral. Ajustado o teste textual legado para backup compartilhado/transação; os comportamentos são cobertos pelos testes de sync/backup.
+Arquivos alterados: server/packagedEbooks.integration.test.ts; server/ebookLibraryPdf.integration.test.ts; este progresso.
+Testes executados: pnpm exec vitest run server/securityAudit.schema.test.ts server/ebookLibraryPdf.integration.test.ts server/packagedEbooks.integration.test.ts server/securityAudit.sync.test.ts server/adminManualDeploy.integration.test.ts.
+Resultado dos testes: 21/21 aprovados em 5 arquivos. Falha anterior nesta etapa: assert textual esperava ebook-category-sync- e fluxo antigo. Causa: nova implementação; expectativa atualizada preservando exigência de backup e ampliando teste comportamental. Não era falha preexistente.
+Pendências: A suíte geral será executada no fechamento.
+Próximo passo: Validar conjunto completo antes de publicar a branch.
+Commit relacionado: test: alinhar validacao do catalogo e documentacao operacional; SHA no checkpoint seguinte.
 
 ### MED-03
 

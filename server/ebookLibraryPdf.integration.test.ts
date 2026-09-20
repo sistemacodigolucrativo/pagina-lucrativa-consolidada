@@ -90,14 +90,15 @@ describe("Acervo de materiais de estudo em PDF", () => {
     expect(syncScript).toContain("metadata.usage = metadata.usage === \"both\" ? \"both\" : \"library\"");
     expect(syncScript).toContain("metadata.libraryCategory = canonicalCategory");
     expect(syncScript).toContain("UPDATE ebooks SET htmlContent = ? WHERE id = ?");
-    expect(syncScript).toContain("ebook-category-sync-");
+    expect(syncScript).toContain("createContentBackup(rows)");
 
-    expect(packagedSync).toContain('const mode = apply ? "apply" : "dry-run"');
+    expect(packagedSync).toContain('START TRANSACTION READ ONLY');
     expect(packagedSync).toContain("ebook-manifest.tsv");
     expect(packagedSync).toContain("shared/ebookLibraryCatalog.ts");
     expect(packagedSync).toContain("content-seeds/academy-courses.json");
-    expect(packagedSync).toContain("ON DUPLICATE KEY UPDATE sourceId = VALUES(sourceId)");
-    expect(packagedSync).toContain("packaged-content-sync-");
+    // Idempotence, rollback and backup-before-write are exercised by securityAudit.sync.test.ts.
+    expect(packagedSync).not.toContain("ON DUPLICATE KEY UPDATE sourceId = VALUES(sourceId)");
+    expect(packagedSync).toContain("createContentBackup(");
     expect(packagedSync).toContain("totalSourceIdsSynced");
     expect(packagedSync).toContain("totalVersionedModules");
     expect(packagedSync).toContain("totalVersionedLessons");

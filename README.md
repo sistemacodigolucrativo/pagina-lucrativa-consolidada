@@ -85,14 +85,14 @@ Esse script executa a geração e a aplicação das migrações configuradas pel
 
 Os e-books padrão, suas categorias e os cursos padrão da Academia são versionados no repositório. A fonte da verdade é o GitHub: `ebook-import/ebook-manifest.tsv`, `shared/ebookLibraryCatalog.ts`, os PDFs em `ebook-import/fontes_importados/` e `content-seeds/academy-courses.json`.
 
-O acervo padrão atual contém 87 e-books empacotados. A Academia usa 29 desses materiais em 11 cursos e 16 módulos progressivos, mantendo `usage: "both"` para que o mesmo PDF possa aparecer na Biblioteca e dentro do curso. Em uma VPS nova, depois de configurar o banco e aplicar o schema, use o bootstrap controlado:
+O acervo padrão atual contém 88 e-books empacotados. A Academia usa 30 desses materiais em 11 cursos e 17 módulos progressivos, mantendo `usage: "both"` para que o mesmo PDF possa aparecer na Biblioteca e dentro do curso. Em uma VPS nova, depois de configurar o banco e aplicar o schema, use o bootstrap controlado:
 
 ```bash
 node scripts/sync-packaged-content.mjs --dry-run
 node scripts/sync-packaged-content.mjs --apply
 ```
 
-Esse fluxo é idempotente e usa `sourceId` para não duplicar e-books. O deploy normal não executa importação destrutiva automaticamente. Detalhes de operação, backup, rollback e exportação de cursos estão em `docs/CONTENT_BOOTSTRAP.md`.
+Esse fluxo é idempotente e usa `sourceId` para não duplicar e-books. O deploy exige `--check` sem divergências antes e depois de ativar a release e não executa `--apply` automaticamente. Detalhes de operação, backup, rollback e exportação de cursos estão em `docs/CONTENT_BOOTSTRAP.md`.
 
 ## Testes e build
 

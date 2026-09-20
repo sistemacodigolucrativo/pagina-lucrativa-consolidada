@@ -1,14 +1,23 @@
 import { describe, expect, it } from "vitest";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 import { PACKAGED_EBOOK_FILE_ROUTE, getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
 
 describe("biblioteca de e-books empacotada", () => {
   it("carrega os PDFs atualizados do manifesto versionado", async () => {
     const ebooks = await getPackagedEbooks();
-    expect(ebooks).toHaveLength(88);
+    const lines = (await readFile(path.resolve(process.env.EBOOK_IMPORT_ROOT || "ebook-import", "ebook-manifest.tsv"), "utf8")).trim().split(/\r?\n/);
+    const idColumn = lines.shift()!.split("\t").indexOf("id");
+    expect(idColumn).toBeGreaterThanOrEqual(0);
+    const expectedIds = lines.filter(Boolean).map(line => line.split("\t")[idColumn]);
+    expect(expectedIds.length).toBeGreaterThan(0);
+    expect(new Set(expectedIds).size).toBe(expectedIds.length);
+    expect(ebooks).toHaveLength(expectedIds.length);
+    expect(ebooks.map(ebook => ebook.sourceId).sort()).toEqual([...expectedIds].sort());
     expect(ebooks.every(ebook => ebook.status === "published")).toBe(true);
     expect(ebooks.every(ebook => ebook.contentType === "application/pdf")).toBe(true);
     expect(ebooks.every(ebook => ebook.htmlContent.includes("codigo-lucrativo-academy"))).toBe(true);
-    expect(new Set(ebooks.map(ebook => ebook.sourceId)).size).toBe(88);
+    expect(new Set(ebooks.map(ebook => ebook.sourceId)).size).toBe(expectedIds.length);
   });
 
   it("localiza o material pelo ID estável usado pela biblioteca", async () => {

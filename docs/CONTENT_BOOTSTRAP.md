@@ -15,8 +15,8 @@ Dados de usuarios, pagamentos, afiliados, progresso de leitura, progresso de cur
 
 - E-books empacotados: 88.
 - Cursos padrao da Academia: 11.
-- Modulos padrao da Academia: 16.
-- Aulas/materiais padrao da Academia: 29.
+- Modulos padrao da Academia: 17.
+- Aulas/materiais padrao da Academia: 30.
 
 Os cursos seguem a progressao: fundamentos, negocio digital, marca, produto, conteudo, funis, SEO, e-mail, trafego, vendas e escala. Cada aula da Academia aponta para um `sourceId` existente no manifesto de e-books. Materiais usados em curso ficam com `usage: "both"` para continuarem disponiveis tambem na Biblioteca.
 
@@ -100,3 +100,29 @@ Em uma implantação futura autorizada: validar a release candidata, conferir a 
 O deploy carrega o arquivo persistente `DEPLOY_ROOT/.env` com `node --env-file`, sem executar o conteúdo como shell. Pode ser indicado outro caminho absoluto via `DEPLOY_RUNTIME_ENV_FILE`. Esse arquivo e as variáveis herdadas precisam corresponder à configuração do serviço systemd; conferir também eventuais overrides `EBOOK_IMPORT_ROOT`/`ACADEMY_MANIFEST_PATH`. O processo de smoke deve conseguir ler os segredos e gravar o diretório de auditoria, sem relaxar permissões para passar na checagem.
 
 `--check` confirma os campos canônicos definidos pelo sync; não comprova ausência de órfãos, validade de credenciais, renderização visual, igualdade de resumos curados ou equivalência de todo o banco. A aplicação em produção deixa de inserir e-books ao atender leituras de membros.
+
+
+## Curadoria administrativa e fonte da verdade (MED-04)
+
+| Campo | Regra operacional |
+| --- | --- |
+| sourceId, arquivo/caminho PDF, título e categoria canônica | Alterar no manifesto/catálogo/PDF do Git, revisar e sincronizar. |
+| Estrutura, ordem, uso Biblioteca/Academia e publicação do curso | Fonte canônica no manifesto da Academia. Alteração temporária pelo painel exige exportação revisada e commit antes de novo sync. |
+| Resumo existente e corpo HTML fora do meta canônico | Curadoria local preservada pelo sync. Para virar conteúdo padrão, revisar e transportar expressamente para a fonte versionada adequada. |
+| Metadados extras fora dos campos canônicos | Preservados no sync; não são automaticamente promovidos a manifesto. |
+
+A interface ainda permite alterar publicação/metadados canônicos no banco. Isso não realiza commit nem exportação automaticamente. O operador deve suspender edições, exportar, comparar com Git, revisar IDs/status e versionar as mudanças aceitas antes de autorizar apply. O export passa a conservar `published: false`; basta uma aula do grupo despublicada para exportar o curso como despublicado, como no comportamento de leitura da Academia.
+
+O export da Academia cobre a estrutura e a publicação de cursos. Títulos/arquivos/categorias da Biblioteca continuam exigindo revisão de `ebook-manifest.tsv` e `shared/ebookLibraryCatalog.ts`; não basta copiar cegamente o JSON exportado. O gate `--check` identifica divergências canônicas, mas não garante que uma alteração administrativa tenha sido promovida corretamente ao Git.
+
+## Verificação relacional antes de qualquer evolução de schema (MED-03)
+
+Existe um diagnóstico de leitura, a ser executado somente em ambiente autorizado com credencial de consulta:
+
+```bash
+node scripts/check-relational-integrity.mjs
+```
+
+Ele usa transação READ ONLY, retorna apenas contagens de referências sem pai em 19 relações/variantes críticas e não emite DDL/DML. Sai com 2 quando encontra referências pendentes, 1 em erro/incompletude e 0 quando as relações examinadas não apresentam referências faltantes. Nenhum código de saída atesta a integridade total do banco.
+
+`courseProgress.courseId` tem múltiplos significados: curso legado, grupo sintético da Academia ou ID codificado de leitura de e-book. A faixa de grupos 900000000–1499999999 exige reconciliação com slugs; não se deve criar FK ingênua para `courses.id`. Referências históricas de autoria podem exigir preservação em vez de exclusão. Antes de FKs, examinar os dados reais, definir política por relação, obter autorização explícita de schema, backup e plano de rollback. Nada disso foi executado nesta etapa.
