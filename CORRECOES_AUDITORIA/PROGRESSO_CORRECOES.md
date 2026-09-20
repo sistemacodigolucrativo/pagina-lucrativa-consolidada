@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T11:04:45+00:00
+Última atualização: 2026-09-20T11:05:51+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -219,19 +219,19 @@ Commit relacionado: test: alinhar validacao do catalogo e documentacao operacion
 ### MED-03
 
 ID: MED-03
-Status: Pendente
+Status: Avaliado; diagnóstico implementado; schema e inspeção real bloqueados
 Gravidade: Medio
 Área: Integridade relacional / banco
 Arquivo(s) auditado(s): drizzle/schema.ts; server/db.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: O schema modela muitas relacoes por colunas de id, mas nao ha evidencias de chaves estrangeiras fortes no schema Drizzle para varias tabelas operacionais.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Ausência de FKs declaradas para relações relevantes confirmada no schema versionado; ausência de FKs/órfãos no banco vivo não foi verificada.
+Evidência no código atual: drizzle/schema.ts define IDs e índices, enquanto purgeMember faz limpeza manual. courseProgress.courseId usa IDs de cursos, grupos sintéticos e leitura codificada de e-books; FK direta para courses seria incorreta.
+Correção aplicada: Verificador de 19 relações/variantes críticas com READ ONLY, apenas contagens, falha explícita em diagnóstico incompleto e separação das faixas de curso/progresso. Sem correção automática de dados ou schema.
+Arquivos alterados: scripts/check-relational-integrity.mjs; server/securityAudit.integrity.test.ts; docs/CONTENT_BOOTSTRAP.md (25e8d7b); este progresso.
+Testes executados: pnpm exec vitest run server/securityAudit.publicSurface.test.ts server/securityAudit.integrity.test.ts server/securityAudit.academyExport.test.ts.
+Resultado dos testes: 6/6 aprovados em 3 arquivos; 2 cenários do verificador com driver simulado confirmam read-only, contagens, faixas de IDs e cleanup em falha. Nenhuma consulta à VPS.
+Pendências: Executar diagnóstico autorizado com credencial de leitura; reconciliar referências históricas e IDs sintéticos. Qualquer FK/schema exige autorização explícita, backup e planejamento; continua bloqueado por regra do usuário.
+Próximo passo: Revisar resultados reais antes de decidir sobre FKs; nunca apagar automaticamente dados financeiros/progresso.
+Commit relacionado: feat: diagnosticar integridade relacional sem escrita; SHA no checkpoint seguinte.
 
 ### MED-04
 
