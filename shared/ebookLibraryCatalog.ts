@@ -86,6 +86,7 @@ export const PACKAGED_EBOOK_LIBRARY_CATEGORIES = {
   "7f7433ede0efcba5": "Negócio digital",
   "4b91d757085a4226": "Ferramentas e modelos",
   "1e3dee972a45f36d": "Ferramentas e modelos",
+  "a7f2c9e31b6d4a80": "Ferramentas e modelos",
 } as const;
 
 export type PackagedEbookLibraryCategory = (typeof PACKAGED_EBOOK_LIBRARY_CATEGORIES)[keyof typeof PACKAGED_EBOOK_LIBRARY_CATEGORIES];

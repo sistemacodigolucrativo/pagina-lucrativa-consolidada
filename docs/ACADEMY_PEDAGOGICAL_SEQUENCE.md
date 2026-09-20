@@ -1,6 +1,6 @@
 # Sequência pedagógica da Academia
 
-Este documento registra a organização didática recomendada para a Academia e a especificação do módulo introdutório de glossário operacional.
+Este documento registra a organização didática aplicada para a Academia e a implementação do módulo introdutório de glossário operacional.
 
 ## Objetivo
 
@@ -32,33 +32,50 @@ Motivo: tráfego antes de conversão pode gerar audiência sem oferta, copy e es
 
 ## Glossário operacional da Academia
 
-O glossário deve ser o primeiro contato conceitual do aluno com a Academia.
+O glossário foi implementado como primeiro contato conceitual do aluno com a Academia.
 
-### Posição recomendada
+### Posição aplicada
 
 Curso: `Preparação e mentalidade de execução`
 
-Módulo sugerido:
+Módulo aplicado:
 
 ```text
 moduleOrder: 1
 title: Glossário operacional da Academia
 ```
 
-Os módulos atuais seriam deslocados depois dele:
+Os módulos anteriores foram deslocados depois dele:
 
 ```text
 moduleOrder: 2 — Clareza financeira e energia de execução
 moduleOrder: 3 — Aprendizagem e foco
 ```
 
-### Aula sugerida
+### Aula aplicada
 
 ```text
 title: Termos essenciais para começar
+sourceId: a7f2c9e31b6d4a80
 ```
 
-### Termos mínimos
+### Material empacotado
+
+O material próprio do glossário foi registrado em:
+
+```text
+ebook-import/ebook-manifest.tsv
+ebook-import/fontes_importados/a7f2c9e31b6d4a80/source.pdf
+shared/ebookLibraryCatalog.ts
+```
+
+Categoria de biblioteca:
+
+```text
+Ferramentas e modelos
+```
+
+### Termos mínimos cobertos
 
 - Lead
 - Conversão
@@ -73,17 +90,28 @@ title: Termos essenciais para começar
 - Recorrência
 - Autoridade
 
-## Restrição técnica importante
+## Validação técnica
 
-O importador da Academia exige que toda aula tenha um `sourceId` existente no `ebook-import/ebook-manifest.tsv`.
+O importador da Academia exige que toda aula tenha um `sourceId` existente no `ebook-import/ebook-manifest.tsv` e um PDF empacotado válido sob `ebook-import/fontes_importados/<sourceId>/source.pdf`.
 
-Por isso, o glossário não foi inserido diretamente no `content-seeds/academy-courses.json` nesta etapa. Antes disso, é necessário criar ou empacotar um material real para o glossário, registrar esse material no manifesto de e-books e somente depois vincular o `sourceId` na Academia.
+A implementação preserva essas regras:
 
-## Próxima implementação segura para o glossário
+1. O `sourceId` do glossário foi criado.
+2. O material foi registrado no manifesto de e-books.
+3. O PDF foi empacotado no diretório esperado.
+4. O catálogo canônico recebeu a categoria do novo material.
+5. O módulo foi inserido como primeiro módulo da Academia.
+6. Os testes foram atualizados para validar 88 materiais, 17 módulos e 30 aulas versionadas.
 
-1. Criar o conteúdo do material `Termos essenciais para começar`.
-2. Gerar/empacotar o arquivo correspondente na biblioteca.
-3. Adicionar o novo item ao `ebook-import/ebook-manifest.tsv` com `sourceId` próprio.
-4. Inserir o módulo `Glossário operacional da Academia` no início do curso `Preparação e mentalidade de execução`.
-5. Reordenar os módulos existentes do curso para preservar a progressão.
-6. Rodar o importador em modo dry-run antes de aplicar.
+## Procedimento pós-deploy
+
+Após o deploy da `main`, a VPS deve sincronizar o banco com o manifesto versionado:
+
+```bash
+cd /home/ubuntu/servicos/pagina-lucrativa/current
+node scripts/sync-packaged-content.mjs --dry-run
+node scripts/sync-packaged-content.mjs --apply
+node scripts/sync-packaged-content.mjs --dry-run
+```
+
+O último `dry-run` deve retornar `totalPlannedUpdates: 0` e `totalPlannedInserts: 0`.

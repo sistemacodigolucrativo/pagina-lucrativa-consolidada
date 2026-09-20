@@ -22,8 +22,8 @@ async function readManifestRows() {
 describe("Acervo de materiais de estudo em PDF", () => {
   it("mantém os e-books empacotados como PDFs reais e categorizados", async () => {
     const rows = await readManifestRows();
-    expect(rows).toHaveLength(87);
-    expect(Object.keys(PACKAGED_EBOOK_LIBRARY_CATEGORIES)).toHaveLength(87);
+    expect(rows).toHaveLength(88);
+    expect(Object.keys(PACKAGED_EBOOK_LIBRARY_CATEGORIES)).toHaveLength(88);
 
     const categories = new Set(rows.map(row => row.libraryCategory));
     expect(categories).toEqual(new Set([
@@ -107,7 +107,7 @@ describe("Acervo de materiais de estudo em PDF", () => {
     const academy = JSON.parse(academyManifest) as {
       courses: Array<{
         slug: string;
-        modules: Array<{ lessons: Array<{ sourceId: string; usage: string }> }>;
+        modules: Array<{ title: string; lessons: Array<{ sourceId: string; usage: string }> }>;
       }>;
     };
     const academyLessons = academy.courses.flatMap(course => course.modules.flatMap(module => module.lessons));
@@ -125,9 +125,11 @@ describe("Acervo de materiais de estudo em PDF", () => {
       "trafego-e-divulgacao",
       "marketing-de-rede-e-escala",
     ]);
-    expect(academy.courses.reduce((sum, course) => sum + course.modules.length, 0)).toBe(16);
-    expect(academyLessons).toHaveLength(29);
-    expect(new Set(academyLessons.map(lesson => lesson.sourceId)).size).toBe(29);
+    expect(academy.courses[0]?.modules[0]?.title).toBe("Glossario operacional da Academia");
+    expect(academy.courses[0]?.modules[0]?.lessons[0]?.sourceId).toBe("a7f2c9e31b6d4a80");
+    expect(academy.courses.reduce((sum, course) => sum + course.modules.length, 0)).toBe(17);
+    expect(academyLessons).toHaveLength(30);
+    expect(new Set(academyLessons.map(lesson => lesson.sourceId)).size).toBe(30);
     expect(academyLessons.every(lesson => rows.some(row => row.sourceId === lesson.sourceId))).toBe(true);
     expect(academyLessons.every(lesson => lesson.usage === "both")).toBe(true);
     expect(contentBootstrapDocs).toContain("node scripts/sync-packaged-content.mjs --dry-run");
