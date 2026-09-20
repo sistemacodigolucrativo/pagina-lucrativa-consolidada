@@ -10,8 +10,21 @@
       "courseOrder": 1,
       "modules": [
         {
-          "title": "Clareza financeira e energia de execucao",
+          "title": "Glossario operacional da Academia",
           "moduleOrder": 1,
+          "lessons": [
+            {
+              "title": "Termos essenciais para comecar",
+              "materialTitle": "Termos essenciais para comecar",
+              "sourceId": "a7f2c9e31b6d4a80",
+              "usage": "both",
+              "lessonOrder": 1
+            }
+          ]
+        },
+        {
+          "title": "Clareza financeira e energia de execucao",
+          "moduleOrder": 2,
           "lessons": [
             {
               "title": "Desenvolva O Seu QI Financeiro",
@@ -31,7 +44,7 @@
         },
         {
           "title": "Aprendizagem e foco",
-          "moduleOrder": 2,
+          "moduleOrder": 3,
           "lessons": [
             {
               "title": "Maneiras Poderosas De Avivar A Sua Memoria",
