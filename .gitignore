@@ -118,3 +118,9 @@ client/public/__manus__/version.json
 
 # Private operational audit logs
 .local-audit/
+
+# Private keys must never be versioned or packaged
+*.pem
+*.key
+id_rsa
+id_ed25519
