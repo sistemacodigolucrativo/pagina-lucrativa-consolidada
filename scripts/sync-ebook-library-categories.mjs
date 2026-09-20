@@ -1,6 +1,8 @@
 import { resolveDatabaseConfig } from "../shared/databaseConfig.mjs";
 import mysql from "mysql2/promise";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
+import "dotenv/config";
+import { createContentBackup, resolveContentBackupDir } from "./lib/content-sync-backup.mjs";
 import path from "node:path";
 import process from "node:process";
 
@@ -46,21 +48,12 @@ function connectionConfig() {
 }
 
 async function createBackup(rows) {
-  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+$/, "").replace("T", "-");
-  const backupDir = path.resolve(process.cwd(), "backups");
-  await mkdir(backupDir, { recursive: true });
-  const backupPath = path.join(backupDir, `ebook-category-sync-${stamp}.json`);
-  await writeFile(backupPath, JSON.stringify(rows.map(row => ({
-    id: row.id,
-    sourceId: row.sourceId,
-    title: row.title,
-    htmlContent: row.htmlContent,
-  })), null, 2));
-  return backupPath;
+  return createContentBackup(rows);
 }
 
 const catalogSource = await readFile(path.resolve(process.cwd(), "shared/ebookLibraryCatalog.ts"), "utf8");
 const canonicalCategories = loadCanonicalCategories(catalogSource);
+if (apply) await resolveContentBackupDir();
 const db = await mysql.createConnection(connectionConfig());
 
 try {

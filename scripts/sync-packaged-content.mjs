@@ -1,7 +1,8 @@
 import { resolveDatabaseConfig } from "../shared/databaseConfig.mjs";
 import mysql from "mysql2/promise";
 import "dotenv/config";
-import { mkdir, readFile, stat, writeFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { createContentBackup, resolveContentBackupDir } from "./lib/content-sync-backup.mjs";
 import path from "node:path";
 import process from "node:process";
 
@@ -241,23 +242,8 @@ function normalizeAcademyManifest(raw, knownSourceIds) {
   };
 }
 
-async function createBackup(rows) {
-  const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+$/, "").replace("T", "-");
-  const backupDir = path.resolve(projectRoot, "backups");
-  await mkdir(backupDir, { recursive: true });
-  const backupPath = path.join(backupDir, `packaged-content-sync-${stamp}.json`);
-  await writeFile(backupPath, JSON.stringify(rows.map(row => ({
-    id: row.id,
-    sourceId: row.sourceId,
-    sourceFile: row.sourceFile,
-    sourcePath: row.sourcePath,
-    title: row.title,
-    summary: row.summary,
-    status: row.status,
-    publishedAt: row.publishedAt,
-    htmlContent: row.htmlContent,
-  })), null, 2));
-  return backupPath;
+async function createBackup(rows, insertedSourceIds) {
+  return createContentBackup(rows, insertedSourceIds);
 }
 
 const [ebookManifestText, catalogSource, academyManifestText] = await Promise.all([
@@ -274,6 +260,7 @@ const academyManifestData = normalizeAcademyManifest(academyManifest, new Set(ma
 const academyBySourceId = academyManifestData.bySourceId;
 await Promise.all(manifestRows.map(assertPdfExists));
 
+if (apply) await resolveContentBackupDir();
 const db = await mysql.createConnection(connectionConfig());
 try {
   const [existingRows] = await db.execute("SELECT id, sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, publishedAt FROM ebooks ORDER BY id");
@@ -336,7 +323,7 @@ try {
 
   let backupPath = null;
   if (apply && (plannedInserts.length || plannedUpdates.length)) {
-    backupPath = await createBackup(existingRows.filter(row => seen.has(row.sourceId)));
+    backupPath = await createBackup(existingRows.filter(row => seen.has(row.sourceId)), plannedInserts.map(row => row.sourceId));
     for (const row of plannedInserts) {
       await db.execute(
         `INSERT INTO ebooks (sourceId, sourceFile, sourcePath, title, summary, htmlContent, status, createdBy, publishedAt)
