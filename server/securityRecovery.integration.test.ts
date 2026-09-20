@@ -16,7 +16,7 @@ describe("recuperação de senha por pergunta secreta", () => {
     expect(migration).toContain("CREATE TABLE IF NOT EXISTS `userSecurityRecovery`");
     expect(migration).toContain("UNIQUE KEY `user_security_recovery_user_unique` (`userId`)");
     expect(db).toContain("hashSecurityAnswer");
-    expect(db).toContain("securityAnswerHash: hashSecurityAnswer");
+    expect(db).toContain("securityAnswerHash: await hashSecurityAnswer");
     expect(db).not.toContain("securityAnswer: input.securityAnswer");
   });
 

@@ -35,7 +35,7 @@ import {
 import { OFFER_AMOUNT_CENTS, type ApplicationInput, type ApplicationPersonalizationInput, type ApplicationReceiptUpload, type MemberPaymentLinkInput, type PublicPaymentPage } from "@shared/applications";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
-import { hashPassword } from "./credentialHash";
+import { hashPassword, verifyPassword, needsPasswordRehash } from "./credentialHash";
 import { assertReceiptReviewAllowed, assertReceiptUploadAllowed, assertSponsorImmutable } from "./integrityGuards";
 import { getPublicSalesSection } from "../shared/publicSalesSections";
 import { getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
@@ -166,10 +166,15 @@ export async function authenticateLocalUser(identifier: string, password: string
   try {
     const user = await getUserByEmail(identifier);
     if (!user?.passwordHash) return null;
-    const candidateHash = hashPassword(password);
-    const stored = Buffer.from(user.passwordHash, "hex");
-    const candidate = Buffer.from(candidateHash, "hex");
-    if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) return null;
+    if (!await verifyPassword(password, user.passwordHash)) return null;
+    if (needsPasswordRehash(user.passwordHash)) {
+      const db = await getDb();
+      if (!db) return null;
+      const passwordHash = await hashPassword(password);
+      const result = await db.update(users).set({ passwordHash }).where(and(eq(users.id, user.id), eq(users.passwordHash, user.passwordHash)));
+      if (result[0].affectedRows !== 1) return null;
+      return { ...user, passwordHash };
+    }
     return user;
   } catch {
     return null;
@@ -704,7 +709,7 @@ export async function updateMemberAccount(userId: number, input: MemberAccountUp
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const userUpdate: { name: string; email: string; passwordHash?: string } = { name: input.name.trim(), email: input.email.trim().toLowerCase() };
-  if (input.newPassword?.trim()) userUpdate.passwordHash = hashPassword(input.newPassword.trim());
+  if (input.newPassword?.trim()) userUpdate.passwordHash = await hashPassword(input.newPassword.trim());
   await db.update(users).set(userUpdate).where(eq(users.id, userId));
   return getMemberAccount(userId);
 }
@@ -723,7 +728,7 @@ export async function updateMemberSecurityRecovery(userId: number, input: { secu
   const values = {
     userId,
     securityQuestion: input.securityQuestion.trim(),
-    securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+    securityAnswerHash: await hashSecurityAnswer(input.securityAnswer),
   };
   await db.insert(userSecurityRecovery).values(values).onDuplicateKeyUpdate({
     set: {
@@ -762,10 +767,11 @@ export async function resetPasswordWithSecurityAnswer(input: { identifier: strin
     .limit(1);
   const row = rows[0];
   if (!row) throw new Error("Não encontramos recuperação configurada para essa conta.");
-  const stored = Buffer.from(row.securityAnswerHash, "hex");
-  const candidate = Buffer.from(hashSecurityAnswer(input.securityAnswer), "hex");
-  if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) throw new Error("Resposta secreta incorreta.");
-  await db.update(users).set({ passwordHash: hashPassword(input.newPassword.trim()), loginMethod: "password" }).where(eq(users.id, row.userId));
+  if (!await verifyPassword(`security-answer:${normalizeSecurityAnswer(input.securityAnswer)}`, row.securityAnswerHash)) throw new Error("Resposta secreta incorreta.");
+  if (needsPasswordRehash(row.securityAnswerHash)) {
+    await db.update(userSecurityRecovery).set({ securityAnswerHash: await hashSecurityAnswer(input.securityAnswer) }).where(and(eq(userSecurityRecovery.userId, row.userId), eq(userSecurityRecovery.securityAnswerHash, row.securityAnswerHash)));
+  }
+  await db.update(users).set({ passwordHash: await hashPassword(input.newPassword.trim()), loginMethod: "password" }).where(eq(users.id, row.userId));
   return { success: true } as const;
 }
 
@@ -2233,9 +2239,9 @@ export async function completeApplicationPersonalization(input: ApplicationPerso
     let userId = existingUser?.id ?? 0;
     const normalizedName = input.name.trim();
     if (userId) {
-      await tx.update(users).set({ name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", lastSignedIn: new Date() }).where(eq(users.id, userId));
+      await tx.update(users).set({ name: normalizedName, email: normalizedEmail, passwordHash: await hashPassword(input.password), loginMethod: "password", lastSignedIn: new Date() }).where(eq(users.id, userId));
     } else {
-      const result = await tx.insert(users).values({ openId, name: normalizedName, email: normalizedEmail, passwordHash: hashPassword(input.password), loginMethod: "password", role: "user" });
+      const result = await tx.insert(users).values({ openId, name: normalizedName, email: normalizedEmail, passwordHash: await hashPassword(input.password), loginMethod: "password", role: "user" });
       userId = Number(result[0].insertId);
     }
 
@@ -2259,10 +2265,10 @@ export async function completeApplicationPersonalization(input: ApplicationPerso
     await tx.insert(userSecurityRecovery).values({
       userId,
       securityQuestion: input.securityQuestion.trim(),
-      securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+      securityAnswerHash: await hashSecurityAnswer(input.securityAnswer),
     }).onDuplicateKeyUpdate({ set: {
       securityQuestion: input.securityQuestion.trim(),
-      securityAnswerHash: hashSecurityAnswer(input.securityAnswer),
+      securityAnswerHash: await hashSecurityAnswer(input.securityAnswer),
       updatedAt: new Date(),
     } });
 

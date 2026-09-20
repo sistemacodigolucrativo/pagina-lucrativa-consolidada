@@ -1,3 +1,4 @@
+import { enforceAdminMutation } from "./adminAudit";
 import type { Express, Request, Response } from "express";
 import { parse as parseCookieHeader } from "cookie";
 import { desc, eq, gte } from "drizzle-orm";
@@ -47,6 +48,7 @@ async function requireAdmin(req: Request, res: Response): Promise<AdminUser | nu
     res.status(403).json({ error: "Acesso administrativo necessario." });
     return null;
   }
+  if (!await enforceAdminMutation(req, res, user.id)) return null;
   return user;
 }
 

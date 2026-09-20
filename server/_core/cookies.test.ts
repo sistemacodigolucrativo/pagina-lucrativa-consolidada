@@ -18,13 +18,13 @@ describe("getSessionCookieOptions", () => {
     });
   });
 
-  it("keeps SameSite=None with Secure for HTTPS and proxied HTTPS", () => {
+  it("uses SameSite=Lax with Secure for HTTPS and proxied HTTPS", () => {
     expect(getSessionCookieOptions(request("https"))).toMatchObject({
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
     });
     expect(getSessionCookieOptions(request("http", "https"))).toMatchObject({
-      sameSite: "none",
+      sameSite: "lax",
       secure: true,
     });
   });

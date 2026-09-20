@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { User } from "../drizzle/schema";
 import { authenticateLocalUser, getStoredPasswordHashByOpenId, getUserByOpenId, upsertUser } from "./db";
 import { demoAuthEnabled, localAuthEnabled, sessionSecret } from "./_core/authConfig";
-import { hashDemoCredential, hashPassword, hashesMatch } from "./credentialHash";
+import { hashDemoCredential, verifyPassword, hashesMatch } from "./credentialHash";
 
 export const DEMO_SESSION_COOKIE_NAME = process.env.VITE_DEV_PREFIX ? "pl_demo_session_dev" : "pl_demo_session";
 
@@ -27,6 +27,7 @@ type DemoSessionPayload = {
   openId: string;
   role: DemoAccount["role"];
   expiresAt: number;
+  authenticatedAt?: number;
   credentialVersion?: string;
   id?: number;
   name?: string;
@@ -96,7 +97,7 @@ export async function resolveDemoAccount(username: string, password: string): Pr
     if (!demoAuthEnabled()) return null;
     const storedPasswordHash = await getStoredPasswordHashByOpenId(matched.openId);
     const valid = storedPasswordHash
-      ? hashesMatch(storedPasswordHash, hashPassword(password))
+      ? await verifyPassword(password, storedPasswordHash)
       : hashesMatch(matched.credentialHash, hashDemoCredential(normalizedUsername, password));
     if (!valid) return null;
     const { credentialHash: _credentialHash, ...account } = matched;
@@ -153,6 +154,7 @@ export function createDemoSession(account: DemoAccount) {
     name: account.name,
     email: account.email,
     loginMethod: account.loginMethod ?? "local_demo",
+    authenticatedAt: Date.now(),
     expiresAt: Date.now() + DEMO_SESSION_DURATION_MS,
     credentialVersion: account.credentialVersion,
   });
@@ -177,4 +179,13 @@ export async function resolveDemoSession(token: string | undefined): Promise<Use
     // Banco/configuração indisponível não pode manter uma autorização antiga.
     return null;
   }
+}
+
+export function hasRecentLocalAuthentication(token: string | undefined) {
+  if (!token) return false;
+  try {
+    const payload = readSessionPayload(token);
+    const age = Date.now() - (payload?.authenticatedAt ?? 0);
+    return Boolean(payload && age >= 0 && age <= 15 * 60 * 1000);
+  } catch { return false; }
 }

@@ -1,4 +1,6 @@
 import "dotenv/config";
+import { assertAuditConfiguration } from "./adminAudit";
+import { assertCsrfConfiguration, csrfProtection } from "./csrf";
 import { assertProductionAuthConfig } from "./authConfig";
 import express, { type RequestHandler } from "express";
 import { createServer, type ServerResponse } from "http";
@@ -72,10 +74,13 @@ function registerPackagedEbookFiles(app: express.Express, appPrefix: string) {
 
 async function startServer() {
   assertProductionAuthConfig();
+  assertCsrfConfiguration();
+  assertAuditConfiguration();
   const app = express();
   const server = createServer(app);
   const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
   const trpcPaths = Array.from(new Set(["/api/trpc", appPrefix ? `${appPrefix}/api/trpc` : null].filter((path): path is string => Boolean(path))));
+  app.use(csrfProtection);
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerPackagedEbookFiles(app, appPrefix);

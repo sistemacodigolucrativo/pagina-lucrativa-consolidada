@@ -1,3 +1,4 @@
+import { appendAdminAudit, enforceAdminMutation } from "./adminAudit";
 import type { Express, Request, Response } from "express";
 import { parse as parseCookieHeader } from "cookie";
 import { and, desc, eq } from "drizzle-orm";
@@ -63,6 +64,7 @@ async function requireAdmin(req: Request, res: Response) {
     res.status(403).json({ error: "Acesso administrativo necessário." });
     return null;
   }
+  if (!await enforceAdminMutation(req, res, user.id)) return null;
   return user;
 }
 
@@ -175,14 +177,16 @@ export async function purgeExpiredMemberDeletions() {
     const userId = Number(row.resourceType);
     const control = parseControl(row.body);
     const deadline = control?.deleteAfter ? new Date(control.deleteAfter).getTime() : NaN;
-    if (Number.isInteger(userId) && userId > 0 && Number.isFinite(deadline) && deadline <= now) {
+    if (control && Number.isInteger(userId) && userId > 0 && Number.isFinite(deadline) && deadline <= now) {
+      const event = { requestId: `scheduled-${userId}-${Date.now()}`, actorId: control.updatedBy, action: `scheduled-member-purge:${userId}` };
+      await appendAdminAudit({ ...event, phase: "started" });
       await purgeMember(userId);
+      await appendAdminAudit({ ...event, phase: "completed" });
     }
   }
 }
 
 async function listMembers() {
-  await purgeExpiredMemberDeletions();
   const db = await getDb();
   if (!db) return { members: [], deletionQueue: [] };
   const [memberRows, controlRows, links] = await Promise.all([

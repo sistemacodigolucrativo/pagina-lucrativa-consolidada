@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T02:40:34+00:00
+Última atualização: 2026-09-20T02:49:09+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -20,11 +20,12 @@ Auditoria recebida preservada integralmente em AUDITORIA_RECEBIDA.md. A main rem
 
 ## Estado de execução
 
-- Base original: pnpm check aprovado; pnpm test: 75 arquivos, 281 testes aprovados (sem banco real).
-- Instalação inicial com pnpm 11.19.0 falhou por incompatibilidade com overrides do package.json. Reexecutada com pnpm 10.4.1 fixado: sucesso, lockfile preservado. Node local 24.19.0; workflow usa Node 22.
-- Críticos implementados: pnpm check aprovado; 5 arquivos / 19 testes focados aprovados.
-- Registro inicial publicado no GitHub: 95d8b3671c6c8d9790104dde73a92199b27b9d80. Git push via terminal sem credencial; publicação feita pela conexão GitHub autenticada, sem force.
-- Próximo passo: HIGH-01/HIGH-02, depois controles operacionais. VPS, migrations e deploy não executados.
+- Base original: pnpm check aprovado; 75 arquivos / 281 testes aprovados.
+- pnpm 10.4.1 instalado e usado, lockfile preservado; pnpm global 11 incompatível. Node local 24.19.0, CI 22.
+- Críticos publicados: 8505c3c38f38690dd34852d0948799f9ffd01ef1.
+- Bloco segurança: 80 arquivos / 313 testes aprovados; typecheck final do bloco aprovado. Falhas intermediárias: teste de logout ainda esperava SameSite=None (atualizado para contrato Lax); TS18047 control possivelmente null no log de purge (condição corrigida). Ambas foram introduzidas/reveladas pelo ajuste desta branch, não falhas da base.
+- Publicações pela conexão GitHub, pois Git CLI não possui credencial. Nenhum force, merge ou alteração da main.
+- Próximo passo: banco/sync/backups/CI e avaliação dos médios. Nenhuma operação na VPS.
 
 ## Achados
 
@@ -65,36 +66,36 @@ Commit relacionado: Mesmo bloco de correção dos críticos; consultar git log d
 ### HIGH-01
 
 ID: HIGH-01
-Status: Pendente
+Status: Corrigido
 Gravidade: Alto
 Área: Senhas / recuperacao de conta
 Arquivo(s) auditado(s): server/credentialHash.ts; server/criticalFlowFixes.ts; server/db.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: Senhas e respostas de seguranca usam SHA-256 simples, sem salt individual e sem fator de custo.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. SHA-256 simples em senha, resposta de recuperação e seed.
+Evidência no código atual: Base credentialHash.ts hashPassword; db.ts autenticação/cadastro/recuperação; criticalFlowFixes.ts; seed-demo.ts. Branch usa formato scrypt versionado com salt individual, custo e fila limitada.
+Correção aplicada: scrypt assíncrono N=16384/r=8/p=5; migração condicional no login correto; gravação moderna em cadastro/troca/recuperação; seed moderno somente fora de produção; recuperação pública não atende admin.
+Arquivos alterados: server/credentialHash.ts, db.ts, criticalFlowFixes.ts, demoAuth.ts; scripts/seed-demo.ts; testes de credenciais e recuperação.
+Testes executados: Suíte pnpm test; typecheck; salt/Unicode/espaços, custo malformado, login legado válido/inválido e atualização concorrente com driver simulado.
+Resultado dos testes: 313 testes aprovados na suíte e typecheck aprovado. Formato <255 caracteres; nenhuma migration.
+Pendências: Hashes legados reais só serão migrados conforme login/recuperação; não houve acesso ou atualização no banco da VPS.
+Próximo passo: Verificar migração gradual de contas reais em validação autorizada; planejar substituição de perguntas secretas.
+Commit relacionado: Bloco fix: proteger credenciais, mutacoes e auditoria administrativa; consultar histórico.
 
 ### HIGH-02
 
 ID: HIGH-02
-Status: Pendente
+Status: Corrigido
 Gravidade: Alto
 Área: Seguranca web / CSRF
 Arquivo(s) auditado(s): server/_core/cookies.ts; server/routers.ts; server/_core/adminMemberManagement.ts; server/_core/adminCommercialOperations.ts; server/_core/adminContentManagement.ts; server/_core/manualDeploy.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: Mutacoes autenticadas por cookie nao apresentam protecao CSRF evidente, e os cookies podem usar SameSite=None quando a requisicao e segura.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. Cookies SameSite=None sob HTTPS e ausência de guarda de origem no entrypoint.
+Evidência no código atual: server/_core/index.ts registra csrfProtection antes de parsers e rotas, cobrindo REST e tRPC com prefixo; csrf.ts compara origem configurada, cookies.ts fixa Lax.
+Correção aplicada: Todas as requisições mutáveis exigem Origin/Referer válido; bloqueio de origem ausente/nula/cross-site; produção exige PUBLIC_APP_ORIGIN HTTPS exata; cookie Secure em produção.
+Arquivos alterados: server/_core/csrf.ts, cookies.ts, index.ts; server/routers.ts; .env.example; testes CSRF/cookies/logout.
+Testes executados: HTTP real local para POST/DELETE/PATCH/PUT; prefixo /dev; origem exata, sufixo malicioso, protocolo errado, nula, ausente, Referer e Host encaminhado.
+Resultado dos testes: 13 cenários HTTP aprovados; handlers não executados nas tentativas recusadas; suíte 313/313.
+Pendências: Configurar PUBLIC_APP_ORIGIN do domínio real e validar navegador atrás do proxy antes de deploy.
+Próximo passo: Verificação operacional autorizada.
+Commit relacionado: Mesmo bloco de segurança.
 
 ### HIGH-03
 
@@ -167,19 +168,19 @@ Commit relacionado: Registro inicial no commit que adiciona este arquivo; consul
 ### HIGH-07
 
 ID: HIGH-07
-Status: Pendente
+Status: Corrigido
 Gravidade: Alto
 Área: Administracao / pagamentos / dados privados
 Arquivo(s) auditado(s): server/_core/adminCommercialOperations.ts; server/_core/storageProxy.ts; server/_core/adminMemberManagement.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: Operacoes financeiras e administrativas destrutivas dependem da mesma autenticacao fragil e sem CSRF ja apontada.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. REST administrativo e tRPC aceitavam sessão demo sem CSRF e sem autenticação recente/log persistente abrangente.
+Evidência no código atual: Guardas administrativas REST chamam enforceAdminMutation; adminProcedure exige beginAdminMutation nas mutações; arquivo privado de auditoria escrito antes da ação; contexto consulta permissão atual no banco.
+Correção aplicada: Autenticação recente de 15 minutos e trilha privada para mutações; exclusão agendada registra ator; listagem GET deixa de disparar purge; acesso a comprovante verifica bloqueio do membro.
+Arquivos alterados: server/_core/adminAudit.ts, trpc.ts, adminMemberManagement.ts, adminCommercialOperations.ts, adminContentManagement.ts, adminRelationshipMaintenance.ts, manualDeploy.ts, index.ts; server/demoAuth.ts; .env.example; .gitignore; teste admin.
+Testes executados: Log real em diretório temporário: início/fim, ator, ausência de cookie/email; recusa de sessão vencida/ausente e de produção sem diretório persistente; suíte completa.
+Resultado dos testes: 3 cenários focados aprovados; suíte 313/313; typecheck aprovado após correção de nulidade.
+Pendências: Configurar SECURITY_AUDIT_DIR privado fora de release e storage; reconciliar eventos started sem final se processo cair. A trilha em arquivo não participa atomicamente da transação SQL.
+Próximo passo: Confirmar permissões, retenção de logs e novo login administrativo no ambiente autorizado.
+Commit relacionado: Mesmo bloco de segurança; não houve execução financeira/deploy real.
 
 ### MED-01
 

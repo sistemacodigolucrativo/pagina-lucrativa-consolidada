@@ -1,3 +1,4 @@
+import { enforceAdminMutation } from "./adminAudit";
 import type { Express, Request, Response } from "express";
 import { parse as parseCookieHeader } from "cookie";
 import { readFile, realpath, rename, stat, writeFile } from "node:fs/promises";
@@ -179,6 +180,7 @@ async function requireAdmin(req: Request, res: Response) {
     res.status(403).json({ error: "Acesso administrativo necessário." });
     return null;
   }
+  if (!await enforceAdminMutation(req, res, user.id)) return null;
   return user;
 }
 

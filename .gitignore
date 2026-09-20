@@ -115,3 +115,6 @@ backups/packaged-content-sync-*.json
 client/public/__manus__/version.json
 .project-config.json
 *.pre-testimonial
+
+# Private operational audit logs
+.local-audit/

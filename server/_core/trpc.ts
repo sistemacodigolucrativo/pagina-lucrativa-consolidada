@@ -1,6 +1,7 @@
 import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
+import { appendAdminAudit, beginAdminMutation } from "./adminAudit";
 import type { TrpcContext } from "./context";
 
 const t = initTRPC.context<TrpcContext>().create({
@@ -35,11 +36,14 @@ export const adminProcedure = t.procedure.use(
       throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });
     }
 
-    return next({
-      ctx: {
-        ...ctx,
-        user: ctx.user,
-      },
-    });
+    if (opts.type === "mutation") {
+      let event;
+      try { event = await beginAdminMutation(ctx.req, ctx.user.id, opts.path); }
+      catch { throw new TRPCError({ code: "FORBIDDEN", message: "Entre novamente para confirmar a operação; o registro de auditoria também deve estar disponível." }); }
+      const result = await next({ ctx: { ...ctx, user: ctx.user } });
+      await appendAdminAudit({ ...event, phase: result.ok ? "completed" : "failed" });
+      return result;
+    }
+    return next({ ctx: { ...ctx, user: ctx.user } });
   }),
 );

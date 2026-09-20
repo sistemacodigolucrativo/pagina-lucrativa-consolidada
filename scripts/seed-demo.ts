@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import mysql from "mysql2/promise";
 
 type Role = "admin" | "user";
@@ -8,8 +8,9 @@ type ContentStatus = "draft" | "published" | "archived";
 const DEMO_PASSWORD = "Demo1234";
 const DEMO_TAG = "DEMO SEED";
 
-function hashPassword(password: string) {
-  return createHash("sha256").update(password).digest("hex");
+import { hashPassword } from "../server/credentialHash";
+if (process.env.NODE_ENV === "production" || process.env.ENABLE_LOCAL_AUTH !== "true") {
+  throw new Error("Seed demo permitido somente fora de produção com ENABLE_LOCAL_AUTH=true.");
 }
 
 function daysAgo(days: number) {
@@ -53,7 +54,7 @@ async function upsertUser(openId: string, name: string, email: string, role: Rol
     `INSERT INTO users (openId, name, email, passwordHash, loginMethod, role, lastSignedIn)
      VALUES (?, ?, ?, ?, 'password', ?, ?)
      ON DUPLICATE KEY UPDATE name = VALUES(name), email = VALUES(email), passwordHash = VALUES(passwordHash), loginMethod = 'password', role = VALUES(role), lastSignedIn = VALUES(lastSignedIn)`,
-    [openId, name, email, hashPassword(DEMO_PASSWORD), role, daysAgo(0)],
+    [openId, name, email, await hashPassword(DEMO_PASSWORD), role, daysAgo(0)],
   );
   const rows = await query<Array<{ id: number } & mysql.RowDataPacket>>("SELECT id FROM users WHERE openId = ? LIMIT 1", [openId]);
   return rows[0].id;
@@ -100,7 +101,7 @@ async function upsertSecurityRecovery(userId: number) {
     `INSERT INTO userSecurityRecovery (userId, securityQuestion, securityAnswerHash)
      VALUES (?, ?, ?)
      ON DUPLICATE KEY UPDATE securityQuestion = VALUES(securityQuestion), securityAnswerHash = VALUES(securityAnswerHash)`,
-    [userId, "Qual palavra pessoal voce escolheu para recuperacao?", hashPassword("security-answer:demonstracao")],
+    [userId, "Qual palavra pessoal voce escolheu para recuperacao?", await hashPassword("security-answer:demonstracao")],
   );
 }
 

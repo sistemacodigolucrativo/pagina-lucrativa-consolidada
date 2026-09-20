@@ -39,15 +39,13 @@ export function getSessionCookieOptions(
   //       ? hostname
   //       : undefined;
 
-  const secure = isSecureRequest(req);
+  const secure = process.env.NODE_ENV === "production" || isSecureRequest(req);
   const cookiePath = process.env.VITE_DEV_PREFIX || "/";
 
   return {
     httpOnly: true,
     path: cookiePath,
-    // Browsers reject SameSite=None without Secure. The dedicated preview is
-    // intentionally served by HTTP on an IP address, so use Lax in that case.
-    sameSite: secure ? "none" : "lax",
+    sameSite: "lax",
     secure,
   };
 }

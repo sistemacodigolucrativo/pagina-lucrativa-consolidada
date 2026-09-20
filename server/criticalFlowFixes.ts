@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import type { ApplicationInput } from "@shared/applications";
 import {
   applicationAccessTokens,
@@ -8,7 +8,7 @@ import {
   userSecurityRecovery,
   users,
 } from "../drizzle/schema";
-import { hashPassword, hashesMatch } from "./credentialHash";
+import { hashPassword, hashesMatch, verifyPassword, needsPasswordRehash } from "./credentialHash";
 import {
   createApplication,
   getApplicationPaymentPage,
@@ -59,7 +59,7 @@ async function findRecoveryAccount(identifier: string) {
     })
     .from(users)
     .innerJoin(userSecurityRecovery, eq(userSecurityRecovery.userId, users.id))
-    .where(sql<boolean>`LOWER(TRIM(${users.email})) = ${normalized}`)
+    .where(and(sql<boolean>`LOWER(TRIM(${users.email})) = ${normalized}`, eq(users.role, "user")))
     .limit(1);
   return rows[0] ?? null;
 }
@@ -73,7 +73,7 @@ export async function updateMemberAccountLocked(userId: number, input: MemberAcc
   };
   const newPassword = input.newPassword ?? null;
   if (newPassword) {
-    userUpdate.passwordHash = hashPassword(newPassword);
+    userUpdate.passwordHash = await hashPassword(newPassword);
     userUpdate.loginMethod = "password";
   }
 
@@ -101,10 +101,12 @@ export async function resetPasswordWithSecurityAnswerSafe(input: { identifier: s
   const row = await findRecoveryAccount(input.identifier);
   if (!row) throw new Error("Não encontramos recuperação configurada para essa conta.");
 
-  const candidateHash = hashSecurityAnswer(input.securityAnswer);
-  if (!hashesMatch(row.securityAnswerHash, candidateHash)) throw new Error("Resposta secreta incorreta.");
+  if (!await verifyPassword(`security-answer:${normalizeSecurityAnswer(input.securityAnswer)}`, row.securityAnswerHash)) throw new Error("Resposta secreta incorreta.");
+  if (needsPasswordRehash(row.securityAnswerHash)) {
+    await db.update(userSecurityRecovery).set({ securityAnswerHash: await hashSecurityAnswer(input.securityAnswer) }).where(and(eq(userSecurityRecovery.userId, row.userId), eq(userSecurityRecovery.securityAnswerHash, row.securityAnswerHash)));
+  }
 
-  const passwordHash = hashPassword(input.newPassword);
+  const passwordHash = await hashPassword(input.newPassword);
   await db.update(users).set({ passwordHash, loginMethod: "password" }).where(eq(users.id, row.userId));
   const persisted = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, row.userId)).limit(1);
   if (!persisted[0]?.passwordHash || !hashesMatch(persisted[0].passwordHash, passwordHash)) {
