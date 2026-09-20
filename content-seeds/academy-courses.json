@@ -203,40 +203,11 @@
       ]
     },
     {
-      "title": "SEO e descoberta organica",
-      "slug": "seo-descoberta-organica",
-      "category": "SEO e descoberta",
-      "level": "pratica",
-      "courseOrder": 7,
-      "modules": [
-        {
-          "title": "Pesquisa e descoberta",
-          "moduleOrder": 1,
-          "lessons": [
-            {
-              "title": "Nocoes Basicas De SEO",
-              "materialTitle": "Nocoes Basicas De SEO",
-              "sourceId": "8c92c6f20ceb06a4",
-              "usage": "both",
-              "lessonOrder": 1
-            },
-            {
-              "title": "A Febre Das Palavras Chave",
-              "materialTitle": "A Febre Das Palavras Chave",
-              "sourceId": "0c3d80f743f7d741",
-              "usage": "both",
-              "lessonOrder": 2
-            }
-          ]
-        }
-      ]
-    },
-    {
       "title": "E-mail e relacionamento",
       "slug": "email-e-relacionamento",
       "category": "E-mail e relacionamento",
       "level": "pratica",
-      "courseOrder": 8,
+      "courseOrder": 7,
       "modules": [
         {
           "title": "Base de e-mail",
@@ -274,33 +245,11 @@
       ]
     },
     {
-      "title": "Trafego e divulgacao",
-      "slug": "trafego-e-divulgacao",
-      "category": "Trafego e divulgacao",
-      "level": "pratica",
-      "courseOrder": 9,
-      "modules": [
-        {
-          "title": "Canais de divulgacao",
-          "moduleOrder": 1,
-          "lessons": [
-            {
-              "title": "Google + Exposto",
-              "materialTitle": "Google + Exposto",
-              "sourceId": "b5c67c69d55242b2",
-              "usage": "both",
-              "lessonOrder": 1
-            }
-          ]
-        }
-      ]
-    },
-    {
       "title": "Vendas e conversao",
       "slug": "vendas-e-conversao",
       "category": "Vendas e conversao",
       "level": "pratica",
-      "courseOrder": 10,
+      "courseOrder": 8,
       "modules": [
         {
           "title": "Estrategia de vendas",
@@ -330,6 +279,57 @@
               "title": "A Magia Da Linguagem Corporal",
               "materialTitle": "A Magia Da Linguagem Corporal",
               "sourceId": "df81605e3e33bd06",
+              "usage": "both",
+              "lessonOrder": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "SEO e descoberta organica",
+      "slug": "seo-descoberta-organica",
+      "category": "SEO e descoberta",
+      "level": "pratica",
+      "courseOrder": 9,
+      "modules": [
+        {
+          "title": "Pesquisa e descoberta",
+          "moduleOrder": 1,
+          "lessons": [
+            {
+              "title": "Nocoes Basicas De SEO",
+              "materialTitle": "Nocoes Basicas De SEO",
+              "sourceId": "8c92c6f20ceb06a4",
+              "usage": "both",
+              "lessonOrder": 1
+            },
+            {
+              "title": "A Febre Das Palavras Chave",
+              "materialTitle": "A Febre Das Palavras Chave",
+              "sourceId": "0c3d80f743f7d741",
+              "usage": "both",
+              "lessonOrder": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "Trafego e divulgacao",
+      "slug": "trafego-e-divulgacao",
+      "category": "Trafego e divulgacao",
+      "level": "pratica",
+      "courseOrder": 10,
+      "modules": [
+        {
+          "title": "Canais de divulgacao",
+          "moduleOrder": 1,
+          "lessons": [
+            {
+              "title": "Google + Exposto",
+              "materialTitle": "Google + Exposto",
+              "sourceId": "b5c67c69d55242b2",
               "usage": "both",
               "lessonOrder": 1
             }
