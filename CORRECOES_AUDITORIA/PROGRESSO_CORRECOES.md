@@ -236,19 +236,19 @@ Commit relacionado: feat: diagnosticar integridade relacional sem escrita; SHA n
 ### MED-04
 
 ID: MED-04
-Status: Pendente
+Status: Avaliado e parcialmente corrigido; disciplina operacional pendente
 Gravidade: Medio
 Área: Conteudo administrativo / fonte da verdade
 Arquivo(s) auditado(s): server/academyCanonical.ts; server/routers.ts; scripts/export-academy-content.mjs; scripts/sync-packaged-content.mjs
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: Ha caminhos administrativos que alteram metadados de conteudo no banco, enquanto o projeto trata manifestos versionados como fonte operacional.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. updateAcademyCoursePublication grava coursePublished no meta HTML do banco; sync usa manifestos. Exportador não preservava published, perdendo a despublicação ao promover o export.
+Evidência no código atual: Publicação no painel ainda altera o estado do banco. O novo export inclui published e segue a regra do leitor: qualquer aula despublicada mantém o grupo despublicado.
+Correção aplicada: Exportação de publicação corrigida e feita em READ ONLY. Documentada matriz de fonte da verdade: estrutura/publicação canônica deve ser exportada, revisada e commitada; resumo/HTML curado e metadados extras preservados no sync. Não foram inventadas tabelas de overrides.
+Arquivos alterados: scripts/export-academy-content.mjs; server/securityAudit.academyExport.test.ts; scripts/sync-packaged-content.mjs (5cc5e4b); docs/CONTENT_BOOTSTRAP.md (25e8d7b); este progresso.
+Testes executados: Suíte focada de 3 arquivos dos médios; node --check scripts/export-academy-content.mjs; testes de curadoria/idempotência no sync.
+Resultado dos testes: 6/6 testes dos médios aprovados, incluindo 2 de exportação. Grupo despublicado permanece false, ordem e curadoria preservadas; materiais sem curso ignorados. Driver real e painel da VPS não utilizados.
+Pendências: O painel não cria export/commit automaticamente. Operador deve seguir o fluxo documentado antes de autorizar sync; a adesão real não foi comprovada. Mudanças de título/arquivo/categoria exigem também revisão do TSV/catálogo, não só JSON da Academia.
+Próximo passo: Confrontar eventual curadoria da VPS com o Git em etapa autorizada e aprovar a política operacional; não executar sync automático para resolver divergência.
+Commit relacionado: fix: preservar publicacao na exportacao da academia; SHA no checkpoint seguinte.
 
 ### MED-05
 

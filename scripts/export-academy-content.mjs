@@ -4,6 +4,7 @@ import "dotenv/config";
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
+import { pathToFileURL } from "node:url";
 
 const metadataName = "codigo-lucrativo-academy";
 const defaultOutput = path.resolve(process.cwd(), "content-seeds/academy-courses.exported.json");
@@ -27,9 +28,7 @@ function readMetadata(htmlContent) {
   }
 }
 
-const db = await mysql.createConnection(connectionConfig());
-try {
-  const [rows] = await db.execute("SELECT id, sourceId, title, summary, status, htmlContent FROM ebooks ORDER BY id");
+export function buildAcademyManifest(rows) {
   const courseMap = new Map();
   for (const row of rows) {
     const metadata = readMetadata(row.htmlContent || "");
@@ -41,8 +40,10 @@ try {
       category: metadata.courseCategory || "Academia",
       level: metadata.level || "fundamentos",
       courseOrder: Number(metadata.courseOrder) || 0,
+      published: true,
       modules: new Map(),
     };
+    course.published = course.published && metadata.coursePublished !== false;
     const moduleKey = `${Number(metadata.moduleOrder) || 0}:${metadata.moduleTitle || "Modulo unico"}`;
     const module = course.modules.get(moduleKey) ?? {
       title: metadata.moduleTitle || "Modulo unico",
@@ -69,6 +70,7 @@ try {
       category: course.category,
       level: course.level,
       courseOrder: course.courseOrder,
+      published: course.published,
       modules: [...course.modules.values()]
         .sort((a, b) => a.moduleOrder - b.moduleOrder || a.title.localeCompare(b.title, "pt-BR"))
         .map(module => ({
@@ -83,6 +85,16 @@ try {
     description: "Export gerado a partir do banco atual. Revise antes de promover para content-seeds/academy-courses.json.",
     courses,
   };
+  return manifest;
+}
+
+async function main() {
+const db = await mysql.createConnection(connectionConfig());
+try {
+  await db.execute("START TRANSACTION READ ONLY");
+  const [rows] = await db.execute("SELECT id, sourceId, title, summary, status, htmlContent FROM ebooks ORDER BY id");
+  const manifest = buildAcademyManifest(rows);
+  const { courses } = manifest;
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(JSON.stringify({
@@ -92,5 +104,13 @@ try {
     totalLessons: courses.reduce((sum, course) => sum + course.modules.reduce((moduleSum, module) => moduleSum + module.lessons.length, 0), 0),
   }, null, 2));
 } finally {
-  await db.end();
+  try { await db.rollback(); } finally { await db.end(); }
+}
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  main().catch(() => {
+    console.error("Exportação não concluída; confira configuração, permissões e caminho de saída.");
+    process.exitCode = 1;
+  });
 }
