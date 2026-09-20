@@ -10,6 +10,10 @@ on:
         description: "Branch ou commit para publicar"
         required: false
         default: "main"
+      deployed_sha:
+        description: "SHA completa da release ativa, conferida pelo operador"
+        required: true
+        type: string
 
 concurrency:
   group: pagina-lucrativa-production
@@ -23,22 +27,33 @@ jobs:
     name: Validar projeto
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      sha: ${{ steps.revision.outputs.sha }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.ref }}
+          ref: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.ref || github.sha }}
+      - name: Fixar SHA validada
+        id: revision
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
       - name: Bloquear alterações automáticas de banco
         shell: bash
+        env:
+          BASE_SHA: ${{ github.event_name == 'push' && github.event.before || inputs.deployed_sha }}
+          TARGET_SHA: ${{ steps.revision.outputs.sha }}
+        run: bash scripts/check-schema-range.sh "$BASE_SHA" "$TARGET_SHA"
+      - name: Bloquear chaves privadas versionadas
+        shell: bash
         run: |
-          if git rev-parse HEAD^ >/dev/null 2>&1; then
-            CHANGED="$(git diff --name-only HEAD^ HEAD -- drizzle drizzle.config.ts drizzle/schema.ts || true)"
-            if [ -n "$CHANGED" ]; then
-              printf '%s\n' "$CHANGED"
-              echo 'Alteração de banco/schema detectada. Exige backup e implantação manual revisada.' >&2
-              exit 1
-            fi
+          set +e
+          git grep -Il -E '^-----BEGIN (RSA |EC |DSA |OPENSSH |ENCRYPTED )?PRIVATE KEY-----' -- .
+          RESULT=$?
+          set -e
+          if [ "$RESULT" -ne 1 ]; then
+            echo 'Chave privada detectada ou inspeção incompleta; publicação bloqueada.' >&2
+            exit 1
           fi
       - name: Configurar Node.js
         uses: actions/setup-node@v4
@@ -50,6 +65,8 @@ jobs:
           corepack prepare pnpm@10.4.1 --activate
       - name: Instalar dependências
         run: pnpm install --frozen-lockfile
+      - name: Validar conteúdo empacotado sem banco
+        run: node scripts/sync-packaged-content.mjs --validate-only
       - name: Typecheck
         run: pnpm check
       - name: Testes
@@ -62,6 +79,8 @@ jobs:
     needs: validate
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    env:
+      TARGET_SHA: ${{ needs.validate.outputs.sha }}
     steps:
       - name: Verificar configuração da VPS
         id: config
@@ -85,6 +104,8 @@ jobs:
       - name: Checkout do SHA validado
         if: steps.config.outputs.ready == 'true'
         uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.validate.outputs.sha }}
 
       - name: Preparar SSH
         if: steps.config.outputs.ready == 'true'
@@ -108,7 +129,11 @@ jobs:
             --exclude='dist' \
             --exclude='.env' \
             --exclude='.env.*' \
-            -czf "/tmp/pagina-lucrativa-${GITHUB_SHA}.tar.gz" .
+            --exclude='*.pem' \
+            --exclude='*.key' \
+            --exclude='backups' \
+            --exclude='.local-audit' \
+            -czf "/tmp/pagina-lucrativa-${TARGET_SHA}.tar.gz" .
 
       - name: Liberar espaço na VPS
         if: steps.config.outputs.ready == 'true'
@@ -178,10 +203,10 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ steps.config.outputs.port }}
         run: |
-          REMOTE_DIR="/tmp/pagina-lucrativa-deploy-${GITHUB_SHA}"
+          REMOTE_DIR="/tmp/pagina-lucrativa-deploy-${TARGET_SHA}"
           ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" "mkdir -p '$REMOTE_DIR'"
           scp -i ~/.ssh/id_ed25519 -P "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes \
-            "/tmp/pagina-lucrativa-${GITHUB_SHA}.tar.gz" scripts/deploy-vps.sh \
+            "/tmp/pagina-lucrativa-${TARGET_SHA}.tar.gz" scripts/deploy-vps.sh \
             "$VPS_USER@$VPS_HOST:$REMOTE_DIR/"
 
       - name: Executar deploy atômico com rollback
@@ -191,11 +216,15 @@ jobs:
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ steps.config.outputs.port }}
           VPS_DEPLOY_PATH: ${{ secrets.VPS_DEPLOY_PATH }}
-          TARGET_SHA: ${{ github.sha }}
+          DEPLOY_BASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.deployed_sha || '' }}
         run: |
+          if [ -n "$DEPLOY_BASE_SHA" ] && ! [[ "$DEPLOY_BASE_SHA" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'SHA base inválida.' >&2
+            exit 1
+          fi
           REMOTE_DIR="/tmp/pagina-lucrativa-deploy-${TARGET_SHA}"
           ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
-            "chmod 700 '$REMOTE_DIR/deploy-vps.sh' && '$REMOTE_DIR/deploy-vps.sh' '$TARGET_SHA' '$VPS_DEPLOY_PATH' '$REMOTE_DIR/pagina-lucrativa-${TARGET_SHA}.tar.gz' 'http://127.0.0.1:3101/'"
+            "chmod 700 '$REMOTE_DIR/deploy-vps.sh' && DEPLOY_BASE_SHA='$DEPLOY_BASE_SHA' '$REMOTE_DIR/deploy-vps.sh' '$TARGET_SHA' '$VPS_DEPLOY_PATH' '$REMOTE_DIR/pagina-lucrativa-${TARGET_SHA}.tar.gz' 'http://127.0.0.1:3101/api/healthz'"
 
       - name: Limpar temporários após deploy
         if: always() && steps.config.outputs.ready == 'true'
@@ -203,7 +232,6 @@ jobs:
           VPS_HOST: ${{ secrets.VPS_HOST }}
           VPS_USER: ${{ secrets.VPS_USER }}
           VPS_PORT: ${{ steps.config.outputs.port }}
-          TARGET_SHA: ${{ github.sha }}
         run: |
           ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
             "rm -rf -- '/tmp/pagina-lucrativa-deploy-${TARGET_SHA}' '/tmp/pagina-lucrativa-${TARGET_SHA}.tar.gz'"

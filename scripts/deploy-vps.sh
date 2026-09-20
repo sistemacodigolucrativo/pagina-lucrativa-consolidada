@@ -164,6 +164,9 @@ printf '%s\n' "$TARGET_SHA" > "$NEW_RELEASE/.deployed-sha"
 cd "$NEW_RELEASE"
 [[ -f package.json && -f pnpm-lock.yaml ]] || fail "Artefato não contém package.json/pnpm-lock.yaml."
 
+# Compare with the actual active release, even after a skipped/failed previous workflow.
+node scripts/check-release-schema.mjs "$PREVIOUS_RELEASE" "$NEW_RELEASE" "${DEPLOY_BASE_SHA:-}"
+
 write_deploy_status "deploying" 35 "Instalando dependências"
 log "Instalando dependências do release com pnpm $PNPM_VERSION"
 "$PNPM_BIN" install --frozen-lockfile

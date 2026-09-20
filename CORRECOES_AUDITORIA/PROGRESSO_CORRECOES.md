@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T03:24:57+00:00
+Última atualização: 2026-09-20T03:31:21+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -109,9 +109,9 @@ Evidência no código atual: deploy-vps.sh não chamava sync; ensurePackagedLibr
 Correção aplicada: Sync exporta fluxo testável, oferece --validate-only sem banco e --check READ ONLY com saída 3 em divergência. Manifestos/PDFs obrigatórios e duplicidade no banco bloqueiam. Apply exige InnoDB, backup privado, leitura FOR UPDATE e transação SERIALIZABLE; rollback em erro, sem DDL. Preserva resumo e corpo HTML curados/metadados extras. Deploy verifica --check antes de ativar e depois, usa ambiente persistente e health de banco. Leitura de membro não insere conteúdo em produção.
 Arquivos alterados: scripts/sync-packaged-content.mjs; scripts/deploy-vps.sh; scripts/manual-deploy-worker.sh; server/academyCanonical.ts; server/securityAudit.sync.test.ts; docs/CONTENT_BOOTSTRAP.md; este progresso.
 Testes executados: pnpm exec vitest run server/securityAudit.sync.test.ts server/securityAudit.backup.test.ts server/packagedEbooks.integration.test.ts server/ebookLibraryPdf.integration.test.ts server/adminManualDeploy.integration.test.ts server/publicHeroTitleDeploy.integration.test.ts; node scripts/sync-packaged-content.mjs --validate-only; bash -n scripts/deploy-vps.sh scripts/manual-deploy-worker.sh; git diff --check.
-Resultado dos testes: Suíte focada aprovada (contagem registrada no checkpoint global). 6 cenários do sync usam arquivos temporários e driver transacional simulado: read-only, idempotência, backup anterior à escrita, preservação de curadoria, rollback e recusa de dados inválidos. Manifestos/PDFs reais: 88 e-books, 11 cursos, 16 módulos, 29 aulas, sem conexão. Bash e diff válidos. Não foi executado deploy nem sync contra banco real.
+Resultado dos testes: Correção do registro deste campo em 5cc5e4b: a rodada ampla NÃO passou integralmente. Foram 24 aprovados e 1 falho em 6 arquivos. Falha: server/ebookLibraryPdf.integration.test.ts esperava string ebook-category-sync- e contrato antigo do sync; causada pela mudança desta etapa, não preexistente. Os 6 testes funcionais do sync e 3 do backup passaram. --validate-only nos arquivos reais retornou 88 e-books, 11 cursos, 17 módulos e 30 aulas (corrige a contagem antiga 16/29 da auditoria). Bash e diff válidos. Sem banco real/deploy.
 Pendências: Somente responsável autorizado pode conferir env do serviço/deploy, banco/schema real, dry-run da candidata, exportações e janela de sync; depois aprovar apply, exigir check zerado e validar health/conteúdo em VPS. O gate pode bloquear o próximo deploy até essa preparação. Rollback de código não reverte um sync previamente aprovado.
-Próximo passo: Corrigir guard de schema/SHA (HIGH-06), avaliar médios e executar suíte/build final. Paridade de produção continua não comprovada.
+Próximo passo: Ajustar assert textual obsoleto ao contrato atual, corrigir documentação pela contagem real e repetir a rodada; seguir HIGH-06 e médios.
 Commit relacionado: fix: bloquear ativacao com conteudo divergente e tornar sync transacional; SHA no checkpoint seguinte.
 
 ### HIGH-04
@@ -151,19 +151,19 @@ Commit relacionado: fix: exigir selecao explicita do banco; SHA registrado no ch
 ### HIGH-06
 
 ID: HIGH-06
-Status: Pendente
+Status: Corrigido no código; execução do workflow de deploy não autorizada
 Gravidade: Alto
 Área: CI/CD / migrations / schema
 Arquivo(s) auditado(s): .github/workflows/deploy-vps.yml
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: A protecao contra alteracoes de schema no deploy verifica apenas o diff do ultimo commit.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. Workflow comparava HEAD^ HEAD, ignorava falhas de diff e não preservava a ref de workflow_dispatch no checkout do deploy.
+Evidência no código atual: scripts/check-schema-range.sh confere SHA completa/base disponível/ancestralidade e todo histórico/diff do intervalo. A SHA resolvida na validação é output consumido pelo checkout, artefato e deploy. check-release-schema.mjs confere schema contra release efetivamente ativa.
+Correção aplicada: Push usa before -> SHA validada; dispatch exige deployed_sha, reconferida na VPS quando futuramente executado. Base desconhecida/schema divergente bloqueiam. Detecção cobre commits intermediários e reversões; comparação adicional de arquivos com release ativa cobre deploys anteriormente pulados/falhos. Validação offline de conteúdo no CI e bloqueio de chaves privadas. Tar exclui chaves/backups/logs privados.
+Arquivos alterados: .github/workflows/deploy-vps.yml; scripts/check-schema-range.sh; scripts/check-release-schema.mjs; scripts/deploy-vps.sh; scripts/manual-deploy-worker.sh; server/securityAudit.schema.test.ts; CORRECOES_AUDITORIA/DECISOES_E_OPERACAO.md; este progresso.
+Testes executados: pnpm exec vitest run server/securityAudit.schema.test.ts server/ebookLibraryPdf.integration.test.ts server/packagedEbooks.integration.test.ts server/securityAudit.sync.test.ts server/adminManualDeploy.integration.test.ts; parser YAML; bash -n em todos os blocos run e scripts alterados; node --check scripts/check-release-schema.mjs; git diff --check.
+Resultado dos testes: 21/21 aprovados em 5 arquivos, incluindo 3 cenários de guard com repositórios/artefatos temporários. YAML e shell válidos. Os testes não executam scripts de deploy contra VPS; o teste existente do worker usa executor substituto em diretório temporário. GitHub Actions real não acionado, pois inclui deploy proibido nesta etapa.
+Pendências: Validar base real e regras operacionais antes de futura implantação autorizada. Dispatch agora exige SHA ativa. Alteração de schema permanece proibida; nenhum bypass foi adicionado.
+Próximo passo: Avaliar todos os médios e consolidar suíte/build, mantendo limitações operacionais explícitas.
+Commit relacionado: fix: validar intervalo de schema e publicar a SHA conferida; SHA no checkpoint seguinte.
 
 ### HIGH-07
 
@@ -311,3 +311,5 @@ Resultado dos testes: Chave RSA confirmada. Arquivo removido; integridade do dif
 Pendências: Revogar/rotacionar a chave nos serviços onde foi autorizada, verificar acessos e cópias/artefatos antigos. A remoção da árvore NÃO revoga a credencial nem remove versões históricas.
 Próximo passo: Responsável autorizar e executar tratamento da credencial fora desta etapa; manter bloqueio de liberação operacional até evidência de revogação ou prova de que não é usada.
 Commit relacionado: fix: remover chave privada versionada; SHA registrado no próximo checkpoint.
+
+Nota de correção de evidência: o texto inicial do commit 5cc5e4b registrou incorretamente aprovação integral e contagem 16/29 antes de incorporar o resultado da rodada ampla. Corrigido explicitamente nesta continuidade: 24 passaram/1 falhou e contagem real 17 módulos/30 aulas. O histórico não foi reescrito; não houve execução na VPS.

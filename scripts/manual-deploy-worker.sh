@@ -151,6 +151,10 @@ while true; do
       --exclude='dist' \
       --exclude='.env' \
       --exclude='.env.*' \
+      --exclude='*.pem' \
+      --exclude='*.key' \
+      --exclude='backups' \
+      --exclude='.local-audit' \
       --exclude='.smoke.log' \
       -czf "$ARTIFACT" .
   )

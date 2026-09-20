@@ -25,3 +25,21 @@ Nenhum comando deste documento foi executado na VPS nesta auditoria. Deploy, syn
 ## Limites da validação
 
 Testes locais exercitam lógica real de hashing, middleware HTTP e arquivos de auditoria temporários. Consultas de identidade e conteúdo são testadas com driver simulado. Não houve acesso ao banco vivo, autenticação no domínio real, envio de mensagens, restart de serviço ou deploy. Passar na suíte local não comprova configuração correta da VPS.
+
+
+## Continuidade: banco, conteúdo e CI
+
+- Produção exige DATABASE_URL ou opt-in exato ALLOW_VPS_SOCKET_DB=true. O alias REMOTE_DATABASE_URL serve apenas ao desenvolvimento. Os scripts de importação, sync e exportação compartilham a política; não selecionar banco porque um socket existe.
+- /api/healthz responde somente saúde e modo de conexão, com SELECT 1. Configuração inválida impede startup; falha do banco retorna 503 na checagem. URL, senha e erro do driver não integram a resposta.
+- Conteúdo: ver docs/CONTENT_BOOTSTRAP.md. O CI valida arquivos sem banco; o deploy exige --check antes de ativação e após ativação. Apply não é automático. Divergências da VPS não foram medidas nesta sessão.
+- O processo de deploy precisa acessar o arquivo persistente DEPLOY_ROOT/.env (ou DEPLOY_RUNTIME_ENV_FILE). A leitura usa node --env-file, sem source/eval de shell. Conferir igualdade com EnvironmentFile do systemd e variáveis herdadas; não presumir que uma sessão SSH herda a configuração do serviço.
+- Backup deve ficar em diretório privado fora das releases e do storage público, com 0700/0600. Não usar storage/backups. Apply usa transação InnoDB e requer janela de edição controlada. Rollback de código não reverte dados já sincronizados.
+- HIGH-06: comparar todo o intervalo do push, bloquear base desconhecida e usar SHA imutável entre jobs. workflow_dispatch passa a exigir a SHA completa da release ativa, reconferida pelo script antes da ativação. O script compara também os arquivos de schema da candidata com a release ativa, cobrindo falhas/pulos no histórico de deploy. Nunca executar migrations automaticamente.
+- Há chave privada RSA no histórico da base. Foi removida da árvore da branch, não usada nem exibida. Deve ser revogada/rotacionada onde autorizada; a limpeza histórica, artefatos e investigação de uso exigem plano separado. O risco continua bloqueando liberação operacional até evidência suficiente.
+
+## Fontes adicionais consultadas nesta continuidade
+
+- [GitHub Actions checkout](https://github.com/actions/checkout): ref explícita e histórico completo para validar commits.
+- [MySQL 8.4 — transações](https://dev.mysql.com/doc/refman/8.4/en/commit.html): READ ONLY, isolamento, commit/rollback e dependência de mecanismo transacional.
+- [Node.js — operações de arquivo](https://nodejs.org/api/fs.html): criação exclusiva wx, permissões e sincronização do arquivo.
+- [GitHub — remoção de dados sensíveis](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository): remoção da árvore não substitui revogação/rotação da credencial.
