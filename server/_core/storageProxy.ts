@@ -4,17 +4,19 @@ import { parse as parseCookieHeader } from "cookie";
 import { LOCAL_STORAGE_DIR, normalizeKey } from "../storage";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 import { ENV } from "./env";
+import { isMemberAdministrativelyBlocked } from "./adminMemberManagement";
 
 function resolveStorageSession(req: Request) {
   const cookies = parseCookieHeader(req.headers.cookie ?? "");
   return resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
 }
 
-function canReadStorageKey(req: Request, key: string) {
+async function canReadStorageKey(req: Request, key: string) {
   if (!key.startsWith("payment-receipts/")) return true;
-  const user = resolveStorageSession(req);
+  const user = await resolveStorageSession(req);
   if (!user) return false;
   if (user.role === "admin") return true;
+  if (await isMemberAdministrativelyBlocked(user.id)) return false;
   const ownerId = Number(key.match(/^payment-receipts\/(\d+)\//)?.[1] ?? 0);
   return Number.isInteger(ownerId) && ownerId === user.id;
 }
@@ -38,7 +40,8 @@ export function registerStorageProxy(app: Express) {
       return;
     }
 
-    if (!canReadStorageKey(req, key)) {
+    const canRead = await canReadStorageKey(req, key).catch(() => false);
+    if (!canRead) {
       res.status(403).send("Storage key is not available for this session");
       return;
     }

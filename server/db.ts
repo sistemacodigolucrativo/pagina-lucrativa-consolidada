@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, isNull, lte, or, sql, type SQL } from "drizzle-orm";
+import { and, inArray, notInArray, desc, eq, gte, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from "node:crypto";
 import { existsSync } from "node:fs";
@@ -40,6 +40,8 @@ import { assertReceiptReviewAllowed, assertReceiptUploadAllowed, assertSponsorIm
 import { getPublicSalesSection } from "../shared/publicSalesSections";
 import { getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
 import { getPackagedEbookLibraryCategory } from "../shared/ebookLibraryCatalog";
+
+import { INTERNAL_CONTENT_CATEGORIES, MEMBER_CONTENT_KINDS, isMemberVisibleContent } from "./memberContentPolicy";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
 const PAYMENT_ACCESS_TOKEN_TTL_MS = 30 * 60 * 1000;
@@ -1129,7 +1131,12 @@ export async function removeAdminPublicSalesSectionImage(sectionId: string) {
 export async function getPublishedContent() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(managedContent).where(eq(managedContent.status, "published")).orderBy(desc(managedContent.updatedAt));
+  const rows = await db.select().from(managedContent).where(and(
+    eq(managedContent.status, "published"),
+    inArray(managedContent.kind, [...MEMBER_CONTENT_KINDS]),
+    or(isNull(managedContent.resourceCategory), notInArray(managedContent.resourceCategory, [...INTERNAL_CONTENT_CATEGORIES])),
+  )).orderBy(desc(managedContent.updatedAt));
+  return rows.filter(isMemberVisibleContent).map(({ createdBy: _createdBy, ...content }) => content);
 }
 
 const ebookListFields = {

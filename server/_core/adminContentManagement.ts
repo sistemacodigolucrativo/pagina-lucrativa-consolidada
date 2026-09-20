@@ -5,11 +5,12 @@ import { managedContent } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 
-const SYSTEM_CATEGORIES = ["public-sales-copy", "public-sales-layout", "member-admin-control", "public-toast-config"];
+import { INTERNAL_CONTENT_CATEGORIES } from "../memberContentPolicy";
+const SYSTEM_CATEGORIES: readonly string[] = INTERNAL_CONTENT_CATEGORIES;
 
 async function requireAdmin(req: Request, res: Response) {
   const cookies = parseCookieHeader(req.headers.cookie ?? "");
-  const user = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+  const user = await resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
   if (!user || user.role !== "admin") {
     res.status(403).json({ error: "Acesso administrativo necessário." });
     return null;

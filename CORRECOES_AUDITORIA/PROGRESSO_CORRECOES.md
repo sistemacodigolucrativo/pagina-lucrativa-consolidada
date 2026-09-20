@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T02:31:47+00:00
+Última atualização: 2026-09-20T02:40:34+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -20,46 +20,47 @@ Auditoria recebida preservada integralmente em AUDITORIA_RECEBIDA.md. A main rem
 
 ## Estado de execução
 
-- Auditoria lida integralmente; 2 críticos, 7 altos, 6 médios.
-- Main remota consultada e clonada; branch de trabalho criada localmente e no GitHub.
-- Testes ainda não executados; instalação pendente.
-- Próximo passo: confirmar CRIT-01 e CRIT-02, levantar a linha de base dos testes e implementar as correções mínimas.
+- Base original: pnpm check aprovado; pnpm test: 75 arquivos, 281 testes aprovados (sem banco real).
+- Instalação inicial com pnpm 11.19.0 falhou por incompatibilidade com overrides do package.json. Reexecutada com pnpm 10.4.1 fixado: sucesso, lockfile preservado. Node local 24.19.0; workflow usa Node 22.
+- Críticos implementados: pnpm check aprovado; 5 arquivos / 19 testes focados aprovados.
+- Registro inicial publicado no GitHub: 95d8b3671c6c8d9790104dde73a92199b27b9d80. Git push via terminal sem credencial; publicação feita pela conexão GitHub autenticada, sem force.
+- Próximo passo: HIGH-01/HIGH-02, depois controles operacionais. VPS, migrations e deploy não executados.
 
 ## Achados
 
 ### CRIT-01
 
 ID: CRIT-01
-Status: Pendente
+Status: Corrigido
 Gravidade: Critico
 Área: Seguranca administrativa / autenticacao
 Arquivo(s) auditado(s): server/demoAuth.ts; server/_core/context.ts; server/_core/trpc.ts; server/_core/adminMemberManagement.ts; server/_core/adminCommercialOperations.ts; server/_core/manualDeploy.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: O caminho real de autenticacao usado pelo contexto da aplicacao ainda depende de sessao local/demo, incluindo uma conta administrativa local fixa.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim, por leitura e testes: a base aceitava contas demo fixas sem distinção de produção.
+Evidência no código atual: Base: server/demoAuth.ts resolveDemoAccount/resolveDemoSession; contexto e 6 módulos REST confiavam no payload. Falta de JWT_SECRET caía em chave constante. Branch: authConfig.ts exige opt-in, impede demo em produção e valida segredo; resolveDemoSession consulta usuário/permissão no banco e vincula sessão à credencial.
+Correção aplicada: Demo impossível em produção; login real no banco somente com ENABLE_LOCAL_AUTH=true; segredo validado no startup; sessão real revogada após senha alterada/usuário excluído; permissão atual do banco; hashes omitidos do usuário devolvido; falha ao consultar bloqueio em produção nega acesso.
+Arquivos alterados: server/demoAuth.ts; server/_core/authConfig.ts, context.ts, index.ts, adminCommercialOperations.ts, adminContentManagement.ts, adminMemberManagement.ts, adminRelationshipMaintenance.ts, manualDeploy.ts, storageProxy.ts; .env.example; scripts/prepare-workspace.sh; testes de autenticação.
+Testes executados: pnpm check; vitest run securityAudit.auth, securityAudit.content, demoAuth, context.auth, functionalPersistence.
+Resultado dos testes: Typecheck aprovado; 19 testes aprovados, incluindo negativos de produção e consulta simulada ao banco. Não houve login em VPS.
+Pendências: Antes de implantação autorizada, configurar segredo aleatório e ENABLE_LOCAL_AUTH=true para contas reais; confirmar administrador real não-demo no banco. Sessões reais antigas exigirão novo login. Não há provedor OAuth ativo no entrypoint; não foi inventado um provedor.
+Próximo passo: Validar acesso administrativo real em ambiente controlado antes de deploy.
+Commit relacionado: Bloco fix: bloquear autenticacao demo em producao e isolar conteudo interno; SHA consultável no histórico deste arquivo.
 
 ### CRIT-02
 
 ID: CRIT-02
-Status: Pendente
+Status: Corrigido
 Gravidade: Critico
 Área: Privacidade / conteudo interno / permissoes
 Arquivo(s) auditado(s): server/db.ts; server/routers.ts; server/_core/adminMemberManagement.ts
-Problema confirmado?: Ainda não confrontado integralmente.
-Evidência no código atual: Pendente; descrição recebida não é confirmação.
-Correção aplicada: Nenhuma.
-Arquivos alterados: Nenhum arquivo funcional.
-Testes executados: Nenhum.
-Resultado dos testes: Não executados.
-Pendências: Confrontar o problema descrito: Registros internos de controle administrativo podem ser expostos pelo endpoint de conteudo publicado dos membros.
-Próximo passo: Ler o fluxo e suas dependências; confirmar com evidência e teste aplicável.
-Commit relacionado: Registro inicial no commit que adiciona este arquivo; consultar git log -- CORRECOES_AUDITORIA/PROGRESSO_CORRECOES.md.
+Problema confirmado?: Sim. getPublishedContent filtrava apenas published e retornava member-admin-control.
+Evidência no código atual: Base: server/db.ts getPublishedContent; adminMemberManagement.ts saveControl grava published. Branch: filtro SQL e filtro defensivo em memória excluem todas as quatro categorias internas conhecidas; createdBy não é retornado.
+Correção aplicada: Política compartilhada de categorias internas e tipos permitidos; preservados materiais, artigos, FAQ e avisos públicos comuns.
+Arquivos alterados: server/db.ts; server/memberContentPolicy.ts; server/_core/adminContentManagement.ts; server/securityAudit.content.test.ts.
+Testes executados: Teste executa getPublishedContent com resultado de driver simulado contendo controles, configurações, rascunhos e conteúdos comuns.
+Resultado dos testes: Somente os 2 conteúdos públicos esperados retornaram; nenhum registro interno nem createdBy. Typecheck aprovado.
+Pendências: Confirmar resultado com dados da VPS em validação operacional autorizada.
+Próximo passo: Manter categorias internas futuras na política compartilhada.
+Commit relacionado: Mesmo bloco de correção dos críticos; consultar git log deste arquivo.
 
 ### HIGH-01
 

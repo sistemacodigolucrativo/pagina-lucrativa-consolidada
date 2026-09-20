@@ -1,4 +1,5 @@
 import "dotenv/config";
+import { assertProductionAuthConfig } from "./authConfig";
 import express, { type RequestHandler } from "express";
 import { createServer, type ServerResponse } from "http";
 import net from "net";
@@ -70,6 +71,7 @@ function registerPackagedEbookFiles(app: express.Express, appPrefix: string) {
 }
 
 async function startServer() {
+  assertProductionAuthConfig();
   const app = express();
   const server = createServer(app);
   const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\/+$/, "");
@@ -115,4 +117,7 @@ async function startServer() {
   });
 }
 
-startServer().catch(console.error);
+startServer().catch(error => {
+  console.error(error instanceof Error ? error.message : "Falha ao iniciar servidor.");
+  process.exitCode = 1;
+});

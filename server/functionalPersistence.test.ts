@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("./db", () => ({
   authenticateLocalUser: vi.fn(),
@@ -9,6 +9,8 @@ vi.mock("./db", () => ({
 import { resolveDemoAccount, toDemoUser } from "./demoAuth";
 
 describe("identidades locais persistentes", () => {
+  beforeEach(() => vi.stubEnv("ENABLE_LOCAL_AUTH", "true"));
+  afterEach(() => vi.unstubAllEnvs());
   it("mantém identificadores estáveis que correspondem às contas da base local", async () => {
     const admin = await resolveDemoAccount("admin", "123");
     const member = await resolveDemoAccount("user", "123");

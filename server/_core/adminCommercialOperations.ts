@@ -19,7 +19,7 @@ import {
 import { getDb, reviewPaymentReceipt } from "../db";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 
-type AdminUser = NonNullable<ReturnType<typeof resolveDemoSession>>;
+type AdminUser = NonNullable<Awaited<ReturnType<typeof resolveDemoSession>>>;
 type PaymentStatus = "not_started" | "awaiting_payment" | "receipt_received" | "confirmed" | "rejected";
 
 const paymentStatuses = new Set(["not_started", "awaiting_payment", "receipt_received", "confirmed", "rejected"]);
@@ -42,7 +42,7 @@ function cents(value: number | null | undefined) {
 
 async function requireAdmin(req: Request, res: Response): Promise<AdminUser | null> {
   const cookies = parseCookieHeader(req.headers.cookie ?? "");
-  const user = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+  const user = await resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
   if (!user || user.role !== "admin") {
     res.status(403).json({ error: "Acesso administrativo necessario." });
     return null;

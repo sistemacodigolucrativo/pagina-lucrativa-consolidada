@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type { User } from "../drizzle/schema";
-import { authenticateLocalUser, getStoredPasswordHashByOpenId, upsertUser } from "./db";
+import { authenticateLocalUser, getStoredPasswordHashByOpenId, getUserByOpenId, upsertUser } from "./db";
+import { demoAuthEnabled, localAuthEnabled, sessionSecret } from "./_core/authConfig";
 import { hashDemoCredential, hashPassword, hashesMatch } from "./credentialHash";
 
 export const DEMO_SESSION_COOKIE_NAME = process.env.VITE_DEV_PREFIX ? "pl_demo_session_dev" : "pl_demo_session";
@@ -19,12 +20,14 @@ export type DemoAccount = {
   email: string;
   loginMethod?: string | null;
   role: "admin" | "user";
+  credentialVersion?: string;
 };
 
 type DemoSessionPayload = {
   openId: string;
   role: DemoAccount["role"];
   expiresAt: number;
+  credentialVersion?: string;
   id?: number;
   name?: string;
   email?: string;
@@ -32,7 +35,13 @@ type DemoSessionPayload = {
 };
 
 const DEMO_SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
-const DEMO_SESSION_SECRET = process.env.JWT_SECRET || "pagina-lucrativa-local-demo-session";
+function credentialVersion(openId: string, passwordHash: string) {
+  return createHmac("sha256", sessionSecret()).update(`${openId}\0${passwordHash}`).digest("hex");
+}
+
+function isDemoIdentity(openId: string, loginMethod?: string | null) {
+  return openId.startsWith("local_demo_") || loginMethod === "local_demo";
+}
 
 type StoredDemoAccount = DemoAccount & { credentialHash: string };
 
@@ -57,15 +66,16 @@ const demoAccounts: StoredDemoAccount[] = [
 
 function signSessionPayload(payload: DemoSessionPayload) {
   const encodedPayload = Buffer.from(JSON.stringify(payload)).toString("base64url");
-  const signature = createHmac("sha256", DEMO_SESSION_SECRET).update(encodedPayload).digest("base64url");
+  const signature = createHmac("sha256", sessionSecret()).update(encodedPayload).digest("base64url");
   return `${encodedPayload}.${signature}`;
 }
 
 function readSessionPayload(token: string): DemoSessionPayload | null {
-  const [encodedPayload, encodedSignature] = token.split(".");
+  const [encodedPayload, encodedSignature, extra] = token.split(".");
+  if (extra !== undefined) return null;
   if (!encodedPayload || !encodedSignature) return null;
 
-  const expectedSignature = createHmac("sha256", DEMO_SESSION_SECRET).update(encodedPayload).digest();
+  const expectedSignature = createHmac("sha256", sessionSecret()).update(encodedPayload).digest();
   const receivedSignature = Buffer.from(encodedSignature, "base64url");
   if (receivedSignature.length !== expectedSignature.length || !timingSafeEqual(receivedSignature, expectedSignature)) return null;
 
@@ -79,9 +89,11 @@ function readSessionPayload(token: string): DemoSessionPayload | null {
 }
 
 export async function resolveDemoAccount(username: string, password: string): Promise<DemoAccount | null> {
+  if (!localAuthEnabled()) return null;
   const normalizedUsername = username.trim().toLowerCase();
   const matched = demoAccounts.find(account => account.username === normalizedUsername);
   if (matched) {
+    if (!demoAuthEnabled()) return null;
     const storedPasswordHash = await getStoredPasswordHashByOpenId(matched.openId);
     const valid = storedPasswordHash
       ? hashesMatch(storedPasswordHash, hashPassword(password))
@@ -101,7 +113,7 @@ export async function resolveDemoAccount(username: string, password: string): Pr
     return account;
   }
   const localUser = await authenticateLocalUser(normalizedUsername, password);
-  if (!localUser) return null;
+  if (!localUser || isDemoIdentity(localUser.openId, localUser.loginMethod) || !localUser.passwordHash) return null;
   return {
     id: localUser.id,
     username: localUser.email ?? normalizedUsername,
@@ -110,6 +122,7 @@ export async function resolveDemoAccount(username: string, password: string): Pr
     email: localUser.email ?? normalizedUsername,
     loginMethod: localUser.loginMethod,
     role: localUser.role,
+    credentialVersion: credentialVersion(localUser.openId, localUser.passwordHash),
   };
 }
 
@@ -130,6 +143,9 @@ export function toDemoUser(account: DemoAccount): User {
 }
 
 export function createDemoSession(account: DemoAccount) {
+  if (!localAuthEnabled() || (isDemoIdentity(account.openId, account.loginMethod) && !demoAuthEnabled())) {
+    throw new Error("Autenticação local/demo desabilitada neste ambiente.");
+  }
   return signSessionPayload({
     id: account.id,
     openId: account.openId,
@@ -138,24 +154,27 @@ export function createDemoSession(account: DemoAccount) {
     email: account.email,
     loginMethod: account.loginMethod ?? "local_demo",
     expiresAt: Date.now() + DEMO_SESSION_DURATION_MS,
+    credentialVersion: account.credentialVersion,
   });
 }
 
-export function resolveDemoSession(token: string | undefined) {
-  if (!token) return null;
-  const payload = readSessionPayload(token);
-  if (!payload) return null;
-  if (payload.id && payload.name && payload.email) {
-    return toDemoUser({
-      id: payload.id,
-      username: payload.email,
-      openId: payload.openId,
-      name: payload.name,
-      email: payload.email,
-      loginMethod: payload.loginMethod,
-      role: payload.role,
-    });
+export async function resolveDemoSession(token: string | undefined): Promise<User | null> {
+  if (!token || !localAuthEnabled()) return null;
+  try {
+    const payload = readSessionPayload(token);
+    if (!payload) return null;
+    if (isDemoIdentity(payload.openId, payload.loginMethod)) {
+      if (!demoAuthEnabled()) return null;
+      const account = demoAccounts.find(candidate => candidate.openId === payload.openId && candidate.role === payload.role);
+      return account ? toDemoUser(account) : null;
+    }
+    // A assinatura não substitui a identidade e a permissão atuais no banco.
+    const user = await getUserByOpenId(payload.openId);
+    if (!user || user.id !== payload.id || !user.passwordHash || isDemoIdentity(user.openId, user.loginMethod)) return null;
+    if (!payload.credentialVersion || !hashesMatch(payload.credentialVersion, credentialVersion(user.openId, user.passwordHash))) return null;
+    return { ...user, passwordHash: null };
+  } catch {
+    // Banco/configuração indisponível não pode manter uma autorização antiga.
+    return null;
   }
-  const account = demoAccounts.find(candidate => candidate.openId === payload.openId && candidate.role === payload.role);
-  return account ? toDemoUser(account) : null;
 }

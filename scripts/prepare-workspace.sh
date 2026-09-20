@@ -114,7 +114,7 @@ log "Para o modo real, configure DATABASE_URL e os demais segredos no ambiente d
 
 if [[ "$START_PREVIEW" == "1" ]]; then
   log "Iniciando preview na porta ${PORT}"
-  exec env DEMO_PREVIEW="$DEMO_PREVIEW" PORT="$PORT" pnpm dev
+  exec env ENABLE_LOCAL_AUTH=true DEMO_PREVIEW="$DEMO_PREVIEW" PORT="$PORT" pnpm dev
 fi
 
 log "Configuração concluída sem iniciar o servidor."

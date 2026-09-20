@@ -15,7 +15,7 @@ export async function createContext(
   opts: CreateExpressContextOptions
 ): Promise<TrpcContext> {
   const cookies = parseCookieHeader(opts.req.headers.cookie ?? "");
-  const demoUser = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+  const demoUser = await resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
   const blocked = demoUser?.role === "user" ? await isMemberAdministrativelyBlocked(demoUser.id) : false;
   const user = blocked ? null : demoUser ?? null;
 

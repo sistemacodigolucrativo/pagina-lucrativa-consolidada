@@ -1,9 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const dbMocks = vi.hoisted(() => ({
   authenticateLocalUser: vi.fn(),
   getStoredPasswordHashByOpenId: vi.fn(),
   upsertUser: vi.fn(),
+  getUserByOpenId: vi.fn(),
 }));
 
 vi.mock("./db", () => dbMocks);
@@ -11,7 +12,10 @@ vi.mock("./db", () => dbMocks);
 import { createDemoSession, resolveDemoAccount, resolveDemoSession } from "./demoAuth";
 
 describe("resolveDemoAccount", () => {
+  afterEach(() => vi.unstubAllEnvs());
   beforeEach(() => {
+    vi.stubEnv("ENABLE_LOCAL_AUTH", "true");
+    vi.stubEnv("NODE_ENV", "test");
     vi.resetAllMocks();
     dbMocks.upsertUser.mockResolvedValue(undefined);
   });
@@ -35,7 +39,7 @@ describe("resolveDemoAccount", () => {
     const account = await resolveDemoAccount("admin", "123");
     const token = createDemoSession(account!);
     expect(token.split(".")).toHaveLength(2);
-    expect(resolveDemoSession(token)).toMatchObject({ openId: "local_demo_admin", role: "admin", loginMethod: "local_demo" });
-    expect(resolveDemoSession(`${token}invalid`)).toBeNull();
+    expect(await resolveDemoSession(token)).toMatchObject({ openId: "local_demo_admin", role: "admin", loginMethod: "local_demo" });
+    expect(await resolveDemoSession(`${token}invalid`)).toBeNull();
   });
 });

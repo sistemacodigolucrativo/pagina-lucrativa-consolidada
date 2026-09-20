@@ -58,7 +58,7 @@ function parseControl(body: string | null | undefined): MemberControl | null {
 
 async function requireAdmin(req: Request, res: Response) {
   const cookies = parseCookieHeader(req.headers.cookie ?? "");
-  const user = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+  const user = await resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
   if (!user || user.role !== "admin") {
     res.status(403).json({ error: "Acesso administrativo necessário." });
     return null;
@@ -68,10 +68,11 @@ async function requireAdmin(req: Request, res: Response) {
 
 async function getControlRow(userId: number) {
   const db = await getDb();
-  // A consulta de bloqueio participa da criação do contexto de autenticação.
-  // Se o banco estiver temporariamente indisponível, não derrubamos toda a sessão;
-  // operações administrativas que gravam estado continuam falhando de forma segura.
-  if (!db) return null;
+  // A indisponibilidade não pode liberar um membro bloqueado em produção.
+  if (!db) {
+    if (process.env.NODE_ENV === "production") throw new Error("Não foi possível verificar o bloqueio do membro.");
+    return null;
+  }
   try {
     const rows = await db.select().from(managedContent).where(and(
       eq(managedContent.resourceCategory, CONTROL_CATEGORY),
@@ -80,7 +81,8 @@ async function getControlRow(userId: number) {
     )).orderBy(desc(managedContent.updatedAt)).limit(1);
     return rows[0] ?? null;
   } catch (error) {
-    console.warn("[AdminMemberManagement] Failed to read member control state:", error);
+    if (process.env.NODE_ENV === "production") throw new Error("Não foi possível verificar o bloqueio do membro.");
+    console.warn("[AdminMemberManagement] Controle de membro indisponível.");
     return null;
   }
 }
