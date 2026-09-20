@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T11:19:32+00:00
+Última atualização: 2026-09-20T13:37:41+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -314,10 +314,10 @@ Gravidade: Critico
 Arquivo(s) auditado(s): attached_assets/Maquinas-50GB_1789167740877.pem; .gitignore
 Problema confirmado?: Sim, arquivo rastreado no commit inicial contém chave privada RSA aceita por node:crypto.createPrivateKey. Conteúdo não exibido nem utilizado para acesso.
 Evidência no código atual: Chave privada presente na árvore de 1ffbc55; pacote tar do deploy incluía attached_assets. Não se sabe se a chave está ativa ou em quais sistemas foi autorizada.
-Correção aplicada: Chave removida da árvore atual; regras no .gitignore, bloqueio de cabeçalhos de chave privada no CI e exclusão de chaves/backups/logs privados do pacote de deploy. Histórico remoto não reescrito.
+Correção aplicada: Chave removida da árvore atual; regras no .gitignore, bloqueio de cabeçalhos de chave privada no CI e exclusão de chaves/backups/logs privados do pacote de deploy. Histórico remoto não reescrito. Após autorização explícita do usuário, apagada também a cópia local ignorada pelo Git; ausência reconfirmada na árvore remota.
 Arquivos alterados: attached_assets/Maquinas-50GB_1789167740877.pem (removido); .gitignore; .github/workflows/deploy-vps.yml; este progresso.
-Testes executados: Tipo validado localmente sem exibir bytes; varredura de todos os blobs novos antes da publicação; comparação das árvores locais/remotas; git diff --check.
-Resultado dos testes: Nenhum blob novo contém chave privada; o blob removido já pertence ao commit remoto inicial e não estava nos objetos pendentes. Chave ausente da árvore publicada. A chave não foi utilizada nem exibida; histórico anterior permanece acessível.
+Testes executados: Tipo validado localmente sem exibir bytes; varredura de todos os blobs novos antes da publicação; comparação das árvores locais/remotas; verificação de ausência do arquivo no disco, índice e árvore remota; git check-ignore; varredura de cabeçalhos privados rastreados; git diff --check.
+Resultado dos testes: Nenhum blob novo contém chave privada; o blob removido já pertence ao commit remoto inicial e não estava nos objetos pendentes. Chave ausente da árvore publicada e do diretório de trabalho após a exclusão autorizada. A chave não foi utilizada nem exibida; histórico anterior permanece acessível.
 Pendências: Revogar/rotacionar a chave nos serviços onde foi autorizada, verificar acessos e cópias/artefatos antigos. A remoção da árvore NÃO revoga a credencial nem remove versões históricas.
 Próximo passo: Responsável autorizar e executar tratamento da credencial fora desta etapa; manter bloqueio de liberação operacional até evidência de revogação ou prova de que não é usada.
 Commit relacionado: 63df8da9b556af1e18182e68c9897863dde4a4c3; prevenção no CI em 14c6355c3f5b2e46cf5655504f9f664f65adfcf1
@@ -430,3 +430,13 @@ Lista completa em relação à retomada 1ffbc55 (35 arquivos, incluindo a remoç
 - **Validação restante:** executar Node 22/CI sem deploy e validação real de autenticação, health, conteúdo e rollback em ambiente autorizado. Asserções locais e build não demonstram estado da VPS.
 
 Todos os críticos e altos estão corrigidos no código ou têm bloqueio/evidência explícitos acima; os seis médios foram avaliados. Nenhuma autorização operacional foi presumida. O próximo trabalho é resolver os bloqueios documentados, sem reiniciar a auditoria e sem reaplicar as correções já publicadas.
+
+
+## Complemento — exclusão do arquivo autorizada pelo usuário
+
+- Pedido: apagar `attached_assets/Maquinas-50GB_1789167740877.pem` e aplicar a correção.
+- Estado conferido antes da ação: o arquivo já estava removido do índice e da árvore publicada da branch (remoção em 63df8da); havia uma cópia local ignorada pelo Git. Branch local/remota em 6de1284, sem modificações pendentes.
+- Ação: apagada somente essa cópia local; mantidas as regras de .gitignore, o bloqueio de chaves privadas no CI e a exclusão de *.pem/*.key do pacote de deploy. Conteúdo da chave não exibido nem utilizado.
+- Validação: ausência no disco, índice e árvore Git publicada; regra de ignore vigente; nenhum cabeçalho de chave privada nos arquivos rastreados; git diff --check aprovado.
+- Nesta continuação, apenas o registro de progresso é alterado no Git, pois a remoção versionada já estava publicada. Instalação, typecheck, suíte e build não repetidos: nenhum código executável ou dependência foi alterado. Mantidos os resultados anteriores de 341 testes aprovados.
+- Limite: apagar o arquivo não comprova revogação da credencial. Nenhuma alteração da main, reescrita do histórico, ação na VPS, deploy ou migration executada.
