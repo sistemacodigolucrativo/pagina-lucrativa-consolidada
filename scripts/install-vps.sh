@@ -115,8 +115,6 @@ require_clone_root() {
 preflight_environment() {
   log "Executando pre-flight do ambiente"
   need_cmd sudo
-  need_cmd openssl
-  need_cmd tar
 
   [[ -r /etc/os-release ]] || fail "/etc/os-release nao encontrado."
   # shellcheck disable=SC1091
@@ -167,6 +165,19 @@ install_system_packages() {
   if [[ "$ENABLE_SSL" == "1" ]]; then
     as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx
   fi
+
+  local required_cmds=(curl git openssl tar unzip)
+  if [[ "$ENABLE_NGINX" == "1" ]]; then
+    required_cmds+=(nginx)
+  fi
+  if command -v mysql >/dev/null 2>&1; then
+    required_cmds+=(mysql)
+  else
+    required_cmds+=(mariadb)
+  fi
+  for cmd in "${required_cmds[@]}"; do
+    need_cmd "$cmd"
+  done
 }
 
 install_node_and_pnpm() {
@@ -240,9 +251,9 @@ prepare_env() {
 }
 
 validate_env_file() {
-  grep -q '^DATABASE_URL=' "$ENV_FILE" || fail "DATABASE_URL ausente em $ENV_FILE."
-  grep -q '^JWT_SECRET=' "$ENV_FILE" || fail "JWT_SECRET ausente em $ENV_FILE."
-  grep -q '^LOCAL_STORAGE_DIR=' "$ENV_FILE" || fail "LOCAL_STORAGE_DIR ausente em $ENV_FILE."
+  grep -Eq '^DATABASE_URL=.+$' "$ENV_FILE" || fail "DATABASE_URL ausente ou vazia em $ENV_FILE."
+  grep -Eq '^JWT_SECRET=.+$' "$ENV_FILE" || fail "JWT_SECRET ausente ou vazia em $ENV_FILE."
+  grep -Eq '^LOCAL_STORAGE_DIR=.+$' "$ENV_FILE" || fail "LOCAL_STORAGE_DIR ausente ou vazia em $ENV_FILE."
 }
 
 prepare_database() {

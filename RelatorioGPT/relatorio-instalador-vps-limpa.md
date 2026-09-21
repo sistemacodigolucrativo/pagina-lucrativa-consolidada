@@ -182,3 +182,34 @@ Os logs brutos nao foram versionados para evitar incluir saidas operacionais ext
 O instalador foi atualizado, documentado e validado em VPS Ubuntu limpa por IP/HTTP. A instalacao ficou funcional com app, banco, migrations, build, systemd, Nginx, seed opcional e idempotencia.
 
 O projeto ficou pronto para instalacao reproduzivel em outra VPS limpa, exceto pela validacao especifica de dominio real e HTTPS.
+
+## 15. Validacao final de robustez
+
+Data da validacao final: 2026-09-21.
+
+Correcoes finais aplicadas:
+
+- O pre-flight inicial deixou de exigir `openssl` e `tar` antes da instalacao de pacotes.
+- A etapa de pacotes passou a validar explicitamente comandos instalados: `curl`, `git`, `openssl`, `tar`, `unzip`, `nginx` quando habilitado, e cliente MySQL/MariaDB.
+- A validacao de `.env` passou a rejeitar `DATABASE_URL`, `JWT_SECRET` e `LOCAL_STORAGE_DIR` quando ausentes ou vazios.
+- O cleanup destrutivo de teste passou a bloquear execucao quando `APP_NAME`, `DEPLOY_ROOT`, `SERVICE_NAME`, `MYSQL_DATABASE`, `MYSQL_USER` ou `DEPLOY_USER` estiverem fora dos valores esperados do projeto de teste.
+
+Validacoes executadas:
+
+- `bash -n scripts/install-vps.sh`: passou.
+- `bash -n scripts/cleanup-test-install.sh`: passou.
+- `git diff --check`: passou.
+- Trava do cleanup testada com `MYSQL_DATABASE` fora do escopo: falhou corretamente antes de qualquer acao destrutiva.
+- Execucao idempotente de `bash scripts/install-vps.sh`: passou.
+- `systemctl is-active pagina-lucrativa.service`: `active`.
+- `sudo nginx -t`: passou.
+- `curl --fail http://127.0.0.1:3101/`: passou.
+- `curl --fail http://127.0.0.1/`: passou.
+- `curl -I http://3.141.97.135/`: HTTP 200.
+
+Observacao:
+
+- `nginx -t` sem sudo na VPS de teste falhou por permissao ao acessar `/run/nginx.pid`; a validacao correta foi executada com `sudo -n nginx -t`.
+- Cleanup destrutivo completo nao foi executado nesta rodada final porque nao havia necessidade operacional.
+- Instalacao limpa completa nao foi repetida nesta rodada final; foi validada execucao idempotente sobre a instalacao de teste existente.
+- Nenhum ajuste foi feito em autodeploy, producao, dominio ou HTTPS.

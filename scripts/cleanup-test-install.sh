@@ -9,6 +9,13 @@ MYSQL_USER="${MYSQL_USER:-pagina_lucrativa}"
 DEPLOY_USER="${DEPLOY_USER:-pagina-deploy}"
 CONFIRM_FLAG="${1:-}"
 
+EXPECTED_APP_NAME="pagina-lucrativa"
+EXPECTED_DEPLOY_ROOT="/home/ubuntu/servicos/pagina-lucrativa"
+EXPECTED_SERVICE_NAME="pagina-lucrativa.service"
+EXPECTED_MYSQL_DATABASE="pagina_lucrativa"
+EXPECTED_MYSQL_USER="pagina_lucrativa"
+EXPECTED_DEPLOY_USER="pagina-deploy"
+
 log() { printf '[cleanup-test] %s\n' "$*"; }
 fail() { printf '[cleanup-test] ERRO: %s\n' "$*" >&2; exit 1; }
 
@@ -24,8 +31,18 @@ as_root() {
   fail "Defina ALLOW_DESTRUCTIVE_TEST_CLEANUP=1 para confirmar que esta VPS e de teste."
 [[ "$CONFIRM_FLAG" == "--i-understand-this-is-test-only" ]] || \
   fail "Informe --i-understand-this-is-test-only para executar a limpeza destrutiva de teste."
-[[ "$DEPLOY_ROOT" == /home/ubuntu/servicos/pagina-lucrativa* ]] || \
-  fail "DEPLOY_ROOT fora do escopo esperado de teste: $DEPLOY_ROOT"
+[[ "$APP_NAME" == "$EXPECTED_APP_NAME" ]] || \
+  fail "APP_NAME fora do escopo permitido para cleanup de teste: $APP_NAME"
+[[ "$DEPLOY_ROOT" == "$EXPECTED_DEPLOY_ROOT" ]] || \
+  fail "DEPLOY_ROOT fora do escopo permitido para cleanup de teste: $DEPLOY_ROOT"
+[[ "$SERVICE_NAME" == "$EXPECTED_SERVICE_NAME" ]] || \
+  fail "SERVICE_NAME fora do escopo permitido para cleanup de teste: $SERVICE_NAME"
+[[ "$MYSQL_DATABASE" == "$EXPECTED_MYSQL_DATABASE" ]] || \
+  fail "MYSQL_DATABASE fora do escopo permitido para cleanup de teste: $MYSQL_DATABASE"
+[[ "$MYSQL_USER" == "$EXPECTED_MYSQL_USER" ]] || \
+  fail "MYSQL_USER fora do escopo permitido para cleanup de teste: $MYSQL_USER"
+[[ "$DEPLOY_USER" == "$EXPECTED_DEPLOY_USER" ]] || \
+  fail "DEPLOY_USER fora do escopo permitido para cleanup de teste: $DEPLOY_USER"
 
 log "Parando/removendo servico $SERVICE_NAME"
 if systemctl list-unit-files "$SERVICE_NAME" >/dev/null 2>&1; then
