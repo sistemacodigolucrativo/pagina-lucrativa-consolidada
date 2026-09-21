@@ -173,7 +173,7 @@ Os logs brutos nao foram versionados para evitar incluir saidas operacionais ext
 
 ## 13. Pendencias
 
-- Dominio real e HTTPS/Certbot nao foram validados, pois a VPS de teste foi validada por IP.
+- Dominio real e HTTPS/Certbot foram validados posteriormente na VPS de teste, conforme secao 16.
 - GitHub Actions com esta branch ainda depende de PR/merge ou execucao do fluxo remoto conforme politica do projeto.
 - `DEPLOY_PUBLIC_KEY` precisa ser informado pelo operador quando quiser preparar autodeploy real.
 
@@ -213,3 +213,39 @@ Observacao:
 - Cleanup destrutivo completo nao foi executado nesta rodada final porque nao havia necessidade operacional.
 - Instalacao limpa completa nao foi repetida nesta rodada final; foi validada execucao idempotente sobre a instalacao de teste existente.
 - Nenhum ajuste foi feito em autodeploy, producao, dominio ou HTTPS.
+
+## 16. Validacao HTTPS em dominio apontado para a VPS de teste
+
+Data da validacao: 2026-09-21.
+
+Contexto:
+
+- O dominio `ocodigolucrativo.site` foi apontado para a VPS de teste.
+- Antes do ajuste, HTTP respondia, mas HTTPS retornava erro 521 pela Cloudflare porque a VPS nao escutava na porta 443.
+
+Correcoes aplicadas ao instalador:
+
+- `--enable-ssl` passou a aceitar `LETSENCRYPT_NO_EMAIL=1` para VPS descartavel de teste quando nao houver e-mail operacional.
+- O health check final do Nginx passou a validar `https://$DOMAIN/` quando SSL estiver habilitado, em vez de exigir `http://127.0.0.1/`, que pode retornar 404 apos o Certbot configurar server block e redirect por dominio.
+
+Comando executado na VPS de teste:
+
+```bash
+DOMAIN=ocodigolucrativo.site LETSENCRYPT_NO_EMAIL=1 bash scripts/install-vps.sh --enable-ssl
+```
+
+Resultado:
+
+- Certbot instalado.
+- Certificado Let's Encrypt emitido para `ocodigolucrativo.site`.
+- Nginx configurado com HTTPS.
+- Porta 443 aberta.
+- `pagina-lucrativa.service`: `active`.
+- `sudo nginx -t`: passou.
+- `curl --fail http://127.0.0.1:3101/`: passou.
+- `curl -I http://ocodigolucrativo.site/`: HTTP 301 para HTTPS.
+- `curl -I https://ocodigolucrativo.site/`: HTTP 200.
+
+Observacao:
+
+- A emissao sem e-mail deve ser tratada como opcao operacional para VPS de teste. Em producao, recomenda-se usar `LETSENCRYPT_EMAIL`.

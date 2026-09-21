@@ -12,6 +12,7 @@ DOMAIN="${DOMAIN:-}"
 ENABLE_NGINX="${ENABLE_NGINX:-1}"
 ENABLE_SSL="${ENABLE_SSL:-0}"
 LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:-}"
+LETSENCRYPT_NO_EMAIL="${LETSENCRYPT_NO_EMAIL:-0}"
 PNPM_VERSION="${PNPM_VERSION:-10.4.1}"
 RUN_TESTS="${RUN_TESTS:-0}"
 RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
@@ -56,7 +57,7 @@ Opcoes seguras:
   --no-seed                Nao sincroniza conteudo padrao (padrao).
   --run-tests              Executa pnpm test durante a instalacao.
   --no-nginx               Nao instala/configura Nginx.
-  --enable-ssl             Habilita Certbot. Requer DOMAIN e LETSENCRYPT_EMAIL.
+  --enable-ssl             Habilita Certbot. Requer DOMAIN e LETSENCRYPT_EMAIL, ou LETSENCRYPT_NO_EMAIL=1.
   --disable-autodeploy     Nao prepara usuario/chave/sudoers de autodeploy.
   --help                   Exibe esta ajuda.
 
@@ -138,7 +139,8 @@ preflight_environment() {
 
   if [[ "$ENABLE_SSL" == "1" ]]; then
     [[ -n "$DOMAIN" ]] || fail "DOMAIN e obrigatorio para --enable-ssl."
-    [[ -n "$LETSENCRYPT_EMAIL" ]] || fail "LETSENCRYPT_EMAIL e obrigatorio para --enable-ssl."
+    [[ -n "$LETSENCRYPT_EMAIL" || "$LETSENCRYPT_NO_EMAIL" == "1" ]] || \
+      fail "LETSENCRYPT_EMAIL e obrigatorio para --enable-ssl, exceto com LETSENCRYPT_NO_EMAIL=1."
   fi
 
   if [[ "$RUN_CONTENT_SYNC" == "1" && ! -f scripts/sync-packaged-content.mjs ]]; then
@@ -464,8 +466,15 @@ EOF
 
   if [[ "$ENABLE_SSL" == "1" ]]; then
     [[ -n "$DOMAIN" ]] || fail "DOMAIN e obrigatorio para ENABLE_SSL=1."
-    [[ -n "$LETSENCRYPT_EMAIL" ]] || fail "LETSENCRYPT_EMAIL e obrigatorio para ENABLE_SSL=1."
-    as_root certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos -m "$LETSENCRYPT_EMAIL" --redirect
+    [[ -n "$LETSENCRYPT_EMAIL" || "$LETSENCRYPT_NO_EMAIL" == "1" ]] || \
+      fail "LETSENCRYPT_EMAIL e obrigatorio para ENABLE_SSL=1, exceto com LETSENCRYPT_NO_EMAIL=1."
+    local certbot_contact_args=()
+    if [[ "$LETSENCRYPT_NO_EMAIL" == "1" ]]; then
+      certbot_contact_args=(--register-unsafely-without-email)
+    else
+      certbot_contact_args=(-m "$LETSENCRYPT_EMAIL")
+    fi
+    as_root certbot --nginx -d "$DOMAIN" --non-interactive --agree-tos "${certbot_contact_args[@]}" --redirect
   fi
 }
 
@@ -483,14 +492,18 @@ validate_installation() {
   [[ "$app_ready" == "1" ]] || fail "Aplicacao nao respondeu em http://127.0.0.1:$PORT/."
   if [[ "$ENABLE_NGINX" == "1" ]]; then
     local nginx_ready=0
+    local nginx_health_url="http://127.0.0.1/"
+    if [[ "$ENABLE_SSL" == "1" && -n "$DOMAIN" ]]; then
+      nginx_health_url="https://$DOMAIN/"
+    fi
     for _ in $(seq 1 10); do
-      if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1/" >/dev/null 2>&1; then
+      if curl --fail --silent --show-error --max-time 10 "$nginx_health_url" >/dev/null 2>&1; then
         nginx_ready=1
         break
       fi
       sleep 1
     done
-    [[ "$nginx_ready" == "1" ]] || fail "Nginx nao respondeu em http://127.0.0.1/."
+    [[ "$nginx_ready" == "1" ]] || fail "Nginx nao respondeu em $nginx_health_url."
   fi
   if [[ -n "$PUBLIC_HEALTHCHECK_URL" ]]; then
     curl --fail --silent --show-error --max-time 15 "$PUBLIC_HEALTHCHECK_URL" >/dev/null

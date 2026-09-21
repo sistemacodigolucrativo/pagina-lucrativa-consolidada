@@ -102,6 +102,29 @@ pnpm exec drizzle-kit migrate
 
 Use `--skip-migrations` quando estiver preparando somente arquivos/servico e as migrations forem tratadas manualmente. Em producao existente, faca backup do banco antes de permitir migrations.
 
+### HTTPS
+
+Para configurar Nginx com Certbot e abrir HTTPS na porta 443, o dominio precisa apontar para a VPS e responder em HTTP antes da emissao do certificado.
+
+Com e-mail:
+
+```bash
+DOMAIN=ocodigolucrativo.site LETSENCRYPT_EMAIL=admin@example.com bash scripts/install-vps.sh --enable-ssl
+```
+
+Em VPS descartavel de teste, quando nao houver e-mail operacional, e possivel registrar o certificado sem e-mail:
+
+```bash
+DOMAIN=ocodigolucrativo.site LETSENCRYPT_NO_EMAIL=1 bash scripts/install-vps.sh --enable-ssl
+```
+
+Depois de ativar SSL, valide:
+
+```bash
+sudo nginx -t
+curl -I https://ocodigolucrativo.site/
+```
+
 ### Conteudo padrao
 
 O conteudo padrao da Biblioteca e Academia nao e aplicado automaticamente. Para popular uma VPS nova com os manifestos versionados:
