@@ -23,6 +23,8 @@ describe("visão geral do membro", () => {
     expect(memberOffice).toContain("analytics.data?.totals.clicks");
     expect(memberOffice).toContain("Taxa de conversão");
     expect(memberOffice).toContain("conversions / visits");
+    expect(memberOffice).not.toContain("Central de ação");
+    expect(memberOffice).not.toContain("Atalhos da operação");
     expect(memberOffice).not.toContain("<span>Aguardando análise</span>");
     expect(memberOffice).not.toContain("<span>Conversões</span>");
     expect(db).toContain("Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0)");

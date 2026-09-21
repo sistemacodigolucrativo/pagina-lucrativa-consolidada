@@ -54,6 +54,7 @@ const SIDEBAR_WIDTH_KEY = "sidebar-width";
 const DEFAULT_WIDTH = 280;
 const MIN_WIDTH = 200;
 const MAX_WIDTH = 480;
+const GETTING_STARTED_FINALIZED_STORAGE_BASE = "pagina-lucrativa.getting-started.finalized";
 
 function isAcademyCourseRoute(path: string) {
   return path.startsWith("/membros/curso");
@@ -148,11 +149,16 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
   const activePath = location || "/";
+  const isMemberArea = Boolean(user) && activePath.startsWith("/membros");
   const memberOfficeNavigation = isMemberOfficeNavigation(menuItems);
+  const gettingStartedFinalizedStorageKey = user?.id
+    ? `${GETTING_STARTED_FINALIZED_STORAGE_BASE}.${user.id}`
+    : GETTING_STARTED_FINALIZED_STORAGE_BASE;
+  const [gettingStartedFinalized, setGettingStartedFinalized] = useState(false);
   const gettingStartedProgress = useMemberGettingStartedProgress({
     enabled: memberOfficeNavigation && user?.role === "user",
   });
-  const visibleMenuItems = memberOfficeNavigation && user?.role === "user" && gettingStartedProgress.isComplete
+  const visibleMenuItems = memberOfficeNavigation && user?.role === "user" && gettingStartedProgress.isComplete && gettingStartedFinalized
     ? menuItems.filter(item => item.path !== "/membros/como-divulgar")
     : menuItems;
   const adminNavigation = isAdminNavigation(menuItems);
@@ -180,7 +186,7 @@ function DashboardLayoutContent({
   }, {});
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const notifications = trpc.member.notifications.useQuery(undefined, {
-    enabled: memberOfficeNavigation && user?.role === "user",
+    enabled: isMemberArea,
     refetchInterval: 30000,
   });
   const markNotificationRead = trpc.member.markNotificationRead.useMutation({
@@ -195,6 +201,29 @@ function DashboardLayoutContent({
       setIsResizing(false);
     }
   }, [isCompact]);
+
+  useEffect(() => {
+    if (!memberOfficeNavigation || user?.role !== "user") {
+      setGettingStartedFinalized(false);
+      return;
+    }
+
+    const readFinalizedState = () => {
+      try {
+        setGettingStartedFinalized(localStorage.getItem(gettingStartedFinalizedStorageKey) === "1");
+      } catch {
+        setGettingStartedFinalized(false);
+      }
+    };
+
+    readFinalizedState();
+    window.addEventListener("storage", readFinalizedState);
+    window.addEventListener("pagina-lucrativa:getting-started-finalized", readFinalizedState);
+    return () => {
+      window.removeEventListener("storage", readFinalizedState);
+      window.removeEventListener("pagina-lucrativa:getting-started-finalized", readFinalizedState);
+    };
+  }, [gettingStartedFinalizedStorageKey, memberOfficeNavigation, user?.role]);
 
   useEffect(() => {
     if (!isMobile || !openMobile) return;
@@ -431,7 +460,7 @@ function DashboardLayoutContent({
             <span className="dashboard-shortcut">CTRL B</span>
           </div>
         </header>
-        {memberOfficeNavigation && user?.role === "user" ? (
+        {isMemberArea ? (
           <div className="dashboard-notifications" ref={notificationsRef}>
             <button type="button" aria-label={`Notificações${notifications.data?.unreadCount ? `: ${notifications.data.unreadCount} não lidas` : ""}`} onClick={() => setNotificationsOpen(current => !current)} className="dashboard-notification-trigger">
               <Bell className="size-4" />

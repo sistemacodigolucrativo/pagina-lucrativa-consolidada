@@ -75,7 +75,6 @@ const publicNavigation = [
 
 const utilityNavigation = [
   ["Acompanhar pedido", "/pedido/acompanhar"],
-  ["Entrar", "/acesso"],
 ] as const;
 
 function publicCopy(overrides: Record<string, Record<string, string>>, sectionId: string, key: string, fallback: string) {
@@ -180,6 +179,8 @@ export default function Home() {
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [openObjectionIndex, setOpenObjectionIndex] = useState<number | null>(null);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
+  const navMenuRef = useRef<HTMLElement | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
   const sectionImages = trpc.public.salesSectionImages.useQuery();
   const socialProof = trpc.public.salesSocialProof.useQuery();
   const { overrides } = usePublicSalesCopy();
@@ -202,6 +203,17 @@ export default function Home() {
       window.removeEventListener("keydown", closeOnEscape);
     };
   }, [profileDetailsOpen]);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const closeOnOutsideClick = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (navMenuRef.current?.contains(target) || menuButtonRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    };
+    window.addEventListener("pointerdown", closeOnOutsideClick);
+    return () => window.removeEventListener("pointerdown", closeOnOutsideClick);
+  }, [menuOpen]);
   const [, setLocation] = useLocation();
   const affiliateParams = typeof window === "undefined" ? null : new URLSearchParams(window.location.search);
   const hasExplicitAffiliate = affiliateParams?.has("afiliado") ?? false;
@@ -254,17 +266,18 @@ export default function Home() {
     <header className="site-header">
       <div className="shell nav">
         <a href="#inicio" aria-label="Método Código Lucrativo — início" onClick={closeMenu}><Brand /></a>
-        <nav className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
+        <nav ref={navMenuRef} className={`nav-links ${menuOpen ? "is-open" : ""}`} aria-label="Navegação principal">
           <div className="nav-links-group nav-links-public" aria-label="Navegação da página">
             {publicNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} onClick={closeMenu}>{label}</a>)}
           </div>
           <span className="nav-links-divider" aria-hidden="true" />
           <div className="nav-links-group nav-links-utility" aria-label="Ações e rotas utilitárias">
-            {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} className={path === "/acesso" ? "nav-login" : undefined} onClick={closeMenu}>{label}</a>)}
+            {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} onClick={closeMenu}>{label}</a>)}
           </div>
-          <a href="#f" className="nav-cta" onClick={closeMenu}>Quero ativar minha estrutura <ArrowUpRight size={15} /></a>
+          <a href={withAppBase("/acesso")} className="nav-cta nav-cta-login-mobile" onClick={closeMenu}>Entrar <ArrowUpRight size={15} /></a>
+          <a href="#f" className="nav-cta nav-cta-activation" onClick={closeMenu}>Quero ativar minha estrutura <ArrowUpRight size={15} /></a>
         </nav>
-        <button className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
+        <button ref={menuButtonRef} className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
     </header>
     {effectiveAffiliate ? (
@@ -274,7 +287,6 @@ export default function Home() {
             <div className="affiliate-profile-summary">
               {effectiveAffiliate.photoUrl ? <img src={withAppBase(effectiveAffiliate.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
               <div className="affiliate-profile-summary-main">
-                <strong className="affiliate-profile-presenter">Apresentador(a) do Método Código Lucrativo</strong>
                 <strong className="affiliate-profile-name">{publicProfileName}</strong>
                 {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
               </div>

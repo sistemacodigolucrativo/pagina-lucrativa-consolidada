@@ -2,6 +2,7 @@ import { ArrowRight, BadgeCheck, CheckCircle2, ChevronLeft, Clipboard, Loader2 }
 import { useEffect } from "react";
 import { useLocation } from "wouter";
 import { withAppBase } from "@/lib/devPath";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { readPaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import ApplicationPayment from "./ApplicationPayment";
 import { trpc } from "@/lib/trpc";
@@ -25,8 +26,9 @@ export default function ApplicationConfirmation() {
 
   async function copyCode() {
     if (!code) return;
-    await navigator.clipboard.writeText(code);
-    toast.success("Código de acompanhamento copiado.");
+    const copied = await copyTextToClipboard(code);
+    if (copied) toast.success("Código de acompanhamento copiado.");
+    else toast.error("Não foi possível copiar o código.");
   }
 
   if (code && receiptSent) {

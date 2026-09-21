@@ -128,7 +128,8 @@ describe("Central de Divulgação", () => {
     expect(center).toContain("Meio");
     expect(center).toContain("Identificação do conteúdo");
     expect(center).toContain("/r/${encodeURIComponent(profileSlug)}");
-    expect(center).toContain("navigator.clipboard.writeText");
+    expect(center).toContain("copyTextToClipboard");
+    expect(center).toContain("Não foi possível copiar o link.");
   });
 
   it("isola a Etapa 4 em uma experiência de divulgação sem gestão de campanhas", async () => {

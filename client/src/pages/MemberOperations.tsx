@@ -1,5 +1,6 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { DEV_PREFIX, withAppBase } from "@/lib/devPath";
 import { getMemberOperationContext } from "@shared/memberOperationRoutes";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
@@ -39,12 +40,12 @@ export default function MemberOperations() {
   useEffect(() => { if (context.anchorId) document.getElementById(context.anchorId)?.scrollIntoView({ block: "start" }); }, [context.anchorId]);
   const refreshCapture = async () => { await Promise.all([utils.member.contacts.invalidate(), utils.member.invitations.invalidate(), utils.member.activities.invalidate(), utils.member.overview.invalidate()]); };
   const copyCampaignLink = async (campaignId: number, slug: string) => {
-    try {
-      await navigator.clipboard.writeText(campaignUrl(slug));
+    const copied = await copyTextToClipboard(campaignUrl(slug));
+    if (copied) {
       setCopiedCampaignId(campaignId);
       window.setTimeout(() => setCopiedCampaignId(current => current === campaignId ? null : current), 1800);
       toast.success("Link copiado.");
-    } catch {
+    } else {
       toast.error("Não foi possível copiar o link.");
     }
   };

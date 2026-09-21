@@ -1,9 +1,10 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { withAppBase } from "@/lib/devPath";
 import { formatCurrency } from "@shared/dashboard";
-import { BookOpenCheck, ChevronRight, Copy, CircleDollarSign, Link2, MousePointerClick, Percent, Sparkles, Target, UsersRound } from "lucide-react";
+import { BookOpenCheck, ChevronRight, Copy, CircleDollarSign, Link2, MousePointerClick, Percent, UsersRound } from "lucide-react";
 import { memberDashboardMenuItems } from "@/lib/memberDashboardNavigation";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
@@ -130,8 +131,9 @@ export default function MemberOffice() {
   };
 
   const copyAffiliateLink = async (link: string) => {
-    await navigator.clipboard.writeText(link);
-    toast.success("Link de indicação copiado.");
+    const copied = await copyTextToClipboard(link);
+    if (copied) toast.success("Link de indicação copiado.");
+    else toast.error("Não foi possível copiar o link.");
   };
 
   const renderBody = () => {
@@ -141,7 +143,7 @@ export default function MemberOffice() {
 
     if (currentPath === "/membros/campanhas" && campaigns.isLoading) return <LoadingPanel />;
     if (currentPath === "/membros/campanhas" && campaigns.isError) return <QueryState title="Não foi possível carregar as campanhas." message="Atualize a página para tentar novamente. Nenhum estado vazio foi assumido enquanto a consulta estava indisponível." />;
-    if (currentPath === "/membros/campanhas") return <><SectionIntro eyebrow="Captação" title="Links & campanhas" detail="Centralize seus links, acompanhe interesse e organize a origem de cada oportunidade." action="Criar campanha" actionHref="/membros/campanhas" />{campaigns.data?.length ? <div className="office-list">{campaigns.data.map(link => <article key={link.id}><div><span className="office-list-code">{link.slug}</span><h3>{link.name}</h3><p>{link.destinationUrl}</p></div><div className="office-list-metric"><strong>{link.clicks}</strong><span>cliques</span></div><button className="office-icon-button" type="button" aria-label={`Copiar link ${link.name}`}><Copy size={16} /></button></article>)}</div> : <section className="office-empty"><span className="office-empty-mark">PL</span><h2>Seu primeiro link começa aqui.</h2><p>Crie um link de campanha para medir interesse sem perder o contexto da sua divulgação.</p></section>}</>;
+    if (currentPath === "/membros/campanhas") return <><SectionIntro eyebrow="Captação" title="Links & campanhas" detail="Centralize seus links, acompanhe interesse e organize a origem de cada oportunidade." action="Criar campanha" actionHref="/membros/campanhas" />{campaigns.data?.length ? <div className="office-list">{campaigns.data.map(link => <article key={link.id}><div><span className="office-list-code">{link.slug}</span><h3>{link.name}</h3><p>{link.destinationUrl}</p></div><div className="office-list-metric"><strong>{link.clicks}</strong><span>cliques</span></div><button className="office-icon-button" type="button" aria-label={`Copiar link ${link.name}`} onClick={() => void copyAffiliateLink(link.destinationUrl)}><Copy size={16} /></button></article>)}</div> : <section className="office-empty"><span className="office-empty-mark">PL</span><h2>Seu primeiro link começa aqui.</h2><p>Crie um link de campanha para medir interesse sem perder o contexto da sua divulgação.</p></section>}</>;
     if (currentPath === "/membros/ganhos") {
       const confirmedApplications = data?.recentApplications?.filter(application => application.paymentStatus === "confirmed") ?? [];
       return <><SectionIntro eyebrow="Relatório de adesões" title="Ganhos e extrato de adesões" detail="Acompanhe os pagamentos confirmados atribuídos ao seu Código Lucrativo." /><div className="office-balance"><span>Valor das adesões confirmadas</span><strong>{formatCurrency(data?.confirmedApplicationValueCents ?? 0)}</strong><p>Valor informativo dos pagamentos confirmados diretamente entre comprador e patrocinador. A plataforma não mantém saldo interno nem processa saques.</p></div>{confirmedApplications.length ? <div className="office-list">{confirmedApplications.map(application => <article key={application.id}><div><h3>{application.fullName}</h3><p>{application.whatsapp}</p></div><time className="text-sm text-zinc-400">{new Date(application.updatedAt).toLocaleDateString("pt-BR")}</time></article>)}</div> : <section className="office-empty"><span className="office-empty-mark">PL</span><h2>Sem adesões confirmadas por enquanto.</h2><p>Quando um pagamento for confirmado, ele aparecerá automaticamente neste relatório.</p></section>}</>;
@@ -204,14 +206,6 @@ export default function MemberOffice() {
               <p>{nextCourse ? `${nextCourse.durationMinutes} min · ${nextCourse.level} · ${nextCourseProgress}% concluído` : "Módulos e progresso aparecerão quando houver conteúdo publicado."}</p>
               {nextCourse ? <div className="obsidian-progress-track" aria-hidden="true"><span style={{ width: `${nextCourseProgress}%` }} /></div> : null}
             </div>
-          </div>
-        </ObsidianCard>
-
-        <ObsidianCard eyebrow="Central de ação" title="Atalhos da operação">
-          <div className="obsidian-action-stack">
-            <a href={withAppBase("/membros/operacao")}><Target aria-hidden="true" />Central de Divulgação</a>
-            <a href={withAppBase("/membros/como-divulgar")}><Sparkles aria-hidden="true" />Primeiros passos</a>
-            <a href={withAppBase("/membros/configuracoes")}><Link2 aria-hidden="true" />Minha página e perfil</a>
           </div>
         </ObsidianCard>
       </section>

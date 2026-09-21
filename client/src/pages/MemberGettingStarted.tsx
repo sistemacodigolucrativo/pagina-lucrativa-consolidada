@@ -7,6 +7,8 @@ import { BarChart3, CheckCircle2, Circle, CircleDashed, ExternalLink, UserRound 
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "wouter";
 
+const GETTING_STARTED_FINALIZED_STORAGE_BASE = "pagina-lucrativa.getting-started.finalized";
+
 const menu: DashboardMenuItem[] = [
   { icon: Circle, label: "Primeiros passos", path: "/membros/como-divulgar", group: "Início" },
   { icon: BarChart3, label: "Central de Divulgação", path: "/membros/operacao", group: "Início" },
@@ -15,8 +17,9 @@ const menu: DashboardMenuItem[] = [
 
 export default function MemberGettingStarted() {
   const utils = trpc.useUtils();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { profile, steps, completed, percentage } = useMemberGettingStartedProgress();
+  const user = trpc.auth.me.useQuery();
   const returnedStep = useMemo(() => {
     return getGettingStartedReturnStepFromLocation(location);
   }, [location]);
@@ -49,6 +52,18 @@ export default function MemberGettingStarted() {
       utils.member.analytics.invalidate(),
     ]);
   }, [returnedStep]);
+
+  const finishGettingStarted = () => {
+    const userId = user.data?.id;
+    const key = userId ? `${GETTING_STARTED_FINALIZED_STORAGE_BASE}.${userId}` : GETTING_STARTED_FINALIZED_STORAGE_BASE;
+    try {
+      localStorage.setItem(key, "1");
+      window.dispatchEvent(new Event("pagina-lucrativa:getting-started-finalized"));
+    } catch {
+      // A navegacao final ainda deve acontecer se o storage nao estiver disponivel.
+    }
+    setLocation("/membros");
+  };
 
   return (
     <DashboardLayout menuItems={menu} title="Escritório Virtual">
@@ -104,6 +119,25 @@ export default function MemberGettingStarted() {
             </article>
           ))}
         </section>
+
+        {completed === steps.length ? (
+          <section className="rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <span className="text-xs uppercase tracking-[0.16em] text-emerald-200">Primeiros Passos concluido</span>
+                <h2 className="mt-2 text-xl font-semibold text-white">Sua configuracao inicial foi finalizada.</h2>
+                <p className="mt-2 max-w-2xl text-sm leading-6 text-zinc-300">A partir de agora, use a visao geral, sua central de divulgacao e os relatorios para acompanhar a operacao.</p>
+              </div>
+              <button
+                type="button"
+                onClick={finishGettingStarted}
+                className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-emerald-200 sm:w-auto"
+              >
+                Finalizar Primeiros Passos
+              </button>
+            </div>
+          </section>
+        ) : null}
       </main>
     </DashboardLayout>
   );

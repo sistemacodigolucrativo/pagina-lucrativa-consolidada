@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
-import { Archive, ArrowLeft, BookOpenCheck, ChevronLeft, ChevronRight, Eye, EyeOff, FileText, LoaderCircle, PlusCircle, Save, Trash2 } from "lucide-react";
+import { Archive, ArrowLeft, BookOpenCheck, ChevronDown, ChevronLeft, ChevronRight, Eye, EyeOff, FileText, LoaderCircle, PlusCircle, Save, Trash2 } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import AdminEbooks from "./AdminEbooks";
@@ -323,6 +323,7 @@ export default function AdminAcademy() {
   const [materialsVisible, setMaterialsVisible] = useState(false);
   const [courseAction, setCourseAction] = useState<{ key: string; action: CourseManagementAction } | null>(null);
   const [coursesPage, setCoursesPage] = useState(1);
+  const [expandedCourseKey, setExpandedCourseKey] = useState<string | null>(null);
   const linkingMaterialIds = useRef(new Set<number>());
 
   const courses = useMemo<CourseView[]>(() => {
@@ -434,6 +435,10 @@ export default function AdminAcademy() {
   useEffect(() => {
     if (coursesPage > courseTotalPages) setCoursesPage(courseTotalPages);
   }, [coursesPage, courseTotalPages]);
+
+  useEffect(() => {
+    setExpandedCourseKey(null);
+  }, [coursesPage]);
 
   const selectedCourse = useMemo(() => {
     if (!courseEditor || courseEditor.creating) return null;
@@ -935,7 +940,7 @@ export default function AdminAcademy() {
           <div className="flex flex-col gap-1 border-b border-white/10 pb-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-white">Cursos cadastrados</h2>
-              <p className="mt-1 text-sm text-zinc-400">Clique em um curso para editar as informações e gerenciar seus materiais.</p>
+              <p className="mt-1 text-sm text-zinc-400">Clique no título para expandir o curso e acessar edição, publicação e materiais.</p>
             </div>
             <span className="text-xs text-zinc-500">{courses.length} {courses.length === 1 ? "curso" : "cursos"}</span>
           </div>
@@ -947,73 +952,87 @@ export default function AdminAcademy() {
               <div className="divide-y divide-white/10 border-y border-white/10">
                 {paginatedCourses.map(course => {
                   const actionPending = courseAction?.key === course.key;
+                  const isExpanded = expandedCourseKey === course.key;
                   return (
-                    <div key={course.key} className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center">
-                    <button type="button" onClick={() => openCourse(course)} className="min-w-0 flex-1 text-left">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-medium text-white [overflow-wrap:anywhere]">{course.title}</p>
-                        <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-zinc-400">{course.items.length} {course.items.length === 1 ? "material" : "materiais"}</span>
-                      </div>
-                      <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
-                        {course.order ? `Ordem ${course.order} · ` : ""}{course.category} · {levelLabel[course.level]} · {course.archived ? "Arquivado" : course.items.length ? (course.published ? "Publicado" : "Oculto") : "Sem materiais"}
-                      </p>
-                    </button>
-
-                    <div className="flex shrink-0 flex-col gap-2 sm:w-[232px]">
-                      <button type="button" onClick={() => openCourse(course)} className="inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-emerald-300/40 hover:text-emerald-100">
-                        Abrir curso
+                    <article key={course.key} className="py-3">
+                      <button
+                        type="button"
+                        aria-expanded={isExpanded}
+                        onClick={() => setExpandedCourseKey(current => current === course.key ? null : course.key)}
+                        className="flex w-full min-w-0 items-center justify-between gap-3 rounded-xl px-2 py-2 text-left transition hover:bg-white/[0.03] focus:outline-none focus:ring-2 focus:ring-emerald-300/30"
+                      >
+                        <p className="min-w-0 flex-1 font-medium text-white [overflow-wrap:anywhere]">{course.title}</p>
+                        <ChevronDown className={`size-4 shrink-0 text-zinc-400 transition-transform ${isExpanded ? "rotate-180" : ""}`} />
                       </button>
 
-                      <div className="grid grid-cols-3 gap-2">
-                        <button
-                          type="button"
-                          disabled={actionPending || course.published || !course.items.length}
-                          onClick={() => void publishCourse(course)}
-                          className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-300/20 px-2 py-2 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-300/10 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {actionPending && courseAction?.action === "publish" ? <LoaderCircle className="size-3 animate-spin" /> : <Eye className="size-3" />}
-                          Publicar
-                        </button>
+                      {isExpanded ? (
+                        <div className="mt-3 flex flex-col gap-3 px-2 pb-2 sm:flex-row sm:items-center">
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="rounded-full border border-white/10 px-2 py-0.5 text-[11px] text-zinc-400">{course.items.length} {course.items.length === 1 ? "material" : "materiais"}</span>
+                            </div>
+                            <p className="mt-2 text-xs uppercase tracking-wider text-zinc-500">
+                              {course.order ? `Ordem ${course.order} · ` : ""}{course.category} · {levelLabel[course.level]} · {course.archived ? "Arquivado" : course.items.length ? (course.published ? "Publicado" : "Oculto") : "Sem materiais"}
+                            </p>
+                          </div>
 
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <button
-                              type="button"
-                              disabled={actionPending}
-                              className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-red-300/20 px-2 py-2 text-[11px] font-semibold text-red-200 transition hover:bg-red-300/10 disabled:cursor-not-allowed disabled:opacity-40"
-                            >
-                              {actionPending && courseAction?.action === "delete" ? <LoaderCircle className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
-                              Excluir
+                          <div className="flex shrink-0 flex-col gap-2 sm:w-[232px]">
+                            <button type="button" onClick={() => openCourse(course)} className="inline-flex items-center justify-center rounded-lg border border-white/10 px-3 py-2 text-xs font-semibold text-zinc-300 transition hover:border-emerald-300/40 hover:text-emerald-100">
+                              Abrir curso
                             </button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Excluir “{course.title}”?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                O curso será removido da listagem da Academia e ficará indisponível para membros. Os materiais associados serão preservados para evitar perda acidental de conteúdo.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => void deleteCourse(course)} className="bg-red-600 text-white hover:bg-red-500">
-                                Excluir curso
-                              </AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
 
-                        <button
-                          type="button"
-                          disabled={actionPending || course.archived}
-                          onClick={() => void archiveCourse(course)}
-                          className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-white/15 px-2 py-2 text-[11px] font-semibold text-zinc-300 transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          {actionPending && courseAction?.action === "archive" ? <LoaderCircle className="size-3 animate-spin" /> : <Archive className="size-3" />}
-                          Arquivar
-                        </button>
-                      </div>
-                    </div>
-                    </div>
+                            <div className="grid grid-cols-3 gap-2">
+                              <button
+                                type="button"
+                                disabled={actionPending || course.published || !course.items.length}
+                                onClick={() => void publishCourse(course)}
+                                className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-emerald-300/20 px-2 py-2 text-[11px] font-semibold text-emerald-100 transition hover:bg-emerald-300/10 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                {actionPending && courseAction?.action === "publish" ? <LoaderCircle className="size-3 animate-spin" /> : <Eye className="size-3" />}
+                                Publicar
+                              </button>
+
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <button
+                                    type="button"
+                                    disabled={actionPending}
+                                    className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-red-300/20 px-2 py-2 text-[11px] font-semibold text-red-200 transition hover:bg-red-300/10 disabled:cursor-not-allowed disabled:opacity-40"
+                                  >
+                                    {actionPending && courseAction?.action === "delete" ? <LoaderCircle className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
+                                    Excluir
+                                  </button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Excluir “{course.title}”?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      O curso será removido da listagem da Academia e ficará indisponível para membros. Os materiais associados serão preservados para evitar perda acidental de conteúdo.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => void deleteCourse(course)} className="bg-red-600 text-white hover:bg-red-500">
+                                      Excluir curso
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+
+                              <button
+                                type="button"
+                                disabled={actionPending || course.archived}
+                                onClick={() => void archiveCourse(course)}
+                                className="inline-flex min-w-0 items-center justify-center gap-1 rounded-lg border border-white/15 px-2 py-2 text-[11px] font-semibold text-zinc-300 transition hover:border-white/30 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"
+                              >
+                                {actionPending && courseAction?.action === "archive" ? <LoaderCircle className="size-3 animate-spin" /> : <Archive className="size-3" />}
+                                Arquivar
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ) : null}
+                    </article>
                   );
                 })}
               </div>

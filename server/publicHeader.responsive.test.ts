@@ -181,7 +181,8 @@ describe("public responsive header and hero layout", () => {
 
   it("keeps the floating public conversion CTA removed while preserving conversion paths", () => {
     expect(appSource).not.toContain("PublicConversionCta");
-    expect(homeSource).toContain('href="#f" className="nav-cta"');
+    expect(homeSource).toContain('href="#f" className="nav-cta nav-cta-activation"');
+    expect(homeSource).toContain('href={withAppBase("/acesso")} className="nav-cta nav-cta-login-mobile"');
     expect(homeSource).toContain('<div className="sales-actions"><JoinButton />');
     expect(homeSource).toContain('className="member-chat-fab"');
     expect(homeSource).toContain('id="f"');
@@ -190,6 +191,11 @@ describe("public responsive header and hero layout", () => {
     expect(conversionCtaSource).toContain("hasReachedViewportTop(packageSection)");
     expect(conversionCtaSource).toContain("hasEnteredViewport(formSection)");
     expect(conversionCtaSource).toContain("pointsToActivationSection(anchor)");
+    expect(conversionCtaSource).toContain("function scrollToActivationSection()");
+    expect(conversionCtaSource).toContain('href="#f"');
+    expect(conversionCtaSource).toContain('event.preventDefault();');
+    expect(conversionCtaSource).toContain('formSection.scrollIntoView({ behavior: "smooth", block: "start" });');
+    expect(conversionCtaSource).not.toContain('href={withAppBase("/#f")}');
     expect(conversionCtaSource).not.toContain('const SOCIAL_PROOF_SECTION_ID = "depoimentos";');
   });
 
@@ -293,7 +299,6 @@ describe("public responsive header and hero layout", () => {
     }
     const utilityItems = [
       '["Acompanhar pedido", "/pedido/acompanhar"]',
-      '["Entrar", "/acesso"]',
     ];
     previousIndex = utilityNavigationStart;
     for (const item of utilityItems) {
@@ -314,8 +319,13 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('publicNavigation.map');
     expect(homeSource).toContain('utilityNavigation.map');
     expect(homeSource).toContain('className="nav-links-divider"');
-    expect(homeSource).toContain('href="#f" className="nav-cta"');
+    expect(homeSource).toContain('href="#f" className="nav-cta nav-cta-activation"');
+    expect(homeSource).toContain('href={withAppBase("/acesso")} className="nav-cta nav-cta-login-mobile"');
+    expect(homeSource).toContain('Entrar <ArrowUpRight size={15} />');
     expect(cssSource).toContain('.nav-cta {');
+    expect(cssSource).toContain('.nav-cta-login-mobile { display: none; }');
+    expect(cssSource).toContain('.nav-links .nav-cta-login-mobile { display: flex; }');
+    expect(cssSource).toContain('.nav-links .nav-cta-activation { display: none; }');
     expect(homeSource).not.toContain('href={withAppBase("/preview")}');
     expect(homeSource).not.toContain('Preview</a>');
   });

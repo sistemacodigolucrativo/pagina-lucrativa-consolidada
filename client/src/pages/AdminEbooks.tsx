@@ -60,6 +60,16 @@ function slugifyCourseTitle(value: string) {
     .slice(0, 96) || "curso";
 }
 
+function pdfDownloadName(value: string) {
+  const normalized = value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+  return `${normalized || "material-academia"}.pdf`;
+}
+
 function titleFromCourseSlug(value: string) {
   return value
     .split("-")
@@ -339,6 +349,7 @@ export default function AdminEbooks() {
   const pending = create.isPending || update.isPending;
   const currentPdfUrl = detail.data?.pdfUrl ?? null;
   const hasExistingPdf = Boolean(currentPdfUrl);
+  const currentPdfDownloadName = pdfDownloadName(detail.data?.title || form.title || form.sourceFile || "material-academia");
 
   const closeForm = () => {
     setSelectedId(null);
@@ -695,9 +706,9 @@ export default function AdminEbooks() {
                 </label>
 
                 {currentPdfUrl ? (
-                  <a href={currentPdfUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300/50 hover:text-emerald-100 sm:w-auto">
+                  <a href={currentPdfUrl} download={currentPdfDownloadName} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm font-semibold text-emerald-200 transition hover:border-emerald-300/50 hover:text-emerald-100 sm:w-auto">
                     <ExternalLink className="size-4" />
-                    Ver PDF atual
+                    Baixar PDF atual
                   </a>
                 ) : null}
               </section>

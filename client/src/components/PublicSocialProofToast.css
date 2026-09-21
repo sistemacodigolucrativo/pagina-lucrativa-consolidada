@@ -1,14 +1,14 @@
 .public-social-proof-toast {
   position: static !important;
-  grid-template-columns: 26px minmax(0, 1fr) !important;
-  gap: 9px !important;
+  grid-template-columns: 24px minmax(0, 1fr) !important;
+  gap: 8px !important;
   width: 100% !important;
-  max-width: 360px !important;
+  max-width: 320px !important;
   min-height: 0 !important;
-  max-height: calc(100dvh - 120px) !important;
+  max-height: 54px !important;
   overflow: hidden !important;
-  padding: 9px 11px !important;
-  border-radius: 12px !important;
+  padding: 7px 10px !important;
+  border-radius: 11px !important;
   box-shadow: 0 12px 30px rgba(0, 0, 0, .32), 0 0 20px rgba(3, 214, 96, .06) !important;
   transform: none !important;
   animation: public-social-proof-toast-inline-in .22s var(--ease-out) both !important;
@@ -18,7 +18,7 @@
   position: static !important;
   inset: auto !important;
   width: 100% !important;
-  max-width: 360px !important;
+  max-width: 320px !important;
   transform: none !important;
 }
 
@@ -64,12 +64,12 @@
 
 @media (max-width: 900px) {
   .public-social-proof-toast-slot { width: min(var(--public-toast-page-width, 340px), calc(100vw - 24px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); min-height: 0; margin: 0; }
-  .public-social-proof-toast { width: 100% !important; max-width: 340px !important; }
-  .public-social-proof-toast-inline { width: 100% !important; max-width: 340px !important; }
+  .public-social-proof-toast { width: 100% !important; max-width: 320px !important; }
+  .public-social-proof-toast-inline { width: 100% !important; max-width: 320px !important; }
 }
 @media (max-width: 650px) {
   .public-social-proof-toast-slot { width: min(var(--public-toast-page-width, 320px), calc(100vw - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px))); min-height: 0; margin: 0; }
-  .public-social-proof-toast { width: 100% !important; max-width: none !important; padding: 8px 10px !important; border-radius: 10px !important; }
+  .public-social-proof-toast { width: 100% !important; max-width: none !important; padding: 7px 9px !important; border-radius: 10px !important; }
   .public-social-proof-toast-inline { width: 100% !important; max-width: none !important; }
 }
 @media (prefers-reduced-motion: reduce) { .public-social-proof-toast { animation: none !important; } }

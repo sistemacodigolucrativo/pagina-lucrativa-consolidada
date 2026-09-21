@@ -84,9 +84,10 @@ function positionToastInPageFlow() {
     const gap = window.innerWidth <= 650 ? 10 : 14;
     const viewportMargin = window.innerWidth <= 650 ? 8 : 18;
     const availableWidth = Math.max(0, anchorRect.left - viewportMargin - gap);
-    const toastWidth = Math.min(360, availableWidth);
+    const toastWidth = Math.min(320, availableWidth);
     if (toastWidth < 220) return;
-    const viewportTop = anchorRect.top + (anchorRect.height / 2) - 32;
+    const compactToastHeight = window.innerWidth <= 650 ? 44 : 46;
+    const viewportTop = anchorRect.top + (anchorRect.height - compactToastHeight) / 2;
     const viewportLeft = anchorRect.left - gap - toastWidth;
     document.documentElement.style.setProperty("--public-toast-page-top", `${Math.round(Math.max(viewportMargin, viewportTop))}px`);
     document.documentElement.style.setProperty("--public-toast-page-left", `${Math.round(Math.max(viewportMargin, viewportLeft))}px`);

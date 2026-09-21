@@ -68,6 +68,9 @@ describe("Academia com leitor integrado", () => {
     expect(adminAcademy).toContain("Publicação dos cursos");
     expect(adminAcademy).toContain("updateCoursePublication");
     expect(adminAcademy).toContain("const COURSES_PER_PAGE = 10");
+    expect(adminAcademy).toContain("expandedCourseKey");
+    expect(adminAcademy).toContain("aria-expanded={isExpanded}");
+    expect(adminAcademy).toContain("setExpandedCourseKey(current => current === course.key ? null : course.key)");
     expect(adminAcademy).toContain("paginatedCourses.map");
     expect(adminAcademy).toContain("setCoursesPage");
     expect(adminAcademy).toContain("Exibindo {paginatedCourses.length} de {courses.length} curso(s)");

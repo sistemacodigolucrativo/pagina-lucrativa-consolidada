@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { ArrowUpRight } from "lucide-react";
 import { useLocation } from "wouter";
-import { withAppBase } from "@/lib/devPath";
 import { isPublicConversionRoute } from "@shared/publicRoutes";
 
 const PACKAGE_SECTION_ID = "o-que-recebe";
@@ -19,6 +18,15 @@ function hasEnteredViewport(element: HTMLElement) {
 function pointsToActivationSection(anchor: HTMLAnchorElement) {
   const href = anchor.getAttribute("href") ?? "";
   return href === "#f" || href.endsWith("/#f");
+}
+
+function scrollToActivationSection() {
+  const formSection = document.getElementById(FORM_SECTION_ID);
+  if (!formSection) return;
+  formSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (window.location.hash !== `#${FORM_SECTION_ID}`) {
+    window.history.pushState(null, "", `#${FORM_SECTION_ID}`);
+  }
 }
 
 export default function PublicConversionCta() {
@@ -88,7 +96,13 @@ export default function PublicConversionCta() {
   return (
     <a
       className="public-conversion-cta"
-      href={withAppBase("/#f")}
+      href="#f"
+      onClick={event => {
+        event.preventDefault();
+        setDismissedByActivationClick(true);
+        setShowFloatingCta(false);
+        scrollToActivationSection();
+      }}
       aria-label="Quero ativar minha estrutura"
       title="Quero ativar minha estrutura"
     >

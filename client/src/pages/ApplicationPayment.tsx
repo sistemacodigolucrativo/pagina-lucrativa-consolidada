@@ -1,5 +1,6 @@
 import PaymentReceivingDetails, { type PaymentReceivingData, type ReceivingPaymentMethod } from "@/components/PaymentReceivingDetails";
 import { trpc } from "@/lib/trpc";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { withAppBase } from "@/lib/devPath";
 import { readPaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import { applicationActivationStatusLabel, applicationPaymentStatusLabel } from "@shared/applications";
@@ -80,14 +81,16 @@ export default function ApplicationPayment() {
 
   async function copyPix() {
     if (!pixKey) return;
-    await navigator.clipboard.writeText(pixKey);
-    toast.success("Chave PIX copiada.");
+    const copied = await copyTextToClipboard(pixKey);
+    if (copied) toast.success("Chave PIX copiada.");
+    else toast.error("Não foi possível copiar a chave PIX.");
   }
 
   async function copyCode() {
     if (!trackingCode) return;
-    await navigator.clipboard.writeText(trackingCode);
-    toast.success("Código de acompanhamento copiado.");
+    const copied = await copyTextToClipboard(trackingCode);
+    if (copied) toast.success("Código de acompanhamento copiado.");
+    else toast.error("Não foi possível copiar o código.");
   }
 
   async function handleReceipt(event: ChangeEvent<HTMLInputElement>) {
@@ -131,14 +134,18 @@ export default function ApplicationPayment() {
   const orderTrackingCode = application.trackingCode || trackingCode;
   const trackingHref = withAppBase(`/pedido/acompanhar?codigo=${encodeURIComponent(orderTrackingCode)}`);
   const showReceiptUpload = Boolean(selectedMethod && selectedMethod !== "checkout") && application.paymentStatus !== "confirmed";
+  const showPaymentMethodChooser = availableMethods.length > 1;
+  const showPaymentStatusSummary = application.paymentStatus !== "awaiting_payment" && application.paymentStatus !== "not_started";
+  const paymentDetailsStep = showPaymentMethodChooser ? 2 : 1;
+  const trackOrderStep = showReceiptUpload ? paymentDetailsStep + 2 : paymentDetailsStep + 1;
   const receiptStatusLabel = application.paymentStatus === "confirmed" ? "Pagamento confirmado"
     : application.paymentStatus === "rejected" ? "Comprovante rejeitado"
       : hasReceiptAwaitingReview ? "Comprovante recebido — aguardando análise"
         : "Aguardando comprovante";
   const handleTrackOrder = async () => {
     try {
-      await navigator.clipboard.writeText(orderTrackingCode);
-      toast.success("Código copiado.");
+      const copied = await copyTextToClipboard(orderTrackingCode);
+      if (copied) toast.success("Código copiado.");
     } catch {
       toast.info("Abrindo acompanhamento do pedido.");
     }
@@ -169,9 +176,9 @@ export default function ApplicationPayment() {
         <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">Depois de pagar, envie o comprovante quando solicitado e acompanhe a análise pelo código do pedido.</p>
       </header>
 
-      <section className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_21rem]">
+      <section className="grid min-w-0 gap-6">
         <div className="min-w-0 space-y-6">
-          <article className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
+          {showPaymentMethodChooser ? <article className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-white">1. Escolha como pagar</h2>
             <p className="mt-2 text-sm leading-6 text-zinc-400">Mostramos apenas as formas de pagamento configuradas para este pedido. A opção preferida do responsável aparece primeiro.</p>
             {availableMethods.length ? <div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">
@@ -182,35 +189,33 @@ export default function ApplicationPayment() {
               {receiving?.other && (receiving.other.key || receiving.other.instructions) ? <button type="button" onClick={() => setSelectedMethod("other")} aria-pressed={selectedMethod === "other"} className={`min-w-0 rounded-xl border p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-emerald-300/40 ${selectedMethod === "other" ? "border-emerald-300/60 bg-emerald-300/10 text-white" : "border-white/10 bg-black/25 text-zinc-300 hover:border-white/25"}`}><span className="flex items-center gap-2 font-semibold"><WalletCards className="size-4 shrink-0 text-emerald-300" />Outra forma</span><span className="mt-2 block break-words text-sm text-zinc-400">Instruções configuradas pelo responsável</span></button> : null}
               {paymentLinks.length ? <button type="button" onClick={() => setSelectedMethod("checkout")} aria-pressed={selectedMethod === "checkout"} className={`min-w-0 rounded-xl border p-4 text-left transition focus:outline-none focus:ring-2 focus:ring-emerald-300/40 ${selectedMethod === "checkout" ? "border-emerald-300/60 bg-emerald-300/10 text-white" : "border-white/10 bg-black/25 text-zinc-300 hover:border-white/25"}`}><span className="flex items-center gap-2 font-semibold"><CreditCard className="size-4 shrink-0 text-emerald-300" />Cartão ou outras formas</span><span className="mt-2 block break-words text-sm text-zinc-400">Pagamento via link de checkout</span></button> : null}
             </div> : <div className="mt-4 rounded-xl border border-yellow-300/25 bg-yellow-300/10 p-4 text-sm leading-6 text-yellow-50">Nenhuma forma de pagamento está configurada para este pedido. Acompanhe seu pedido ou aguarde orientação do responsável.</div>}
-          </article>
+          </article> : !availableMethods.length ? <article className="min-w-0 rounded-2xl border border-yellow-300/25 bg-yellow-300/10 p-5 text-sm leading-6 text-yellow-50 sm:p-6">Nenhuma forma de pagamento está configurada para este pedido. Acompanhe seu pedido ou aguarde orientação do responsável.</article> : null}
+
+          <article className="min-w-0 space-y-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6">{buyerDetailsContent}</article>
 
           <article className="min-w-0 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-5 shadow-xl shadow-emerald-950/20 sm:p-6">
             <div className="flex min-w-0 flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
               <div className="min-w-0"><span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Resumo do pedido</span><h2 className="mt-2 break-words text-xl font-semibold text-white [overflow-wrap:anywhere]">Confira os dados antes de pagar</h2><p className="mt-2 text-sm leading-6 text-zinc-400">O pagamento é realizado diretamente ao responsável indicado abaixo.</p></div>
               <div className="min-w-0 rounded-2xl border border-emerald-300/25 bg-black/35 p-4 lg:min-w-56"><span className="text-xs uppercase tracking-wider text-zinc-500">Valor da solicitação de ativação</span><strong className="mt-1 block break-words text-3xl text-emerald-200">{formatCurrency(application.offerAmountCents)}</strong></div>
             </div>
-            <dl className="mt-5 grid min-w-0 gap-3 sm:grid-cols-3">
-              <div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Responsável pelo recebimento</dt><dd className="mt-1 break-words text-sm font-semibold text-white [overflow-wrap:anywhere]">{sponsorName}</dd></div>
+            <dl className={`mt-5 grid min-w-0 gap-3 ${showPaymentStatusSummary ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+              <div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Este é o seu apresentador</dt><dd className="mt-1 break-words text-sm font-semibold text-white [overflow-wrap:anywhere]">{sponsorName}</dd></div>
               <div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Código do pedido</dt><dd className="mt-2 flex min-w-0 flex-wrap items-center gap-2"><code className="min-w-0 break-all text-sm text-emerald-100">{application.trackingCode}</code><button type="button" onClick={copyCode} className="inline-flex items-center gap-1 rounded-lg border border-white/15 px-2 py-1 text-xs font-semibold text-white hover:bg-white/5"><Clipboard className="size-3.5" />Copiar</button></dd></div>
-              <div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Status do pagamento</dt><dd className="mt-1 break-words text-sm font-semibold text-white [overflow-wrap:anywhere]">{applicationPaymentStatusLabel[application.paymentStatus]}</dd></div>
+              {showPaymentStatusSummary ? <div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Status do pagamento</dt><dd className="mt-1 break-words text-sm font-semibold text-white [overflow-wrap:anywhere]">{applicationPaymentStatusLabel[application.paymentStatus]}</dd></div> : null}
             </dl>
             <p className="mt-4 text-sm text-zinc-400">Confira o responsável antes de realizar o pagamento.</p>
           </article>
 
-          {selectedMethod === "pix" && pixKey ? <article className="min-w-0 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><QrCode className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">2. Pague com PIX</h2></div><div className="mt-4 min-w-0 space-y-4"><dl className="grid min-w-0 gap-3 sm:grid-cols-2"><div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Titular</dt><dd className="mt-1 break-words text-white [overflow-wrap:anywhere]">{payment.data.pix?.holderName || sponsorName}</dd></div><div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Tipo da chave</dt><dd className="mt-1 break-words text-white">{pixType || "PIX"}</dd></div></dl><div className="min-w-0 rounded-xl border border-white/10 bg-black/35 p-4"><span className="text-xs uppercase tracking-wider text-zinc-500">Chave PIX</span><code className="mt-2 block min-w-0 break-all text-sm text-emerald-100">{pixKey}</code>{payment.data.pix?.instructions ? <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-300 [overflow-wrap:anywhere]">{payment.data.pix.instructions}</p> : null}</div><button type="button" onClick={copyPix} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-200 active:scale-[.98] sm:w-auto"><Clipboard className="size-4" />Copiar chave PIX</button></div></article> : null}
+          {selectedMethod === "pix" && pixKey ? <article className="min-w-0 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><QrCode className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">{paymentDetailsStep}. Pague com PIX</h2></div><div className="mt-4 min-w-0 space-y-4"><dl className="grid min-w-0 gap-3 sm:grid-cols-2"><div className="min-w-0 rounded-xl border border-white/10 bg-black/25 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">Titular</dt><dd className="mt-1 break-words text-white [overflow-wrap:anywhere]">{payment.data.pix?.holderName || sponsorName}</dd></div><div className="min-w-0 rounded-xl border border-white/10 bg-black/35 p-4"><dt className="text-xs uppercase tracking-wider text-zinc-500">{pixType ? `Chave PIX · ${pixType}` : "Chave PIX"}</dt><dd className="mt-2 min-w-0 break-all text-sm text-emerald-100">{pixKey}</dd></div></dl>{payment.data.pix?.instructions ? <p className="whitespace-pre-wrap break-words rounded-xl border border-white/10 bg-black/25 p-4 text-sm leading-6 text-zinc-300 [overflow-wrap:anywhere]">{payment.data.pix.instructions}</p> : null}<button type="button" onClick={copyPix} className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-3 text-sm font-semibold text-black transition hover:bg-emerald-200 active:scale-[.98] sm:w-auto"><Clipboard className="size-4" />Copiar chave PIX</button></div></article> : null}
 
-          {receiving && selectedMethod && ["bank_transfer", "pagseguro", "paypal", "other"].includes(selectedMethod) ? <article className="min-w-0 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6"><div className="flex min-w-0 items-center gap-2 text-white"><WalletCards className="size-5 shrink-0 text-emerald-300" /><h2 className="min-w-0 break-words text-lg font-semibold [overflow-wrap:anywhere]">2. {receivingMethodTitle[selectedMethod] ?? "Dados para pagamento"}</h2></div><p className="mt-2 text-sm leading-6 text-zinc-400">Use os dados abaixo exatamente como informados pelo responsável pelo recebimento.</p><div className="mt-4 min-w-0"><PaymentReceivingDetails receiving={receiving} method={selectedMethod as ReceivingPaymentMethod} /></div></article> : null}
+          {receiving && selectedMethod && ["bank_transfer", "pagseguro", "paypal", "other"].includes(selectedMethod) ? <article className="min-w-0 rounded-2xl border border-emerald-300/20 bg-emerald-300/5 p-5 sm:p-6"><div className="flex min-w-0 items-center gap-2 text-white"><WalletCards className="size-5 shrink-0 text-emerald-300" /><h2 className="min-w-0 break-words text-lg font-semibold [overflow-wrap:anywhere]">{paymentDetailsStep}. {receivingMethodTitle[selectedMethod] ?? "Dados para pagamento"}</h2></div><p className="mt-2 text-sm leading-6 text-zinc-400">Use os dados abaixo exatamente como informados pelo responsável pelo recebimento.</p><div className="mt-4 min-w-0"><PaymentReceivingDetails receiving={receiving} method={selectedMethod as ReceivingPaymentMethod} /></div></article> : null}
 
-          {selectedMethod === "checkout" && paymentLinks.length ? <article className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><CreditCard className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">2. Pague pelo checkout</h2></div><p className="mt-2 text-sm leading-6 text-zinc-400">Você será encaminhado para o checkout configurado pelo responsável. O Código Lucrativo não processa cartão diretamente.</p><div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">{paymentLinks.map((link, index) => <a key={`${link.label}-${index}`} href={link.paymentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 min-w-0 items-center justify-center break-words rounded-lg bg-emerald-300 px-4 py-3 text-center text-sm font-semibold text-black transition hover:bg-emerald-200 [overflow-wrap:anywhere]">Pagar com {link.label}</a>)}</div></article> : null}
-
-          <article className="min-w-0 space-y-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6 lg:hidden">{buyerDetailsContent}</article>
+          {selectedMethod === "checkout" && paymentLinks.length ? <article className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><CreditCard className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">{paymentDetailsStep}. Pague pelo checkout</h2></div><p className="mt-2 text-sm leading-6 text-zinc-400">Você será encaminhado para o checkout configurado pelo responsável. O Código Lucrativo não processa cartão diretamente.</p><div className="mt-4 grid min-w-0 gap-3 sm:grid-cols-2">{paymentLinks.map((link, index) => <a key={`${link.label}-${index}`} href={link.paymentUrl} target="_blank" rel="noreferrer" className="inline-flex min-h-12 min-w-0 items-center justify-center break-words rounded-lg bg-emerald-300 px-4 py-3 text-center text-sm font-semibold text-black transition hover:bg-emerald-200 [overflow-wrap:anywhere]">Pagar com {link.label}</a>)}</div></article> : null}
 
           {showReceiptUpload && !hasSubmittedReceipt ? <article className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6"><div className="flex items-center gap-2 text-white"><UploadCloud className="size-5 text-emerald-300" /><h2 className="text-lg font-semibold">Já pagou? Envie seu comprovante</h2></div><p className="mt-2 text-sm leading-6 text-zinc-400">Envie o comprovante para que o responsável confira o pagamento e dê continuidade à análise.</p><label className="mt-4 inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.98] sm:w-auto"><UploadCloud className="size-4" />{uploadReceipt.isPending ? "Enviando..." : "Enviar comprovante"}<input type="file" accept="image/jpeg,image/png,image/webp,application/pdf" className="sr-only" disabled={uploadReceipt.isPending} onChange={handleReceipt} /></label><p className="mt-3 text-xs leading-5 text-zinc-500">Formatos aceitos: JPG, PNG, WEBP ou PDF. Limite: 5 MB.</p></article> : null}
 
-          {showReceiptUpload && hasSubmittedReceipt ? <article className="min-w-0 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5 text-center text-sm leading-6 text-emerald-50 shadow-xl shadow-emerald-950/20 sm:p-6"><CheckCircle2 className="mx-auto mb-3 size-7" /><h2 className="break-words text-lg font-semibold [overflow-wrap:anywhere]">Comprovante recebido — {receiptStatusLabel.replace("Comprovante recebido — ", "")}</h2><span className="mt-4 block text-emerald-100/80">Código do pedido:</span><strong className="mt-1 block break-all text-base text-white">{application.trackingCode}</strong><button type="button" onClick={handleTrackOrder} className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 font-semibold hover:bg-emerald-300/10">Acompanhar pedido <ArrowRight className="size-4" /></button></article> : <article className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6"><h2 className="text-lg font-semibold text-white">{showReceiptUpload ? "4" : "3"}. Acompanhe seu pedido</h2><p className="mt-2 text-sm leading-6 text-zinc-400">Após pagar e enviar o comprovante, acompanhe análise e liberação do acesso.</p><button type="button" onClick={handleTrackOrder} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 sm:w-auto">Acompanhar pedido <ArrowRight className="size-4" /></button></article>}
+          {showReceiptUpload && hasSubmittedReceipt ? <article className="min-w-0 rounded-2xl border border-emerald-300/30 bg-emerald-300/10 p-5 text-center text-sm leading-6 text-emerald-50 shadow-xl shadow-emerald-950/20 sm:p-6"><CheckCircle2 className="mx-auto mb-3 size-7" /><h2 className="break-words text-lg font-semibold [overflow-wrap:anywhere]">Comprovante recebido — {receiptStatusLabel.replace("Comprovante recebido — ", "")}</h2><span className="mt-4 block text-emerald-100/80">Código do pedido:</span><strong className="mt-1 block break-all text-base text-white">{application.trackingCode}</strong><button type="button" onClick={handleTrackOrder} className="mt-5 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 font-semibold hover:bg-emerald-300/10">Acompanhar pedido <ArrowRight className="size-4" /></button></article> : <article className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6"><h2 className="text-lg font-semibold text-white">{trackOrderStep}. Acompanhe seu pedido</h2><p className="mt-2 text-sm leading-6 text-zinc-400">Após pagar e enviar o comprovante, acompanhe análise e liberação do acesso.</p><button type="button" onClick={handleTrackOrder} className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-emerald-300/40 px-4 py-2 text-sm font-semibold text-emerald-100 hover:bg-emerald-300/10 sm:w-auto">Acompanhar pedido <ArrowRight className="size-4" /></button></article>}
         </div>
-
-        <aside className="hidden min-w-0 space-y-5 rounded-2xl border border-white/10 bg-zinc-950/70 p-5 sm:p-6 lg:sticky lg:top-6 lg:block lg:self-start">{buyerDetailsContent}</aside>
       </section>
     </section>
   </main>;

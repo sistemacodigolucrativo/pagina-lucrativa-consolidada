@@ -1,6 +1,7 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import GettingStartedReturnButton, { getGettingStartedStepFromLocation, withGettingStartedStep } from "@/components/GettingStartedReturnButton";
 import { PhoneInput } from "@/components/PhoneInput";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { withAppBase } from "@/lib/devPath";
 import { trpc } from "@/lib/trpc";
 import { normalizeEmail } from "@shared/contactValidation";
@@ -131,11 +132,11 @@ export default function MemberOperationCenter() {
   const selectedEvents = selectedCampaignId ? (analytics.data?.recentEvents ?? []).filter(item => item.campaignId === selectedCampaignId) : [];
 
   const copyText = async (text: string, onCopied: () => void) => {
-    try {
-      await navigator.clipboard.writeText(text);
+    const copied = await copyTextToClipboard(text);
+    if (copied) {
       onCopied();
       toast.success("Link copiado.");
-    } catch {
+    } else {
       toast.error("Não foi possível copiar o link.");
     }
   };

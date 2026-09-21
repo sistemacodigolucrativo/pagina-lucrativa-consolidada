@@ -1,5 +1,6 @@
 import PaymentReceivingDetails, { type PaymentReceivingData, type ReceivingPaymentMethod } from "@/components/PaymentReceivingDetails";
 import { trpc } from "@/lib/trpc";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import { withAppBase } from "@/lib/devPath";
 import { readPaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import { ArrowLeft, ArrowRight, Building2, CheckCircle2, Clipboard, CreditCard, Loader2, QrCode, UploadCloud, WalletCards, X } from "lucide-react";
@@ -55,14 +56,16 @@ export default function ApplicationPaymentMethods() {
 
   async function copyCode() {
     if (!trackingCode) return;
-    await navigator.clipboard.writeText(trackingCode);
-    toast.success("Código de acompanhamento copiado.");
+    const copied = await copyTextToClipboard(trackingCode);
+    if (copied) toast.success("Código de acompanhamento copiado.");
+    else toast.error("Não foi possível copiar o código.");
   }
 
   async function copyPix() {
     if (!pixKey) return;
-    await navigator.clipboard.writeText(pixKey);
-    toast.success("Chave PIX copiada.");
+    const copied = await copyTextToClipboard(pixKey);
+    if (copied) toast.success("Chave PIX copiada.");
+    else toast.error("Não foi possível copiar a chave PIX.");
   }
 
   async function handleReceiptFile(event: ChangeEvent<HTMLInputElement>) {
