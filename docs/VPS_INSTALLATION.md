@@ -180,4 +180,3 @@ Esse script remove servico, Nginx do projeto, usuario de deploy, banco/usuario M
 - Build falhando: rode `pnpm check` e `pnpm build` dentro do release/cloned repo.
 - Banco indisponivel: confirme `systemctl status mariadb` ou `mysql`.
 - Nginx conflitando: revise `/etc/nginx/sites-enabled/default` e configs existentes antes de ativar o site.
-
