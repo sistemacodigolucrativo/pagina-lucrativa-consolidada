@@ -15,6 +15,7 @@ LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:-}"
 PNPM_VERSION="${PNPM_VERSION:-10.4.1}"
 RUN_TESTS="${RUN_TESTS:-0}"
 RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
+RUN_CONTENT_SYNC="${RUN_CONTENT_SYNC:-0}"
 MYSQL_DATABASE="${MYSQL_DATABASE:-pagina_lucrativa}"
 MYSQL_USER="${MYSQL_USER:-pagina_lucrativa}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
@@ -26,8 +27,9 @@ LOCAL_STORAGE_DIR="${LOCAL_STORAGE_DIR:-$DEPLOY_ROOT/storage}"
 PUBLIC_HEALTHCHECK_URL="${PUBLIC_HEALTHCHECK_URL:-}"
 ENABLE_AUTODEPLOY="${ENABLE_AUTODEPLOY:-1}"
 DEPLOY_USER="${DEPLOY_USER:-pagina-deploy}"
-DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY:-no-agent-forwarding,no-port-forwarding,no-X11-forwarding,no-pty ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIZYhyaX0ZgkB7QGMJOY00J6wKQkoGT+X8kGvKWxqJyg github-actions-pagina-lucrativa}"
+DEPLOY_PUBLIC_KEY="${DEPLOY_PUBLIC_KEY:-}"
 PNPM_BIN_FOR_DEPLOY="${PNPM_BIN_FOR_DEPLOY:-}"
+MIN_DISK_MB="${MIN_DISK_MB:-2048}"
 
 RELEASES_DIR="$DEPLOY_ROOT/releases"
 CURRENT_LINK="$DEPLOY_ROOT/current"
@@ -35,6 +37,55 @@ ENV_FILE="$DEPLOY_ROOT/.env"
 
 log() { printf '[install] %s\n' "$*"; }
 fail() { printf '[install] ERRO: %s\n' "$*" >&2; exit 1; }
+on_error() {
+  local code=$?
+  printf '[install] ERRO: falha na linha %s (codigo %s). Revise o log acima e reexecute apos corrigir a causa.\n' "${BASH_LINENO[0]:-?}" "$code" >&2
+  exit "$code"
+}
+trap on_error ERR
+
+usage() {
+  cat <<'EOF'
+Uso:
+  scripts/install-vps.sh [opcoes]
+
+Opcoes seguras:
+  --apply-migrations       Executa drizzle-kit migrate (padrao).
+  --skip-migrations        Nao executa migrations.
+  --seed-default-content   Executa sync-packaged-content.mjs --dry-run e --apply.
+  --no-seed                Nao sincroniza conteudo padrao (padrao).
+  --run-tests              Executa pnpm test durante a instalacao.
+  --no-nginx               Nao instala/configura Nginx.
+  --enable-ssl             Habilita Certbot. Requer DOMAIN e LETSENCRYPT_EMAIL.
+  --disable-autodeploy     Nao prepara usuario/chave/sudoers de autodeploy.
+  --help                   Exibe esta ajuda.
+
+Variaveis principais:
+  DEPLOY_ROOT, SERVICE_NAME, SERVICE_USER, PORT, DOMAIN, MYSQL_DATABASE,
+  MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD, JWT_SECRET, DEPLOY_PUBLIC_KEY.
+
+Seguranca:
+  .env existente e preservado. Conteudo padrao so e aplicado com --seed-default-content.
+EOF
+}
+
+parse_args() {
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --apply-migrations) RUN_DB_PUSH=1 ;;
+      --skip-migrations) RUN_DB_PUSH=0 ;;
+      --seed-default-content) RUN_CONTENT_SYNC=1 ;;
+      --no-seed) RUN_CONTENT_SYNC=0 ;;
+      --run-tests) RUN_TESTS=1 ;;
+      --no-nginx) ENABLE_NGINX=0 ;;
+      --enable-ssl) ENABLE_SSL=1 ;;
+      --disable-autodeploy) ENABLE_AUTODEPLOY=0 ;;
+      --help) usage; exit 0 ;;
+      *) fail "Opcao desconhecida: $1" ;;
+    esac
+    shift
+  done
+}
 
 as_root() {
   if [[ "$(id -u)" -eq 0 ]]; then
@@ -61,12 +112,48 @@ require_clone_root() {
     fail "Execute este instalador na raiz do clone do Pagina Lucrativa."
 }
 
+preflight_environment() {
+  log "Executando pre-flight do ambiente"
+  need_cmd sudo
+
+  [[ -r /etc/os-release ]] || fail "/etc/os-release nao encontrado."
+  # shellcheck disable=SC1091
+  . /etc/os-release
+  [[ "${ID:-}" == "ubuntu" ]] || fail "Sistema nao suportado: ${PRETTY_NAME:-desconhecido}. Use Ubuntu."
+
+  local disk_check_path available_mb
+  disk_check_path="$DEPLOY_ROOT"
+  while [[ ! -e "$disk_check_path" && "$disk_check_path" != "/" ]]; do
+    disk_check_path="$(dirname "$disk_check_path")"
+  done
+  available_mb="$(df -Pm "$disk_check_path" | awk 'NR==2 {print $4}')"
+  [[ -n "$available_mb" && "$available_mb" -ge "$MIN_DISK_MB" ]] || \
+    fail "Espaco livre insuficiente em $disk_check_path: ${available_mb:-0} MB disponiveis, minimo ${MIN_DISK_MB} MB."
+
+  if command -v ss >/dev/null 2>&1 && ss -ltn "( sport = :$PORT )" | awk 'NR>1 {found=1} END {exit found ? 0 : 1}'; then
+    if ! systemctl is-active --quiet "$SERVICE_NAME" 2>/dev/null; then
+      fail "Porta $PORT ja esta em uso e $SERVICE_NAME nao esta ativo. Libere a porta ou defina PORT."
+    fi
+  fi
+
+  if [[ "$ENABLE_SSL" == "1" ]]; then
+    [[ -n "$DOMAIN" ]] || fail "DOMAIN e obrigatorio para --enable-ssl."
+    [[ -n "$LETSENCRYPT_EMAIL" ]] || fail "LETSENCRYPT_EMAIL e obrigatorio para --enable-ssl."
+  fi
+
+  if [[ "$RUN_CONTENT_SYNC" == "1" && ! -f scripts/sync-packaged-content.mjs ]]; then
+    fail "scripts/sync-packaged-content.mjs nao encontrado para --seed-default-content."
+  fi
+}
+
 install_system_packages() {
   log "Validando pacotes do sistema"
-  need_cmd sudo
   as_root apt-get update
 
-  local packages=(ca-certificates curl git openssl tar build-essential nginx)
+  local packages=(ca-certificates curl git openssl tar unzip build-essential)
+  if [[ "$ENABLE_NGINX" == "1" ]]; then
+    packages+=(nginx)
+  fi
   if command -v mysql >/dev/null 2>&1 || command -v mariadb >/dev/null 2>&1; then
     log "Cliente de banco ja existe; preservando variante instalada."
   else
@@ -78,6 +165,19 @@ install_system_packages() {
   if [[ "$ENABLE_SSL" == "1" ]]; then
     as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y certbot python3-certbot-nginx
   fi
+
+  local required_cmds=(curl git openssl tar unzip)
+  if [[ "$ENABLE_NGINX" == "1" ]]; then
+    required_cmds+=(nginx)
+  fi
+  if command -v mysql >/dev/null 2>&1; then
+    required_cmds+=(mysql)
+  else
+    required_cmds+=(mariadb)
+  fi
+  for cmd in "${required_cmds[@]}"; do
+    need_cmd "$cmd"
+  done
 }
 
 install_node_and_pnpm() {
@@ -122,6 +222,7 @@ prepare_env() {
   log "Validando arquivo de ambiente"
   if [[ -f "$ENV_FILE" ]]; then
     log ".env existente preservado: $ENV_FILE"
+    validate_env_file
     return
   fi
 
@@ -146,6 +247,13 @@ prepare_env() {
   } > "$ENV_FILE"
   as_root chown "$SERVICE_USER:$SERVICE_GROUP" "$ENV_FILE"
   as_root chmod 600 "$ENV_FILE"
+  validate_env_file
+}
+
+validate_env_file() {
+  grep -Eq '^DATABASE_URL=.+$' "$ENV_FILE" || fail "DATABASE_URL ausente ou vazia em $ENV_FILE."
+  grep -Eq '^JWT_SECRET=.+$' "$ENV_FILE" || fail "JWT_SECRET ausente ou vazia em $ENV_FILE."
+  grep -Eq '^LOCAL_STORAGE_DIR=.+$' "$ENV_FILE" || fail "LOCAL_STORAGE_DIR ausente ou vazia em $ENV_FILE."
 }
 
 prepare_database() {
@@ -202,6 +310,12 @@ install_release() {
 
   if [[ "$RUN_DB_PUSH" == "1" ]]; then
     as_root sudo -u "$SERVICE_USER" env HOME="/home/$SERVICE_USER" bash -lc "set -a; . '$ENV_FILE'; set +a; cd '$release_dir' && '$pnpm_bin' exec drizzle-kit migrate"
+  else
+    log "Migrations ignoradas por configuracao (--skip-migrations/RUN_DB_PUSH=0)."
+  fi
+
+  if [[ "$RUN_CONTENT_SYNC" == "1" ]]; then
+    as_root sudo -u "$SERVICE_USER" env HOME="/home/$SERVICE_USER" bash -lc "set -a; . '$ENV_FILE'; set +a; cd '$release_dir' && node scripts/sync-packaged-content.mjs --dry-run && node scripts/sync-packaged-content.mjs --apply"
   fi
 
   as_root sudo -u "$SERVICE_USER" env HOME="/home/$SERVICE_USER" bash -lc "cd '$release_dir' && '$pnpm_bin' check"
@@ -251,7 +365,11 @@ configure_autodeploy_contract() {
   log "Preparando contrato do autodeploy existente"
 
   if ! id "$DEPLOY_USER" >/dev/null 2>&1; then
-    as_root useradd --create-home --shell /bin/bash "$DEPLOY_USER"
+    if getent group "$DEPLOY_USER" >/dev/null 2>&1; then
+      as_root useradd --create-home --shell /bin/bash --gid "$DEPLOY_USER" "$DEPLOY_USER"
+    else
+      as_root useradd --create-home --shell /bin/bash "$DEPLOY_USER"
+    fi
   fi
 
   as_root usermod -a -G "$DEPLOY_USER" "$SERVICE_USER"
@@ -382,6 +500,8 @@ validate_installation() {
 
 main() {
   require_clone_root
+  parse_args "$@"
+  preflight_environment
   install_system_packages
   install_node_and_pnpm
   prepare_database_service

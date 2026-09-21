@@ -129,6 +129,8 @@ O processo de produção serve o cliente compilado e mantém as rotas client-sid
 
 O fluxo mínimo é instalar Node.js, pnpm e MySQL, clonar o repositório, criar o `.env`, instalar dependências, aplicar o banco, gerar o build e iniciar o processo de produção.
 
+Para uma instalação Ubuntu reproduzível com systemd, Nginx, releases locais, migrations controladas e bootstrap opcional de conteúdo padrão, use `scripts/install-vps.sh` e siga o procedimento detalhado em `docs/VPS_INSTALLATION.md`.
+
 ```bash
 git clone <URL-DO-REPOSITORIO> codigo-lucrativo
 cd codigo-lucrativo
