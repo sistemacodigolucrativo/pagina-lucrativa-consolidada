@@ -1,6 +1,6 @@
 # Progresso das correções da auditoria
 
-Última atualização: 2026-09-20T13:37:41+00:00
+Última atualização: 2026-09-21T12:38:08+00:00
 Repositório: sistemacodigolucrativo/pagina-lucrativa-consolidada
 Branch de trabalho: fix/auditoria-qualidade-aceitavel
 SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
@@ -9,7 +9,17 @@ SHA base da main no início: c2ab114d8be7328b7a64eb60d1afb96841f2179c
 
 Auditoria integral preservada em AUDITORIA_RECEBIDA.md. Esta continuidade parte da branch fix/auditoria-qualidade-aceitavel em 1ffbc55, usando o progresso existente e confrontando apenas pendências/regressões confirmadas. A main é somente referência de base. Clone limpo separado; cópia antiga com alterações de terceiros preservada. Não executar deploy, migrations, alteração de schema, acesso à VPS ou merge na main. Publicação autorizada exclusivamente na branch de trabalho.
 
-## Estado atual desta etapa — 2026-09-20
+## Estado atual — relatório recebido em 21/09/2026
+
+- Relatório de outra IA na VPS 201 recebido do usuário e preservado em [RELATORIO_VPS_RECEBIDO_2026-09-21.md](RELATORIO_VPS_RECEBIDO_2026-09-21.md). Este assistente não acessou a VPS nem repetiu consultas ao banco real.
+- Segundo essa fonte: serviço ativo em c2ab114d, Node 22.23.2, DATABASE_URL efetiva, banco MySQL/MariaDB 10.11 acessível e dois administradores local_demo. A branch corrigida ainda não estava implantada no momento relatado. Paridade de conteúdo, schema/grants completos e administrador real não foram comprovados.
+- Configuração relatada da VPS não permite ativar a candidata com segurança: PUBLIC_APP_ORIGIN e SECURITY_AUDIT_DIR ausentes, contas administrativas demo recusadas pela nova política e backups dentro da release. JWT presente não equivale a segredo adequado.
+- Corrigida a interpretação do relatório: REMOTE_DATABASE_URL é somente desenvolvimento; socket opt-in é condicional e DEPLOY_RUNTIME_ENV_FILE tem padrão. CONTENT_SYNC_BACKUP_DIR é exigida no apply; ENABLE_LOCAL_AUTH habilita login, não é um guard de startup. Detalhes em DECISOES_E_OPERACAO.md.
+- Corrigida a ordem de operação: dry-run/check da candidata antes de ativar; eventual apply somente separado/autorizado; health e novo check após ativação. Não reexecutar correções já prontas por estarem ausentes da release antiga.
+- Pendência local Node 22 encerrada: em ambiente isolado, Node 22.23.2 e pnpm 10.4.1 executaram instalação frozen, typecheck, 341 testes em 87 arquivos, build e validate-only com sucesso. Sem banco real. O código executável da branch e o lockfile não mudaram.
+- Nesta atualização, alterações somente em três documentos de continuidade. Preparação da VPS, alteração de contas/configuração/permissões, tratamento da chave, sync com escrita, deploy e merge permanecem sem autorização para este assistente.
+
+## Estado da etapa de 20/09/2026 (histórico)
 
 - Retomada concluída sem reaplicar CRIT-01/02 e HIGH-01/02/07. Estado anterior: typecheck e 313 testes em 80 arquivos aprovados.
 - HIGH-03/04/05/06 corrigidos no código. Evidência operacional da VPS permanece bloqueada por ausência de autorização: paridade de dados, diretórios/ambiente, restauração e execução do workflow não foram comprovadas.
@@ -42,7 +52,7 @@ Auditoria integral preservada em AUDITORIA_RECEBIDA.md. Esta continuidade parte 
 ### CRIT-01
 
 ID: CRIT-01
-Status: Corrigido
+Status: Corrigido no código; versão antiga e administradores demo relatados na VPS
 Gravidade: Critico
 Área: Seguranca administrativa / autenticacao
 Arquivo(s) auditado(s): server/demoAuth.ts; server/_core/context.ts; server/_core/trpc.ts; server/_core/adminMemberManagement.ts; server/_core/adminCommercialOperations.ts; server/_core/manualDeploy.ts
@@ -52,14 +62,14 @@ Correção aplicada: Demo impossível em produção; login real no banco somente
 Arquivos alterados: server/demoAuth.ts; server/_core/authConfig.ts, context.ts, index.ts, adminCommercialOperations.ts, adminContentManagement.ts, adminMemberManagement.ts, adminRelationshipMaintenance.ts, manualDeploy.ts, storageProxy.ts; .env.example; scripts/prepare-workspace.sh; testes de autenticação.
 Testes executados: pnpm check; vitest run securityAudit.auth, securityAudit.content, demoAuth, context.auth, functionalPersistence.
 Resultado dos testes: Typecheck aprovado; 19 testes aprovados, incluindo negativos de produção e consulta simulada ao banco. Não houve login em VPS.
-Pendências: Antes de implantação autorizada, configurar segredo aleatório e ENABLE_LOCAL_AUTH=true para contas reais; confirmar administrador real não-demo no banco. Sessões reais antigas exigirão novo login. Não há provedor OAuth ativo no entrypoint; não foi inventado um provedor.
-Próximo passo: Validar acesso administrativo real em ambiente controlado antes de deploy.
+Pendências: Relatório externo recebido em 21/09/2026 informa release c2ab114d e somente dois administradores, ambos local_demo. Preparar identidade administrativa real sob autorização específica, sem converter demos cegamente nem liberar exceção de produção; ENABLE_LOCAL_AUTH=true não elimina a recusa de demos. Validar JWT e acesso em ambiente controlado. Este assistente não consultou a VPS.
+Próximo passo: Definir com o responsável a identidade administrativa real e um procedimento autorizado que preserve dados/referências, antes da ativação da candidata.
 Commit relacionado: 8505c3c38f38690dd34852d0948799f9ffd01ef1
 
 ### CRIT-02
 
 ID: CRIT-02
-Status: Corrigido
+Status: Corrigido no código; não implantado segundo relatório externo
 Gravidade: Critico
 Área: Privacidade / conteudo interno / permissoes
 Arquivo(s) auditado(s): server/db.ts; server/routers.ts; server/_core/adminMemberManagement.ts
@@ -69,14 +79,14 @@ Correção aplicada: Política compartilhada de categorias internas e tipos perm
 Arquivos alterados: server/db.ts; server/memberContentPolicy.ts; server/_core/adminContentManagement.ts; server/securityAudit.content.test.ts.
 Testes executados: Teste executa getPublishedContent com resultado de driver simulado contendo controles, configurações, rascunhos e conteúdos comuns.
 Resultado dos testes: Somente os 2 conteúdos públicos esperados retornaram; nenhum registro interno nem createdBy. Typecheck aprovado.
-Pendências: Confirmar resultado com dados da VPS em validação operacional autorizada.
+Pendências: Relatório de 21/09 informa release antiga e ausência do filtro novo. Não foram fornecidos resultados com dados reais para esta política; validar saída pública em etapa operacional autorizada.
 Próximo passo: Manter categorias internas futuras na política compartilhada.
 Commit relacionado: 8505c3c38f38690dd34852d0948799f9ffd01ef1
 
 ### HIGH-01
 
 ID: HIGH-01
-Status: Corrigido
+Status: Corrigido no código; migração de credenciais reais ainda não comprovada
 Gravidade: Alto
 Área: Senhas / recuperacao de conta
 Arquivo(s) auditado(s): server/credentialHash.ts; server/criticalFlowFixes.ts; server/db.ts
@@ -86,14 +96,14 @@ Correção aplicada: scrypt assíncrono N=16384/r=8/p=5; migração condicional 
 Arquivos alterados: server/credentialHash.ts, db.ts, criticalFlowFixes.ts, demoAuth.ts; scripts/seed-demo.ts; testes de credenciais e recuperação.
 Testes executados: Suíte pnpm test; typecheck; salt/Unicode/espaços, custo malformado, login legado válido/inválido e atualização concorrente com driver simulado.
 Resultado dos testes: 313 testes aprovados na suíte e typecheck aprovado. Formato <255 caracteres; nenhuma migration.
-Pendências: Hashes legados reais só serão migrados conforme login/recuperação; não houve acesso ou atualização no banco da VPS.
+Pendências: Hashes reais não inspecionados/migrados por este assistente. Relatório de 21/09 informa administradores local_demo e não testa login; release corrigida não implantada. Não afirmar adoção de scrypt no banco real sem evidência.
 Próximo passo: Verificar migração gradual de contas reais em validação autorizada; planejar substituição de perguntas secretas.
 Commit relacionado: d70c3ab9ad4f8b3704495a9de5b2f7c6fa1b1f13
 
 ### HIGH-02
 
 ID: HIGH-02
-Status: Corrigido
+Status: Corrigido no código; ausência na versão instalada relatada externamente
 Gravidade: Alto
 Área: Seguranca web / CSRF
 Arquivo(s) auditado(s): server/_core/cookies.ts; server/routers.ts; server/_core/adminMemberManagement.ts; server/_core/adminCommercialOperations.ts; server/_core/adminContentManagement.ts; server/_core/manualDeploy.ts
@@ -103,31 +113,31 @@ Correção aplicada: Todas as requisições mutáveis exigem Origin/Referer vál
 Arquivos alterados: server/_core/csrf.ts, cookies.ts, index.ts; server/routers.ts; .env.example; testes CSRF/cookies/logout.
 Testes executados: HTTP real local para POST/DELETE/PATCH/PUT; prefixo /dev; origem exata, sufixo malicioso, protocolo errado, nula, ausente, Referer e Host encaminhado.
 Resultado dos testes: 13 cenários HTTP aprovados; handlers não executados nas tentativas recusadas; suíte 313/313.
-Pendências: Configurar PUBLIC_APP_ORIGIN do domínio real e validar navegador atrás do proxy antes de deploy.
-Próximo passo: Verificação operacional autorizada.
+Pendências: Relatório recebido informa PUBLIC_APP_ORIGIN ausente e CSRF/cookie antigos na release c2ab114d. Origem HTTPS exata é obrigatória no startup da candidata; validar navegador/proxy e negativas de autorização após preparação e autorização operacional. Nenhuma requisição mutável foi executada por este assistente.
+Próximo passo: Definir configuração da origem pública e validação controlada; não ativar a candidata com a configuração incompleta relatada.
 Commit relacionado: d70c3ab9ad4f8b3704495a9de5b2f7c6fa1b1f13
 
 ### HIGH-03
 
 ID: HIGH-03
-Status: Corrigido no código; comprovação de paridade na VPS bloqueada
+Status: Corrigido no código; divergência de versão relatada na VPS; paridade de conteúdo pendente
 Gravidade: Alto
 Área: Banco de dados / sincronizacao de conteudo
 Arquivo(s) auditado(s): .github/workflows/deploy-vps.yml; scripts/deploy-vps.sh; scripts/sync-packaged-content.mjs; server/academyCanonical.ts
-Problema confirmado?: Sim, desacoplamento no código confirmado. Divergência real do banco da VPS não foi afirmada: não houve acesso autorizado ao ambiente.
+Problema confirmado?: Desacoplamento de código confirmado na auditoria. Relatório externo de 21/09 informa VPS em c2ab114d versus branch e9383934; divergência dos dados de conteúdo ainda não foi medida.
 Evidência no código atual: deploy-vps.sh não chamava sync; ensurePackagedLibraryEbooks fazia inserções durante leituras e só atualizava sourceId em duplicatas. Sync aceitava ausência do manifesto da Academia como lista vazia e sobrescrevia resumo curado.
 Correção aplicada: Sync com --validate-only e --check READ ONLY (saída 3 em divergência), manifestos/PDFs obrigatórios e recusa de duplicatas no banco. Apply InnoDB transacional/SERIALIZABLE/FOR UPDATE com backup privado anterior ao DML e curadoria preservada. Gate antes/depois da ativação, arquivo de ambiente persistente e health SELECT 1. Leituras em produção não inserem e-books. Na revisão final, fail() passou de exit 1 para return 1, permitindo disparar trap ERR/rollback nas falhas de health.
 Arquivos alterados: scripts/sync-packaged-content.mjs; scripts/deploy-vps.sh; scripts/manual-deploy-worker.sh; server/academyCanonical.ts; server/securityAudit.sync.test.ts; server/securityAudit.schema.test.ts (regressão do rollback); docs/CONTENT_BOOTSTRAP.md; este progresso.
 Testes executados: pnpm exec vitest run server/securityAudit.sync.test.ts server/securityAudit.backup.test.ts server/packagedEbooks.integration.test.ts server/ebookLibraryPdf.integration.test.ts server/adminManualDeploy.integration.test.ts server/publicHeroTitleDeploy.integration.test.ts; node scripts/sync-packaged-content.mjs --validate-only; bash -n scripts/deploy-vps.sh scripts/manual-deploy-worker.sh; git diff --check.
 Resultado dos testes: Validação final: pnpm check e pnpm build aprovados; pnpm test com 87 arquivos / 341 testes aprovados. Sync/backup testados com arquivos reais temporários e driver simulado; --validate-only nos PDFs/manifestos reais: 88 e-books, 11 cursos, 17 módulos e 30 aulas. Falha intermediária de assert textual obsoleto foi corrigida e reexecutada (ver histórico abaixo). Nenhum deploy, sync ou banco real utilizado.
-Pendências: Somente responsável autorizado pode conferir env do serviço/deploy, banco/schema real, dry-run da candidata, exportações e janela de sync; depois aprovar apply, exigir check zerado e validar health/conteúdo em VPS. O gate pode bloquear o próximo deploy até essa preparação. Rollback de código não reverte um sync previamente aprovado.
-Próximo passo: Validação operacional autorizada: conferir env/schema/banco, exportar curadoria, revisar dry-run e aprovar eventual apply; exigir check zerado e health real antes de liberar produção.
+Pendências: Fixar candidata, conferir schema/engine/instância real, exportar/revisar curadoria e executar dry-run/check da candidata antes da ativação. Eventual apply exige autorização específica e backup persistente. A ordem sugerida no relatório externo (deploy antes de dry-run/check) foi corrigida no procedimento; relatório não comprova paridade de conteúdo.
+Próximo passo: Preparação operacional autorizada, conta real/configuração/diretórios, validação da candidata e --check sem diferenças ANTES da ativação; depois health/check novamente. Rollback de código não reverte dados previamente alterados.
 Commit relacionado: acf4dc16a31d181416f3ac0f0ae8260212e3ca37; f3b0859dbb1db7c43450c74c5f0766202f75e63d
 
 ### HIGH-04
 
 ID: HIGH-04
-Status: Corrigido no código; validação operacional pendente
+Status: Corrigido no código; backup inadequado na release relatado externamente
 Gravidade: Alto
 Área: Backup / rollback operacional
 Arquivo(s) auditado(s): scripts/sync-packaged-content.mjs; scripts/deploy-vps.sh; .github/workflows/deploy-vps.yml
@@ -137,14 +147,14 @@ Correção aplicada: CONTENT_SYNC_BACKUP_DIR absoluto obrigatório em produção
 Arquivos alterados: scripts/lib/content-sync-backup.mjs; scripts/sync-packaged-content.mjs; scripts/sync-ebook-library-categories.mjs; .env.example; server/securityAudit.backup.test.ts; docs/CONTENT_BOOTSTRAP.md; este progresso.
 Testes executados: pnpm exec vitest run server/securityAudit.backup.test.ts (incluído nas execuções focadas); node --check dos scripts; git diff --check.
 Resultado dos testes: 3/3 testes de arquivos reais temporários aprovados: recusa de caminhos inseguros/symlinks/permissões, backups únicos e persistência após remover a release. Sem banco real.
-Pendências: Provisionar diretório privado persistente na VPS, conferir usuário do processo, espaço, retenção e exercitar restauração revisada. Nenhuma ação na VPS autorizada/executada.
-Próximo passo: Provisionar e validar backup/restauração na VPS somente em etapa expressamente autorizada; transação e gate de HIGH-03 já concluídos no código.
+Pendências: Relatório externo encontra backups dentro da release c2ab114d com diretório 2755 e CONTENT_SYNC_BACKUP_DIR ausente. Faltam dono/executor definido, diretório persistente privado, retenção, espaço e restauração revisada. Preservar backups existentes até plano autorizado; exposição HTTP e permissões de cada arquivo não foram demonstradas.
+Próximo passo: Planejar/provisionar backup 0700/0600 fora de release/storage sob autorização; alinhar executor do sync com o proprietário, sem ampliar permissões para contornar separação ubuntu/pagina-deploy.
 Commit relacionado: 1fb1ba40439540cb8f8d401193111c5dc02c855d
 
 ### HIGH-05
 
 ID: HIGH-05
-Status: Corrigido no código; validação operacional pendente
+Status: Corrigido no código; conexão via URL relatada; validação completa da candidata pendente
 Gravidade: Alto
 Área: Banco de dados / configuracao de ambiente
 Arquivo(s) auditado(s): server/db.ts; scripts/sync-packaged-content.mjs; drizzle.config.ts
@@ -154,8 +164,8 @@ Correção aplicada: Removido fallback implícito em servidor e quatro scripts d
 Arquivos alterados: shared/databaseConfig.mjs e .d.mts; server/db.ts; server/_core/env.ts, index.ts, databaseHealth.ts; scripts/sync-packaged-content.mjs, export-academy-content.mjs, sync-ebook-library-categories.mjs, import-ebooks.mjs; .env.example; server/securityAudit.database.test.ts; este progresso.
 Testes executados: pnpm install --frozen-lockfile; pnpm check; pnpm exec vitest run server/securityAudit.database.test.ts server/securityAudit.backup.test.ts server/securityAudit.credentials.test.ts server/securityAudit.content.test.ts.
 Resultado dos testes: Instalação concluída com pnpm 10.4.1, sem mudar lockfile; aviso de scripts de build de dependências ignorados. Typecheck aprovado. 17/17 testes aprovados em 4 arquivos; 9 cenários específicos de configuração/HTTP. Consultas com driver simulado, não banco real.
-Pendências: Configurar DATABASE_URL ou opt-in de socket no ambiente real, inclusive processo de deploy. Ainda não verificado na VPS, cujo acesso está proibido nesta etapa.
-Próximo passo: Validar conexão e ambiente real somente em etapa operacional autorizada; suíte e build locais concluídos.
+Pendências: Relatório externo confirma DATABASE_URL no processo e consulta de leitura em MySQL/MariaDB 10.11; não comprova nome esperado do schema, grants completos, engine nem execução da candidata. ALLOW_VPS_SOCKET_DB e REMOTE_DATABASE_URL ausentes não são falhas com DATABASE_URL. DEPLOY_RUNTIME_ENV_FILE é override opcional; padrão coincide com .env persistente relatado.
+Próximo passo: Preservar a seleção por URL e confirmar adequação/formato/schema e acesso por serviço/executor de deploy. Conferir JWT, PUBLIC_APP_ORIGIN e SECURITY_AUDIT_DIR antes do startup da candidata; não habilitar socket por ausência indevidamente tratada como requisito.
 Commit relacionado: efa0ed997f0ea07652d60cf4e3497c9df7d1fd8a
 
 ### HIGH-06
@@ -171,14 +181,14 @@ Correção aplicada: Push usa before -> SHA validada; dispatch exige deployed_sh
 Arquivos alterados: .github/workflows/deploy-vps.yml; scripts/check-schema-range.sh; scripts/check-release-schema.mjs; scripts/deploy-vps.sh; scripts/manual-deploy-worker.sh; server/securityAudit.schema.test.ts; CORRECOES_AUDITORIA/DECISOES_E_OPERACAO.md; este progresso.
 Testes executados: pnpm exec vitest run server/securityAudit.schema.test.ts server/ebookLibraryPdf.integration.test.ts server/packagedEbooks.integration.test.ts server/securityAudit.sync.test.ts server/adminManualDeploy.integration.test.ts; parser YAML; bash -n em todos os blocos run e scripts alterados; node --check scripts/check-release-schema.mjs; git diff --check.
 Resultado dos testes: Rodada focada: 21/21 em 5 arquivos; após complemento de rollback, suíte completa: 341/341 em 87 arquivos, incluindo 4 testes no arquivo schema. YAML e shell válidos. Nenhum workflow de deploy acionado; testes isolados não executam SSH/systemctl/VPS.
-Pendências: Validar base real e regras operacionais antes de futura implantação autorizada. Dispatch agora exige SHA ativa. Alteração de schema permanece proibida; nenhum bypass foi adicionado.
-Próximo passo: Confirmar SHA da release ativa antes de futuro deploy autorizado; médios avaliados e validação local concluída. Não acionar workflow nesta etapa.
+Pendências: Relatório externo informa SHA ativa c2ab114d; reconfirmar imediatamente antes de um futuro deploy e confrontar schema real. Workflow real não executado. Validação local com Node 22.23.2 concluída em 21/09; isso não equivale a aprovação do workflow nem validação da VPS.
+Próximo passo: Manter bloqueio de schema/base desconhecida e usar SHA imutável validada; nenhuma autorização de merge/deploy foi acrescentada pelo recebimento do relatório.
 Commit relacionado: 14c6355c3f5b2e46cf5655504f9f664f65adfcf1
 
 ### HIGH-07
 
 ID: HIGH-07
-Status: Corrigido
+Status: Corrigido no código; configuração operacional de auditoria ausente no relato da VPS
 Gravidade: Alto
 Área: Administracao / pagamentos / dados privados
 Arquivo(s) auditado(s): server/_core/adminCommercialOperations.ts; server/_core/storageProxy.ts; server/_core/adminMemberManagement.ts
@@ -188,7 +198,7 @@ Correção aplicada: Autenticação recente de 15 minutos e trilha privada para 
 Arquivos alterados: server/_core/adminAudit.ts, trpc.ts, adminMemberManagement.ts, adminCommercialOperations.ts, adminContentManagement.ts, adminRelationshipMaintenance.ts, manualDeploy.ts, index.ts; server/demoAuth.ts; .env.example; .gitignore; teste admin.
 Testes executados: Log real em diretório temporário: início/fim, ator, ausência de cookie/email; recusa de sessão vencida/ausente e de produção sem diretório persistente; suíte completa.
 Resultado dos testes: 3 cenários focados aprovados; suíte 313/313; typecheck aprovado após correção de nulidade.
-Pendências: Configurar SECURITY_AUDIT_DIR privado fora de release e storage; reconciliar eventos started sem final se processo cair. A trilha em arquivo não participa atomicamente da transação SQL.
+Pendências: Relatório recebido informa SECURITY_AUDIT_DIR ausente, serviço ubuntu e arquivos de deploy pagina-deploy. Definir diretório privado persistente acessível ao executor correto, retenção e reconciliação de started sem final. Não houve teste real de mutação/autenticação recente; relatório e testes locais não demonstram escrita real de auditoria.
 Próximo passo: Confirmar permissões, retenção de logs e novo login administrativo no ambiente autorizado.
 Commit relacionado: d70c3ab9ad4f8b3704495a9de5b2f7c6fa1b1f13
 
@@ -239,7 +249,7 @@ Correção aplicada: Verificador de 19 relações/variantes críticas com READ O
 Arquivos alterados: scripts/check-relational-integrity.mjs; server/securityAudit.integrity.test.ts; docs/CONTENT_BOOTSTRAP.md (2799d34); este progresso.
 Testes executados: pnpm exec vitest run server/securityAudit.publicSurface.test.ts server/securityAudit.integrity.test.ts server/securityAudit.academyExport.test.ts.
 Resultado dos testes: 6/6 aprovados em 3 arquivos; 2 cenários do verificador com driver simulado confirmam read-only, contagens, faixas de IDs e cleanup em falha. Nenhuma consulta à VPS.
-Pendências: Executar diagnóstico autorizado com credencial de leitura; reconciliar referências históricas e IDs sintéticos. Qualquer FK/schema exige autorização explícita, backup e planejamento; continua bloqueado por regra do usuário.
+Pendências: Relatório comprova somente consulta de versão/banco e agregação de administradores; não verifica FKs ou referências órfãs. Ausência do script no release antigo não prova inconsistência nem justifica elevar automaticamente a gravidade. Diagnóstico real, reconciliação de IDs sintéticos e eventual schema continuam dependentes de autorização específica.
 Próximo passo: Revisar resultados reais antes de decidir sobre FKs; nunca apagar automaticamente dados financeiros/progresso.
 Commit relacionado: 139bbee25f70c7439e271d0557dfa6fdbea338a6
 
@@ -318,7 +328,7 @@ Correção aplicada: Chave removida da árvore atual; regras no .gitignore, bloq
 Arquivos alterados: attached_assets/Maquinas-50GB_1789167740877.pem (removido); .gitignore; .github/workflows/deploy-vps.yml; este progresso.
 Testes executados: Tipo validado localmente sem exibir bytes; varredura de todos os blobs novos antes da publicação; comparação das árvores locais/remotas; verificação de ausência do arquivo no disco, índice e árvore remota; git check-ignore; varredura de cabeçalhos privados rastreados; git diff --check.
 Resultado dos testes: Nenhum blob novo contém chave privada; o blob removido já pertence ao commit remoto inicial e não estava nos objetos pendentes. Chave ausente da árvore publicada e do diretório de trabalho após a exclusão autorizada. A chave não foi utilizada nem exibida; histórico anterior permanece acessível.
-Pendências: Revogar/rotacionar a chave nos serviços onde foi autorizada, verificar acessos e cópias/artefatos antigos. A remoção da árvore NÃO revoga a credencial nem remove versões históricas.
+Pendências: Revogação/rotação e inspeção de cópias/artefatos antigos continuam sem comprovação também no relatório externo de 21/09. A árvore Git c2ab114d inclui o caminho da chave; sua presença física atual na VPS não foi verificada. Remoção na branch não remove versões históricas nem revoga credencial. Não recuperar/usar a chave para testar acesso.
 Próximo passo: Responsável autorizar e executar tratamento da credencial fora desta etapa; manter bloqueio de liberação operacional até evidência de revogação ou prova de que não é usada.
 Commit relacionado: 63df8da9b556af1e18182e68c9897863dde4a4c3; prevenção no CI em 14c6355c3f5b2e46cf5655504f9f664f65adfcf1
 
@@ -427,7 +437,7 @@ Lista completa em relação à retomada 1ffbc55 (35 arquivos, incluindo a remoç
 - **HIGH-03/04/05/06, comprovação operacional bloqueada:** confirmar SHA ativa, banco/schema, configuração compartilhada entre serviço/deploy, segredo/origem/login real/logs privados já exigidos na etapa anterior; provisionar backup privado persistente, revisar dry-run/exportações e testar restauração. Somente então considerar autorização de sync/apply e deploy. O gate pode bloquear deploy enquanto houver divergência; não há apply automático.
 - **MED-03:** diagnóstico real somente com acesso autorizado de leitura; reconciliação de dados e eventual desenho de FKs dependem de autorização de schema. IDs sintéticos de courseProgress exigem tratamento específico, não FK direta indiscriminada.
 - **MED-04:** o painel ainda não exporta/commita automaticamente; seguir a matriz de fonte da verdade antes de qualquer sync aprovado, incluindo revisão do TSV para títulos/categorias/arquivos de e-books.
-- **Validação restante:** executar Node 22/CI sem deploy e validação real de autenticação, health, conteúdo e rollback em ambiente autorizado. Asserções locais e build não demonstram estado da VPS.
+- **Validação restante naquela etapa:** Node 22 foi posteriormente concluído localmente em 21/09, conforme atualização acima. Workflow real, autenticação, health, conteúdo e rollback na VPS continuam pendentes; asserções locais e build não demonstram seu estado operacional.
 
 Todos os críticos e altos estão corrigidos no código ou têm bloqueio/evidência explícitos acima; os seis médios foram avaliados. Nenhuma autorização operacional foi presumida. O próximo trabalho é resolver os bloqueios documentados, sem reiniciar a auditoria e sem reaplicar as correções já publicadas.
 
@@ -440,3 +450,40 @@ Todos os críticos e altos estão corrigidos no código ou têm bloqueio/evidên
 - Validação: ausência no disco, índice e árvore Git publicada; regra de ignore vigente; nenhum cabeçalho de chave privada nos arquivos rastreados; git diff --check aprovado.
 - Nesta continuação, apenas o registro de progresso é alterado no Git, pois a remoção versionada já estava publicada. Instalação, typecheck, suíte e build não repetidos: nenhum código executável ou dependência foi alterado. Mantidos os resultados anteriores de 341 testes aprovados.
 - Limite: apagar o arquivo não comprova revogação da credencial. Nenhuma alteração da main, reescrita do histórico, ação na VPS, deploy ou migration executada.
+
+
+## Complemento de 21/09/2026 — relatório operacional e Node 22
+
+### Origem das evidências
+
+O usuário forneceu relatório de outra IA conectada à VPS, com data do exame em 21/09/2026 (Brasília). Preservado em RELATORIO_VPS_RECEBIDO_2026-09-21.md, inclusive as classificações/ordem originais. A análise das divergências entre esse texto e os requisitos do código está em DECISOES_E_OPERACAO.md. Não houve inspeção independente da VPS por este assistente, nem envio de instruções diretamente ao outro executor.
+
+A branch foi reconferida em e9383934a6c460a62f466dbfb0dca66269ee2274 antes das alterações documentais. O relato da versão antiga e da configuração incompleta não é evidência de regressão da branch corrigida. Não foram alterados código executável, schema, package.json ou pnpm-lock.yaml nesta continuação.
+
+### Verificações locais realmente executadas com Node 22.23.2
+
+A versão informada no relatório foi obtida em diretório de ferramentas isolado, fora do projeto e da VPS. A versão do executável foi conferida antes dos comandos. pnpm 10.4.1 selecionado por PATH; variáveis de conexão removidas do ambiente e ausência de .env local verificada. A instalação frozen reaproveitou node_modules, sem alterar o lockfile; não se tratou de uma instalação limpa em máquina nova.
+
+| Comando | Resultado observado |
+| --- | --- |
+| `pnpm install --frozen-lockfile` | Exit 0; lockfile já em dia e preservado; dependências já presentes; 757 ms. |
+| `pnpm check` | Exit 0; sem erro de TypeScript. |
+| `pnpm test` | Exit 0; 87 arquivos / 341 testes aprovados; 6,83 s. |
+| `pnpm build` | Exit 0; Vite e esbuild concluídos; aviso de bundle JS acima de 500 kB, sem supressão. |
+| `node scripts/sync-packaged-content.mjs --validate-only` | Exit 0; 88 e-books, 11 cursos, 17 módulos e 30 aulas; sem banco. |
+| `git diff --check` e revisão do escopo documental | Sem erro; nenhum arquivo executável/schema/dependência alterado. |
+
+Avisos observados: EnvHttpProxyAgent experimental no runtime desta sessão, scripts de dependências @tailwindcss/oxide e esbuild ignorados pelo pnpm, aviso de atualização disponível do gerenciador e tamanho dos bundles. Não foram alteradas versões do projeto, liberados scripts adicionais ou reduzidas proteções para passar. Nenhuma falha nas execuções Node 22 desta etapa.
+
+Esses resultados encerram a pendência de validação local com Node 22. Não validam MariaDB real, configuração efetiva do serviço, instalação limpa do artefato no servidor, login real, proxy, permissões ou rollback na VPS. O workflow existente contém deploy e não foi acionado.
+
+### Próximo trabalho concreto
+
+1. Fazer o responsável definir a identidade administrativa real e um procedimento de preparação que preserve dados/referências; não promover ou renomear demos automaticamente.
+2. Validar/configurar JWT, origem pública, login local e diretórios privados sob autorização. Preservar a conexão por DATABASE_URL se confirmada adequada; as variáveis opcionais não devem ser introduzidas por engano.
+3. Confirmar schema/engine/grants e conteúdo com a candidata, antes de ativação. Eventual escrita de sync deve ter autorização própria, backup e revisão de curadoria.
+4. Autorizar separadamente a implantação da SHA validada somente depois de satisfeitos esses pré-requisitos, incluindo tratamento do risco de credencial e plano de retorno. Validar saúde e acesso administrativo após ativação.
+
+Receber o relatório não autoriza executar essas mudanças. As pendências operacionais continuam explícitas nos respectivos achados e as correções já publicadas foram preservadas.
+
+Validação documental intermediária: `git diff --cached --check` retornou exit 2 por oito linhas com espaços finais usados como quebra de Markdown no relatório recém-adicionado. Causa desta atualização documental, sem relação com o código/testes ou com a VPS. Normalizadas as quebras para linhas em branco; reexecução de git diff --cached --check aprovada com exit 0 antes do commit.

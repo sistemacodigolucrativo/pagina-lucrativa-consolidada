@@ -43,3 +43,44 @@ Testes locais exercitam lógica real de hashing, middleware HTTP e arquivos de a
 - [MySQL 8.4 — transações](https://dev.mysql.com/doc/refman/8.4/en/commit.html): READ ONLY, isolamento, commit/rollback e dependência de mecanismo transacional.
 - [Node.js — operações de arquivo](https://nodejs.org/api/fs.html): criação exclusiva wx, permissões e sincronização do arquivo.
 - [GitHub — remoção de dados sensíveis](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository): remoção da árvore não substitui revogação/rotação da credencial.
+
+## Relatório operacional recebido em 21/09/2026
+
+Fonte: `RELATORIO_VPS_RECEBIDO_2026-09-21.md`, fornecido pelo usuário e produzido por outra IA na VPS 201. Este assistente não acessou a VPS. O relato informa release `c2ab114d8be7328b7a64eb60d1afb96841f2179c`, Node 22.23.2, conexão MySQL/MariaDB 10.11 via DATABASE_URL e dois administradores com loginMethod=local_demo. As conclusões abaixo confrontam esse relato com o código da branch; não são novos testes de produção.
+
+### Requisitos reais de configuração
+
+| Variável | Exigência na branch corrigida | Interpretação do relatório |
+| --- | --- | --- |
+| DATABASE_URL | URL válida com banco explícito; alternativa por socket requer opt-in. | Presença e conexão foram relatadas. Não mudar para socket apenas porque existe. Ainda falta confirmar correspondência com o schema pretendido. |
+| JWT_SECRET | Validado no startup de produção por assertProductionAuthConfig. | Presença não comprova força/adequação; o relatório não informa o resultado dessa validação. |
+| PUBLIC_APP_ORIGIN | Origem HTTPS exata obrigatória no startup de produção. | Ausência relatada impede o startup da candidata. |
+| SECURITY_AUDIT_DIR | Caminho absoluto persistente, fora de release/storage, obrigatório no startup. Diretório privado e acessível ao executor são necessários para as mutações. | Ausência relatada também impede o startup da candidata. |
+| ENABLE_LOCAL_AUTH | Habilita login local somente com valor true; ausência não causa, por si só, erro de startup. | Necessário para utilizar o login local real adotado pelo projeto; não torna contas demo aceitáveis. |
+| CONTENT_SYNC_BACKUP_DIR | Obrigatório em produção no sync com --apply; não é exigido por --check nem pelo startup do servidor. | Provisionar antes de qualquer apply autorizado; backup dentro de release não atende ao requisito de persistência. |
+| ALLOW_VPS_SOCKET_DB | Somente para a alternativa por socket quando não existe DATABASE_URL. | Ausência não é falha no cenário relatado, que usa URL. |
+| DEPLOY_RUNTIME_ENV_FILE | Override opcional; padrão do deploy é DEPLOY_ROOT/.env. | O caminho padrão coincide com o EnvironmentFile relatado. Conferir executor, leitura e precedência de variáveis; não é obrigatório definir esse override. |
+| REMOTE_DATABASE_URL | Alias apenas de desenvolvimento; ignorado em produção. | Ausência não é falha e não deve ser preenchida para solucionar o relatório. |
+
+Referências locais: `shared/databaseConfig.mjs`, `server/_core/index.ts`, `server/_core/authConfig.ts`, `server/_core/csrf.ts`, `server/_core/adminAudit.ts`, `scripts/lib/content-sync-backup.mjs` e `scripts/deploy-vps.sh`.
+
+### Limites da evidência recebida
+
+- Os dois registros com loginMethod=local_demo serão recusados pela política nova em produção. É preciso identificar o responsável e preparar uma identidade real, preservando referências históricas. Não converter contas cegamente nem apenas trocar loginMethod: openId com prefixo local_demo_ também é recusado e a credencial precisa ser válida. Alteração de identidade, senha ou papel exige autorização separada.
+- O nome `resolveDemoSession` e a existência de `demoAuth.ts` não provam isoladamente uma vulnerabilidade: a branch corrigida conserva esses nomes com outra implementação. A comparação de código/versão e os registros demo é que sustentam a conclusão.
+- O retorno databaseNamePresent=true demonstra presença de um nome, mas não permite conferir se é o schema esperado. Solicitar confirmação sanitizada de correspondência; a lista de serviços ativos não identifica, sozinha, produto/instância de banco efetivamente usados.
+- Não foram informados privilégios completos da conta do banco, engine/schema real, integridade relacional, equivalência dos conteúdos, força do JWT, ACLs ou integrantes do grupo pagina-deploy. Não marcar essas verificações como concluídas.
+- Ausência do script de diagnóstico relacional no release antigo não comprova órfãos nem cria, por si só, um novo achado alto. A inspeção de dados de MED-03 continua pendente.
+- As permissões relatadas não comprovam exposição pública dos backups ou do .env. Essa conclusão exige avaliar ACLs, diretórios ancestrais, grupos e configuração HTTP. O backup na release continua inadequado para persistência e privacidade operacional.
+- A árvore Git da base c2ab114d inclui o caminho da chave removida. O relatório não verificou se existem cópias dela na VPS/releases/artefatos antigos; não afirmar que foram eliminadas, nem recuperar seu conteúdo para esse fim.
+
+### Sequência corrigida para uma futura implantação autorizada
+
+1. Resolver a situação da credencial privada e confirmar um meio administrativo seguro. Planejar conta administrativa real e recuperação; não relaxar o bloqueio de demos para manter acesso.
+2. Definir a configuração válida da candidata, validar JWT sem expor valor e planejar/provisionar os diretórios privados persistentes sob autorização. O serviço roda como ubuntu, enquanto há arquivos de deploy sob pagina-deploy: definir quem executará o sync e evitar liberar permissões amplas para contornar a separação.
+3. Fixar SHA candidata e reconfirmar SHA ativa, schema/engine/banco, artefato, backup e plano de retorno. Validar a candidata em ambiente controlado. Não confundir validação com Node 22 local com validação do MariaDB real.
+4. Executar dry-run/--check da candidata ANTES da ativação, com a configuração correta. Se houver divergência, revisar/exportar curadoria e obter autorização específica para eventual apply transacional com backup. Exigir --check sem alterações pendentes antes de avançar. Não rodar automaticamente scripts da release antiga para simular a política nova.
+5. Somente após os pré-requisitos e autorização de deploy, ativar a SHA validada. O procedimento existente também inicia worker e restaura o título público do Hero; esses efeitos devem constar do plano aprovado. Nenhum comando de deploy foi executado nesta etapa.
+6. Validar health local/público, login administrativo real e negativas de autorização/CSRF em cenários controlados, conteúdo e logs. Repetir --check após ativação. Rollback de código não desfaz alterações anteriores de dados/configuração; retorno à versão antiga também restaura suas limitações de segurança.
+
+O relatório recebido propunha dry-run/check somente depois do deploy. Isso foi corrigido neste procedimento: `scripts/deploy-vps.sh` já exige --check antes de trocar o symlink e o repete após ativação. Esta preparação não está autorizada automaticamente pelo recebimento do relatório.
