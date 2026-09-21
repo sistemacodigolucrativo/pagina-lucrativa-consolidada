@@ -227,6 +227,7 @@ Correcoes aplicadas ao instalador:
 
 - `--enable-ssl` passou a aceitar `LETSENCRYPT_NO_EMAIL=1` para VPS descartavel de teste quando nao houver e-mail operacional.
 - O health check final do Nginx passou a validar `https://$DOMAIN/` quando SSL estiver habilitado, em vez de exigir `http://127.0.0.1/`, que pode retornar 404 apos o Certbot configurar server block e redirect por dominio.
+- O instalador passou a oferecer seletor interativo para dominio/HTTPS quando executado em terminal interativo, mantendo variaveis/flags para automacao nao interativa.
 
 Comando executado na VPS de teste:
 

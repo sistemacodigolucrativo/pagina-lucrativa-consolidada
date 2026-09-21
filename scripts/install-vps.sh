@@ -17,6 +17,7 @@ PNPM_VERSION="${PNPM_VERSION:-10.4.1}"
 RUN_TESTS="${RUN_TESTS:-0}"
 RUN_DB_PUSH="${RUN_DB_PUSH:-1}"
 RUN_CONTENT_SYNC="${RUN_CONTENT_SYNC:-0}"
+INTERACTIVE_INSTALL="${INTERACTIVE_INSTALL:-auto}"
 MYSQL_DATABASE="${MYSQL_DATABASE:-pagina_lucrativa}"
 MYSQL_USER="${MYSQL_USER:-pagina_lucrativa}"
 MYSQL_PASSWORD="${MYSQL_PASSWORD:-}"
@@ -58,6 +59,7 @@ Opcoes seguras:
   --run-tests              Executa pnpm test durante a instalacao.
   --no-nginx               Nao instala/configura Nginx.
   --enable-ssl             Habilita Certbot. Requer DOMAIN e LETSENCRYPT_EMAIL, ou LETSENCRYPT_NO_EMAIL=1.
+  --non-interactive        Nao pergunta nada durante a instalacao.
   --disable-autodeploy     Nao prepara usuario/chave/sudoers de autodeploy.
   --help                   Exibe esta ajuda.
 
@@ -80,12 +82,73 @@ parse_args() {
       --run-tests) RUN_TESTS=1 ;;
       --no-nginx) ENABLE_NGINX=0 ;;
       --enable-ssl) ENABLE_SSL=1 ;;
+      --non-interactive) INTERACTIVE_INSTALL=0 ;;
       --disable-autodeploy) ENABLE_AUTODEPLOY=0 ;;
       --help) usage; exit 0 ;;
       *) fail "Opcao desconhecida: $1" ;;
     esac
     shift
   done
+}
+
+is_interactive_install() {
+  [[ -t 0 && -t 1 ]] || return 1
+  if [[ "$INTERACTIVE_INSTALL" == "1" ]]; then
+    return 0
+  fi
+  if [[ "$INTERACTIVE_INSTALL" == "0" ]]; then
+    return 1
+  fi
+  [[ -t 0 && -t 1 ]]
+}
+
+prompt_yes_no() {
+  local question="$1"
+  local default_answer="${2:-n}"
+  local suffix answer
+  if [[ "$default_answer" == "y" ]]; then
+    suffix="[S/n]"
+  else
+    suffix="[s/N]"
+  fi
+  while true; do
+    read -r -p "$question $suffix " answer
+    answer="${answer:-$default_answer}"
+    case "$answer" in
+      s|S|y|Y|yes|YES|sim|SIM) return 0 ;;
+      n|N|no|NO|nao|NAO|não|NÃO) return 1 ;;
+      *) printf 'Responda com s ou n.\n' ;;
+    esac
+  done
+}
+
+prompt_optional_https() {
+  [[ "$ENABLE_NGINX" == "1" ]] || return 0
+  if [[ "$ENABLE_SSL" == "1" ]]; then
+    return
+  fi
+  is_interactive_install || return 0
+
+  if ! prompt_yes_no "Deseja configurar dominio e HTTPS agora?" "n"; then
+    return 0
+  fi
+
+  ENABLE_SSL=1
+  while [[ -z "$DOMAIN" ]]; do
+    read -r -p "Informe o dominio apontado para esta VPS: " DOMAIN
+    DOMAIN="${DOMAIN//[[:space:]]/}"
+  done
+
+  if prompt_yes_no "Deseja informar e-mail para renovacao do Let's Encrypt?" "y"; then
+    while [[ -z "$LETSENCRYPT_EMAIL" ]]; do
+      read -r -p "Informe o e-mail do Let's Encrypt: " LETSENCRYPT_EMAIL
+      LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL//[[:space:]]/}"
+    done
+    LETSENCRYPT_NO_EMAIL=0
+  else
+    LETSENCRYPT_NO_EMAIL=1
+    log "HTTPS sera configurado sem e-mail do Let's Encrypt."
+  fi
 }
 
 as_root() {
@@ -514,6 +577,7 @@ validate_installation() {
 main() {
   require_clone_root
   parse_args "$@"
+  prompt_optional_https
   preflight_environment
   install_system_packages
   install_node_and_pnpm

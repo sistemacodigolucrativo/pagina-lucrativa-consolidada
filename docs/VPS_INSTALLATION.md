@@ -89,6 +89,7 @@ bash scripts/install-vps.sh --run-tests
 bash scripts/install-vps.sh --seed-default-content
 bash scripts/install-vps.sh --no-nginx
 bash scripts/install-vps.sh --enable-ssl
+bash scripts/install-vps.sh --non-interactive
 bash scripts/install-vps.sh --disable-autodeploy
 ```
 
@@ -105,6 +106,8 @@ Use `--skip-migrations` quando estiver preparando somente arquivos/servico e as 
 ### HTTPS
 
 Para configurar Nginx com Certbot e abrir HTTPS na porta 443, o dominio precisa apontar para a VPS e responder em HTTP antes da emissao do certificado.
+
+Em uma sessao interativa, quando `DOMAIN`/`--enable-ssl` nao forem informados, o instalador pergunta se o operador deseja configurar dominio e HTTPS durante a instalacao. Em automacoes, CI ou sessoes nao interativas, ele nao pergunta e continua usando variaveis/flags explicitas.
 
 Com e-mail:
 
