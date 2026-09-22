@@ -9,7 +9,6 @@ export const adminMenu: DashboardMenuItem[] = [
   { icon: Trophy, label: "Pontos/Performance", path: "/admin/pontos", group: "Campanhas comerciais" },
   { icon: UsersRound, label: "Membros e rede", path: "/admin/membros", group: "Gestão de membros" },
   { icon: Library, label: "Biblioteca de Recursos", path: "/admin/biblioteca-recursos", group: "Conteúdo" },
-  { icon: FileText, label: "Publicações", path: "/admin/publicacoes", group: "Conteúdo" },
   { icon: Library, label: "Biblioteca de e-books", path: "/admin/ebooks", group: "Capacitação" },
   { icon: BookOpenCheck, label: "Academia", path: "/admin/academia", group: "Capacitação" },
   { icon: LifeBuoy, label: "Suporte", path: "/admin/suporte", group: "Relacionamento" },
