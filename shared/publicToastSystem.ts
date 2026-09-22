@@ -20,15 +20,15 @@ export type PublicToastSettings = {
   visibleSeconds: number;
 };
 
-export const PUBLIC_TOAST_CATEGORY = "Toast";
+export const PUBLIC_TOAST_CATEGORY = "public-toast-config";
 export const PUBLIC_TOAST_TEMPLATE_TYPE = "social-proof-template";
 export const PUBLIC_TOAST_SETTINGS_TYPE = "social-proof-settings";
 
 export const publicToastDefaultSettings: PublicToastSettings = {
   enabled: true,
   showSimulationNotice: true,
-  headerMessage: "Dica rápida",
-  footerMessage: "Mensagem educativa sobre a estrutura. Não representa compra, vaga ou ganho real.",
+  headerMessage: "Atividade ilustrativa",
+  footerMessage: "Demonstração ilustrativa — não representa uma atividade real.",
   headerColor: "#FACC15",
   nameColor: "#38BDF8",
   messageColor: "#FFFFFF",
@@ -40,10 +40,12 @@ export const publicToastDefaultSettings: PublicToastSettings = {
 };
 
 export const publicToastDefaultTemplates: readonly PublicToastTemplate[] = [
-  { id: "default-structure", title: "Orientação", message: "Veja como a estrutura é organizada antes de ativar.", disclaimer: "Dica sobre recursos da plataforma." },
-  { id: "default-flow", title: "Fluxo oficial", message: "Cadastro, pagamento, comprovante e análise acontecem em etapas separadas.", disclaimer: "O pagamento não acontece na primeira tela." },
-  { id: "default-no-monthly", title: "Sem mensalidade", message: "O modelo atual não cobra mensalidade para manter a solicitação ativa.", disclaimer: "Confira a condição vigente antes de avançar." },
-  { id: "default-proof", title: "Decisão consciente", message: "Leia as objeções e perguntas frequentes antes de solicitar sua ativação.", disclaimer: "Resultados dependem de execução e divulgação." },
+  { id: "default-registration", title: "Cadastro", message: "{{nome}} acabou de se cadastrar", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-purchase", title: "Aquisição", message: "{{nome}} acabou de adquirir o programa", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-group-entry", title: "Entrada no grupo", message: "{{nome}} entrou para o grupo", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-view", title: "Visualização", message: "{{nome}} está visualizando agora", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-start", title: "Início", message: "{{nome}} acabou de iniciar o programa", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-slot", title: "Vaga garantida", message: "{{nome}} acabou de garantir sua vaga", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
 ];
 
 export const publicToastNames = [
