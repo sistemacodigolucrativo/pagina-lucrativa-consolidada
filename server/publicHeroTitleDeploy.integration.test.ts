@@ -28,16 +28,20 @@ describe("restauração do título público do Hero no deploy", () => {
     expect(restorePublicHeroTitleBody(null)).toBeNull();
   });
 
-  it("executa a restauração pelo mesmo deploy-vps.sh usado no GitHub e no painel", () => {
+  it("mantém a restauração do Hero no deploy-vps e conecta o painel ao autodeploy mestre", () => {
     const deploy = read("scripts/deploy-vps.sh");
     const worker = read("scripts/manual-deploy-worker.sh");
+    const autodeploy = read("scripts/vps-autodeploy-master.sh");
     const resetScript = read("scripts/reset-public-hero-title.ts");
     const resetService = read("server/publicHeroTitleReset.ts");
     const publicCopyConfig = read("server/_core/publicSalesCopyConfig.ts");
 
     expect(deploy).toContain('DEPLOY_ROOT="$DEPLOY_ROOT" "$PNPM_BIN" exec tsx scripts/reset-public-hero-title.ts');
     expect(deploy).toContain('write_deploy_status "deploying" 99 "Restaurando título padrão do Hero"');
-    expect(worker).toContain('bash "$DEPLOY_SCRIPT" "$SHA" "$DEPLOY_ROOT" "$ARTIFACT" "$HEALTHCHECK_URL"');
+    expect(worker).toContain('DEPLOY_SCRIPT="$CURRENT_RELEASE/scripts/vps-autodeploy-master.sh"');
+    expect(worker).toContain('DEPLOY_REF="$DEPLOY_REF"');
+    expect(autodeploy).toContain('run_known_sync_scripts');
+    expect(autodeploy).toContain('activate_release');
     expect(resetScript).toContain("DEPLOY_HERO_RESET_PENDING");
     expect(resetScript).toContain("process.env.DEPLOY_ROOT?.trim()");
     expect(resetScript).toContain("/api/public-sales-copy");
