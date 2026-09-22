@@ -70,9 +70,9 @@ export default function AdminOffice() {
                 <BookOpenCheck aria-hidden="true" />
                 Academia
               </button>
-              <button type="button" className="obsidian-button is-secondary" disabled aria-disabled="true">
+              <button type="button" className="obsidian-button is-secondary" onClick={() => openCard("/admin/biblioteca-recursos")}>
                 <FileText aria-hidden="true" />
-                Publicações
+                Biblioteca de Recursos
               </button>
             </div>
           }
@@ -112,11 +112,11 @@ export default function AdminOffice() {
               />
               <MetricCard
                 icon={FileText}
-                label="Conteúdos publicados"
+                label="Recursos publicados"
                 value={publishedContent}
-                detail={`${totalContent} conteúdos cadastrados`}
-                ariaLabel="Abrir Publicações"
-                onActivate={() => openCard("/admin/publicacoes")}
+                detail={`${totalContent} recursos cadastrados`}
+                ariaLabel="Abrir Biblioteca de Recursos"
+                onActivate={() => openCard("/admin/biblioteca-recursos")}
               />
               <MetricCard
                 icon={BookOpenCheck}
@@ -130,7 +130,7 @@ export default function AdminOffice() {
                 icon={ChartNoAxesCombined}
                 label="Taxa de publicação"
                 value={`${publicationRate.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
-                detail="Publicados / conteúdos cadastrados"
+                detail="Publicados / recursos cadastrados"
               />
             </section>
 
@@ -153,11 +153,11 @@ export default function AdminOffice() {
               />
               <MetricCard
                 icon={FileText}
-                label="Rascunhos"
+                label="Recursos em rascunho"
                 value={draftContent}
-                detail="Conteúdos que exigem revisão"
-                ariaLabel="Abrir Rascunhos"
-                onActivate={() => openCard("/admin/publicacoes/rascunhos")}
+                detail="Recursos que exigem revisão"
+                ariaLabel="Abrir Biblioteca de Recursos"
+                onActivate={() => openCard("/admin/biblioteca-recursos")}
               />
             </section>
 
