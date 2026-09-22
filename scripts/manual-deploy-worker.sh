@@ -19,6 +19,7 @@ HEARTBEAT_FILE="$DEPLOY_ROOT/manual-deploy-worker.json"
 STATUS_FILE="$DEPLOY_ROOT/deploy-status.json"
 RESULT_FILE="$DEPLOY_ROOT/manual-deploy-result.json"
 SAVED_GITHUB_TOKEN_FILE="$DEPLOY_ROOT/shared/github-token"
+DEFAULT_CHECKOUT_DIR="${CHECKOUT_DIR:-/home/ubuntu/workspaces/pagina-lucrativa-consolidada}"
 ZERO_SHA="0000000000000000000000000000000000000000"
 
 log() { printf '[manual-deploy-worker] %s\n' "$*"; }
@@ -112,6 +113,22 @@ current_deployed_sha() {
   fi
 }
 
+resolve_target_sha_after_deploy() {
+  local sha=""
+  if command -v git >/dev/null 2>&1 && [[ -d "$DEFAULT_CHECKOUT_DIR/.git" ]]; then
+    sha="$(git -C "$DEFAULT_CHECKOUT_DIR" rev-parse HEAD 2>/dev/null || true)"
+  fi
+  if [[ ! "$sha" =~ ^[0-9a-f]{40}$ ]]; then
+    sha="$(current_deployed_sha)"
+  fi
+  local release
+  release="$(current_release_dir)"
+  if [[ "$sha" =~ ^[0-9a-f]{40}$ && -n "$release" && -d "$release" ]]; then
+    printf '%s\n' "$sha" > "$release/.deployed-sha" 2>/dev/null || true
+  fi
+  printf '%s' "${sha:-$ZERO_SHA}"
+}
+
 if [[ -f "$PROCESSING_FILE" && ! -f "$REQUEST_FILE" ]]; then
   mv -f "$PROCESSING_FILE" "$REQUEST_FILE"
 fi
@@ -195,7 +212,7 @@ while true; do
   set -e
 
   FINISHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-  TARGET_SHA="$(current_deployed_sha)"
+  TARGET_SHA="$(resolve_target_sha_after_deploy)"
   if [[ "$code" -eq 0 ]]; then
     write_deploy_status "completed" 100 "Deploy manual concluído" "$TARGET_SHA"
     write_manual_result "completed" "$TARGET_SHA" "$REQUESTED_BY" "$REQUESTED_AT" "$STARTED_AT" "$FINISHED_AT" "Deploy manual validado de ponta a ponta" "0" "$DEPLOY_REF"
