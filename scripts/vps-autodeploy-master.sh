@@ -242,19 +242,18 @@ create_mysql_defaults_file() {
     fi
     printf 'user=%s\n' "$DB_USER"
     if [[ -n "${DB_PASS:-}" ]]; then printf 'password=%s\n' "$DB_PASS"; fi
-    printf 'database=%s\n' "$DB_NAME"
     printf 'default-character-set=utf8mb4\n'
   } > "$MYSQL_DEFAULTS_FILE"
 }
 
 mysql_exec() {
   [[ -n "${MYSQL_DEFAULTS_FILE:-}" && -f "$MYSQL_DEFAULTS_FILE" ]] || create_mysql_defaults_file
-  mysql --defaults-extra-file="$MYSQL_DEFAULTS_FILE" --batch --raw -e "$1"
+  mysql --defaults-extra-file="$MYSQL_DEFAULTS_FILE" --database="$DB_NAME" --batch --raw -e "$1"
 }
 
 mysql_run_file() {
   [[ -n "${MYSQL_DEFAULTS_FILE:-}" && -f "$MYSQL_DEFAULTS_FILE" ]] || create_mysql_defaults_file
-  mysql --defaults-extra-file="$MYSQL_DEFAULTS_FILE" < "$1"
+  mysql --defaults-extra-file="$MYSQL_DEFAULTS_FILE" --database="$DB_NAME" < "$1"
 }
 
 backup_database() {
