@@ -164,8 +164,8 @@ function AppRoutes() {
     <Route path="/admin/biblioteca-recursos/:contentId/editar" component={AdminPublications} />
     <Route path="/admin/biblioteca-recursos" component={AdminPublications} />
     <Route path="/admin/perguntas-frequentes" component={AdminPublications} />
-    <Route path="/admin/publicacoes/rascunhos" component={AdminPublications} />
-    <Route path="/admin/publicacoes" component={AdminPublications} />
+    <Route path="/admin/publicacoes/rascunhos">{() => <RedirectRoute to="/admin/biblioteca-recursos" />}</Route>
+    <Route path="/admin/publicacoes">{() => <RedirectRoute to="/admin/biblioteca-recursos" />}</Route>
     <Route path="/admin/imagens" component={AdminSalesSectionsPage} />
     <Route path="/preview" component={Preview} />
     <Route path="/admin/futuras-implementacoes" component={AdminFutureImplementations} />
