@@ -19,10 +19,23 @@ HEARTBEAT_FILE="$DEPLOY_ROOT/manual-deploy-worker.json"
 STATUS_FILE="$DEPLOY_ROOT/deploy-status.json"
 RESULT_FILE="$DEPLOY_ROOT/manual-deploy-result.json"
 SAVED_GITHUB_TOKEN_FILE="$DEPLOY_ROOT/shared/github-token"
+OPERATIONAL_ENV_FILE="$DEPLOY_ROOT/.env"
 DEFAULT_CHECKOUT_DIR="${CHECKOUT_DIR:-${DEPLOY_ROOT}/shared/panel-checkout}"
 ZERO_SHA="0000000000000000000000000000000000000000"
 
 log() { printf '[manual-deploy-worker] %s\n' "$*"; }
+
+load_operational_env() {
+  if [[ -f "$OPERATIONAL_ENV_FILE" ]]; then
+    log "Carregando ambiente operacional do deploy."
+    set -a
+    # shellcheck disable=SC1090
+    source "$OPERATIONAL_ENV_FILE"
+    set +a
+  else
+    log "Ambiente operacional não encontrado em ${OPERATIONAL_ENV_FILE}; seguindo com variáveis já presentes."
+  fi
+}
 
 write_heartbeat() {
   local tmp="${HEARTBEAT_FILE}.tmp.$$"
@@ -199,6 +212,7 @@ while true; do
   write_deploy_status "deploying" 5 "Deploy manual solicitado para ${DEPLOY_REF}" "$REQUEST_SHA"
   write_manual_result "running" "$REQUEST_SHA" "$REQUESTED_BY" "$REQUESTED_AT" "$STARTED_AT" "" "Executando script mestre de autodeploy" "" "$DEPLOY_REF"
 
+  load_operational_env
   log "Iniciando autodeploy manual da ref ${DEPLOY_REF}."
   log "Checkout isolado do painel: ${DEFAULT_CHECKOUT_DIR}."
   set +e
