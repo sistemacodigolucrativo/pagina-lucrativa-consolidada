@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 const read = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
 
 describe("telas administrativas separadas e responsivas", () => {
-  it("mantém Publicações contida em mobile, tablet e desktop", () => {
+  it("mantém Biblioteca de Recursos contida em mobile, tablet e desktop", () => {
     const source = read("client/src/pages/AdminPublications.tsx");
     expect(source).toContain("min-w-0 max-w-7xl");
     expect(source).toContain("overflow-x-clip");
@@ -14,7 +14,7 @@ describe("telas administrativas separadas e responsivas", () => {
     expect(source).toContain("sm:w-auto");
   });
 
-  it("mantém o formulário de Publicações fechado até o clique em Criar Conteúdo", () => {
+  it("mantém o formulário da Biblioteca de Recursos fechado até o clique em Criar Conteúdo", () => {
     const source = read("client/src/pages/AdminPublications.tsx");
     expect(source).toContain("const [showInlineForm, setShowInlineForm] = useState(false)");
     expect(source).toContain("Criar Conteúdo");
@@ -23,17 +23,19 @@ describe("telas administrativas separadas e responsivas", () => {
     expect(source).toContain("else setShowInlineForm(false)");
   });
 
-  it("abre rascunhos em tela própria e reposiciona rotas administrativas no topo", () => {
+  it("redireciona rotas legadas de Publicações para Biblioteca de Recursos e reposiciona rotas administrativas no topo", () => {
     const app = read("client/src/App.tsx");
-    const adminOffice = read("client/src/pages/AdminOffice.tsx");
     const publications = read("client/src/pages/AdminPublications.tsx");
     expect(app).toContain("function RouteScrollReset()");
     expect(app).toContain('document.querySelector<HTMLElement>(".dashboard-main")?.scrollTo');
-    expect(app).toContain('path="/admin/publicacoes/rascunhos" component={AdminPublications}');
-    expect(adminOffice).toContain('openCard("/admin/publicacoes/rascunhos")');
-    expect(publications).toContain('normalizedLocation === "/admin/publicacoes/rascunhos"');
-    expect(publications).toContain("Rascunhos — Publicações");
-    expect(publications).toContain("Nenhum rascunho salvo no momento.");
+    expect(app).toContain('path="/admin/publicacoes/rascunhos"');
+    expect(app).toContain('path="/admin/publicacoes"');
+    expect(app).toContain('<RedirectRoute to="/admin/biblioteca-recursos" />');
+    expect(app).not.toContain('path="/admin/publicacoes/rascunhos" component={AdminPublications}');
+    expect(app).not.toContain('path="/admin/publicacoes" component={AdminPublications}');
+    expect(app).toContain('path="/admin/biblioteca-recursos" component={AdminPublications}');
+    expect(publications).toContain('"/admin/biblioteca-recursos"');
+    expect(publications).toContain("Biblioteca de Recursos");
   });
 
   it("abre criação e edição de e-books em rotas independentes", () => {
