@@ -19,7 +19,7 @@ HEARTBEAT_FILE="$DEPLOY_ROOT/manual-deploy-worker.json"
 STATUS_FILE="$DEPLOY_ROOT/deploy-status.json"
 RESULT_FILE="$DEPLOY_ROOT/manual-deploy-result.json"
 SAVED_GITHUB_TOKEN_FILE="$DEPLOY_ROOT/shared/github-token"
-DEFAULT_CHECKOUT_DIR="${CHECKOUT_DIR:-/home/ubuntu/workspaces/pagina-lucrativa-consolidada}"
+DEFAULT_CHECKOUT_DIR="${CHECKOUT_DIR:-${DEPLOY_ROOT}/shared/panel-checkout}"
 ZERO_SHA="0000000000000000000000000000000000000000"
 
 log() { printf '[manual-deploy-worker] %s\n' "$*"; }
@@ -200,9 +200,11 @@ while true; do
   write_manual_result "running" "$REQUEST_SHA" "$REQUESTED_BY" "$REQUESTED_AT" "$STARTED_AT" "" "Executando script mestre de autodeploy" "" "$DEPLOY_REF"
 
   log "Iniciando autodeploy manual da ref ${DEPLOY_REF}."
+  log "Checkout isolado do painel: ${DEFAULT_CHECKOUT_DIR}."
   set +e
   GITHUB_TOKEN="$TOKEN" \
     DEPLOY_REF="$DEPLOY_REF" \
+    CHECKOUT_DIR="$DEFAULT_CHECKOUT_DIR" \
     DEPLOY_INVOCATION="panel-manual" \
     RUN_TESTS="${RUN_TESTS:-0}" \
     SERVICE_NAME="$SERVICE_NAME" \
