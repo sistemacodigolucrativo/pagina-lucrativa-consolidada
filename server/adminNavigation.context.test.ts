@@ -13,6 +13,9 @@ describe("navegação administrativa contextual", () => {
     expect(navigation).not.toContain('path: "/admin/comunicacoes"');
     expect(navigation).not.toContain('label: "Divulgação"');
     expect(navigation).not.toContain('path: "/admin/divulgacao"');
+    expect(navigation).not.toContain('label: "Publicações"');
+    expect(navigation).not.toContain('path: "/admin/publicacoes"');
+    expect(navigation).toContain('label: "Biblioteca de Recursos", path: "/admin/biblioteca-recursos", group: "Conteúdo"');
     expect(navigation).toContain('label: "Campanhas", path: "/admin/operacao", group: "Campanhas comerciais"');
     expect(navigation).toContain('label: "Pedidos", path: "/admin/pedidos", group: "Campanhas comerciais"');
     expect(navigation).toContain('label: "Financeiro", path: "/admin/financeiro", group: "Campanhas comerciais"');
@@ -47,11 +50,14 @@ describe("navegação administrativa contextual", () => {
     expect(preview).toContain('href={withAppBase("/")}');
   });
 
-  it("mantém Publicações como CMS oficial e separa suporte, divulgação e módulos comerciais", () => {
+  it("mantém Publicações como rota legada redirecionada e separa suporte, divulgação e módulos comerciais", () => {
     const app = read("client/src/App.tsx");
     const adminOffice = read("client/src/pages/AdminOffice.tsx");
     const adminCommercial = read("server/_core/adminCommercialOperations.ts");
-    expect(app).toContain('path="/admin/publicacoes" component={AdminPublications}');
+    expect(app).toContain('path="/admin/publicacoes"');
+    expect(app).toContain('<RedirectRoute to="/admin/biblioteca-recursos" />');
+    expect(app).not.toContain('path="/admin/publicacoes" component={AdminPublications}');
+    expect(app).toContain('path="/admin/biblioteca-recursos" component={AdminPublications}');
     expect(app).toContain('path="/admin/divulgacao" component={AdminOperation}');
     expect(app).toContain('path="/admin/operacao" component={AdminOperation}');
     expect(app).toContain('path="/admin/pedidos" component={AdminOrders}');
@@ -75,6 +81,7 @@ describe("navegação administrativa contextual", () => {
     expect(adminOffice).not.toContain("capturedContacts");
     expect(adminOffice).not.toContain("/admin/divulgacao");
   });
+
   it("registra a especificação de produto digital personalizado em Futuras Implementações", () => {
     const futureImplementations = read("client/src/pages/AdminFutureImplementations.tsx");
     expect(futureImplementations).toContain("Produto digital personalizado a partir do conhecimento do membro");
@@ -84,5 +91,4 @@ describe("navegação administrativa contextual", () => {
     expect(futureImplementations).toContain("auditar a branch real do projeto");
     expect(futureImplementations).toContain("Não recriar autenticação");
   });
-
 });
