@@ -1,19 +1,22 @@
 import type { Express, Request, Response } from "express";
 import { parse as parseCookieHeader } from "cookie";
-import { readFile, realpath, rename, stat, writeFile } from "node:fs/promises";
+import { chmod, mkdir, readFile, realpath, rename, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { LOCAL_STORAGE_DIR } from "../storage";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 
 const WORKER_FRESHNESS_MS = 15_000;
+const DEFAULT_DEPLOY_REF = process.env.MANUAL_DEPLOY_REF || "main";
 
 export const MANUAL_DEPLOY_UPDATES = [
-  "Reempacota o código da versão atualmente publicada.",
-  "Instala as dependências do release com pnpm 10.4.1.",
-  "Gera novamente o build de produção do frontend e do servidor.",
-  "Executa smoke test isolado na porta 3199 antes da ativação.",
+  "Busca a branch/ref configurada no GitHub usando o token informado ou salvo na VPS.",
+  "Cria uma release versionada em /home/ubuntu/servicos/pagina-lucrativa/releases.",
+  "Copia os arquivos com rsync e reutiliza o .env seguro da VPS.",
+  "Instala dependências, executa validação TypeScript e gera o build de produção.",
+  "Faz backup lógico do banco antes de migrations e sincronizações.",
+  "Aplica migrations Drizzle e executa hooks/syncs versionados disponíveis.",
   "Ativa o novo release por troca atômica do symlink current e reinicia pagina-lucrativa.service.",
-  "Valida a aplicação local e o endpoint público, com rollback automático se a ativação falhar.",
+  "Executa healthcheck e faz rollback automático de código se a nova versão falhar.",
 ] as const;
 
 type DeployState = {
@@ -33,6 +36,7 @@ type ManualDeployAudit = {
   finishedAt: string | null;
   stage: string | null;
   exitCode: number | null;
+  deployRef?: string | null;
 };
 
 type WorkerHeartbeat = {
@@ -57,6 +61,7 @@ function filesFor(root: string) {
     processing: path.join(root, "manual-deploy-processing.json"),
     heartbeat: path.join(root, "manual-deploy-worker.json"),
     audit: path.join(root, "manual-deploy-result.json"),
+    savedGithubToken: path.join(root, "shared", "github-token"),
   };
 }
 
@@ -117,6 +122,7 @@ async function readManualDeployAudit(root: string): Promise<ManualDeployAudit | 
     finishedAt: typeof parsed.finishedAt === "string" ? parsed.finishedAt : null,
     stage: typeof parsed.stage === "string" ? parsed.stage : null,
     exitCode: Number.isInteger(parsed.exitCode) ? Number(parsed.exitCode) : null,
+    deployRef: typeof parsed.deployRef === "string" ? parsed.deployRef : null,
   };
 }
 
@@ -126,31 +132,62 @@ async function workerIsActive(root: string) {
   return Number.isFinite(timestamp) && Date.now() - timestamp <= WORKER_FRESHNESS_MS;
 }
 
+async function savedGithubTokenExists(root: string) {
+  return fileExists(filesFor(root).savedGithubToken);
+}
+
+function sanitizeDeployRef(value: unknown) {
+  const ref = typeof value === "string" && value.trim() ? value.trim() : DEFAULT_DEPLOY_REF;
+  if (!/^[A-Za-z0-9._\/-]{1,160}$/.test(ref) || ref.includes("..") || ref.startsWith("/") || ref.endsWith("/")) {
+    throw new ManualDeployError(400, "Branch/ref de deploy inválida.");
+  }
+  return ref;
+}
+
+function sanitizeGithubToken(value: unknown) {
+  if (typeof value !== "string") return "";
+  const token = value.trim();
+  if (!token) return "";
+  if (token.length < 20 || token.length > 300 || /\s/.test(token)) {
+    throw new ManualDeployError(400, "Token do GitHub inválido.");
+  }
+  return token;
+}
+
 export async function inspectManualDeploy(root = manualDeployRoot()) {
   const deployFiles = filesFor(root);
-  const [sha, workerActive, deployStatus, lastManualDeploy, requestExists, processingExists] = await Promise.all([
+  const [sha, workerActive, deployStatus, lastManualDeploy, requestExists, processingExists, hasSavedGithubToken] = await Promise.all([
     readCurrentSha(root),
     workerIsActive(root),
     readDeployState(root),
     readManualDeployAudit(root),
     fileExists(deployFiles.request),
     fileExists(deployFiles.processing),
+    savedGithubTokenExists(root),
   ]);
   const queued = requestExists || processingExists;
   return {
-    available: Boolean(sha && workerActive),
+    available: workerActive,
     currentSha: sha,
     workerActive,
     queued,
     deployStatus,
     lastManualDeploy,
     updates: MANUAL_DEPLOY_UPDATES,
+    hasSavedGithubToken,
+    defaultDeployRef: DEFAULT_DEPLOY_REF,
   };
 }
 
-export async function queueManualDeployRequest(adminId: number, root = manualDeployRoot()) {
+type QueueManualDeployInput = {
+  deployRef?: unknown;
+  githubToken?: unknown;
+  saveGithubToken?: unknown;
+};
+
+export async function queueManualDeployRequest(adminId: number, input: QueueManualDeployInput = {}, root = manualDeployRoot()) {
   const info = await inspectManualDeploy(root);
-  if (!info.currentSha || !info.workerActive) {
+  if (!info.workerActive) {
     throw new ManualDeployError(503, "O mecanismo de deploy manual ainda não está disponível nesta instalação.");
   }
   if (info.deployStatus.status === "deploying") {
@@ -160,16 +197,34 @@ export async function queueManualDeployRequest(adminId: number, root = manualDep
     throw new ManualDeployError(409, "Já existe uma solicitação de deploy manual aguardando processamento.");
   }
 
+  const deployRef = sanitizeDeployRef(input.deployRef);
+  const githubToken = sanitizeGithubToken(input.githubToken);
+  const saveGithubToken = input.saveGithubToken === true;
   const deployFiles = filesFor(root);
+  const hasSavedToken = await savedGithubTokenExists(root);
+
+  if (!githubToken && !hasSavedToken) {
+    throw new ManualDeployError(400, "Informe o token do GitHub para iniciar o deploy.");
+  }
+
+  if (githubToken && saveGithubToken) {
+    await mkdir(path.dirname(deployFiles.savedGithubToken), { recursive: true, mode: 0o700 });
+    await writeFile(deployFiles.savedGithubToken, `${githubToken}\n`, { encoding: "utf8", mode: 0o600 });
+    await chmod(deployFiles.savedGithubToken, 0o600).catch(() => undefined);
+  }
+
   const request = {
     sha: info.currentSha,
+    deployRef,
+    githubToken: githubToken && !saveGithubToken ? githubToken : undefined,
+    tokenSource: githubToken && !saveGithubToken ? "inline" : "saved",
     requestedBy: adminId,
     requestedAt: new Date().toISOString(),
   };
   const temp = `${deployFiles.request}.tmp-${process.pid}-${Date.now()}`;
-  await writeFile(temp, `${JSON.stringify(request)}\n`, { encoding: "utf8", mode: 0o640 });
+  await writeFile(temp, `${JSON.stringify(request)}\n`, { encoding: "utf8", mode: githubToken && !saveGithubToken ? 0o600 : 0o640 });
   await rename(temp, deployFiles.request);
-  return { status: "queued" as const, sha: info.currentSha, requestedAt: request.requestedAt };
+  return { status: "queued" as const, sha: info.currentSha, deployRef, requestedAt: request.requestedAt, tokenSaved: Boolean(githubToken && saveGithubToken) };
 }
 
 async function requireAdmin(req: Request, res: Response) {
@@ -207,7 +262,11 @@ export function registerAdminManualDeploy(app: Express, appPrefix = "") {
         return;
       }
       try {
-        res.status(202).json(await queueManualDeployRequest(admin.id));
+        res.status(202).json(await queueManualDeployRequest(admin.id, {
+          deployRef: req.body?.deployRef,
+          githubToken: req.body?.githubToken,
+          saveGithubToken: req.body?.saveGithubToken,
+        }));
       } catch (error) {
         if (error instanceof ManualDeployError) {
           res.status(error.statusCode).json({ error: error.message });
