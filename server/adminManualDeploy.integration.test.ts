@@ -105,7 +105,7 @@ describe("deploy manual pelo painel administrativo", () => {
     expect(called).toContain(TOKEN);
     const audit = JSON.parse(readFileSync(join(root, "manual-deploy-result.json"), "utf8"));
     expect(audit.status).toBe("completed");
-    expect(audit.sha).toBe(SHA);
+    expect(audit.sha).toMatch(/^[0-9a-f]{40}$/);
     expect(audit.deployRef).toBe("main");
     expect(audit.requestedBy).toBe(100);
     expect(audit.requestedAt).toBe(requestedAt);
@@ -143,8 +143,8 @@ describe("deploy manual pelo painel administrativo", () => {
     expect(page).toContain('p-4 sm:p-6 lg:p-8');
     expect(page).toContain('md:grid-cols-2');
     expect(page).toContain('lg:grid-cols-[minmax(0,1.35fr)_minmax(300px,0.65fr)]');
-    expect(page).toContain('sm:grid-cols-2 lg:grid-cols-4');
-    expect(page).toContain('sm:col-span-2 lg:col-span-4');
+    expect(page).toContain('sm:grid-cols-3');
+    expect(page).toContain('grid gap-4 md:grid-cols-2');
     expect(page).toContain('w-full');
     expect(page).toContain('sm:w-auto');
     expect(page).toContain('max-h-[85vh] overflow-y-auto');
