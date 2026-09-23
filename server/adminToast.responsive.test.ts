@@ -36,6 +36,14 @@ describe("admin Toast responsive UX", () => {
     expect(source).toContain('Criar cópia');
   });
 
+  it("mounts the public toast listener so Visualizar shows an in-page preview", () => {
+    expect(source).toContain('PublicSocialProofToast');
+    expect(source).toContain('PUBLIC_TOAST_PREVIEW_EVENT');
+    expect(source).toContain('id="admin-public-toast-preview-slot"');
+    expect(source).toContain('new CustomEvent(PUBLIC_TOAST_PREVIEW_EVENT');
+    expect(source).not.toContain('dispatchPreview(item.summary ?? "", parseDisclaimer(item.body)); await');
+  });
+
   it("duplicates from an existing model into an independent draft", () => {
     expect(source).toContain('function duplicate(item:');
     expect(source).toContain('title: `${item.title} — cópia`');

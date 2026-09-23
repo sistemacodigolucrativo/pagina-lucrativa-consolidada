@@ -1,4 +1,5 @@
 import DashboardLayout from "@/components/DashboardLayout";
+import PublicSocialProofToast, { PUBLIC_TOAST_PREVIEW_EVENT } from "@/components/PublicSocialProofToast";
 import { adminMenu } from "@/lib/adminNavigation";
 import { trpc } from "@/lib/trpc";
 import { Bell, ChevronDown, ChevronUp, Copy, Eye, Pencil, RotateCcw, Save, Sparkles, Trash2, X } from "lucide-react";
@@ -16,7 +17,6 @@ import {
 
 type ToastForm = { title: string; message: string; disclaimer: string; status: "draft" | "published" };
 type ColorKey = "headerColor" | "nameColor" | "messageColor" | "footerColor";
-const PUBLIC_TOAST_PREVIEW_EVENT = "codigo-lucrativo:toast-preview";
 
 function parseDisclaimer(body?: string | null) {
   if (!body) return "";
@@ -123,7 +123,7 @@ export default function AdminToast() {
   function previewItem(item: NonNullable<typeof content.data>[number]) { dispatchPreview(item.summary ?? "", parseDisclaimer(item.body)); }
   function remove(id: number) { if (window.confirm("Excluir este modelo de Toast? Ele poderá ser restaurado pela lixeira.")) updateStatus.mutate({ id, status: "archived" }); }
 
-  return <DashboardLayout menuItems={adminMenu} title="Administração"><main className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:p-4 md:space-y-6 md:p-8">
+  return <DashboardLayout menuItems={adminMenu} title="Administração"><><div id="admin-public-toast-preview-slot" className="public-social-proof-toast-slot" aria-live="polite" style={{ left: "50%", transform: "translateX(-50%)", width: "min(320px, calc(100vw - 24px))" }}><PublicSocialProofToast /></div><main className="mx-auto w-full max-w-7xl space-y-4 p-3 sm:p-4 md:space-y-6 md:p-8">
     <header className="relative overflow-hidden rounded-2xl border border-emerald-300/15 bg-[radial-gradient(circle_at_top_right,rgba(16,185,129,.16),transparent_38%),linear-gradient(145deg,rgba(9,18,16,.98),rgba(3,8,9,.99))] p-4 shadow-2xl sm:rounded-3xl sm:p-6 md:p-8">
       <Sparkles className="absolute right-5 top-5 size-5 text-emerald-300" /><span className="text-[10px] font-semibold uppercase tracking-[.16em] text-emerald-300">Sistema · Prova social</span>
       <div className="mt-2 flex items-center gap-3"><Bell className="size-6 text-emerald-300" /><h1 className="text-2xl font-semibold text-white sm:text-3xl">Central de Toast</h1></div>
@@ -159,5 +159,5 @@ export default function AdminToast() {
         </article>;
       })}</div>
     </section>
-  </main></DashboardLayout>;
+  </main></></DashboardLayout>;
 }
