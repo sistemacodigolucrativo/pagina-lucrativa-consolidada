@@ -115,3 +115,13 @@ backups/packaged-content-sync-*.json
 client/public/__manus__/version.json
 .project-config.json
 *.pre-testimonial
+
+# Local credentials and private keys
+*.pem
+*.key
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.p12
+*.pfx
