@@ -82,6 +82,16 @@ describe("navegação administrativa contextual", () => {
     expect(adminOffice).not.toContain("/admin/divulgacao");
   });
 
+  it("registra a anotação do menu de manutenção pós-instalação em Futuras Implementações", () => {
+    const futureImplementations = read("client/src/pages/AdminFutureImplementations.tsx");
+    expect(futureImplementations).toContain("Menu de manutenção pós-instalação via SSH");
+    expect(futureImplementations).toContain("CÓDIGO LUCRATIVO — MENU MANUTENÇÃO");
+    expect(futureImplementations).toContain("Gerenciar administrador");
+    expect(futureImplementations).toContain("Segurança e credenciais");
+    expect(futureImplementations).toContain("Verificação de produção");
+    expect(futureImplementations).toContain("codigo-menu");
+  });
+
   it("registra a especificação de produto digital personalizado em Futuras Implementações", () => {
     const futureImplementations = read("client/src/pages/AdminFutureImplementations.tsx");
     expect(futureImplementations).toContain("Produto digital personalizado a partir do conhecimento do membro");

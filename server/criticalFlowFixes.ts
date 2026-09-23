@@ -22,6 +22,7 @@ type CampaignRequestLike = { headers?: { cookie?: string | string[] } };
 
 type MemberAccountUpdate = {
   name: string;
+  email: string;
   newPassword?: string | null;
 };
 
@@ -68,8 +69,13 @@ export async function updateMemberAccountLocked(userId: number, input: MemberAcc
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
 
-  const userUpdate: { name: string; passwordHash?: string; loginMethod?: string } = {
+  const email = normalizeEmailForLookup(input.email);
+  const existingEmailRows = await db.select({ id: users.id }).from(users).where(sql<boolean>`LOWER(TRIM(${users.email})) = ${email} AND ${users.id} <> ${userId}`).limit(1);
+  if (existingEmailRows.length) throw new Error("Este e-mail já está em uso por outra conta.");
+
+  const userUpdate: { name: string; email: string; passwordHash?: string; loginMethod?: string } = {
     name: input.name.trim(),
+    email,
   };
   const newPassword = input.newPassword ?? null;
   if (newPassword) {

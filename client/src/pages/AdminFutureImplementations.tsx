@@ -420,6 +420,250 @@ A nova funcionalidade deverá ser integrada ao fluxo existente do membro, preser
  
 Somente depois da auditoria do código real deverá ser elaborado o plano técnico definitivo de implementação.`;
 
+const maintenanceMenuSpec = `# ESPECIFICAÇÃO — MENU DE MANUTENÇÃO PÓS-INSTALAÇÃO VIA SSH
+
+Sim. Esse menu pós-instalação via SSH é uma boa ideia.
+
+O comando poderia ser:
+
+menu
+
+Ou:
+
+codigo-menu
+
+E abrir algo assim:
+
+=====================================
+ CÓDIGO LUCRATIVO — MENU MANUTENÇÃO
+=====================================
+
+1) Status geral do sistema
+2) Gerenciar administrador
+3) Backup do banco de dados
+4) Backup completo da VPS/projeto
+5) Restaurar backup
+6) Segurança e credenciais
+7) Banco de dados / limpeza segura
+8) Deploy, build e rollback
+9) Logs e diagnóstico
+10) Nginx, domínio e SSL
+11) Verificação de produção
+0) Sair
+
+## 1. Status geral do sistema
+
+Serve para ver rapidamente se está tudo vivo.
+
+Deve mostrar:
+
+- Serviço pagina-lucrativa.service: active/inactive
+- Domínio respondendo HTTP 200 ou erro
+- Uso de disco
+- Uso de memória
+- Banco conectando ou não
+- Último commit em produção
+- Último backup disponível
+
+Por que precisa: antes de mexer em qualquer coisa, você precisa saber se o sistema está saudável.
+
+## 2. Gerenciar administrador
+
+Esse é um dos pontos mais importantes.
+
+Opções:
+
+1) Listar administradores
+2) Alterar e-mail do admin
+3) Alterar senha do admin
+4) Criar novo admin
+5) Remover admin
+6) Rebaixar admin para membro
+
+Por que precisa: se você esquecer senha, perder e-mail ou precisar trocar acesso administrativo, não fica dependente do painel.
+
+Como deve corrigir/funcionar: o menu deve alterar diretamente no banco, mas sempre fazendo backup antes.
+
+Regra obrigatória: antes de alterar admin, criar backup SQL automático.
+
+## 3. Backup do banco de dados
+
+Opções:
+
+1) Criar backup SQL agora
+2) Listar backups SQL existentes
+3) Ver tamanho/data do último backup
+4) Validar backup SQL em banco temporário
+
+Por que precisa: o banco guarda usuários, admins, pedidos, membros, e-mails, senhas hash, conteúdos e dados operacionais.
+
+Como deve funcionar: usar mysqldump, salvar em pasta segura e registrar data/hora.
+
+## 4. Backup completo da VPS/projeto
+
+Opções:
+
+1) Backup completo do projeto
+2) Backup completo com banco + arquivos
+3) Backup de .env, Nginx, systemd e storage
+4) Gerar manifesto do backup
+5) Gerar checksum
+
+Por que precisa: backup só do banco não recupera tudo. Você também precisa dos arquivos, .env, configurações de serviço, Nginx, uploads e storage.
+
+Como deve funcionar: gerar .tar.gz com manifesto e checksum, sem expor segredo no relatório.
+
+## 5. Restaurar backup
+
+Opções:
+
+1) Restaurar banco em banco temporário
+2) Restaurar banco em produção
+3) Restaurar arquivos do projeto
+4) Restaurar backup completo
+
+Por que precisa: backup que nunca foi restaurado é apenas uma promessa.
+
+Como deve funcionar: por segurança, restauração em produção deve exigir confirmação forte:
+
+DIGITE: RESTAURAR PRODUCAO
+
+E antes de restaurar, criar backup do estado atual.
+
+## 6. Segurança e credenciais
+
+Opções:
+
+1) Verificar JWT_SECRET
+2) Verificar DATABASE_URL
+3) Verificar ENABLE_DEMO_ACCOUNTS
+4) Listar fingerprints SSH autorizadas
+5) Remover chave SSH antiga
+6) Gerar nova chave SSH
+7) Verificar permissões de arquivos sensíveis
+8) Procurar arquivos .env, .pem, .key expostos no projeto
+
+Por que precisa: foi exatamente aí que apareceram riscos na auditoria.
+
+Como deve funcionar: nunca imprimir valor real de senha, token, chave, JWT_SECRET ou DATABASE_URL. Mostrar só status mascarado.
+
+Exemplo:
+
+JWT_SECRET: presente, tamanho 64
+DATABASE_URL: presente, conexão OK
+ENABLE_DEMO_ACCOUNTS: ausente/desativado
+
+## 7. Banco de dados / limpeza segura
+
+Opções:
+
+1) Limpar sessões expiradas
+2) Limpar logs antigos
+3) Limpar tokens temporários expirados
+4) Limpar backups antigos
+5) Otimizar tabelas
+6) Ver tamanho das tabelas
+
+Por que precisa: com o tempo, banco e arquivos acumulam lixo operacional.
+
+Como deve funcionar: nada de apagar usuários, membros, pedidos ou dados financeiros sem confirmação. Limpeza deve ser só de dados temporários/expirados.
+
+Regra obrigatória: antes de qualquer limpeza, backup automático.
+
+## 8. Deploy, build e rollback
+
+Opções:
+
+1) Ver commit atual
+2) Atualizar projeto da main
+3) Rodar pnpm check
+4) Rodar pnpm test
+5) Rodar pnpm build
+6) Reiniciar serviço
+7) Fazer rollback para build anterior
+
+Por que precisa: se uma atualização quebrar o sistema, você precisa voltar rápido.
+
+Como deve funcionar: antes de aplicar nova build, salvar backup do dist atual.
+
+## 9. Logs e diagnóstico
+
+Opções:
+
+1) Ver logs do serviço
+2) Ver erros recentes
+3) Ver logs do Nginx
+4) Ver status do banco
+5) Ver uso de disco
+6) Ver portas em uso
+
+Por que precisa: quando der erro, você precisa diagnosticar sem caçar comando manual.
+
+Como deve funcionar: mostrar apenas os últimos registros e não expor segredo.
+
+## 10. Nginx, domínio e SSL
+
+Opções:
+
+1) Testar configuração do Nginx
+2) Reiniciar Nginx
+3) Ver domínio configurado
+4) Testar HTTPS
+5) Ver validade do certificado SSL
+6) Renovar SSL
+
+Por que precisa: se domínio, proxy ou SSL quebrar, o site sai do ar mesmo com app funcionando.
+
+Como deve funcionar: usar testes seguros antes de reiniciar.
+
+## 11. Verificação de produção
+
+Opções:
+
+1) Testar home pública
+2) Testar login demo bloqueado
+3) Testar /ebook-files sem login
+4) Testar /ebook-files com sessão
+5) Testar arquivos sensíveis bloqueados
+6) Gerar relatório final
+
+Por que precisa: isso automatiza os testes feitos manualmente.
+
+Como deve funcionar: gerar um relatório .md em CORRECOES/ ou RELATORIOS/, sem segredos.
+
+## Itens recomendados adicionais
+
+Inclua também:
+
+1) Rollback de emergência
+2) Restaurar backup em banco temporário
+3) Verificar validade do SSL
+4) Verificar espaço em disco
+5) Listar administradores
+6) Remover administrador
+7) Criar administrador emergencial
+8) Verificar permissões de arquivos sensíveis
+9) Gerar relatório de manutenção
+10) Testar produção automaticamente
+
+## Recomendação de primeira versão
+
+Para a primeira versão, fazer só o essencial:
+
+1) Status geral
+2) Alterar senha/e-mail admin
+3) Criar/remover admin
+4) Backup SQL
+5) Backup completo
+6) Restaurar backup em banco temporário
+7) Segurança SSH/JWT/DATABASE_URL
+8) Testes de produção
+9) Logs
+10) Rollback
+
+Isso já resolveria 90% dos problemas reais de manutenção pós-instalação.`;
+
+
 export default function AdminFutureImplementations() {
   return (
     <DashboardLayout menuItems={adminMenu} title="Administração">
@@ -454,6 +698,35 @@ export default function AdminFutureImplementations() {
               </div>
             </div>
           </section>
+
+          <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start">
+              <div className="w-fit rounded-xl border bg-muted/40 p-3">
+                <ServerCog className="h-5 w-5 text-primary" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="text-lg font-semibold">Menu de manutenção pós-instalação via SSH</h2>
+                  <span className="rounded-full border px-2.5 py-1 text-xs font-medium text-muted-foreground">Anotação salva</span>
+                </div>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">
+                  Registrar a futura central de manutenção acessível por SSH para status, administração emergencial, backups, restauração segura, credenciais, deploy, rollback, logs, Nginx, SSL e verificações de produção.
+                </p>
+                <div className="mt-4 grid gap-3 text-sm text-muted-foreground md:grid-cols-3">
+                  <div className="rounded-xl border border-dashed bg-muted/20 p-4"><strong className="mb-1 block text-foreground">Comando sugerido</strong>Usar <span className="font-mono text-foreground">menu</span> ou <span className="font-mono text-foreground">codigo-menu</span> após login SSH.</div>
+                  <div className="rounded-xl border border-dashed bg-muted/20 p-4"><strong className="mb-1 block text-foreground">Primeira versão</strong>Status geral, admins, backups, restauração temporária, segurança, testes, logs e rollback.</div>
+                  <div className="rounded-xl border border-dashed bg-muted/20 p-4"><strong className="mb-1 block text-foreground">Regra de segurança</strong>Nunca expor segredos e sempre criar backup antes de ações administrativas sensíveis.</div>
+                </div>
+                <details className="mt-4 rounded-xl border bg-muted/20 p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-foreground">Ver anotação completa</summary>
+                  <pre className="mt-4 max-h-[32rem] overflow-auto whitespace-pre-wrap break-words rounded-lg bg-background/70 p-4 text-xs leading-6 text-muted-foreground">
+                    {maintenanceMenuSpec}
+                  </pre>
+                </details>
+              </div>
+            </div>
+          </section>
+
 
           <section className="rounded-2xl border bg-card p-5 shadow-sm md:p-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-start">

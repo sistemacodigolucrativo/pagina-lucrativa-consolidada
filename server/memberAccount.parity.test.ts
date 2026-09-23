@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { accountInput, receivingPreferenceInput } from "./routers";
 
 describe("separação funcional de conta e recebimento", () => {
-  it("mantém Meus dados restrito a nome e senha e descarta tentativa de alterar e-mail", () => {
+  it("mantém Meus dados restrito a nome, e-mail e senha sem misturar recebimento", () => {
     const result = accountInput.safeParse({ name: "Membro Código Lucrativo", email: "outro@example.com", newPassword: null, confirmPassword: null });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).not.toHaveProperty("email");
+      expect(result.data.email).toBe("outro@example.com");
       expect(result.data).not.toHaveProperty("paypalEmail");
     }
   });
@@ -38,7 +38,7 @@ describe("separação funcional de conta e recebimento", () => {
   });
 
   it("rejeita confirmação de nova senha diferente", () => {
-    const result = accountInput.safeParse({ name: "Membro Código Lucrativo", newPassword: "nova-senha", confirmPassword: "outra-senha" });
+    const result = accountInput.safeParse({ name: "Membro Código Lucrativo", email: "membro@example.com", newPassword: "nova-senha", confirmPassword: "outra-senha" });
     expect(result.success).toBe(false);
     if (!result.success) expect(result.error.issues.some(issue => issue.path[0] === "confirmPassword")).toBe(true);
   });

@@ -2,16 +2,15 @@ import { describe, expect, it } from "vitest";
 import { accountInput } from "./routers";
 
 describe("dados privados da conta", () => {
-  it("normaliza o nome e descarta qualquer tentativa de alterar o e-mail", () => {
+  it("normaliza nome e e-mail da conta", () => {
     const result = accountInput.parse({ name: "  Pessoa de Teste ", email: " OUTRO@EXAMPLE.COM " });
     expect(result.name).toBe("Pessoa de Teste");
-    expect(result).not.toHaveProperty("email");
+    expect(result.email).toBe("outro@example.com");
   });
 
-  it("não usa o contrato de atualização da conta para validar ou persistir e-mail", () => {
+  it("valida o e-mail antes de permitir atualização da conta", () => {
     for (const email of ["pessoa", "pessoa@", "pessoa@example", "pessoa example.com"]) {
-      const result = accountInput.parse({ name: "Pessoa de Teste", email });
-      expect(result).not.toHaveProperty("email");
+      expect(() => accountInput.parse({ name: "Pessoa de Teste", email })).toThrow();
     }
   });
 

@@ -144,6 +144,7 @@ export const profilePhotoInput = z.object({
 });
 export const accountInput = z.object({
   name: z.string().trim().min(2, "Informe seu nome.").max(180),
+  email: normalizedEmailZodSchema,
   newPassword: z.string().min(6, "A nova senha deve ter pelo menos 6 caracteres.").max(128).optional().nullable(),
   confirmPassword: z.string().max(128).optional().nullable(),
 }).superRefine((value, context) => {

@@ -9,15 +9,19 @@ async function source(relativePath: string) {
 }
 
 describe("correções críticas de conta, cadastro e pagamento", () => {
-  it("mantém e-mail do membro imutável na interface e no contrato", async () => {
-    const [accountPage, routers] = await Promise.all([
+  it("permite alterar e-mail da própria conta sem misturar dados de recebimento", async () => {
+    const [accountPage, routers, fixes] = await Promise.all([
       source("client/src/pages/MemberAccount.tsx"),
       source("server/routers.ts"),
+      source("server/criticalFlowFixes.ts"),
     ]);
     const accountContract = routers.match(/export const accountInput = z\.object\(\{([\s\S]*?)\}\)\.superRefine/)?.[1] ?? "";
-    expect(accountContract).not.toContain("email:");
-    expect(accountPage).toContain("Este e-mail é fixo e não pode ser alterado após o cadastro.");
-    expect(accountPage).not.toContain('setField("email"');
+    expect(accountContract).toContain("email: normalizedEmailZodSchema");
+    expect(accountPage).toContain('setField("email"');
+    expect(accountPage).toContain("Este e-mail é usado para login");
+    expect(accountPage).not.toContain("Este e-mail é fixo e não pode ser alterado após o cadastro.");
+    expect(accountPage).not.toContain("paypalEmail");
+    expect(fixes).toContain("Este e-mail já está em uso por outra conta.");
   });
 
   it("confirma senha persistida e recupera conta por e-mail normalizado", async () => {
