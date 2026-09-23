@@ -1,7 +1,7 @@
 import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, FileText, LayoutDashboard, Save, Search, Star, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, ClipboardCheck, Download, FileText, LayoutDashboard, Save, Search, Star, Trash2, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
@@ -20,6 +20,62 @@ const statusPaths: Record<TestimonialStatus, string> = {
 };
 const statusOrder = ["pending", "approved", "rejected", "archived"] as const;
 
+const testimonialJsonTemplate = JSON.stringify({
+  depoimentos: [
+    {
+      nome: "Nome da pessoa",
+      texto: "Texto do depoimento",
+      avaliacao: 5,
+      cargo_ou_contexto: "Aluno / Cliente / Membro",
+      imagem: "",
+      status: "ativo",
+      ordem: 1,
+    },
+  ],
+}, null, 2);
+
+type TestimonialJsonItem = {
+  nome: string;
+  texto: string;
+  avaliacao?: number | null;
+  cargo_ou_contexto?: string | null;
+  imagem?: string | null;
+  status?: "ativo" | "rascunho" | "arquivado" | "approved" | "pending" | "archived" | null;
+  ordem?: number | null;
+};
+
+function parseTestimonialsJsonInput(value: string): { depoimentos: TestimonialJsonItem[] } {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(value);
+  } catch {
+    throw new Error("JSON malformado. Revise aspas, vírgulas e chaves antes de importar.");
+  }
+  if (!parsed || typeof parsed !== "object" || !Array.isArray((parsed as { depoimentos?: unknown }).depoimentos)) {
+    throw new Error('O JSON precisa conter a chave "depoimentos" com uma lista de itens.');
+  }
+  const depoimentos = (parsed as { depoimentos: unknown[] }).depoimentos.map((item, index) => {
+    if (!item || typeof item !== "object") throw new Error(`Depoimento ${index + 1} precisa ser um objeto.`);
+    const record = item as Record<string, unknown>;
+    const nome = typeof record.nome === "string" ? record.nome.trim() : "";
+    const texto = typeof record.texto === "string" ? record.texto.trim() : "";
+    if (!nome || !texto) throw new Error(`Depoimento ${index + 1} precisa ter nome e texto.`);
+    const avaliacao = typeof record.avaliacao === "number" && Number.isFinite(record.avaliacao) ? Math.max(1, Math.min(5, Math.round(record.avaliacao))) : 5;
+    const status = typeof record.status === "string" && ["ativo", "rascunho", "arquivado", "approved", "pending", "archived"].includes(record.status) ? record.status as TestimonialJsonItem["status"] : "ativo";
+    return {
+      nome,
+      texto,
+      avaliacao,
+      cargo_ou_contexto: typeof record.cargo_ou_contexto === "string" ? record.cargo_ou_contexto.trim() : "",
+      imagem: typeof record.imagem === "string" ? record.imagem.trim() : "",
+      status,
+      ordem: typeof record.ordem === "number" && Number.isFinite(record.ordem) ? Math.max(1, Math.round(record.ordem)) : index + 1,
+    };
+  });
+  if (!depoimentos.length) throw new Error("Inclua pelo menos um depoimento para importar.");
+  return { depoimentos };
+}
+
 export default function AdminTestimonials() {
   const utils = trpc.useUtils();
   const [location, setLocation] = useLocation();
@@ -28,6 +84,11 @@ export default function AdminTestimonials() {
   const [query, setQuery] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
+  const [jsonInput, setJsonInput] = useState(testimonialJsonTemplate);
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonPreview, setJsonPreview] = useState<TestimonialJsonItem[] | null>(null);
+  const [replaceAllBeforeImport, setReplaceAllBeforeImport] = useState(false);
+  const [exportedJson, setExportedJson] = useState("");
   const activeStatus = statusOrder.find(status => statusPaths[status] === location) ?? null;
   const isQueueScreen = activeStatus !== null;
 
@@ -39,8 +100,72 @@ export default function AdminTestimonials() {
     onError: error => toast.error(error.message),
   });
 
+  const importTestimonials = trpc.admin.importTestimonialsJson.useMutation({
+    onSuccess: async result => {
+      await utils.admin.testimonials.invalidate();
+      setJsonError(null);
+      toast.success(`${result.created} depoimentos importados. ${result.skippedDuplicates} duplicados ignorados.`);
+    },
+    onError: error => toast.error(error.message),
+  });
+
+  const exportTestimonials = trpc.admin.exportTestimonialsJson.useMutation({
+    onSuccess: async data => {
+      const json = JSON.stringify(data, null, 2);
+      setExportedJson(json);
+      try {
+        await navigator.clipboard?.writeText(json);
+        toast.success("JSON dos depoimentos copiado para a área de transferência.");
+      } catch {
+        toast.success("JSON dos depoimentos gerado para copiar manualmente.");
+      }
+    },
+    onError: error => toast.error(error.message),
+  });
+
+  const deleteAllTestimonials = trpc.admin.deleteAllTestimonials.useMutation({
+    onSuccess: async result => {
+      setExportedJson(JSON.stringify(result.backup, null, 2));
+      await utils.admin.testimonials.invalidate();
+      toast.success(`${result.deleted} depoimentos removidos. Backup JSON gerado abaixo.`);
+    },
+    onError: error => toast.error(error.message),
+  });
+
   function save(id: number, status: TestimonialStatus, fallbackNote: string | null) {
     update.mutate({ id, status, adminNote: notes[id] ?? fallbackNote ?? null });
+  }
+
+  function validateJsonInput() {
+    try {
+      const parsed = parseTestimonialsJsonInput(jsonInput);
+      setJsonPreview(parsed.depoimentos);
+      setJsonError(null);
+      toast.success(`${parsed.depoimentos.length} depoimentos detectados no JSON.`);
+      return parsed;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "JSON inválido.";
+      setJsonPreview(null);
+      setJsonError(message);
+      toast.error(message);
+      return null;
+    }
+  }
+
+  function importJsonInput() {
+    const parsed = validateJsonInput();
+    if (!parsed) return;
+    if (replaceAllBeforeImport && !window.confirm("Substituir todos os depoimentos atuais antes da importação? Um backup JSON deve ser exportado antes desta ação.")) return;
+    importTestimonials.mutate({ depoimentos: parsed.depoimentos, replaceAll: replaceAllBeforeImport });
+  }
+
+  function deleteAllWithConfirmation() {
+    const confirmation = window.prompt('Para deletar todos os depoimentos, digite exatamente: DELETAR DEPOIMENTOS');
+    if (confirmation !== "DELETAR DEPOIMENTOS") {
+      toast.error("Confirmação inválida. Nenhum depoimento foi removido.");
+      return;
+    }
+    deleteAllTestimonials.mutate({ confirmation });
   }
 
   function toggleExpanded(id: number) {
@@ -103,6 +228,65 @@ export default function AdminTestimonials() {
 
         {!isQueueScreen ? (
           <>
+            <section className="min-w-0 overflow-hidden rounded-2xl border border-amber-300/15 bg-zinc-950/60 p-4 sm:p-6">
+              <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+                <div className="min-w-0 space-y-4">
+                  <div className="min-w-0">
+                    <span className="text-xs uppercase tracking-[0.16em] text-amber-200">Importação por JSON</span>
+                    <h2 className="mt-1 break-words text-lg font-semibold text-white">Importar depoimentos gerados por IA</h2>
+                    <p className="mt-1 text-sm leading-6 text-zinc-400">Cole uma lista no formato padrão, valide a estrutura e importe sem alterar o layout público atual.</p>
+                  </div>
+                  <textarea
+                    value={jsonInput}
+                    onChange={event => { setJsonInput(event.target.value); setJsonError(null); }}
+                    className="min-h-72 w-full min-w-0 rounded-xl border border-white/15 bg-black/45 px-3 py-3 font-mono text-xs leading-5 text-zinc-100 outline-none ring-amber-300/40 focus:ring-2"
+                    spellCheck={false}
+                    aria-label="JSON de depoimentos"
+                  />
+                  {jsonError ? <p className="rounded-xl border border-red-300/30 bg-red-950/25 px-3 py-2 text-sm text-red-100">{jsonError}</p> : null}
+                  <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
+                    <button type="button" onClick={validateJsonInput} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-amber-200/30 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-200/10"><ClipboardCheck className="size-4" />Validar JSON</button>
+                    <button type="button" onClick={importJsonInput} disabled={importTestimonials.isPending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-200 disabled:opacity-60"><Upload className="size-4" />Importar depoimentos</button>
+                    <button type="button" onClick={() => exportTestimonials.mutate()} disabled={exportTestimonials.isPending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 disabled:opacity-60"><Download className="size-4" />Exportar depoimentos</button>
+                    <button type="button" onClick={deleteAllWithConfirmation} disabled={deleteAllTestimonials.isPending || counts.all === 0} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-red-400/35 px-4 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:opacity-50"><Trash2 className="size-4" />Deletar todos os depoimentos</button>
+                  </div>
+                  <label className="flex items-start gap-2 text-sm leading-6 text-zinc-300">
+                    <input type="checkbox" checked={replaceAllBeforeImport} onChange={event => setReplaceAllBeforeImport(event.target.checked)} className="mt-1 size-4 rounded border-white/20 bg-black text-amber-300" />
+                    Substituir todos os depoimentos antes de importar. Use somente após exportar backup JSON.
+                  </label>
+                  {exportedJson ? (
+                    <div className="min-w-0 rounded-xl border border-white/10 bg-black/30 p-3">
+                      <p className="mb-2 text-xs uppercase tracking-wider text-zinc-400">Backup/exportação JSON</p>
+                      <textarea value={exportedJson} readOnly className="min-h-36 w-full min-w-0 rounded-lg border border-white/10 bg-black px-3 py-2 font-mono text-xs leading-5 text-zinc-200" />
+                    </div>
+                  ) : null}
+                </div>
+                <aside className="min-w-0 space-y-4">
+                  <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+                    <h3 className="text-sm font-semibold text-white">Modelo para copiar e enviar para IA</h3>
+                    <pre className="mt-3 max-h-72 overflow-auto rounded-lg border border-white/10 bg-black p-3 text-xs leading-5 text-zinc-300"><code>{testimonialJsonTemplate}</code></pre>
+                  </div>
+                  <div className="rounded-xl border border-white/10 bg-black/25 p-4">
+                    <h3 className="text-sm font-semibold text-white">Pré-visualização</h3>
+                    {jsonPreview?.length ? (
+                      <div className="mt-3 space-y-2">
+                        <p className="text-xs text-emerald-200">{jsonPreview.length} depoimentos detectados</p>
+                        {jsonPreview.slice(0, 6).map((item, index) => (
+                          <div key={`${item.nome}-${index}`} className="rounded-lg border border-white/10 bg-zinc-950/80 p-3">
+                            <p className="break-words text-sm font-semibold text-white">{item.nome}</p>
+                            <p className="mt-1 line-clamp-2 break-words text-xs leading-5 text-zinc-400">{item.texto}</p>
+                          </div>
+                        ))}
+                        {jsonPreview.length > 6 ? <p className="text-xs text-zinc-500">Mais {jsonPreview.length - 6} itens serão importados.</p> : null}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm leading-6 text-zinc-400">Valide o JSON para ver quantos depoimentos serão importados antes de salvar.</p>
+                    )}
+                  </div>
+                </aside>
+              </div>
+            </section>
+
             <section className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
                 <span className="text-xs uppercase tracking-wider text-zinc-400">Todos</span>

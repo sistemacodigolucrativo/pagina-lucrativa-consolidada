@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 const source = readFileSync(resolve(process.cwd(), "client/src/pages/AdminToast.tsx"), "utf8");
 const sonnerSource = readFileSync(resolve(process.cwd(), "client/src/components/ui/sonner.tsx"), "utf8");
 const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+const publicToastSystemSource = readFileSync(resolve(process.cwd(), "shared/publicToastSystem.ts"), "utf8");
 
 describe("admin Toast responsive UX", () => {
   it("edits and duplicates directly inside the selected Toast card", () => {
@@ -60,4 +61,13 @@ describe("admin Toast responsive UX", () => {
     expect(cssSource).toContain(".codigo-operational-toast");
     expect(cssSource).toContain("cursor: pointer;");
   });
+
+
+  it("não recria os seeds antigos removidos da Central de Toasts", () => {
+    expect(publicToastSystemSource).not.toContain("Orientação");
+    expect(publicToastSystemSource).not.toContain("Fluxo oficial");
+    expect(publicToastSystemSource).not.toContain("Sem mensalidade");
+    expect(publicToastSystemSource).not.toContain("Decisão consciente");
+  });
+
 });

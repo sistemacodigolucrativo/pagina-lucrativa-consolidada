@@ -23,6 +23,20 @@ describe("relatos próprios de membros", () => {
     expect(app).toContain('path="/admin/relatos" component={AdminTestimonials}');
   });
 
+  it("expõe mutations administrativas para importar, exportar e excluir depoimentos em JSON", () => {
+    const router = read("server/routers.ts");
+    const db = read("server/db.ts");
+    expect(router).toContain("testimonialImportInput");
+    expect(router).toContain("exportTestimonialsJson: adminProcedure.mutation");
+    expect(router).toContain("importTestimonialsJson: adminProcedure.input(testimonialImportInput).mutation");
+    expect(router).toContain('deleteAllTestimonials: adminProcedure.input(z.object({ confirmation: z.literal("DELETAR DEPOIMENTOS") })');
+    expect(db).toContain("exportAdminTestimonialsJson");
+    expect(db).toContain("importAdminTestimonialsJson");
+    expect(db).toContain("deleteAllAdminTestimonials");
+    expect(db).toContain("testimonialImportHash");
+    expect(db).toContain("skippedDuplicates");
+  });
+
   it("usa relatos aprovados com avaliação como fonte real da prova social pública", () => {
     const db = read("server/db.ts");
     const router = read("server/routers.ts");

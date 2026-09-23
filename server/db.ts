@@ -2112,6 +2112,65 @@ export async function getMemberTestimonials(userId: number) {
   return db.select().from(memberTestimonials).where(eq(memberTestimonials.userId, userId)).orderBy(desc(memberTestimonials.updatedAt));
 }
 
+export type AdminTestimonialImportItem = {
+  nome: string;
+  texto: string;
+  avaliacao?: number | null;
+  cargo_ou_contexto?: string | null;
+  imagem?: string | null;
+  status?: "ativo" | "rascunho" | "arquivado" | "approved" | "pending" | "archived" | null;
+  ordem?: number | null;
+};
+
+type AdminTestimonialExportItem = {
+  nome: string;
+  texto: string;
+  avaliacao: number;
+  cargo_ou_contexto: string;
+  imagem: string;
+  status: "ativo" | "rascunho" | "arquivado";
+  ordem: number;
+};
+
+function normalizeImportedTestimonialStatus(status: AdminTestimonialImportItem["status"]): "approved" | "pending" | "archived" {
+  if (status === "rascunho" || status === "pending") return "pending";
+  if (status === "arquivado" || status === "archived") return "archived";
+  return "approved";
+}
+
+function exportStatus(status: string): "ativo" | "rascunho" | "arquivado" {
+  if (status === "pending" || status === "rejected") return "rascunho";
+  if (status === "archived") return "arquivado";
+  return "ativo";
+}
+
+function testimonialImportHash(name: string, content: string) {
+  return createHash("sha256").update(`${name.trim().toLowerCase()}|${content.trim().toLowerCase()}`).digest("hex").slice(0, 16);
+}
+
+async function ensureImportedTestimonialUser(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, item: AdminTestimonialImportItem) {
+  const name = item.nome.trim();
+  const content = item.texto.trim();
+  const hash = testimonialImportHash(name, content);
+  const openId = `imported-testimonial:${hash}`;
+  const email = `depoimento-${hash}@pagina-lucrativa.local`;
+  const existing = await db.select({ id: users.id }).from(users).where(eq(users.openId, openId)).limit(1);
+  if (existing[0]) {
+    await db.insert(memberProfiles).values({
+      userId: existing[0].id,
+      slug: `depoimento-${hash}`,
+      city: item.cargo_ou_contexto?.trim() || null,
+      state: null,
+      photoUrl: item.imagem?.trim() || null,
+    }).onDuplicateKeyUpdate({ set: { city: item.cargo_ou_contexto?.trim() || null, photoUrl: item.imagem?.trim() || null } });
+    return existing[0].id;
+  }
+  const result = await db.insert(users).values({ openId, name, email, loginMethod: "imported_testimonial", role: "user" });
+  const userId = Number(result[0].insertId);
+  await db.insert(memberProfiles).values({ userId, slug: `depoimento-${hash}`, city: item.cargo_ou_contexto?.trim() || null, state: null, photoUrl: item.imagem?.trim() || null });
+  return userId;
+}
+
 export async function createMemberTestimonial(userId: number, input: { content: string; rating: number }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
@@ -2134,7 +2193,12 @@ export async function getAdminTestimonials() {
     updatedAt: memberTestimonials.updatedAt,
     memberName: users.name,
     memberEmail: users.email,
-  }).from(memberTestimonials).leftJoin(users, eq(memberTestimonials.userId, users.id)).orderBy(desc(memberTestimonials.updatedAt));
+    photoUrl: memberProfiles.photoUrl,
+    context: memberProfiles.city,
+  }).from(memberTestimonials)
+    .leftJoin(users, eq(memberTestimonials.userId, users.id))
+    .leftJoin(memberProfiles, eq(memberTestimonials.userId, memberProfiles.userId))
+    .orderBy(desc(memberTestimonials.updatedAt));
 }
 
 export async function updateAdminTestimonial(testimonialId: number, input: { status: "pending" | "approved" | "rejected" | "archived"; adminNote?: string | null }) {
@@ -2145,6 +2209,64 @@ export async function updateAdminTestimonial(testimonialId: number, input: { sta
   await db.update(memberTestimonials).set({ status: input.status, adminNote: input.adminNote ?? null }).where(eq(memberTestimonials.id, testimonialId));
   return { success: true } as const;
 }
+
+export async function exportAdminTestimonialsJson(adminUserId: number) {
+  const rows = await getAdminTestimonials();
+  const depoimentos: AdminTestimonialExportItem[] = rows.map((item, index) => ({
+    nome: item.memberName || "Membro do Código Lucrativo",
+    texto: item.content,
+    avaliacao: Math.min(5, Math.max(1, Number(item.rating ?? 5))),
+    cargo_ou_contexto: item.context ?? "",
+    imagem: item.photoUrl ?? "",
+    status: exportStatus(item.status),
+    ordem: index + 1,
+  }));
+  console.info("[AdminTestimonials] export", { adminUserId, count: depoimentos.length });
+  return { depoimentos };
+}
+
+export async function importAdminTestimonialsJson(adminUserId: number, items: AdminTestimonialImportItem[], replaceAll: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  if (!items.length) throw new Error("Nenhum depoimento válido foi informado.");
+  const normalized = items.map((item, index) => ({ ...item, nome: item.nome.trim(), texto: item.texto.trim(), ordem: item.ordem ?? index + 1 })).filter(item => item.nome && item.texto);
+  if (!normalized.length) throw new Error("Nenhum depoimento válido foi informado.");
+  normalized.sort((a, b) => Number(a.ordem ?? 0) - Number(b.ordem ?? 0));
+  if (replaceAll) await db.delete(memberTestimonials);
+  let imported = 0;
+  let skipped = 0;
+  for (const item of normalized) {
+    const duplicateRows = await db.select({ id: memberTestimonials.id }).from(memberTestimonials)
+      .leftJoin(users, eq(memberTestimonials.userId, users.id))
+      .where(and(eq(users.name, item.nome), eq(memberTestimonials.content, item.texto)))
+      .limit(1);
+    if (duplicateRows[0]) { skipped += 1; continue; }
+    const userId = await ensureImportedTestimonialUser(db, item);
+    await db.insert(memberTestimonials).values({
+      userId,
+      content: item.texto,
+      rating: Math.min(5, Math.max(1, Number(item.avaliacao ?? 5) || 5)),
+      authorConfirmed: 1,
+      status: normalizeImportedTestimonialStatus(item.status),
+      adminNote: `Importado por JSON no painel administrativo. Admin ID: ${adminUserId}.`,
+    });
+    imported += 1;
+  }
+  console.info("[AdminTestimonials] import", { adminUserId, received: items.length, imported, skipped, replaceAll });
+  return { created: imported, skippedDuplicates: skipped, total: items.length };
+}
+
+export async function deleteAllAdminTestimonials(adminUserId: number, confirmation: string) {
+  if (confirmation !== "DELETAR DEPOIMENTOS") throw new Error("Confirmação inválida para excluir depoimentos.");
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const backup = await exportAdminTestimonialsJson(adminUserId);
+  const deleted = backup.depoimentos.length;
+  await db.delete(memberTestimonials);
+  console.info("[AdminTestimonials] delete_all", { adminUserId, deleted });
+  return { deleted, backup };
+}
+
 
 function hashAccessToken(token: string) {
   const salt = randomUUID();

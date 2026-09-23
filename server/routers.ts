@@ -73,6 +73,9 @@ import {
   getMemberTestimonials,
   createMemberTestimonial,
   getAdminTestimonials,
+  exportAdminTestimonialsJson,
+  importAdminTestimonialsJson,
+  deleteAllAdminTestimonials,
   updateAdminTestimonial,
   getPublicSalesSocialProof,
   removeAdminPublicSalesSectionImage,
@@ -291,6 +294,17 @@ const ebookInput = z.object({
 export const captureContactInput = z.object({ campaignId: z.number().int().positive().optional().nullable(), name: z.string().trim().min(2).max(180), email: normalizedEmailZodSchema, whatsapp: optionalPhoneZodSchema, source: z.string().trim().min(2).max(160), consent: z.literal(true), consentNote: z.string().trim().max(2000).optional().nullable() });
 export const invitationInput = z.object({ contactId: z.number().int().positive().optional().nullable(), channel: z.enum(["link", "email", "whatsapp"]), message: z.string().trim().max(4000).optional().nullable() });
 export const testimonialInput = z.object({ content: z.string().trim().min(30).max(8000), rating: z.number().int().min(1).max(5), authorConfirmed: z.literal(true) });
+const testimonialImportItemInput = z.object({
+  nome: z.string().trim().min(1).max(180),
+  texto: z.string().trim().min(1).max(8000),
+  avaliacao: z.number().int().min(1).max(5).optional().nullable().default(5),
+  cargo_ou_contexto: z.string().trim().max(180).optional().nullable(),
+  imagem: z.string().trim().max(1024).optional().nullable(),
+  status: z.enum(["ativo", "rascunho", "arquivado", "approved", "pending", "archived"]).optional().nullable().default("ativo"),
+  ordem: z.number().int().positive().optional().nullable(),
+});
+const testimonialImportInput = z.object({ depoimentos: z.array(testimonialImportItemInput).min(1).max(200), replaceAll: z.boolean().default(false) });
+
 export const appRouter = router({
   system: systemRouter,
   auth: router({
@@ -429,6 +443,9 @@ export const appRouter = router({
     invitations: adminProcedure.query(() => getAdminInvitations()),
     updateInvitation: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["prepared", "cancelled"]) })).mutation(({ input }) => updateAdminInvitation(input.id, input.status)),
     testimonials: adminProcedure.query(() => getAdminTestimonials()),
+    exportTestimonialsJson: adminProcedure.mutation(({ ctx }) => exportAdminTestimonialsJson(ctx.user.id)),
+    importTestimonialsJson: adminProcedure.input(testimonialImportInput).mutation(({ ctx, input }) => importAdminTestimonialsJson(ctx.user.id, input.depoimentos, input.replaceAll)),
+    deleteAllTestimonials: adminProcedure.input(z.object({ confirmation: z.literal("DELETAR DEPOIMENTOS") })).mutation(({ ctx, input }) => deleteAllAdminTestimonials(ctx.user.id, input.confirmation)),
     updateTestimonial: adminProcedure.input(z.object({ id: z.number().int().positive(), status: z.enum(["pending", "approved", "rejected", "archived"]), adminNote: z.string().trim().max(4000).optional().nullable() })).mutation(({ input }) => updateAdminTestimonial(input.id, input)),
     publicSalesSectionImages: adminProcedure.query(() => getAdminPublicSalesSectionImages()),
     upsertPublicSalesSectionImage: adminProcedure.input(publicSalesSectionImageInput).mutation(({ ctx, input }) => upsertAdminPublicSalesSectionImage(ctx.user.id, input.sectionId, input)),

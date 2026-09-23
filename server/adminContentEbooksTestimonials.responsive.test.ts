@@ -82,6 +82,24 @@ describe("anotações administrativas — publicações, e-books e agradecimento
     expect(source).toContain('"Voltar para e-books"');
   });
 
+  it("oferece importação, exportação e exclusão forte de depoimentos por JSON", () => {
+    const source = read("client/src/pages/AdminTestimonials.tsx");
+    expect(source).toContain("testimonialJsonTemplate");
+    expect(source).toContain("parseTestimonialsJsonInput");
+    expect(source).toContain("JSON.parse(value)");
+    expect(source).toContain("Validar JSON");
+    expect(source).toContain("Importar depoimentos");
+    expect(source).toContain("Exportar depoimentos");
+    expect(source).toContain("Deletar todos os depoimentos");
+    expect(source).toContain("DELETAR DEPOIMENTOS");
+    expect(source).toContain("Pré-visualização");
+    expect(source).toContain("Modelo para copiar e enviar para IA");
+    expect(source).toContain("trpc.admin.importTestimonialsJson.useMutation");
+    expect(source).toContain("trpc.admin.exportTestimonialsJson.useMutation");
+    expect(source).toContain("trpc.admin.deleteAllTestimonials.useMutation");
+    expect(source).toContain("replaceAllBeforeImport");
+  });
+
   it("faz os cards de agradecimentos abrirem listas independentes pelo status real", () => {
     const source = read("client/src/pages/AdminTestimonials.tsx");
     expect(source).toContain("const statusPaths");
