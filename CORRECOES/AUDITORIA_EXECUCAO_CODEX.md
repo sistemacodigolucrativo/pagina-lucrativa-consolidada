@@ -19,7 +19,7 @@
 |ID da auditoria|Status|Prioridade|Resumo|Commit|Testes|Observações|
 |---|---|---|---|---|---|---|
 |CL-P0-001|Corrigido|P0|Chave privada PEM removida do versionamento e padrões de chave adicionados ao .gitignore.|bd149f104e8aaaa5bf3f7f03088f0ecdbba15776|file/git ls-files/grep/git diff --check|Push realizado; rotação/revogação da chave permanece obrigatória fora do Git.|
-|CL-P0-002|Corrigido|P0|/ebook-files agora exige sessão válida e usa cache privado para PDFs.|Pendente|pnpm check; pnpm test server/ebooks.integration.test.ts; pnpm build; git diff --check|Acesso autorizado segue via leitor com withCredentials.|
+|CL-P0-002|Corrigido|P0|/ebook-files agora exige sessão válida e usa cache privado para PDFs.|0a8f5b58373ff83326bcf1763305cbd6945d8185|pnpm check; pnpm test server/ebooks.integration.test.ts; pnpm build; git diff --check|Push realizado; acesso autorizado segue via leitor com withCredentials.|
 |CL-P0-003|Não iniciado|P0|Auth demo/admin hardcoded e fallback de JWT.|Pendente|Pendente|Próximo item P0.|
 |CL-P0-004|Não iniciado|P0|Hash SHA-256 puro para senhas.|Pendente|Pendente|Pendente.|
 
@@ -55,8 +55,8 @@
 - Testes executados: pnpm check; pnpm test server/ebooks.integration.test.ts; pnpm build; git diff --check
 - Resultado dos testes: pnpm check OK; teste de e-books OK com 7 testes; build OK; git diff --check OK.
 - Evidência depois da correção: teste estático garante parseCookieHeader, DEMO_SESSION_COOKIE_NAME/resolveDemoSession, 401 para visitante e ausência de cache público.
-- Commit: Pendente
-- Push realizado? Não
+- Commit: 0a8f5b58373ff83326bcf1763305cbd6945d8185
+- Push realizado? Sim
 - Pendências: a proteção ainda depende do fluxo de sessão atual; CL-P0-003 tratará endurecimento do auth demo/fallback de JWT.
 - Observações: o leitor já usa getDocument com withCredentials, preservando acesso do membro autenticado.
 
