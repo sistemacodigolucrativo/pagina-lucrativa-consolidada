@@ -42,10 +42,27 @@ type PublicToastPreviewDetail = {
 };
 
 function randomItem<T>(items: readonly T[]): T { return items[Math.floor(Math.random() * items.length)]!; }
-function renderTemplate(message: string) {
-  const firstName = randomItem(publicToastNames);
+function shuffleIndexes(length: number) {
+  const indexes = Array.from({ length }, (_, index) => index);
+  for (let index = indexes.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1));
+    [indexes[index], indexes[swapIndex]] = [indexes[swapIndex], indexes[index]];
+  }
+  return indexes;
+}
+function pickSessionName(displayedNames: Set<string>) {
+  const availableNames = publicToastNames.filter(name => !displayedNames.has(name));
+  if (availableNames.length === 0) {
+    displayedNames.clear();
+    return randomItem(publicToastNames);
+  }
+  return randomItem(availableNames);
+}
+function renderTemplate(message: string, displayedNames?: Set<string>) {
+  const firstName = displayedNames ? pickSessionName(displayedNames) : randomItem(publicToastNames);
   const surname = randomItem(publicToastSurnames);
   const city = randomItem(publicToastCities);
+  if (displayedNames) displayedNames.add(firstName);
   const displayName = `${firstName} ${surname.charAt(0)}.`;
   return { message: message.replaceAll("{{nome}}", displayName).replaceAll("{{cidade}}", city), displayName };
 }
@@ -100,7 +117,8 @@ export default function PublicSocialProofToast() {
   const [notice, setNotice] = useState<ActiveNotice | null>(null);
   const [templates, setTemplates] = useState<PublicToastTemplate[]>([...publicToastDefaultTemplates]);
   const [settings, setSettings] = useState<PublicToastSettings>(publicToastDefaultSettings);
-  const historyRef = useRef<number[]>([]);
+  const templateOrderRef = useRef<number[]>([]);
+  const displayedNamesRef = useRef<Set<string>>(new Set());
   const previewDismissRef = useRef<number | undefined>(undefined);
   const floatingAnchorReadyRef = useRef(false);
 
@@ -194,9 +212,10 @@ export default function PublicSocialProofToast() {
     }
 
     const chooseIndex = () => {
-      const recent = new Set(historyRef.current.slice(-Math.min(3, templates.length - 1)));
-      const available = templates.map((_, index) => index).filter(index => !recent.has(index));
-      return randomItem(available.length ? available : templates.map((_, index) => index));
+      if (templateOrderRef.current.length === 0) {
+        templateOrderRef.current = shuffleIndexes(templates.length);
+      }
+      return templateOrderRef.current.shift() ?? Math.floor(Math.random() * templates.length);
     };
     const scheduleNext = (delay: number) => {
       nextTimer = window.setTimeout(() => {
@@ -208,8 +227,7 @@ export default function PublicSocialProofToast() {
         const index = chooseIndex();
         const template = templates[index];
         if (!template) return;
-        historyRef.current = [...historyRef.current, index].slice(-3);
-        const rendered = renderTemplate(template.message);
+        const rendered = renderTemplate(template.message, displayedNamesRef.current);
         setNotice({ ...rendered, disclaimer: template.disclaimer, key: Date.now() });
         dismissTimer = window.setTimeout(() => {
           if (cancelled) return;
@@ -218,8 +236,11 @@ export default function PublicSocialProofToast() {
         }, settings.visibleSeconds * 1000);
       }, delay);
     };
-    historyRef.current = [];
-    scheduleNext(Math.min(settings.initialDelaySeconds * 1000, 4_000));
+    templateOrderRef.current = shuffleIndexes(templates.length);
+    displayedNamesRef.current = new Set();
+    const firstDelayMax = Math.min(settings.initialDelaySeconds * 1000, 4_000);
+    const firstDelayMin = Math.min(1_500, firstDelayMax);
+    scheduleNext(randomBetween(firstDelayMin, firstDelayMax));
     return () => { cancelled = true; clearTimers(); };
   }, [location, settings, templates]);
 

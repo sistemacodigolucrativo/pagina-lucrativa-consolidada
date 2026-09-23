@@ -27,8 +27,8 @@ export const PUBLIC_TOAST_SETTINGS_TYPE = "social-proof-settings";
 export const publicToastDefaultSettings: PublicToastSettings = {
   enabled: true,
   showSimulationNotice: true,
-  headerMessage: "Atividade ilustrativa",
-  footerMessage: "Demonstração ilustrativa — não representa uma atividade real.",
+  headerMessage: "Acontecendo agora 🕒",
+  footerMessage: "Esta atividade representa um evento registrado nos últimos minutos.",
   headerColor: "#FACC15",
   nameColor: "#38BDF8",
   messageColor: "#FFFFFF",
@@ -40,12 +40,12 @@ export const publicToastDefaultSettings: PublicToastSettings = {
 };
 
 export const publicToastDefaultTemplates: readonly PublicToastTemplate[] = [
-  { id: "default-registration", title: "Cadastro", message: "{{nome}} acabou de se cadastrar", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-purchase", title: "Aquisição", message: "{{nome}} acabou de adquirir o programa", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-group-entry", title: "Entrada no grupo", message: "{{nome}} entrou para o grupo", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-view", title: "Visualização", message: "{{nome}} está visualizando agora", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-start", title: "Início", message: "{{nome}} acabou de iniciar o programa", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
-  { id: "default-slot", title: "Vaga garantida", message: "{{nome}} acabou de garantir sua vaga", disclaimer: "Demonstração ilustrativa — não representa uma atividade real." },
+  { id: "default-registration", title: "Cadastro", message: "{{nome}} acabou de se cadastrar", disclaimer: "Esta atividade representa um evento registrado nos últimos minutos." },
+  { id: "default-purchase", title: "Aquisição", message: "{{nome}} acabou de adquirir o programa", disclaimer: "Esta atividade representa um evento registrado nos últimos minutos." },
+  { id: "default-group-entry", title: "Entrada no grupo", message: "{{nome}} entrou para o grupo", disclaimer: "Esta atividade representa um evento registrado nos últimos minutos." },
+  { id: "default-view", title: "Visualização", message: "{{nome}} está visualizando agora", disclaimer: "Esta atividade representa um evento registrado nos últimos minutos." },
+  { id: "default-start", title: "Início", message: "{{nome}} acabou de iniciar o programa", disclaimer: "Esta atividade representa um evento registrado nos últimos minutos." },
+  { id: "default-slot", title: "Vaga garantida", message: "{{nome}} acabou de garantir sua vaga", disclaimer: "Esta atividade representa um evento registrado nos últimos minutos." },
 ];
 
 export const publicToastNames = [

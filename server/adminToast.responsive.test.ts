@@ -70,4 +70,11 @@ describe("admin Toast responsive UX", () => {
     expect(publicToastSystemSource).not.toContain("Decisão consciente");
   });
 
+  it("usa os textos comerciais atuais como padrão do Toast público", () => {
+    expect(publicToastSystemSource).toContain("Acontecendo agora 🕒");
+    expect(publicToastSystemSource).toContain("Esta atividade representa um evento registrado nos últimos minutos.");
+    expect(publicToastSystemSource).not.toContain("Atividade ilustrativa");
+    expect(publicToastSystemSource).not.toContain("Demonstração ilustrativa — não representa uma atividade real.");
+  });
+
 });

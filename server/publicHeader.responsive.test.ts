@@ -139,6 +139,11 @@ describe("public responsive header and hero layout", () => {
     expect(socialProofSource).toContain('getFloatingAnchor');
     expect(socialProofSource).toContain('floatingAnchorReadyRef');
     expect(socialProofSource).toContain('scheduleNext(1000)');
+    expect(socialProofSource).toContain('shuffleIndexes(templates.length)');
+    expect(socialProofSource).toContain('displayedNamesRef');
+    expect(socialProofSource).toContain('pickSessionName');
+    expect(socialProofSource).toContain('displayedNames.clear()');
+    expect(socialProofSource).toContain('randomBetween(firstDelayMin, firstDelayMax)');
     expect(socialProofSource).toContain('--public-toast-page-top');
     expect(socialProofSource).toContain('--public-toast-page-left');
     expect(socialProofSource).toContain('--public-toast-page-width');
