@@ -15,7 +15,9 @@ describe("AdminOffice — visão administrativa sem fila global de pedidos", () 
     expect(source).toContain("hasAttentionQueue ? (");
     expect(source).toContain("const hasAttentionQueue = openTickets > 0 || pendingTestimonials > 0");
     expect(source).toContain("const hasOperationalLog = !activities.isLoading && Boolean(activities.data?.length)");
-    expect(source).toContain("disabled aria-disabled");
+    expect(source).toContain("Biblioteca de Recursos");
+    expect(source).toContain('onClick={() => openCard("/admin/biblioteca-recursos")}');
+    expect(source).not.toContain("disabled aria-disabled");
     expect(source).not.toContain("trpc.admin.academy.list.useQuery");
     expect(source).not.toContain("const COURSES_PER_PAGE = 10");
     expect(source).not.toContain("Trilhas ativas na Academia");

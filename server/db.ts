@@ -93,10 +93,13 @@ export function verifyPaymentAccessToken(token: string, trackingCode: string) {
 
 export async function getDb() {
   if (_db) return _db;
+  if (!ENV.databaseUrl && ENV.isProduction) {
+    throw new Error("DATABASE_URL é obrigatório em produção para conectar ao banco.");
+  }
   try {
     if (ENV.databaseUrl) {
       _db = drizzle(ENV.databaseUrl);
-    } else if (existsSync(VPS_SOCKET_PATH)) {
+    } else if (!ENV.isProduction && existsSync(VPS_SOCKET_PATH)) {
       _db = drizzle({
         connection: {
           socketPath: VPS_SOCKET_PATH,
@@ -109,6 +112,7 @@ export async function getDb() {
   } catch (error) {
     console.warn("[Database] Failed to connect:", error);
     _db = null;
+    if (ENV.isProduction) throw error;
   }
   return _db;
 }
