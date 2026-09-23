@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 const menu: DashboardMenuItem[] = [
   { icon: CircleHelp, label: "Fale conosco", path: "/membros/fale-conosco", group: "Ajuda" },
-  { icon: MessageCircleMore, label: "Enviar depoimento", path: "/membros/fazer-depoimento", group: "Ajuda" },
+  { icon: MessageCircleMore, label: "Enviar agradecimento", path: "/membros/fazer-depoimento", group: "Ajuda" },
 ];
 
 export default function MemberSupport() {

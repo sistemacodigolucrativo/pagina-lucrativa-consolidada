@@ -90,7 +90,7 @@ export default function AdminOffice() {
                   <span className="office-eyebrow">Precisa de atenção</span>
                   <h2>Filas administrativas abertas.</h2>
                   <p>
-                    {openTickets} {attentionLabel(openTickets, "ticket aberto", "tickets abertos")} e {pendingTestimonials} {attentionLabel(pendingTestimonials, "depoimento em análise", "depoimentos em análise")}.
+                    {openTickets} {attentionLabel(openTickets, "ticket aberto", "tickets abertos")} e {pendingTestimonials} {attentionLabel(pendingTestimonials, "agradecimento em análise", "agradecimentos em análise")}.
                   </p>
                   <div className="obsidian-status-row">
                     {openTickets ? <ObsidianBadge variant="warning">Suporte pendente</ObsidianBadge> : null}
@@ -145,10 +145,10 @@ export default function AdminOffice() {
               />
               <MetricCard
                 icon={ClipboardList}
-                label="Depoimentos pendentes"
+                label="Agradecimentos pendentes"
                 value={pendingTestimonials}
                 detail="Aguardando revisão administrativa"
-                ariaLabel="Abrir Depoimentos"
+                ariaLabel="Abrir Agradecimentos"
                 onActivate={() => openCard("/admin/relatos")}
               />
               <MetricCard

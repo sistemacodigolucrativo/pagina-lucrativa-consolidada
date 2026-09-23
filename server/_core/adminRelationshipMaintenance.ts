@@ -21,11 +21,11 @@ export function registerAdminRelationshipMaintenance(app: Express, appPrefix: st
     app.delete(`${path}/testimonials/:id`, async (req, res) => {
       if (!await requireAdmin(req, res)) return;
       const id = Number(req.params.id);
-      if (!Number.isInteger(id) || id <= 0) return void res.status(400).json({ error: "Depoimento inválido." });
+      if (!Number.isInteger(id) || id <= 0) return void res.status(400).json({ error: "Agradecimento inválido." });
       const db = await getDb();
       if (!db) return void res.status(503).json({ error: "Banco de dados indisponível." });
       const existing = await db.select({ id: memberTestimonials.id }).from(memberTestimonials).where(eq(memberTestimonials.id, id)).limit(1);
-      if (!existing[0]) return void res.status(404).json({ error: "Depoimento não encontrado." });
+      if (!existing[0]) return void res.status(404).json({ error: "Agradecimento não encontrado." });
       await db.delete(memberTestimonials).where(eq(memberTestimonials.id, id));
       res.json({ success: true });
     });

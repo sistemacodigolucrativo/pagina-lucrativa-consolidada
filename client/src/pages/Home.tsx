@@ -178,6 +178,7 @@ export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [openObjectionIndex, setOpenObjectionIndex] = useState<number | null>(null);
+  const [activeTestimonialIndex, setActiveTestimonialIndex] = useState(0);
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
   const navMenuRef = useRef<HTMLElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -258,9 +259,15 @@ export default function Home() {
   }
 
   const closeMenu = () => setMenuOpen(false);
+  const testimonialItems = socialProof.data?.testimonials ?? [];
   const reviewCount = socialProof.data?.reviewCount ?? 0;
   const averageRating = socialProof.data?.averageRating ?? null;
   const formattedAverageRating = averageRating !== null ? averageRating.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : null;
+  const previousTestimonial = () => setActiveTestimonialIndex(current => testimonialItems.length ? current === 0 ? testimonialItems.length - 1 : current - 1 : 0);
+  const nextTestimonial = () => setActiveTestimonialIndex(current => testimonialItems.length ? current === testimonialItems.length - 1 ? 0 : current + 1 : 0);
+  useEffect(() => {
+    if (activeTestimonialIndex >= testimonialItems.length) setActiveTestimonialIndex(0);
+  }, [activeTestimonialIndex, testimonialItems.length]);
 
   return <div className="sales-page reference-page">
     <header className="site-header">
@@ -365,19 +372,36 @@ export default function Home() {
       <section className="sales-section sales-social-proof" id="depoimentos">
         <div className="shell">
           <div className="sales-section-heading">
-            <div>{overrides.social_proof?.eyebrow ? <Eyebrow>{overrides.social_proof.eyebrow}</Eyebrow> : <Eyebrow>Quem já faz parte</Eyebrow>}{overrides.social_proof?.title ? <h2>{overrides.social_proof.title}</h2> : <h2>Veja experiências de quem já utiliza o método.</h2>}</div>
-            <p>{publicCopy(overrides, "social_proof", "description", "Conheça experiências de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
+            <div>{overrides.social_proof?.eyebrow ? <Eyebrow>{overrides.social_proof.eyebrow}</Eyebrow> : <Eyebrow>Quem já faz parte</Eyebrow>}{overrides.social_proof?.title ? <h2>{overrides.social_proof.title}</h2> : <h2>Veja agradecimentos de quem já utiliza o método.</h2>}</div>
+            <p>{publicCopy(overrides, "social_proof", "description", "Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
           </div>
           <div className="social-proof-stats">
             <article><span>Total de membros</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.memberCount ?? 0}</strong></article>
-            <article className="social-proof-rating-card"><span>Avaliação média</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : averageRating !== null && formattedAverageRating ? <div className="social-proof-rating-summary" aria-label={`Avaliação média ${formattedAverageRating} de 5 em ${reviewCount} avaliações`}><RatingStars rating={averageRating} /><strong>{formattedAverageRating} / 5</strong><small>{reviewCount} {reviewCount === 1 ? "avaliação" : "avaliações"}</small></div> : <div className="social-proof-rating-empty"><strong>Aguardando avaliações</strong><small>Assim que houver avaliações disponíveis, a média aparecerá aqui.</small></div>}</article>
           </div>
-          {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : socialProof.data?.testimonials.length ? <div className="testimonial-grid">{socialProof.data.testimonials.map(item => <article key={item.id} className="testimonial-card">
-            {item.photoUrl ? <img src={withAppBase(item.photoUrl)} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}
-            <div className="testimonial-rating" aria-label={`Avaliação ${item.rating} de 5`}>{Array.from({ length: 5 }).map((_, index) => <Star key={index} size={14} fill={index < item.rating ? "currentColor" : "none"} />)}</div>
-            <p>{item.content}</p>
-            <footer><strong>{item.memberName}</strong><span>{item.location}</span></footer>
-          </article>)}</div> : null}
+          {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : testimonialItems.length ? <div className="testimonial-carousel" aria-label="Agradecimentos de membros">
+            <div className="testimonial-carousel-track">
+              {testimonialItems.map((item, index) => <article key={item.id} className={`testimonial-card testimonial-carousel-card ${index === activeTestimonialIndex ? "is-active" : ""}`} aria-hidden={index !== activeTestimonialIndex}>
+                <div className="testimonial-card-top">
+                  {item.photoUrl ? <img src={withAppBase(item.photoUrl)} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}
+                  <div className="testimonial-card-meta"><strong>{item.memberName}</strong><span>{item.location}</span></div>
+                </div>
+                <div className="testimonial-rating" aria-label={`Avaliação ${item.rating} de 5`}>{Array.from({ length: 5 }).map((_, starIndex) => <Star key={starIndex} size={16} fill={starIndex < item.rating ? "currentColor" : "none"} />)}</div>
+                <p>{item.content}</p>
+              </article>)}
+            </div>
+            <div className="testimonial-carousel-rating-bar" aria-label="Avaliação média e navegação dos agradecimentos">
+              <button type="button" onClick={previousTestimonial} aria-label="Ver agradecimento anterior"><ChevronLeft size={20} /></button>
+              <div className="testimonial-carousel-rating-main">
+                <span>Avaliação média</span>
+                {averageRating !== null ? <RatingStars rating={averageRating} /> : null}
+                <small>{activeTestimonialIndex + 1} / {testimonialItems.length}</small>
+              </div>
+              <div className="testimonial-carousel-rating-score">
+                {socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : averageRating !== null && formattedAverageRating ? <><strong>{formattedAverageRating} / 5</strong><small>{reviewCount} {reviewCount === 1 ? "avaliação" : "avaliações"}</small></> : <><strong>Aguardando</strong><small>Sem avaliações</small></>}
+              </div>
+              <button type="button" onClick={nextTestimonial} aria-label="Ver próximo agradecimento"><ChevronRight size={20} /></button>
+            </div>
+          </div> : null}
         </div>
       </section>
 

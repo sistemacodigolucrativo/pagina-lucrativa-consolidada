@@ -90,11 +90,18 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).not.toContain('.sprint-paper-card {');
   });
 
-  it("uses natural social proof heading and copy", () => {
+  it("uses natural social proof heading, copy and premium carousel", () => {
     expect(homeSource).toContain("<Eyebrow>Quem já faz parte</Eyebrow>");
     expect(homeSource).not.toContain("<Eyebrow>Prova social</Eyebrow>");
-    expect(homeSource).toContain("<h2>Veja experiências de quem já utiliza o método.</h2>");
-    expect(homeSource).toContain("Conheça experiências de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.");
+    expect(homeSource).toContain("<h2>Veja agradecimentos de quem já utiliza o método.</h2>");
+    expect(homeSource).toContain("Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.");
+    expect(homeSource).toContain("activeTestimonialIndex");
+    expect(homeSource).toContain("testimonial-carousel");
+    expect(homeSource).toContain("testimonial-carousel-rating-bar");
+    expect(homeSource).toContain("Ver agradecimento anterior");
+    expect(homeSource).toContain("Ver próximo agradecimento");
+    expect(cssSource).toContain(".testimonial-carousel { position: relative;");
+    expect(cssSource).toContain(".testimonial-carousel-rating-bar button");
     expect(homeSource).not.toContain("Membros reais, dados reais da plataforma.");
     expect(homeSource).not.toContain("Os indicadores abaixo são carregados dos registros existentes.");
     expect(homeSource).not.toContain("Depoimentos aparecem somente depois de enviados pelo membro e aprovados pela administração.");
@@ -103,14 +110,15 @@ describe("public responsive header and hero layout", () => {
   it("shows average rating with fractional stars and review count", () => {
     expect(homeSource).toContain("function RatingStars");
     expect(homeSource).toContain("fillPercent");
-    expect(homeSource).toContain("social-proof-rating-card");
+    expect(homeSource).toContain("testimonial-carousel-rating-bar");
     expect(homeSource).toContain("Avaliação média");
     expect(homeSource).toContain("formattedAverageRating");
     expect(homeSource).toContain("reviewCount === 1 ? \"avaliação\" : \"avaliações\"");
-    expect(homeSource).toContain("Aguardando avaliações");
+    expect(homeSource).toContain("Aguardando");
+    expect(homeSource).toContain("Sem avaliações");
     expect(homeSource).not.toContain("<span>Total de avaliações</span><strong>");
     expect(cssSource).toContain(".rating-star-fill");
-    expect(cssSource).toContain(".social-proof-rating-summary");
+    expect(cssSource).toContain(".testimonial-carousel-rating-score");
   });
 
   it("mounts the social proof toast as a floating public element and avoids fragile portals", () => {

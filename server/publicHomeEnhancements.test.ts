@@ -10,6 +10,8 @@ const activationCard = read("client/src/components/VioletaNeonActivationCard.tsx
 describe("melhorias da página pública", () => {
   it("mantém as novas seções comerciais na Home sem criar preview interno do produto", () => {
     expect(home).toContain("salesSocialProof.useQuery");
+    expect(home).toContain("testimonial-carousel");
+    expect(home).toContain("Ver próximo agradecimento");
     expect(home).toContain("Total de membros");
     expect(home).toContain("Avaliação média");
     expect(home).toContain("Tudo o que você recebe");

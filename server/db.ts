@@ -2228,9 +2228,9 @@ export async function exportAdminTestimonialsJson(adminUserId: number) {
 export async function importAdminTestimonialsJson(adminUserId: number, items: AdminTestimonialImportItem[], replaceAll: boolean) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  if (!items.length) throw new Error("Nenhum depoimento válido foi informado.");
+  if (!items.length) throw new Error("Nenhum agradecimento válido foi informado.");
   const normalized = items.map((item, index) => ({ ...item, nome: item.nome.trim(), texto: item.texto.trim(), ordem: item.ordem ?? index + 1 })).filter(item => item.nome && item.texto);
-  if (!normalized.length) throw new Error("Nenhum depoimento válido foi informado.");
+  if (!normalized.length) throw new Error("Nenhum agradecimento válido foi informado.");
   normalized.sort((a, b) => Number(a.ordem ?? 0) - Number(b.ordem ?? 0));
   if (replaceAll) await db.delete(memberTestimonials);
   let imported = 0;
@@ -2257,7 +2257,7 @@ export async function importAdminTestimonialsJson(adminUserId: number, items: Ad
 }
 
 export async function deleteAllAdminTestimonials(adminUserId: number, confirmation: string) {
-  if (confirmation !== "DELETAR DEPOIMENTOS") throw new Error("Confirmação inválida para excluir depoimentos.");
+  if (confirmation !== "DELETAR AGRADECIMENTOS") throw new Error("Confirmação inválida para excluir agradecimentos.");
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const backup = await exportAdminTestimonialsJson(adminUserId);
