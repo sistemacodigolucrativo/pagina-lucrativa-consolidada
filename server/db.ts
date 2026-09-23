@@ -43,6 +43,9 @@ import { getPackagedEbookLibraryCategory } from "../shared/ebookLibraryCatalog";
 
 const VPS_SOCKET_PATH = "/run/mysqld/mysqld.sock";
 const PAYMENT_ACCESS_TOKEN_TTL_MS = 30 * 60 * 1000;
+const PUBLIC_COUNTER_CONFIG_CATEGORY = "public-counter-config";
+const PUBLIC_MEMBERS_COUNTER_INCREMENT = "public_members_counter_increment";
+const PUBLIC_REVIEWS_COUNTER_INCREMENT = "public_reviews_counter_increment";
 let _db: ReturnType<typeof drizzle> | null = null;
 type DbExecutor = Pick<ReturnType<typeof drizzle>, "select" | "insert" | "update">;
 
@@ -1057,15 +1060,90 @@ export async function getPublicSalesSectionImages() {
   return db.select({ sectionId: publicSalesSectionImages.sectionId, imageUrl: publicSalesSectionImages.imageUrl, contentType: publicSalesSectionImages.contentType, status: publicSalesSectionImages.status, originalName: publicSalesSectionImages.originalName, updatedAt: publicSalesSectionImages.updatedAt }).from(publicSalesSectionImages).orderBy(desc(publicSalesSectionImages.updatedAt));
 }
 
+
+type PublicCounterIncrementKey = typeof PUBLIC_MEMBERS_COUNTER_INCREMENT | typeof PUBLIC_REVIEWS_COUNTER_INCREMENT;
+
+function parsePublicCounterIncrement(body: string | null | undefined) {
+  if (!body) return 0;
+  try {
+    const parsed = JSON.parse(body) as { value?: unknown };
+    const value = Number(parsed.value ?? 0);
+    return Number.isInteger(value) && value > 0 ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+async function getPublicCounterIncrementMap(db: NonNullable<Awaited<ReturnType<typeof getDb>>>) {
+  const rows = await db.select({ resourceType: managedContent.resourceType, body: managedContent.body }).from(managedContent).where(and(
+    eq(managedContent.kind, "notice"),
+    eq(managedContent.resourceCategory, PUBLIC_COUNTER_CONFIG_CATEGORY),
+    eq(managedContent.status, "published"),
+  ));
+  const values = { members: 0, reviews: 0 };
+  for (const row of rows) {
+    if (row.resourceType === PUBLIC_MEMBERS_COUNTER_INCREMENT) values.members = parsePublicCounterIncrement(row.body);
+    if (row.resourceType === PUBLIC_REVIEWS_COUNTER_INCREMENT) values.reviews = parsePublicCounterIncrement(row.body);
+  }
+  return values;
+}
+
+export async function getAdminPublicCounterSettings() {
+  const db = await getDb();
+  if (!db) return { realMembers: 0, memberIncrement: 0, publicMembersTotal: 0, realReviews: 0, reviewIncrement: 0, publicReviewsTotal: 0 };
+  const [members, reviews, increments] = await Promise.all([
+    db.select({ value: sql<number>`COUNT(*)` }).from(users).where(eq(users.role, "user")),
+    db.select({ value: sql<number>`COUNT(*)` }).from(memberTestimonials).where(and(eq(memberTestimonials.status, "approved"), sql`${memberTestimonials.rating} IS NOT NULL`)),
+    getPublicCounterIncrementMap(db),
+  ]);
+  const realMembers = Number(members[0]?.value ?? 0);
+  const realReviews = Number(reviews[0]?.value ?? 0);
+  return {
+    realMembers,
+    memberIncrement: increments.members,
+    publicMembersTotal: realMembers + increments.members,
+    realReviews,
+    reviewIncrement: increments.reviews,
+    publicReviewsTotal: realReviews + increments.reviews,
+  };
+}
+
+export async function updateAdminPublicCounterIncrement(adminId: number, key: PublicCounterIncrementKey, value: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const increment = Number.isInteger(value) && value > 0 ? value : 0;
+  const existing = await db.select({ id: managedContent.id }).from(managedContent).where(and(
+    eq(managedContent.kind, "notice"),
+    eq(managedContent.resourceCategory, PUBLIC_COUNTER_CONFIG_CATEGORY),
+    eq(managedContent.resourceType, key),
+    eq(managedContent.status, "published"),
+  )).orderBy(desc(managedContent.updatedAt)).limit(1);
+  const payload = {
+    kind: "notice" as const,
+    title: key === PUBLIC_MEMBERS_COUNTER_INCREMENT ? "Incremento público de membros" : "Incremento público de avaliações",
+    summary: String(increment),
+    body: JSON.stringify({ value: increment, updatedBy: adminId, updatedAt: new Date().toISOString() }),
+    resourceUrl: null,
+    resourceCategory: PUBLIC_COUNTER_CONFIG_CATEGORY,
+    resourceType: key,
+    status: "published" as const,
+    createdBy: adminId,
+  };
+  if (existing[0]) await db.update(managedContent).set(payload).where(eq(managedContent.id, existing[0].id));
+  else await db.insert(managedContent).values(payload);
+  return getAdminPublicCounterSettings();
+}
+
 export async function getPublicSalesSocialProof() {
   const db = await getDb();
-  if (!db) return { memberCount: 0, reviewCount: 0, averageRating: null, testimonials: [] };
-  const [members, reviews, testimonials] = await Promise.all([
+  if (!db) return { memberCount: 0, realMemberCount: 0, memberCounterIncrement: 0, reviewCount: 0, realReviewCount: 0, reviewCounterIncrement: 0, averageRating: null, testimonials: [] };
+  const [members, reviews, increments, testimonials] = await Promise.all([
     db.select({ value: sql<number>`COUNT(*)` }).from(users).where(eq(users.role, "user")),
     db.select({
       count: sql<number>`COUNT(*)`,
       average: sql<number>`AVG(${memberTestimonials.rating})`,
     }).from(memberTestimonials).where(and(eq(memberTestimonials.status, "approved"), sql`${memberTestimonials.rating} IS NOT NULL`)),
+    getPublicCounterIncrementMap(db),
     db.select({
       id: memberTestimonials.id,
       content: memberTestimonials.content,
@@ -1082,11 +1160,16 @@ export async function getPublicSalesSocialProof() {
       .orderBy(desc(memberTestimonials.updatedAt))
       .limit(6),
   ]);
-  const reviewCount = Number(reviews[0]?.count ?? 0);
-  const averageRating = reviewCount > 0 ? Math.round(Number(reviews[0]?.average ?? 0) * 10) / 10 : null;
+  const realMemberCount = Number(members[0]?.value ?? 0);
+  const realReviewCount = Number(reviews[0]?.count ?? 0);
+  const averageRating = realReviewCount > 0 ? Math.round(Number(reviews[0]?.average ?? 0) * 10) / 10 : null;
   return {
-    memberCount: Number(members[0]?.value ?? 0),
-    reviewCount,
+    memberCount: realMemberCount + increments.members,
+    realMemberCount,
+    memberCounterIncrement: increments.members,
+    reviewCount: realReviewCount + increments.reviews,
+    realReviewCount,
+    reviewCounterIncrement: increments.reviews,
     averageRating,
     testimonials: testimonials.map(item => ({
       ...item,

@@ -2,7 +2,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { adminMenu } from "@/lib/adminNavigation";
 import { withAppBase } from "@/lib/devPath";
-import { Ban, ChevronDown, Clock3, Network, PencilLine, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { Ban, ChevronDown, Clock3, Network, PencilLine, Save, ShieldCheck, Trash2, UsersRound } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -35,11 +35,15 @@ async function request(path: string, init?: RequestInit) {
 }
 
 export default function AdminReferrals() {
+  const utils = trpc.useUtils();
   const network = trpc.admin.referralLinks.useQuery();
+  const publicCounters = trpc.admin.publicCounterSettings.useQuery();
   const [management, setManagement] = useState<MemberManagementResponse>({ members: [], deletionQueue: [] });
   const [loadingMembers, setLoadingMembers] = useState(true);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [expandedMemberIds, setExpandedMemberIds] = useState<Set<number>>(() => new Set());
+  const [counterEditorOpen, setCounterEditorOpen] = useState(false);
+  const [memberCounterInput, setMemberCounterInput] = useState("");
 
   const loadMembers = useCallback(async () => {
     setLoadingMembers(true);
@@ -58,6 +62,23 @@ export default function AdminReferrals() {
   }, []);
 
   useEffect(() => { void loadMembers(); }, [loadMembers]);
+
+  useEffect(() => {
+    if (publicCounters.data) setMemberCounterInput(String(publicCounters.data.memberIncrement));
+  }, [publicCounters.data?.memberIncrement]);
+
+  const updateMemberCounter = trpc.admin.updatePublicCounterIncrement.useMutation({
+    onSuccess: async () => {
+      await utils.admin.publicCounterSettings.invalidate();
+      toast.success("Contador público de membros atualizado.");
+    },
+    onError: error => toast.error(error.message),
+  });
+
+  function saveMemberCounterIncrement(value: number) {
+    updateMemberCounter.mutate({ key: "public_members_counter_increment", value });
+  }
+
 
   function toggleMemberExpanded(memberId: number) {
     setExpandedMemberIds(current => {
@@ -116,6 +137,29 @@ export default function AdminReferrals() {
           <article className="rounded-2xl border border-emerald-300/25 bg-emerald-300/10 p-5"><p className="text-xs uppercase tracking-wider text-emerald-200">Membros</p><strong className="mt-2 block text-3xl text-white">{loadingMembers ? "..." : management.members.length}</strong></article>
           <article className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5"><p className="text-xs uppercase tracking-wider text-zinc-400">Vínculos ativos</p><strong className="mt-2 block text-3xl text-white">{network.isLoading ? "..." : data?.activeCount ?? 0}</strong></article>
           <article className="rounded-2xl border border-white/10 bg-zinc-950/60 p-5 sm:col-span-2 lg:col-span-1"><p className="text-xs uppercase tracking-wider text-zinc-400">Bloqueados</p><strong className="mt-2 block text-3xl text-white">{management.members.filter(member => member.blocked && !member.deletionRequestedAt).length}</strong></article>
+        </section>
+
+        <section className="rounded-2xl border border-emerald-300/15 bg-zinc-950/60 p-4 sm:p-5" aria-labelledby="public-member-counter-title">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Exibição pública</span>
+              <h2 id="public-member-counter-title" className="mt-1 font-medium text-white">Contador público de membros</h2>
+              <p className="mt-2 max-w-3xl text-sm leading-6 text-zinc-400">O incremento altera somente o número exibido na página pública. Não cria usuários, acessos, permissões ou métricas internas.</p>
+            </div>
+            <button type="button" onClick={() => setCounterEditorOpen(value => !value)} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-300/30 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/10">Ajustar contador público</button>
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-xs uppercase tracking-wider text-zinc-500">Membros reais</span><strong className="mt-1 block text-2xl text-white">{publicCounters.isLoading ? "..." : publicCounters.data?.realMembers ?? 0}</strong></div>
+            <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-xs uppercase tracking-wider text-zinc-500">Incremento manual</span><strong className="mt-1 block text-2xl text-emerald-200">+{publicCounters.isLoading ? "..." : publicCounters.data?.memberIncrement ?? 0}</strong></div>
+            <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3"><span className="text-xs uppercase tracking-wider text-emerald-200">Total exibido publicamente</span><strong className="mt-1 block text-2xl text-white">{publicCounters.isLoading ? "..." : publicCounters.data?.publicMembersTotal ?? 0}</strong></div>
+          </div>
+          {counterEditorOpen ? <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/10 bg-black/25 p-3 sm:flex-row sm:items-end">
+            <label className="flex-1 text-sm text-zinc-200">Quantidade adicional de membros
+              <input type="number" min="0" step="1" inputMode="numeric" value={memberCounterInput} onChange={event => setMemberCounterInput(event.target.value.replace(/\D/g, ""))} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/40 focus:ring-2" />
+            </label>
+            <button type="button" disabled={updateMemberCounter.isPending} onClick={() => saveMemberCounterIncrement(Number(memberCounterInput || 0))} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"><Save className="size-4" />Salvar</button>
+            <button type="button" disabled={updateMemberCounter.isPending} onClick={() => { setMemberCounterInput("0"); saveMemberCounterIncrement(0); }} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-200 disabled:opacity-60">Zerar incremento</button>
+          </div> : null}
         </section>
 
         {!loadingMembers && management.deletionQueue.length ? (

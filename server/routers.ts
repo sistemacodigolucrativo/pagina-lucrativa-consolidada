@@ -77,6 +77,8 @@ import {
   importAdminTestimonialsJson,
   deleteAllAdminTestimonials,
   updateAdminTestimonial,
+  getAdminPublicCounterSettings,
+  updateAdminPublicCounterIncrement,
   getPublicSalesSocialProof,
   removeAdminPublicSalesSectionImage,
   upsertAdminPublicSalesSectionImage,
@@ -450,6 +452,8 @@ export const appRouter = router({
     publicSalesSectionImages: adminProcedure.query(() => getAdminPublicSalesSectionImages()),
     upsertPublicSalesSectionImage: adminProcedure.input(publicSalesSectionImageInput).mutation(({ ctx, input }) => upsertAdminPublicSalesSectionImage(ctx.user.id, input.sectionId, input)),
     removePublicSalesSectionImage: adminProcedure.input(z.object({ sectionId: z.string().trim().regex(/^[a-z0-9_]+$/).min(3).max(64) })).mutation(({ input }) => removeAdminPublicSalesSectionImage(input.sectionId)),
+    publicCounterSettings: adminProcedure.query(() => getAdminPublicCounterSettings()),
+    updatePublicCounterIncrement: adminProcedure.input(z.object({ key: z.enum(["public_members_counter_increment", "public_reviews_counter_increment"]), value: z.number().int().min(0).max(999999) })).mutation(({ ctx, input }) => updateAdminPublicCounterIncrement(ctx.user.id, input.key, input.value)),
     referralLinks: adminProcedure.query(() => getAdminReferralLinks()),
   }),
 });

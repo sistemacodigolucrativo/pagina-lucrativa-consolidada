@@ -2,7 +2,7 @@ import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardL
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, ClipboardCheck, Download, FileText, LayoutDashboard, Save, Search, Star, Trash2, Upload } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
@@ -80,6 +80,7 @@ export default function AdminTestimonials() {
   const utils = trpc.useUtils();
   const [location, setLocation] = useLocation();
   const testimonials = trpc.admin.testimonials.useQuery();
+  const publicCounters = trpc.admin.publicCounterSettings.useQuery();
   const [notes, setNotes] = useState<Record<number, string>>({});
   const [query, setQuery] = useState("");
   const [deletingId, setDeletingId] = useState<number | null>(null);
@@ -89,8 +90,27 @@ export default function AdminTestimonials() {
   const [jsonPreview, setJsonPreview] = useState<TestimonialJsonItem[] | null>(null);
   const [replaceAllBeforeImport, setReplaceAllBeforeImport] = useState(false);
   const [exportedJson, setExportedJson] = useState("");
+  const [reviewCounterEditorOpen, setReviewCounterEditorOpen] = useState(false);
+  const [reviewCounterInput, setReviewCounterInput] = useState("");
   const activeStatus = statusOrder.find(status => statusPaths[status] === location) ?? null;
   const isQueueScreen = activeStatus !== null;
+
+  useEffect(() => {
+    if (publicCounters.data) setReviewCounterInput(String(publicCounters.data.reviewIncrement));
+  }, [publicCounters.data?.reviewIncrement]);
+
+
+  const updateReviewCounter = trpc.admin.updatePublicCounterIncrement.useMutation({
+    onSuccess: async () => {
+      await utils.admin.publicCounterSettings.invalidate();
+      toast.success("Contador público de avaliações atualizado.");
+    },
+    onError: error => toast.error(error.message),
+  });
+
+  function saveReviewCounterIncrement(value: number) {
+    updateReviewCounter.mutate({ key: "public_reviews_counter_increment", value });
+  }
 
   const update = trpc.admin.updateTestimonial.useMutation({
     onSuccess: async () => {
@@ -228,6 +248,29 @@ export default function AdminTestimonials() {
 
         {!isQueueScreen ? (
           <>
+            <section className="min-w-0 overflow-hidden rounded-2xl border border-emerald-300/15 bg-zinc-950/60 p-4 sm:p-6" aria-labelledby="public-review-counter-title">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Exibição pública</span>
+                  <h2 id="public-review-counter-title" className="mt-1 break-words text-lg font-semibold text-white">Contador público de avaliações</h2>
+                  <p className="mt-1 text-sm leading-6 text-zinc-400">O incremento altera somente o contador visual da página pública. Não cria agradecimentos, não muda a média real e não altera a lista cadastrada.</p>
+                </div>
+                <button type="button" onClick={() => setReviewCounterEditorOpen(value => !value)} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-300/30 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/10">Ajustar contador de avaliações</button>
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-xs uppercase tracking-wider text-zinc-500">Avaliações reais</span><strong className="mt-1 block text-2xl text-white">{publicCounters.isLoading ? "..." : publicCounters.data?.realReviews ?? 0}</strong></div>
+                <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-xs uppercase tracking-wider text-zinc-500">Incremento manual</span><strong className="mt-1 block text-2xl text-emerald-200">+{publicCounters.isLoading ? "..." : publicCounters.data?.reviewIncrement ?? 0}</strong></div>
+                <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3"><span className="text-xs uppercase tracking-wider text-emerald-200">Total exibido publicamente</span><strong className="mt-1 block text-2xl text-white">{publicCounters.isLoading ? "..." : publicCounters.data?.publicReviewsTotal ?? 0}</strong></div>
+              </div>
+              {reviewCounterEditorOpen ? <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/10 bg-black/25 p-3 sm:flex-row sm:items-end">
+                <label className="flex-1 text-sm text-zinc-200">Quantidade adicional de avaliações
+                  <input type="number" min="0" step="1" inputMode="numeric" value={reviewCounterInput} onChange={event => setReviewCounterInput(event.target.value.replace(/\D/g, ""))} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/40 focus:ring-2" />
+                </label>
+                <button type="button" disabled={updateReviewCounter.isPending} onClick={() => saveReviewCounterIncrement(Number(reviewCounterInput || 0))} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"><Save className="size-4" />Salvar</button>
+                <button type="button" disabled={updateReviewCounter.isPending} onClick={() => { setReviewCounterInput("0"); saveReviewCounterIncrement(0); }} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-200 disabled:opacity-60">Zerar incremento</button>
+              </div> : null}
+            </section>
+
             <section className="min-w-0 overflow-hidden rounded-2xl border border-amber-300/15 bg-zinc-950/60 p-4 sm:p-6">
               <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
                 <div className="min-w-0 space-y-4">
