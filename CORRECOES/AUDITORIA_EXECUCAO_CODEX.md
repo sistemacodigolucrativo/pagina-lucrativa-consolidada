@@ -21,7 +21,7 @@
 |CL-P0-001|Corrigido|P0|Chave privada PEM removida do versionamento e padrões de chave adicionados ao .gitignore.|bd149f104e8aaaa5bf3f7f03088f0ecdbba15776|file/git ls-files/grep/git diff --check|Push realizado; rotação/revogação da chave permanece obrigatória fora do Git.|
 |CL-P0-002|Corrigido|P0|/ebook-files agora exige sessão válida e usa cache privado para PDFs.|0a8f5b58373ff83326bcf1763305cbd6945d8185|pnpm check; pnpm test server/ebooks.integration.test.ts; pnpm build; git diff --check|Push realizado; acesso autorizado segue via leitor com withCredentials.|
 |CL-P0-003|Corrigido|P0|Produção passa a exigir JWT_SECRET e contas demo ficam desativadas por padrão.|586a4cf9e78e85240f3001a42cf64f2fb8d1dc5f|pnpm check; pnpm test server/demoAuth.test.ts; pnpm build; git diff --check|Push realizado; ENABLE_DEMO_ACCOUNTS=true pode reativar demo explicitamente fora do padrão seguro.|
-|CL-P0-004|Corrigido|P0|hashPassword agora usa scrypt com salt e mantém verificação de hashes SHA-256 legados.|Pendente|pnpm check; pnpm test server/credentialHash.test.ts server/demoAuth.test.ts server/criticalFlowFixes.integration.test.ts; pnpm build; git diff --check|Sem migration: campos varchar(255) comportam o novo formato.|
+|CL-P0-004|Corrigido|P0|hashPassword agora usa scrypt com salt e mantém verificação de hashes SHA-256 legados.|1927af11e02d2da262d5d0ed4c2a1e847622e500|pnpm check; pnpm test server/credentialHash.test.ts server/demoAuth.test.ts server/criticalFlowFixes.integration.test.ts; pnpm build; git diff --check|Push realizado; sem migration: campos varchar(255) comportam o novo formato.|
 
 ## 4. Achados confrontados
 
@@ -91,8 +91,8 @@
 - Testes executados: pnpm check; pnpm test server/credentialHash.test.ts server/demoAuth.test.ts server/criticalFlowFixes.integration.test.ts; pnpm build; git diff --check
 - Resultado dos testes: pnpm check OK; 3 arquivos de teste OK com 13 testes; build OK; git diff --check OK.
 - Evidência depois da correção: credentialHash.test confirma formato scrypt, salt diferente para a mesma senha, verificação de senha correta/incorreta e compatibilidade com SHA-256 legado.
-- Commit: Pendente
-- Push realizado? Não
+- Commit: 1927af11e02d2da262d5d0ed4c2a1e847622e500
+- Push realizado? Sim
 - Pendências: hashes antigos permanecem aceitos para login/recuperação; rehash gradual em login pode ser implementado futuramente se o proprietário desejar converter registros legados automaticamente.
 - Observações: não houve migration; passwordHash e securityAnswerHash já são varchar(255).
 
