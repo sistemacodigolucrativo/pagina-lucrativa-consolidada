@@ -116,3 +116,24 @@
 |Rotacionar/revogar chave PEM|Segredo já esteve versionado.|Acesso indevido se a chave for real ou reutilizada.|Proprietário deve revogar a chave e substituir acessos dependentes.|
 |Histórico Git ainda contém o segredo|Não foi autorizado reescrever histórico.|O segredo pode ser recuperado em commits antigos.|Decidir se haverá limpeza de histórico com ferramenta apropriada e coordenação de todos os clones.|
 |Confrontar CL-P0-003|Próximo achado crítico.|Auth demo/fallback podem seguir inseguros.|Auditar demoAuth e endurecer produção se confirmado.|
+
+## Incorporação da branch temporária fix/home-indicator-card-layout
+
+- Data/hora: 2026-09-23T16:30:17Z
+- Branch temporária incorporada: fix/home-indicator-card-layout
+- Commit incorporado: a386c58ed5b3282d83bb5fb9a61fd4a76b33ddae
+- Branch destino: main
+- Método usado: fast-forward da main local para origin/main; a main remota já continha o commit no momento da conferência.
+- Arquivos alterados:
+  - client/src/index.css
+  - server/publicHeader.responsive.test.ts
+  - server/publicProfile.modal.responsive.test.ts
+- Testes executados:
+  - pnpm check: OK
+  - pnpm test server/publicHeader.responsive.test.ts server/publicProfile.modal.responsive.test.ts: OK, 26 testes passaram
+  - pnpm build: OK
+- Resultado: correção visual incorporada na main, validada e disponível no domínio de teste previamente publicado.
+- Push da main realizado? Sim, sem alterações pendentes no momento do push funcional; relatório enviado em commit documental posterior.
+- Branch remota deletada? Sim
+- Branch local deletada? Sim
+- Observações: não houve force push, reset destrutivo, deploy adicional, alteração de banco, backend, autenticação ou infraestrutura nesta etapa.
