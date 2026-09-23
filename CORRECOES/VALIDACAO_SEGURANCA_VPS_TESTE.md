@@ -5,6 +5,7 @@
 - Diretório local: /home/ubuntu/workspaces/pagina-lucrativa-main-update
 - Branch: main
 - Commit base no início desta rodada: ce0d265d0c12733374d0711638a8e77bf247bc04
+- Commit com correções aplicado na main: 3ba5b5a49541b25991793a8665217af6eeaf195c
 - Serviço: pagina-lucrativa.service
 - Domínio validado: https://ocodigolucrativo.site/
 
@@ -42,6 +43,15 @@
 - pnpm test.
 - pnpm build.
 - git diff --check.
+
+## Publicação na VPS de teste
+
+- Build aplicada no serviço pagina-lucrativa.service: Sim
+- Serviço reiniciado: Sim
+- Status do serviço após restart: active
+- Validação local http://127.0.0.1:3101/: HTTP 200
+- Validação domínio https://ocodigolucrativo.site/: HTTP 200
+- Backup do dist anterior: /home/ubuntu/servicos/pagina-lucrativa/backups/dist-before-security-hardening-20260923T173149Z.tar.gz
 
 ## Pendências
 
