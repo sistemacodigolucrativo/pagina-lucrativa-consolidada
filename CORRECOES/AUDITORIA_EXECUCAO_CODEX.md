@@ -20,8 +20,8 @@
 |---|---|---|---|---|---|---|
 |CL-P0-001|Corrigido|P0|Chave privada PEM removida do versionamento e padrões de chave adicionados ao .gitignore.|bd149f104e8aaaa5bf3f7f03088f0ecdbba15776|file/git ls-files/grep/git diff --check|Push realizado; rotação/revogação da chave permanece obrigatória fora do Git.|
 |CL-P0-002|Corrigido|P0|/ebook-files agora exige sessão válida e usa cache privado para PDFs.|0a8f5b58373ff83326bcf1763305cbd6945d8185|pnpm check; pnpm test server/ebooks.integration.test.ts; pnpm build; git diff --check|Push realizado; acesso autorizado segue via leitor com withCredentials.|
-|CL-P0-003|Corrigido|P0|Produção passa a exigir JWT_SECRET e contas demo ficam desativadas por padrão.|Pendente|pnpm check; pnpm test server/demoAuth.test.ts; pnpm build; git diff --check|ENABLE_DEMO_ACCOUNTS=true pode reativar demo explicitamente fora do padrão seguro.|
-|CL-P0-004|Não iniciado|P0|Hash SHA-256 puro para senhas.|Pendente|Pendente|Próximo item P0.|
+|CL-P0-003|Corrigido|P0|Produção passa a exigir JWT_SECRET e contas demo ficam desativadas por padrão.|586a4cf9e78e85240f3001a42cf64f2fb8d1dc5f|pnpm check; pnpm test server/demoAuth.test.ts; pnpm build; git diff --check|Push realizado; ENABLE_DEMO_ACCOUNTS=true pode reativar demo explicitamente fora do padrão seguro.|
+|CL-P0-004|Corrigido|P0|hashPassword agora usa scrypt com salt e mantém verificação de hashes SHA-256 legados.|Pendente|pnpm check; pnpm test server/credentialHash.test.ts server/demoAuth.test.ts server/criticalFlowFixes.integration.test.ts; pnpm build; git diff --check|Sem migration: campos varchar(255) comportam o novo formato.|
 
 ## 4. Achados confrontados
 
@@ -73,10 +73,28 @@
 - Testes executados: pnpm check; pnpm test server/demoAuth.test.ts; pnpm build; git diff --check
 - Resultado dos testes: pnpm check OK; demoAuth.test OK com 5 testes; build OK; git diff --check OK.
 - Evidência depois da correção: teste estático garante verificação de NODE_ENV production, mensagem de JWT_SECRET obrigatório, flag ENABLE_DEMO_ACCOUNTS e bloqueio de sessões demo quando demo está desabilitado.
-- Commit: Pendente
-- Push realizado? Não
+- Commit: 586a4cf9e78e85240f3001a42cf64f2fb8d1dc5f
+- Push realizado? Sim
 - Pendências: validar antes de deploy que a VPS de produção possui JWT_SECRET definido e que existe usuário real no banco quando ENABLE_DEMO_ACCOUNTS não for usado.
 - Observações: não foram expostos valores de JWT_SECRET ou credenciais.
+
+
+### ACHADO CL-P0-004 — Hash de senha inadequado com SHA-256 puro
+- Prioridade original: P0
+- Status: Corrigido
+- Local indicado na auditoria: server/credentialHash.ts; server/criticalFlowFixes.ts; server/db.ts
+- Local confirmado no projeto: server/credentialHash.ts usava createHash("sha256") para hashPassword sem salt e hashesMatch comparava hex diretamente.
+- Problema confirmado? Sim
+- Evidência antes da correção: hashPassword retornava SHA-256 hex puro; authenticateLocalUser e recuperação comparavam buffers hex; securityAnswer reutilizava hashPassword com prefixo textual.
+- Correção aplicada: hashPassword agora gera formato versionado scrypt$salt$key com salt aleatório; hashesMatch valida scrypt e mantém compatibilidade com SHA-256 legado; login local e recuperação passaram a comparar senha/resposta normalizada contra o hash armazenado; confirmações pós-gravação comparam o hash persistido exatamente.
+- Arquivos alterados: server/credentialHash.ts; server/credentialHash.test.ts; server/demoAuth.ts; server/db.ts; server/criticalFlowFixes.ts; server/criticalFlowFixes.integration.test.ts; CORRECOES/AUDITORIA_EXECUCAO_CODEX.md
+- Testes executados: pnpm check; pnpm test server/credentialHash.test.ts server/demoAuth.test.ts server/criticalFlowFixes.integration.test.ts; pnpm build; git diff --check
+- Resultado dos testes: pnpm check OK; 3 arquivos de teste OK com 13 testes; build OK; git diff --check OK.
+- Evidência depois da correção: credentialHash.test confirma formato scrypt, salt diferente para a mesma senha, verificação de senha correta/incorreta e compatibilidade com SHA-256 legado.
+- Commit: Pendente
+- Push realizado? Não
+- Pendências: hashes antigos permanecem aceitos para login/recuperação; rehash gradual em login pode ser implementado futuramente se o proprietário desejar converter registros legados automaticamente.
+- Observações: não houve migration; passwordHash e securityAnswerHash já são varchar(255).
 
 ## 5. Testes gerais executados
 |Comando|Resultado|Observação|

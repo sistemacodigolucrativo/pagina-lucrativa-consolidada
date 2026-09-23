@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 import type { User } from "../drizzle/schema";
 import { authenticateLocalUser, getStoredPasswordHashByOpenId, upsertUser } from "./db";
-import { hashDemoCredential, hashPassword, hashesMatch } from "./credentialHash";
+import { hashDemoCredential, hashesMatch } from "./credentialHash";
 
 export const DEMO_SESSION_COOKIE_NAME = process.env.VITE_DEV_PREFIX ? "pl_demo_session_dev" : "pl_demo_session";
 
@@ -95,7 +95,7 @@ export async function resolveDemoAccount(username: string, password: string): Pr
   if (matched) {
     const storedPasswordHash = await getStoredPasswordHashByOpenId(matched.openId);
     const valid = storedPasswordHash
-      ? hashesMatch(storedPasswordHash, hashPassword(password))
+      ? hashesMatch(storedPasswordHash, password)
       : hashesMatch(matched.credentialHash, hashDemoCredential(normalizedUsername, password));
     if (!valid) return null;
     const { credentialHash: _credentialHash, ...account } = matched;

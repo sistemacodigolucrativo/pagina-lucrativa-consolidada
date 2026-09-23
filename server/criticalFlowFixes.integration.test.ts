@@ -23,7 +23,7 @@ describe("correções críticas de conta, cadastro e pagamento", () => {
   it("confirma senha persistida e recupera conta por e-mail normalizado", async () => {
     const fixes = await source("server/criticalFlowFixes.ts");
     expect(fixes).toContain("hashPassword(newPassword)");
-    expect(fixes).toContain("hashesMatch(persisted[0].passwordHash");
+    expect(fixes).toContain("persisted[0]?.passwordHash !==");
     expect(fixes).toContain("LOWER(TRIM(${users.email}))");
     expect(fixes).not.toContain("hashPassword(input.newPassword.trim())");
   });

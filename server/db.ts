@@ -35,7 +35,7 @@ import {
 import { OFFER_AMOUNT_CENTS, type ApplicationInput, type ApplicationPersonalizationInput, type ApplicationReceiptUpload, type MemberPaymentLinkInput, type PublicPaymentPage } from "@shared/applications";
 import { ENV } from "./_core/env";
 import { storagePut } from "./storage";
-import { hashPassword } from "./credentialHash";
+import { hashPassword, hashesMatch } from "./credentialHash";
 import { assertReceiptReviewAllowed, assertReceiptUploadAllowed, assertSponsorImmutable } from "./integrityGuards";
 import { getPublicSalesSection } from "../shared/publicSalesSections";
 import { getPackagedEbook, getPackagedEbooks } from "./staticEbooks";
@@ -164,10 +164,7 @@ export async function authenticateLocalUser(identifier: string, password: string
   try {
     const user = await getUserByEmail(identifier);
     if (!user?.passwordHash) return null;
-    const candidateHash = hashPassword(password);
-    const stored = Buffer.from(user.passwordHash, "hex");
-    const candidate = Buffer.from(candidateHash, "hex");
-    if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) return null;
+    if (!hashesMatch(user.passwordHash, password)) return null;
     return user;
   } catch {
     return null;
@@ -760,9 +757,7 @@ export async function resetPasswordWithSecurityAnswer(input: { identifier: strin
     .limit(1);
   const row = rows[0];
   if (!row) throw new Error("Não encontramos recuperação configurada para essa conta.");
-  const stored = Buffer.from(row.securityAnswerHash, "hex");
-  const candidate = Buffer.from(hashSecurityAnswer(input.securityAnswer), "hex");
-  if (stored.length !== candidate.length || stored.length === 0 || !timingSafeEqual(stored, candidate)) throw new Error("Resposta secreta incorreta.");
+  if (!hashesMatch(row.securityAnswerHash, `security-answer:${normalizeSecurityAnswer(input.securityAnswer)}`)) throw new Error("Resposta secreta incorreta.");
   await db.update(users).set({ passwordHash: hashPassword(input.newPassword.trim()), loginMethod: "password" }).where(eq(users.id, row.userId));
   return { success: true } as const;
 }

@@ -81,7 +81,7 @@ export async function updateMemberAccountLocked(userId: number, input: MemberAcc
 
   if (userUpdate.passwordHash) {
     const persisted = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, userId)).limit(1);
-    if (!persisted[0]?.passwordHash || !hashesMatch(persisted[0].passwordHash, userUpdate.passwordHash)) {
+    if (persisted[0]?.passwordHash !== userUpdate.passwordHash) {
       throw new Error("A nova senha não pôde ser confirmada. Tente novamente.");
     }
   }
@@ -101,13 +101,12 @@ export async function resetPasswordWithSecurityAnswerSafe(input: { identifier: s
   const row = await findRecoveryAccount(input.identifier);
   if (!row) throw new Error("Não encontramos recuperação configurada para essa conta.");
 
-  const candidateHash = hashSecurityAnswer(input.securityAnswer);
-  if (!hashesMatch(row.securityAnswerHash, candidateHash)) throw new Error("Resposta secreta incorreta.");
+  if (!hashesMatch(row.securityAnswerHash, `security-answer:${normalizeSecurityAnswer(input.securityAnswer)}`)) throw new Error("Resposta secreta incorreta.");
 
   const passwordHash = hashPassword(input.newPassword);
   await db.update(users).set({ passwordHash, loginMethod: "password" }).where(eq(users.id, row.userId));
   const persisted = await db.select({ passwordHash: users.passwordHash }).from(users).where(eq(users.id, row.userId)).limit(1);
-  if (!persisted[0]?.passwordHash || !hashesMatch(persisted[0].passwordHash, passwordHash)) {
+  if (persisted[0]?.passwordHash !== passwordHash) {
     throw new Error("A nova senha não pôde ser confirmada. Tente novamente.");
   }
   return { success: true } as const;
