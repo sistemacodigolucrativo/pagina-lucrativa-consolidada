@@ -32,7 +32,18 @@ type DemoSessionPayload = {
 };
 
 const DEMO_SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
-const DEMO_SESSION_SECRET = process.env.JWT_SECRET || "pagina-lucrativa-local-demo-session";
+const DEMO_ACCOUNTS_ENABLED = process.env.ENABLE_DEMO_ACCOUNTS === "true" || process.env.NODE_ENV !== "production";
+
+function resolveSessionSecret() {
+  const secret = process.env.JWT_SECRET?.trim();
+  if (secret) return secret;
+  if (process.env.NODE_ENV === "production") {
+    throw new Error("JWT_SECRET é obrigatório em produção para assinar sessões.");
+  }
+  return "pagina-lucrativa-local-demo-session";
+}
+
+const DEMO_SESSION_SECRET = resolveSessionSecret();
 
 type StoredDemoAccount = DemoAccount & { credentialHash: string };
 
@@ -80,7 +91,7 @@ function readSessionPayload(token: string): DemoSessionPayload | null {
 
 export async function resolveDemoAccount(username: string, password: string): Promise<DemoAccount | null> {
   const normalizedUsername = username.trim().toLowerCase();
-  const matched = demoAccounts.find(account => account.username === normalizedUsername);
+  const matched = DEMO_ACCOUNTS_ENABLED ? demoAccounts.find(account => account.username === normalizedUsername) : null;
   if (matched) {
     const storedPasswordHash = await getStoredPasswordHashByOpenId(matched.openId);
     const valid = storedPasswordHash
@@ -156,6 +167,7 @@ export function resolveDemoSession(token: string | undefined) {
       role: payload.role,
     });
   }
+  if (!DEMO_ACCOUNTS_ENABLED) return null;
   const account = demoAccounts.find(candidate => candidate.openId === payload.openId && candidate.role === payload.role);
   return account ? toDemoUser(account) : null;
 }

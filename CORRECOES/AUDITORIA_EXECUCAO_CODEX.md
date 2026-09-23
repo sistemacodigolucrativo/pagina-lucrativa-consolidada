@@ -20,8 +20,8 @@
 |---|---|---|---|---|---|---|
 |CL-P0-001|Corrigido|P0|Chave privada PEM removida do versionamento e padrões de chave adicionados ao .gitignore.|bd149f104e8aaaa5bf3f7f03088f0ecdbba15776|file/git ls-files/grep/git diff --check|Push realizado; rotação/revogação da chave permanece obrigatória fora do Git.|
 |CL-P0-002|Corrigido|P0|/ebook-files agora exige sessão válida e usa cache privado para PDFs.|0a8f5b58373ff83326bcf1763305cbd6945d8185|pnpm check; pnpm test server/ebooks.integration.test.ts; pnpm build; git diff --check|Push realizado; acesso autorizado segue via leitor com withCredentials.|
-|CL-P0-003|Não iniciado|P0|Auth demo/admin hardcoded e fallback de JWT.|Pendente|Pendente|Próximo item P0.|
-|CL-P0-004|Não iniciado|P0|Hash SHA-256 puro para senhas.|Pendente|Pendente|Pendente.|
+|CL-P0-003|Corrigido|P0|Produção passa a exigir JWT_SECRET e contas demo ficam desativadas por padrão.|Pendente|pnpm check; pnpm test server/demoAuth.test.ts; pnpm build; git diff --check|ENABLE_DEMO_ACCOUNTS=true pode reativar demo explicitamente fora do padrão seguro.|
+|CL-P0-004|Não iniciado|P0|Hash SHA-256 puro para senhas.|Pendente|Pendente|Próximo item P0.|
 
 ## 4. Achados confrontados
 
@@ -59,6 +59,24 @@
 - Push realizado? Sim
 - Pendências: a proteção ainda depende do fluxo de sessão atual; CL-P0-003 tratará endurecimento do auth demo/fallback de JWT.
 - Observações: o leitor já usa getDocument com withCredentials, preservando acesso do membro autenticado.
+
+
+### ACHADO CL-P0-003 — Auth demo/admin hardcoded e fallback de JWT
+- Prioridade original: P0
+- Status: Corrigido
+- Local indicado na auditoria: server/demoAuth.ts
+- Local confirmado no projeto: server/demoAuth.ts tinha contas admin/user hardcoded sempre ativas e DEMO_SESSION_SECRET com fallback previsível quando JWT_SECRET ausente.
+- Problema confirmado? Sim
+- Evidência antes da correção: DEMO_SESSION_SECRET usava process.env.JWT_SECRET || "pagina-lucrativa-local-demo-session"; resolveDemoAccount sempre buscava demoAccounts antes do banco.
+- Correção aplicada: produção agora falha sem JWT_SECRET; contas demo hardcoded ficam desativadas por padrão em NODE_ENV=production e só podem ser habilitadas explicitamente com ENABLE_DEMO_ACCOUNTS=true; sessões reais com payload completo seguem resolvidas.
+- Arquivos alterados: server/demoAuth.ts; server/demoAuth.test.ts; CORRECOES/AUDITORIA_EXECUCAO_CODEX.md
+- Testes executados: pnpm check; pnpm test server/demoAuth.test.ts; pnpm build; git diff --check
+- Resultado dos testes: pnpm check OK; demoAuth.test OK com 5 testes; build OK; git diff --check OK.
+- Evidência depois da correção: teste estático garante verificação de NODE_ENV production, mensagem de JWT_SECRET obrigatório, flag ENABLE_DEMO_ACCOUNTS e bloqueio de sessões demo quando demo está desabilitado.
+- Commit: Pendente
+- Push realizado? Não
+- Pendências: validar antes de deploy que a VPS de produção possui JWT_SECRET definido e que existe usuário real no banco quando ENABLE_DEMO_ACCOUNTS não for usado.
+- Observações: não foram expostos valores de JWT_SECRET ou credenciais.
 
 ## 5. Testes gerais executados
 |Comando|Resultado|Observação|

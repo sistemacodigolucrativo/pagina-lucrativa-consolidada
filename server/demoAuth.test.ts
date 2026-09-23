@@ -1,4 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { readFile } from "node:fs/promises";
+import path from "node:path";
 
 const dbMocks = vi.hoisted(() => ({
   authenticateLocalUser: vi.fn(),
@@ -14,6 +16,16 @@ describe("resolveDemoAccount", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     dbMocks.upsertUser.mockResolvedValue(undefined);
+  });
+
+
+  it("mantém contas demo e fallback de sessão fora da produção por padrão", async () => {
+    const source = await readFile(path.join(process.cwd(), "server/demoAuth.ts"), "utf8");
+    expect(source).toContain('process.env.NODE_ENV === "production"');
+    expect(source).toContain('JWT_SECRET é obrigatório em produção para assinar sessões.');
+    expect(source).toContain('process.env.ENABLE_DEMO_ACCOUNTS === "true"');
+    expect(source).toContain('const matched = DEMO_ACCOUNTS_ENABLED ? demoAccounts.find');
+    expect(source).toContain('if (!DEMO_ACCOUNTS_ENABLED) return null;');
   });
 
   it("reconhece a conta administrativa local", async () => {
