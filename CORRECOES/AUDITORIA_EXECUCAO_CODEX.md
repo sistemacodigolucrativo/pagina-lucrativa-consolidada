@@ -18,7 +18,7 @@
 ## 3. Resumo de progresso
 |ID da auditoria|Status|Prioridade|Resumo|Commit|Testes|Observações|
 |---|---|---|---|---|---|---|
-|CL-P0-001|Corrigido|P0|Chave privada PEM removida do versionamento e padrões de chave adicionados ao .gitignore.|Pendente|file/git ls-files/grep/git diff --check|Rotação/revogação da chave permanece obrigatória fora do Git.|
+|CL-P0-001|Corrigido|P0|Chave privada PEM removida do versionamento e padrões de chave adicionados ao .gitignore.|bd149f104e8aaaa5bf3f7f03088f0ecdbba15776|file/git ls-files/grep/git diff --check|Push realizado; rotação/revogação da chave permanece obrigatória fora do Git.|
 |CL-P0-002|Não iniciado|P0|PDFs de e-books públicos em /ebook-files.|Pendente|Pendente|Próximo item P0.|
 |CL-P0-003|Não iniciado|P0|Auth demo/admin hardcoded e fallback de JWT.|Pendente|Pendente|Pendente.|
 |CL-P0-004|Não iniciado|P0|Hash SHA-256 puro para senhas.|Pendente|Pendente|Pendente.|
@@ -37,8 +37,8 @@
 - Testes executados: file sem imprimir conteúdo; git ls-files para segredo rastreado; grep de regras no .gitignore; git diff --check
 - Resultado dos testes: segredo confirmado antes e removido do working tree; regras de ignore presentes; diff sem whitespace inválido.
 - Evidência depois da correção: git status mostra remoção do PEM e alteração do .gitignore; git diff --check sem erro.
-- Commit: Pendente
-- Push realizado? Não
+- Commit: bd149f104e8aaaa5bf3f7f03088f0ecdbba15776
+- Push realizado? Sim
 - Pendências: revogar/rotacionar a chave fora do Git; a remoção atual não apaga o segredo do histórico Git. Reescrita de histórico não foi executada por segurança.
 - Observações: conteúdo da chave não foi impresso no terminal nem no relatório.
 
