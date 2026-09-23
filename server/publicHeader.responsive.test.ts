@@ -44,9 +44,11 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.site-header { position: sticky; top: 0; z-index: 50;');
     expect(cssSource).toContain('.sales-page { min-height: 100vh; overflow: clip;');
     expect(cssSource).toContain('.affiliate-banner { position: relative;');
+    expect(cssSource).toContain('margin: 0; border-bottom: 1px solid rgba(3, 214, 96, .16);');
     expect(cssSource).toContain('.affiliate-profile-hero { max-width: none;');
     expect(cssSource).toContain('.affiliate-profile-summary { display: flex;');
     expect(cssSource).toContain('.sales-hero { position: relative;');
+    expect(cssSource).toContain('.reference-page .sales-hero { min-height: 0; padding-top: clamp(18px, 3vw, 28px); }');
   });
 
   it("extracts the digital structure visual into one independent landing section", () => {

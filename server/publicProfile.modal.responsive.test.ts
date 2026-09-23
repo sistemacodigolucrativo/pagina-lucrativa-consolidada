@@ -52,7 +52,7 @@ describe("public profile summary and modal", () => {
     expect(cssSource).toContain("max-height: min(720px, calc(100vh - 32px)); overflow-y: auto;");
     expect(cssSource).toContain(".affiliate-profile-modal-backdrop { place-items: center; padding: 14px; }");
     expect(cssSource).toContain("max-height: calc(100vh - 28px);");
-    expect(cssSource).toContain(".affiliate-profile-hero { padding: 11px 0; }");
+    expect(cssSource).toContain(".affiliate-profile-hero { padding: 9px 0; }");
     expect(cssSource).toContain(".affiliate-profile-avatar { width: 42px; height: 42px; border-radius: 9px; }");
   });
 });
