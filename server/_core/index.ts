@@ -1,5 +1,6 @@
 import "dotenv/config";
 import express, { type RequestHandler } from "express";
+import { parse as parseCookieHeader } from "cookie";
 import { createServer, type ServerResponse } from "http";
 import net from "net";
 import path from "node:path";
@@ -19,6 +20,7 @@ import { registerAdminRelationshipMaintenance } from "./adminRelationshipMainten
 import { registerAdminCommercialOperations } from "./adminCommercialOperations";
 import { serveStatic, setupVite } from "./vite";
 import { PACKAGED_EBOOK_FILE_ROUTE } from "../staticEbooks";
+import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -46,7 +48,7 @@ function createPackagedEbookFilesMiddleware(): RequestHandler {
     fallthrough: false,
     setHeaders(response: ServerResponse, filePath: string) {
       if (!filePath.toLowerCase().endsWith(".pdf")) return;
-      response.setHeader("Cache-Control", "public, max-age=86400");
+      response.setHeader("Cache-Control", "private, max-age=3600");
       response.setHeader("Content-Disposition", "inline");
       response.setHeader("Content-Type", "application/pdf");
       response.setHeader("X-Content-Type-Options", "nosniff");
@@ -56,6 +58,13 @@ function createPackagedEbookFilesMiddleware(): RequestHandler {
   return (request, response, next) => {
     if (!request.path.toLowerCase().endsWith(".pdf")) {
       response.status(404).send("E-book não encontrado.");
+      return;
+    }
+
+    const cookies = parseCookieHeader(request.headers.cookie ?? "");
+    const user = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME]);
+    if (!user) {
+      response.status(401).send("Acesso autenticado necessário para abrir este e-book.");
       return;
     }
 

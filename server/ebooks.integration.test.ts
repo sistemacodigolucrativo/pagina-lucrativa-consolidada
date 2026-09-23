@@ -64,6 +64,16 @@ describe("módulo canônico de e-books e Academia", () => {
     expect(memberReader).toContain("sem categoria definida aparecem automaticamente em Outros");
   });
 
+  it("protege os PDFs empacotados contra acesso público direto", async () => {
+    const server = await read("server/_core/index.ts");
+    expect(server).toContain('import { parse as parseCookieHeader } from "cookie"');
+    expect(server).toContain('DEMO_SESSION_COOKIE_NAME, resolveDemoSession');
+    expect(server).toContain('const user = resolveDemoSession(cookies[DEMO_SESSION_COOKIE_NAME])');
+    expect(server).toContain('response.status(401).send("Acesso autenticado necessário para abrir este e-book.")');
+    expect(server).toContain('response.setHeader("Cache-Control", "private, max-age=3600")');
+    expect(server).not.toContain('response.setHeader("Cache-Control", "public, max-age=86400")');
+  });
+
   it("renderiza PDF internamente, restaura página e informa progresso", async () => {
     const reader = await read("client/src/components/ResponsiveEbookFrame.tsx");
     const memberReader = await read("client/src/pages/EbookReader.tsx");
