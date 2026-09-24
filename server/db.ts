@@ -1148,6 +1148,7 @@ export async function getPublicSalesSocialProof() {
       id: memberTestimonials.id,
       content: memberTestimonials.content,
       rating: memberTestimonials.rating,
+      adminNote: memberTestimonials.adminNote,
       updatedAt: memberTestimonials.updatedAt,
       memberName: users.name,
       photoUrl: memberProfiles.photoUrl,
@@ -1171,12 +1172,18 @@ export async function getPublicSalesSocialProof() {
     realReviewCount,
     reviewCounterIncrement: increments.reviews,
     averageRating,
-    testimonials: testimonials.map(item => ({
-      ...item,
-      rating: Math.min(5, Math.max(1, Number(item.rating ?? 0))),
-      memberName: item.memberName || "Membro do Código Lucrativo",
-      location: [item.city, item.state].filter(Boolean).join(" - ") || "Local não informado",
-    })),
+    testimonials: testimonials.map(item => {
+      const { meta } = parseImportedTestimonialMeta(item.adminNote);
+      return {
+        id: item.id,
+        content: item.content,
+        rating: Math.min(5, Math.max(1, Number(item.rating ?? 0))),
+        updatedAt: item.updatedAt,
+        memberName: meta?.name || item.memberName || "Membro do Código Lucrativo",
+        photoUrl: meta ? meta.image || null : item.photoUrl,
+        location: meta?.context || [item.city, item.state].filter(Boolean).join(" - ") || "Local não informado",
+      };
+    }),
   };
 }
 
@@ -2227,31 +2234,59 @@ function exportStatus(status: string): "ativo" | "rascunho" | "arquivado" {
   return "ativo";
 }
 
+const IMPORTED_TESTIMONIAL_META_PREFIX = "[[codigo-lucrativo-imported-testimonial:";
+const IMPORTED_TESTIMONIAL_META_SUFFIX = "]]";
+
+type ImportedTestimonialMeta = {
+  hash: string;
+  name: string;
+  context: string;
+  image: string;
+};
+
 function testimonialImportHash(name: string, content: string) {
   return createHash("sha256").update(`${name.trim().toLowerCase()}|${content.trim().toLowerCase()}`).digest("hex").slice(0, 16);
 }
 
-async function ensureImportedTestimonialUser(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, item: AdminTestimonialImportItem) {
+function encodeImportedTestimonialMeta(meta: ImportedTestimonialMeta, note = "") {
+  const payload = Buffer.from(JSON.stringify(meta), "utf8").toString("base64url");
+  return `${IMPORTED_TESTIMONIAL_META_PREFIX}${payload}${IMPORTED_TESTIMONIAL_META_SUFFIX}${note ? `\n${note}` : ""}`;
+}
+
+function parseImportedTestimonialMeta(adminNote: string | null | undefined) {
+  const value = adminNote ?? "";
+  if (!value.startsWith(IMPORTED_TESTIMONIAL_META_PREFIX)) return { meta: null as ImportedTestimonialMeta | null, note: value };
+  const end = value.indexOf(IMPORTED_TESTIMONIAL_META_SUFFIX, IMPORTED_TESTIMONIAL_META_PREFIX.length);
+  if (end < 0) return { meta: null as ImportedTestimonialMeta | null, note: value };
+  const encoded = value.slice(IMPORTED_TESTIMONIAL_META_PREFIX.length, end);
+  const note = value.slice(end + IMPORTED_TESTIMONIAL_META_SUFFIX.length).replace(/^\n/, "");
+  try {
+    const parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")) as Partial<ImportedTestimonialMeta>;
+    if (!parsed.hash || !parsed.name) return { meta: null as ImportedTestimonialMeta | null, note };
+    return { meta: { hash: String(parsed.hash), name: String(parsed.name), context: String(parsed.context ?? ""), image: String(parsed.image ?? "") }, note };
+  } catch {
+    return { meta: null as ImportedTestimonialMeta | null, note };
+  }
+}
+
+function createImportedTestimonialAdminNote(adminUserId: number, item: AdminTestimonialImportItem) {
   const name = item.nome.trim();
   const content = item.texto.trim();
-  const hash = testimonialImportHash(name, content);
-  const openId = `imported-testimonial:${hash}`;
-  const email = `depoimento-${hash}@pagina-lucrativa.local`;
-  const existing = await db.select({ id: users.id }).from(users).where(eq(users.openId, openId)).limit(1);
-  if (existing[0]) {
-    await db.insert(memberProfiles).values({
-      userId: existing[0].id,
-      slug: `depoimento-${hash}`,
-      city: item.cargo_ou_contexto?.trim() || null,
-      state: null,
-      photoUrl: item.imagem?.trim() || null,
-    }).onDuplicateKeyUpdate({ set: { city: item.cargo_ou_contexto?.trim() || null, photoUrl: item.imagem?.trim() || null } });
-    return existing[0].id;
-  }
-  const result = await db.insert(users).values({ openId, name, email, loginMethod: "imported_testimonial", role: "user" });
-  const userId = Number(result[0].insertId);
-  await db.insert(memberProfiles).values({ userId, slug: `depoimento-${hash}`, city: item.cargo_ou_contexto?.trim() || null, state: null, photoUrl: item.imagem?.trim() || null });
-  return userId;
+  const meta: ImportedTestimonialMeta = {
+    hash: testimonialImportHash(name, content),
+    name,
+    context: item.cargo_ou_contexto?.trim() || "",
+    image: item.imagem?.trim() || "",
+  };
+  return encodeImportedTestimonialMeta(meta, `Importado por JSON no painel administrativo. Admin ID: ${adminUserId}.`);
+}
+
+function mergeImportedTestimonialAdminNote(currentNote: string | null | undefined, nextNote: string | null | undefined) {
+  const { meta } = parseImportedTestimonialMeta(currentNote);
+  if (!meta) return nextNote ?? null;
+  const { meta: nextMeta } = parseImportedTestimonialMeta(nextNote);
+  if (nextMeta) return nextNote ?? null;
+  return encodeImportedTestimonialMeta(meta, nextNote ?? "");
 }
 
 export async function createMemberTestimonial(userId: number, input: { content: string; rating: number }) {
@@ -2264,7 +2299,7 @@ export async function createMemberTestimonial(userId: number, input: { content: 
 export async function getAdminTestimonials() {
   const db = await getDb();
   if (!db) return [];
-  return db.select({
+  const rows = await db.select({
     id: memberTestimonials.id,
     userId: memberTestimonials.userId,
     content: memberTestimonials.content,
@@ -2282,14 +2317,25 @@ export async function getAdminTestimonials() {
     .leftJoin(users, eq(memberTestimonials.userId, users.id))
     .leftJoin(memberProfiles, eq(memberTestimonials.userId, memberProfiles.userId))
     .orderBy(desc(memberTestimonials.updatedAt));
+  return rows.map(item => {
+    const { meta, note } = parseImportedTestimonialMeta(item.adminNote);
+    return {
+      ...item,
+      adminNote: note || null,
+      memberName: meta?.name || item.memberName,
+      memberEmail: meta ? null : item.memberEmail,
+      photoUrl: meta?.image || item.photoUrl,
+      context: meta?.context || item.context,
+    };
+  });
 }
 
 export async function updateAdminTestimonial(testimonialId: number, input: { status: "pending" | "approved" | "rejected" | "archived"; adminNote?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const testimonial = await db.select({ id: memberTestimonials.id }).from(memberTestimonials).where(eq(memberTestimonials.id, testimonialId)).limit(1);
+  const testimonial = await db.select({ id: memberTestimonials.id, adminNote: memberTestimonials.adminNote }).from(memberTestimonials).where(eq(memberTestimonials.id, testimonialId)).limit(1);
   if (!testimonial[0]) throw new Error("Relato não encontrado.");
-  await db.update(memberTestimonials).set({ status: input.status, adminNote: input.adminNote ?? null }).where(eq(memberTestimonials.id, testimonialId));
+  await db.update(memberTestimonials).set({ status: input.status, adminNote: mergeImportedTestimonialAdminNote(testimonial[0].adminNote, input.adminNote ?? null) }).where(eq(memberTestimonials.id, testimonialId));
   return { success: true } as const;
 }
 
@@ -2319,19 +2365,23 @@ export async function importAdminTestimonialsJson(adminUserId: number, items: Ad
   let imported = 0;
   let skipped = 0;
   for (const item of normalized) {
-    const duplicateRows = await db.select({ id: memberTestimonials.id }).from(memberTestimonials)
+    const hash = testimonialImportHash(item.nome, item.texto);
+    const duplicateRows = await db.select({ id: memberTestimonials.id, adminNote: memberTestimonials.adminNote, memberName: users.name }).from(memberTestimonials)
       .leftJoin(users, eq(memberTestimonials.userId, users.id))
-      .where(and(eq(users.name, item.nome), eq(memberTestimonials.content, item.texto)))
-      .limit(1);
-    if (duplicateRows[0]) { skipped += 1; continue; }
-    const userId = await ensureImportedTestimonialUser(db, item);
+      .where(eq(memberTestimonials.content, item.texto))
+      .limit(50);
+    const hasDuplicate = duplicateRows.some(row => {
+      const { meta } = parseImportedTestimonialMeta(row.adminNote);
+      return meta?.hash === hash || (row.memberName?.trim().toLowerCase() === item.nome.trim().toLowerCase());
+    });
+    if (hasDuplicate) { skipped += 1; continue; }
     await db.insert(memberTestimonials).values({
-      userId,
+      userId: adminUserId,
       content: item.texto,
       rating: Math.min(5, Math.max(1, Number(item.avaliacao ?? 5) || 5)),
       authorConfirmed: 1,
       status: normalizeImportedTestimonialStatus(item.status),
-      adminNote: `Importado por JSON no painel administrativo. Admin ID: ${adminUserId}.`,
+      adminNote: createImportedTestimonialAdminNote(adminUserId, item),
     });
     imported += 1;
   }

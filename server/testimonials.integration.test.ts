@@ -35,6 +35,10 @@ describe("relatos próprios de membros", () => {
     expect(db).toContain("deleteAllAdminTestimonials");
     expect(db).toContain("testimonialImportHash");
     expect(db).toContain("skippedDuplicates");
+    expect(db).toContain("createImportedTestimonialAdminNote");
+    expect(db).toContain("userId: adminUserId");
+    expect(db).not.toContain("ensureImportedTestimonialUser");
+    expect(db).not.toContain('loginMethod: "imported_testimonial"');
   });
 
   it("usa relatos aprovados com avaliação como fonte real da prova social pública", () => {
@@ -50,5 +54,7 @@ describe("relatos próprios de membros", () => {
     expect(db).toContain("memberProfiles.photoUrl");
     expect(db).toContain("memberProfiles.city");
     expect(db).toContain("memberProfiles.state");
+    expect(db).toContain("photoUrl: meta ? meta.image || null : item.photoUrl");
+    expect(db).toContain("id: item.id,");
   });
 });

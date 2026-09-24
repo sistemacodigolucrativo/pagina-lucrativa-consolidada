@@ -115,6 +115,61 @@ function RatingStars({ rating }: { rating: number }) {
   </span>;
 }
 
+function formatPublicCounter(value: number) {
+  return Math.max(0, Math.round(value)).toLocaleString("pt-BR");
+}
+
+function AnimatedMemberCount({ value }: { value: number }) {
+  const [displayValue, setDisplayValue] = useState(0);
+  const [hasEnteredViewport, setHasEnteredViewport] = useState(false);
+  const counterRef = useRef<HTMLElement | null>(null);
+  const finalValue = Math.max(0, Math.round(value));
+
+  useEffect(() => {
+    setDisplayValue(hasEnteredViewport ? finalValue : 0);
+  }, [finalValue, hasEnteredViewport]);
+
+  useEffect(() => {
+    if (hasEnteredViewport || typeof window === "undefined") return;
+    const element = counterRef.current;
+    if (!element) return;
+    if (!("IntersectionObserver" in window)) {
+      setHasEnteredViewport(true);
+      return;
+    }
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) {
+        setHasEnteredViewport(true);
+        observer.disconnect();
+      }
+    }, { threshold: 0.35 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [hasEnteredViewport]);
+
+  useEffect(() => {
+    if (!hasEnteredViewport || typeof window === "undefined") return;
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion || finalValue === 0) {
+      setDisplayValue(finalValue);
+      return;
+    }
+    let frame = 0;
+    const duration = 1_600;
+    const start = window.performance.now();
+    const animate = (now: number) => {
+      const progress = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplayValue(Math.round(finalValue * eased));
+      if (progress < 1) frame = window.requestAnimationFrame(animate);
+    };
+    frame = window.requestAnimationFrame(animate);
+    return () => window.cancelAnimationFrame(frame);
+  }, [finalValue, hasEnteredViewport]);
+
+  return <strong ref={counterRef}>{formatPublicCounter(displayValue)}</strong>;
+}
+
 const virtualOfficeSlides = [
   { title: "Método e estrutura", caption: "Base de apresentação e dados essenciais preparados para iniciar sua operação." },
   { title: "Escritório Virtual", caption: "Painel para centralizar perfil, pedidos, campanhas e acompanhamento." },
@@ -376,7 +431,7 @@ export default function Home() {
             <p>{publicCopy(overrides, "social_proof", "description", "Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
           </div>
           <div className="social-proof-stats">
-            <article><span>Total de membros</span><strong>{socialProof.isLoading ? "..." : socialProof.isError ? "Indisponível" : socialProof.data?.memberCount ?? 0}</strong></article>
+            <article><span>Total de membros</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : <AnimatedMemberCount value={socialProof.data?.memberCount ?? 0} />}</article>
           </div>
           {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : testimonialItems.length ? <div className="testimonial-carousel" aria-label="Agradecimentos de membros">
             <div className="testimonial-carousel-track">
