@@ -172,6 +172,7 @@ function AppRoutes() {
     <Route path="/admin/futuras-implementacoes" component={AdminFutureImplementations} />
     <Route path="/admin/toast" component={AdminToast} />
     <Route path="/admin/divulgacao" component={AdminOperation} />
+    <Route path="/admin/suporte/encerrados" component={AdminSupport} />
     <Route path="/admin/suporte" component={AdminSupport} />
     <Route path="/admin/auditoria" component={AdminAudit} />
     <Route path="/admin/pedidos" component={AdminOrders} />

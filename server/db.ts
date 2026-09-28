@@ -2175,6 +2175,8 @@ export async function updateAdminContentStatus(contentId: number, status: "draft
 export async function getAdminTickets() {
   const db = await getDb();
   if (!db) return [];
+  const retentionLimit = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+  await db.delete(supportTickets).where(and(eq(supportTickets.status, "closed"), lte(supportTickets.updatedAt, retentionLimit)));
   return db.select().from(supportTickets).orderBy(desc(supportTickets.updatedAt));
 }
 

@@ -2,7 +2,8 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-const read = (file: string) => readFileSync(resolve(process.cwd(), file), "utf8");
+const read = (file: string) =>
+  readFileSync(resolve(process.cwd(), file), "utf8");
 
 describe("telas administrativas separadas e responsivas", () => {
   it("mantém Biblioteca de Recursos contida em mobile, tablet e desktop", () => {
@@ -16,9 +17,13 @@ describe("telas administrativas separadas e responsivas", () => {
 
   it("mantém o formulário da Biblioteca de Recursos fechado até o clique em Criar Conteúdo", () => {
     const source = read("client/src/pages/AdminPublications.tsx");
-    expect(source).toContain("const [showInlineForm, setShowInlineForm] = useState(false)");
+    expect(source).toContain(
+      "const [showInlineForm, setShowInlineForm] = useState(false)"
+    );
     expect(source).toContain("Criar Conteúdo");
-    expect(source).toContain("!config.splitFlow && isPublicationManager && !isPublicationDraftScreen");
+    expect(source).toContain(
+      "!config.splitFlow && isPublicationManager && !isPublicationDraftScreen"
+    );
     expect(source).toContain("showInlineForm ? <section");
     expect(source).toContain("else setShowInlineForm(false)");
   });
@@ -27,13 +32,21 @@ describe("telas administrativas separadas e responsivas", () => {
     const app = read("client/src/App.tsx");
     const publications = read("client/src/pages/AdminPublications.tsx");
     expect(app).toContain("function RouteScrollReset()");
-    expect(app).toContain('document.querySelector<HTMLElement>(".dashboard-main")?.scrollTo');
+    expect(app).toContain(
+      'document.querySelector<HTMLElement>(".dashboard-main")?.scrollTo'
+    );
     expect(app).toContain('path="/admin/publicacoes/rascunhos"');
     expect(app).toContain('path="/admin/publicacoes"');
     expect(app).toContain('<RedirectRoute to="/admin/biblioteca-recursos" />');
-    expect(app).not.toContain('path="/admin/publicacoes/rascunhos" component={AdminPublications}');
-    expect(app).not.toContain('path="/admin/publicacoes" component={AdminPublications}');
-    expect(app).toContain('path="/admin/biblioteca-recursos" component={AdminPublications}');
+    expect(app).not.toContain(
+      'path="/admin/publicacoes/rascunhos" component={AdminPublications}'
+    );
+    expect(app).not.toContain(
+      'path="/admin/publicacoes" component={AdminPublications}'
+    );
+    expect(app).toContain(
+      'path="/admin/biblioteca-recursos" component={AdminPublications}'
+    );
     expect(publications).toContain('"/admin/biblioteca-recursos"');
     expect(publications).toContain("Biblioteca de Recursos");
   });
@@ -44,7 +57,7 @@ describe("telas administrativas separadas e responsivas", () => {
     expect(app).toContain("/admin/ebooks/novo");
     expect(app).toContain("/admin/ebooks/:ebookId/editar");
     expect(ebooks).toContain('setLocation("/admin/ebooks/novo")');
-    expect(ebooks).toContain('setLocation(`/admin/ebooks/${id}/editar`)');
+    expect(ebooks).toContain("setLocation(`/admin/ebooks/${id}/editar`)");
     expect(ebooks).toContain('isLibraryFormScreen ? "hidden"');
     expect(ebooks).toContain('"Voltar para e-books"');
     expect(ebooks).toContain("sm:p-5");
@@ -53,7 +66,12 @@ describe("telas administrativas separadas e responsivas", () => {
   it("abre cada fila de agradecimentos em uma rota independente", () => {
     const app = read("client/src/App.tsx");
     const testimonials = read("client/src/pages/AdminTestimonials.tsx");
-    for (const route of ["/admin/relatos/em-analise", "/admin/relatos/aprovados", "/admin/relatos/necessita-ajuste", "/admin/relatos/arquivados"]) {
+    for (const route of [
+      "/admin/relatos/em-analise",
+      "/admin/relatos/aprovados",
+      "/admin/relatos/necessita-ajuste",
+      "/admin/relatos/arquivados",
+    ]) {
       expect(app).toContain(route);
       expect(testimonials).toContain(route);
     }
@@ -61,5 +79,25 @@ describe("telas administrativas separadas e responsivas", () => {
     expect(testimonials).toContain("Voltar para Agradecimentos");
     expect(testimonials).toContain("sm:grid-cols-2 lg:grid-cols-5");
     expect(testimonials).toContain("lg:grid-cols-[minmax(0,1fr)_180px_auto]");
+  });
+  it("separa tickets encerrados e mantém suporte ativo em barrinhas", () => {
+    const app = read("client/src/App.tsx");
+    const support = read("client/src/pages/AdminSupport.tsx");
+    const db = read("server/db.ts");
+    expect(app).toContain(
+      'path="/admin/suporte/encerrados" component={AdminSupport}'
+    );
+    expect(support).toContain(
+      'const isClosedScreen = location === "/admin/suporte/encerrados"'
+    );
+    expect(support).toContain("const activeTickets = useMemo(");
+    expect(support).toContain('item.status !== "closed"');
+    expect(support).toContain("const closedTickets = useMemo(");
+    expect(support).toContain("StatusIcon status={item.status}");
+    expect(support).toContain("support-ticket-details-${item.id}");
+    expect(db).toContain("90 * 24 * 60 * 60 * 1000");
+    expect(db).toContain(
+      'db.delete(supportTickets).where(and(eq(supportTickets.status, "closed"), lte(supportTickets.updatedAt, retentionLimit)))'
+    );
   });
 });

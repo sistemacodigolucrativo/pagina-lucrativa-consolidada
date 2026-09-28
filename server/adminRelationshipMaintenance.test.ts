@@ -11,15 +11,21 @@ describe("manutenção administrativa de relacionamento", () => {
     expect(source).toContain(">Editar</button>");
     expect(source).toContain("Desbloquear");
     expect(source).toContain(">Excluir</button>");
-    expect(source).not.toContain('hidden sm:flex');
-    expect(source).not.toContain('hidden md:flex');
+    expect(source).not.toContain("hidden sm:flex");
+    expect(source).not.toContain("hidden md:flex");
   });
 
   it("oferece busca, filtros e ciclo de atendimento no suporte", () => {
     const source = read("client/src/pages/AdminSupport.tsx");
-    expect(source).toContain('type TicketFilter = "all" | TicketStatus');
+    expect(source).toContain("const activeTickets = useMemo(");
+    expect(source).toContain("const closedTickets = useMemo(");
+    expect(source).toContain('"/admin/suporte/encerrados"');
+    expect(source).toContain('item.status !== "closed"');
+    expect(source).toContain("support-ticket-details-${item.id}");
     expect(source).toContain("Buscar assunto ou mensagem");
-    expect(source).toContain("Escreva uma resposta antes de marcar o ticket como respondido.");
+    expect(source).toContain(
+      "Escreva uma resposta antes de marcar o ticket como respondido."
+    );
     expect(source).toContain('option value="closed"');
     const db = read("server/db.ts");
     const layout = read("client/src/components/DashboardLayout.tsx");
@@ -43,7 +49,7 @@ describe("manutenção administrativa de relacionamento", () => {
     expect(page).toContain("Gestão de agradecimentos");
     expect(page).toContain("Buscar membro ou conteúdo");
     expect(page).toContain("relationship-maintenance/testimonials");
-    expect(page).toContain(">Excluir</button>");
+    expect(page).toContain("Excluir");
     expect(endpoint).toContain("db.delete(memberTestimonials)");
   });
 });

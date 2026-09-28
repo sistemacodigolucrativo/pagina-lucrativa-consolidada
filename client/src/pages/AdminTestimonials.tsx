@@ -1,17 +1,48 @@
-import DashboardLayout, { type DashboardMenuItem } from "@/components/DashboardLayout";
+import DashboardLayout, {
+  type DashboardMenuItem,
+} from "@/components/DashboardLayout";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
 import { useRapidClickToggle } from "@/hooks/useRapidClickToggle";
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, ClipboardCheck, Download, FileText, LayoutDashboard, Save, Search, Star, Trash2, Upload } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  ClipboardCheck,
+  Download,
+  FileText,
+  LayoutDashboard,
+  Save,
+  Search,
+  Star,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
 
 const menu: DashboardMenuItem[] = [
-  { icon: LayoutDashboard, label: "Dashboard", path: "/admin", group: "Visão geral" },
-  { icon: FileText, label: "Agradecimentos", path: "/admin/relatos", group: "Relacionamento" },
+  {
+    icon: LayoutDashboard,
+    label: "Dashboard",
+    path: "/admin",
+    group: "Visão geral",
+  },
+  {
+    icon: FileText,
+    label: "Agradecimentos",
+    path: "/admin/relatos",
+    group: "Relacionamento",
+  },
 ];
-const statusLabels = { pending: "Em análise", approved: "Aprovado", rejected: "Necessita ajuste", archived: "Arquivado" } as const;
+const statusLabels = {
+  pending: "Em análise",
+  approved: "Aprovado",
+  rejected: "Necessita ajuste",
+  archived: "Arquivado",
+} as const;
 type TestimonialStatus = keyof typeof statusLabels;
 const statusPaths: Record<TestimonialStatus, string> = {
   pending: "/admin/relatos/em-analise",
@@ -21,19 +52,23 @@ const statusPaths: Record<TestimonialStatus, string> = {
 };
 const statusOrder = ["pending", "approved", "rejected", "archived"] as const;
 
-const testimonialJsonTemplate = JSON.stringify({
-  depoimentos: [
-    {
-      nome: "Nome da pessoa",
-      texto: "Texto do agradecimento",
-      avaliacao: 5,
-      cargo_ou_contexto: "Aluno / Cliente / Membro",
-      imagem: "",
-      status: "ativo",
-      ordem: 1,
-    },
-  ],
-}, null, 2);
+const testimonialJsonTemplate = JSON.stringify(
+  {
+    depoimentos: [
+      {
+        nome: "Nome da pessoa",
+        texto: "Texto do agradecimento",
+        avaliacao: 5,
+        cargo_ou_contexto: "Aluno / Cliente / Membro",
+        imagem: "",
+        status: "ativo",
+        ordem: 1,
+      },
+    ],
+  },
+  null,
+  2
+);
 
 type TestimonialJsonItem = {
   nome: string;
@@ -41,39 +76,94 @@ type TestimonialJsonItem = {
   avaliacao?: number | null;
   cargo_ou_contexto?: string | null;
   imagem?: string | null;
-  status?: "ativo" | "rascunho" | "arquivado" | "approved" | "pending" | "archived" | null;
+  status?:
+    | "ativo"
+    | "rascunho"
+    | "arquivado"
+    | "approved"
+    | "pending"
+    | "archived"
+    | null;
   ordem?: number | null;
 };
 
-function parseTestimonialsJsonInput(value: string): { depoimentos: TestimonialJsonItem[] } {
+function testimonialTitle(item: {
+  memberName?: string | null;
+  content: string;
+}) {
+  const namedTitle = item.memberName?.trim();
+  if (namedTitle) return namedTitle;
+  return (
+    item.content.split(/\r?\n/)[0]?.trim().slice(0, 96) ||
+    "Depoimento sem título"
+  );
+}
+
+function parseTestimonialsJsonInput(value: string): {
+  depoimentos: TestimonialJsonItem[];
+} {
   let parsed: unknown;
   try {
     parsed = JSON.parse(value);
   } catch {
-    throw new Error("JSON malformado. Revise aspas, vírgulas e chaves antes de importar.");
+    throw new Error(
+      "JSON malformado. Revise aspas, vírgulas e chaves antes de importar."
+    );
   }
-  if (!parsed || typeof parsed !== "object" || !Array.isArray((parsed as { depoimentos?: unknown }).depoimentos)) {
-    throw new Error('O JSON precisa conter a chave "depoimentos" com uma lista de itens.');
+  if (
+    !parsed ||
+    typeof parsed !== "object" ||
+    !Array.isArray((parsed as { depoimentos?: unknown }).depoimentos)
+  ) {
+    throw new Error(
+      'O JSON precisa conter a chave "depoimentos" com uma lista de itens.'
+    );
   }
-  const depoimentos = (parsed as { depoimentos: unknown[] }).depoimentos.map((item, index) => {
-    if (!item || typeof item !== "object") throw new Error(`Agradecimento ${index + 1} precisa ser um objeto.`);
-    const record = item as Record<string, unknown>;
-    const nome = typeof record.nome === "string" ? record.nome.trim() : "";
-    const texto = typeof record.texto === "string" ? record.texto.trim() : "";
-    if (!nome || !texto) throw new Error(`Agradecimento ${index + 1} precisa ter nome e texto.`);
-    const avaliacao = typeof record.avaliacao === "number" && Number.isFinite(record.avaliacao) ? Math.max(1, Math.min(5, Math.round(record.avaliacao))) : 5;
-    const status = typeof record.status === "string" && ["ativo", "rascunho", "arquivado", "approved", "pending", "archived"].includes(record.status) ? record.status as TestimonialJsonItem["status"] : "ativo";
-    return {
-      nome,
-      texto,
-      avaliacao,
-      cargo_ou_contexto: typeof record.cargo_ou_contexto === "string" ? record.cargo_ou_contexto.trim() : "",
-      imagem: typeof record.imagem === "string" ? record.imagem.trim() : "",
-      status,
-      ordem: typeof record.ordem === "number" && Number.isFinite(record.ordem) ? Math.max(1, Math.round(record.ordem)) : index + 1,
-    };
-  });
-  if (!depoimentos.length) throw new Error("Inclua pelo menos um agradecimento para importar.");
+  const depoimentos = (parsed as { depoimentos: unknown[] }).depoimentos.map(
+    (item, index) => {
+      if (!item || typeof item !== "object")
+        throw new Error(`Agradecimento ${index + 1} precisa ser um objeto.`);
+      const record = item as Record<string, unknown>;
+      const nome = typeof record.nome === "string" ? record.nome.trim() : "";
+      const texto = typeof record.texto === "string" ? record.texto.trim() : "";
+      if (!nome || !texto)
+        throw new Error(`Agradecimento ${index + 1} precisa ter nome e texto.`);
+      const avaliacao =
+        typeof record.avaliacao === "number" &&
+        Number.isFinite(record.avaliacao)
+          ? Math.max(1, Math.min(5, Math.round(record.avaliacao)))
+          : 5;
+      const status =
+        typeof record.status === "string" &&
+        [
+          "ativo",
+          "rascunho",
+          "arquivado",
+          "approved",
+          "pending",
+          "archived",
+        ].includes(record.status)
+          ? (record.status as TestimonialJsonItem["status"])
+          : "ativo";
+      return {
+        nome,
+        texto,
+        avaliacao,
+        cargo_ou_contexto:
+          typeof record.cargo_ou_contexto === "string"
+            ? record.cargo_ou_contexto.trim()
+            : "",
+        imagem: typeof record.imagem === "string" ? record.imagem.trim() : "",
+        status,
+        ordem:
+          typeof record.ordem === "number" && Number.isFinite(record.ordem)
+            ? Math.max(1, Math.round(record.ordem))
+            : index + 1,
+      };
+    }
+  );
+  if (!depoimentos.length)
+    throw new Error("Inclua pelo menos um agradecimento para importar.");
   return { depoimentos };
 }
 
@@ -89,29 +179,36 @@ export default function AdminTestimonials() {
   const [expandedIds, setExpandedIds] = useState<Set<number>>(() => new Set());
   const [jsonInput, setJsonInput] = useState(testimonialJsonTemplate);
   const [jsonError, setJsonError] = useState<string | null>(null);
-  const [jsonPreview, setJsonPreview] = useState<TestimonialJsonItem[] | null>(null);
+  const [jsonPreview, setJsonPreview] = useState<TestimonialJsonItem[] | null>(
+    null
+  );
   const [replaceAllBeforeImport, setReplaceAllBeforeImport] = useState(false);
   const [exportedJson, setExportedJson] = useState("");
   const [reviewCounterEditorOpen, setReviewCounterEditorOpen] = useState(false);
   const [reviewCounterInput, setReviewCounterInput] = useState("");
-  const activeStatus = statusOrder.find(status => statusPaths[status] === location) ?? null;
+  const activeStatus =
+    statusOrder.find(status => statusPaths[status] === location) ?? null;
   const isQueueScreen = activeStatus !== null;
 
   useEffect(() => {
-    if (publicCounters.data) setReviewCounterInput(String(publicCounters.data.reviewIncrement));
+    if (publicCounters.data)
+      setReviewCounterInput(String(publicCounters.data.reviewIncrement));
   }, [publicCounters.data?.reviewIncrement]);
 
-
-  const updateReviewCounter = trpc.admin.updatePublicCounterIncrement.useMutation({
-    onSuccess: async () => {
-      await utils.admin.publicCounterSettings.invalidate();
-      toast.success("Contador público de avaliações atualizado.");
-    },
-    onError: error => toast.error(error.message),
-  });
+  const updateReviewCounter =
+    trpc.admin.updatePublicCounterIncrement.useMutation({
+      onSuccess: async () => {
+        await utils.admin.publicCounterSettings.invalidate();
+        toast.success("Contador público de avaliações atualizado.");
+      },
+      onError: error => toast.error(error.message),
+    });
 
   function saveReviewCounterIncrement(value: number) {
-    updateReviewCounter.mutate({ key: "public_reviews_counter_increment", value });
+    updateReviewCounter.mutate({
+      key: "public_reviews_counter_increment",
+      value,
+    });
   }
 
   const update = trpc.admin.updateTestimonial.useMutation({
@@ -126,7 +223,9 @@ export default function AdminTestimonials() {
     onSuccess: async result => {
       await utils.admin.testimonials.invalidate();
       setJsonError(null);
-      toast.success(`${result.created} agradecimentos importados. ${result.skippedDuplicates} duplicados ignorados.`);
+      toast.success(
+        `${result.created} agradecimentos importados. ${result.skippedDuplicates} duplicados ignorados.`
+      );
     },
     onError: error => toast.error(error.message),
   });
@@ -137,9 +236,13 @@ export default function AdminTestimonials() {
       setExportedJson(json);
       try {
         await navigator.clipboard?.writeText(json);
-        toast.success("JSON dos agradecimentos copiado para a área de transferência.");
+        toast.success(
+          "JSON dos agradecimentos copiado para a área de transferência."
+        );
       } catch {
-        toast.success("JSON dos agradecimentos gerado para copiar manualmente.");
+        toast.success(
+          "JSON dos agradecimentos gerado para copiar manualmente."
+        );
       }
     },
     onError: error => toast.error(error.message),
@@ -149,12 +252,18 @@ export default function AdminTestimonials() {
     onSuccess: async result => {
       setExportedJson(JSON.stringify(result.backup, null, 2));
       await utils.admin.testimonials.invalidate();
-      toast.success(`${result.deleted} agradecimentos removidos. Backup JSON gerado abaixo.`);
+      toast.success(
+        `${result.deleted} agradecimentos removidos. Backup JSON gerado abaixo.`
+      );
     },
     onError: error => toast.error(error.message),
   });
 
-  function save(id: number, status: TestimonialStatus, fallbackNote: string | null) {
+  function save(
+    id: number,
+    status: TestimonialStatus,
+    fallbackNote: string | null
+  ) {
     update.mutate({ id, status, adminNote: notes[id] ?? fallbackNote ?? null });
   }
 
@@ -163,7 +272,9 @@ export default function AdminTestimonials() {
       const parsed = parseTestimonialsJsonInput(jsonInput);
       setJsonPreview(parsed.depoimentos);
       setJsonError(null);
-      toast.success(`${parsed.depoimentos.length} agradecimentos detectados no JSON.`);
+      toast.success(
+        `${parsed.depoimentos.length} agradecimentos detectados no JSON.`
+      );
       return parsed;
     } catch (error) {
       const message = error instanceof Error ? error.message : "JSON inválido.";
@@ -177,12 +288,23 @@ export default function AdminTestimonials() {
   function importJsonInput() {
     const parsed = validateJsonInput();
     if (!parsed) return;
-    if (replaceAllBeforeImport && !window.confirm("Substituir todos os agradecimentos atuais antes da importação? Um backup JSON deve ser exportado antes desta ação.")) return;
-    importTestimonials.mutate({ depoimentos: parsed.depoimentos, replaceAll: replaceAllBeforeImport });
+    if (
+      replaceAllBeforeImport &&
+      !window.confirm(
+        "Substituir todos os agradecimentos atuais antes da importação? Um backup JSON deve ser exportado antes desta ação."
+      )
+    )
+      return;
+    importTestimonials.mutate({
+      depoimentos: parsed.depoimentos,
+      replaceAll: replaceAllBeforeImport,
+    });
   }
 
   function deleteAllWithConfirmation() {
-    const confirmation = window.prompt('Para deletar todos os agradecimentos, digite exatamente: DELETAR AGRADECIMENTOS');
+    const confirmation = window.prompt(
+      "Para deletar todos os agradecimentos, digite exatamente: DELETAR AGRADECIMENTOS"
+    );
     if (confirmation !== "DELETAR AGRADECIMENTOS") {
       toast.error("Confirmação inválida. Nenhum agradecimento foi removido.");
       return;
@@ -193,19 +315,23 @@ export default function AdminTestimonials() {
   function toggleExpanded(id: number) {
     setExpandedIds(current => {
       const next = new Set(current);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
 
   const all = testimonials.data ?? [];
-  const counts = useMemo(() => ({
-    all: all.length,
-    pending: all.filter(item => item.status === "pending").length,
-    approved: all.filter(item => item.status === "approved").length,
-    rejected: all.filter(item => item.status === "rejected").length,
-    archived: all.filter(item => item.status === "archived").length,
-  }), [all]);
+  const counts = useMemo(
+    () => ({
+      all: all.length,
+      pending: all.filter(item => item.status === "pending").length,
+      approved: all.filter(item => item.status === "approved").length,
+      rejected: all.filter(item => item.status === "rejected").length,
+      archived: all.filter(item => item.status === "archived").length,
+    }),
+    [all]
+  );
 
   const visible = useMemo(() => {
     if (!activeStatus) return [];
@@ -213,21 +339,41 @@ export default function AdminTestimonials() {
     return all.filter(item => {
       if (item.status !== activeStatus) return false;
       if (!term) return true;
-      return [item.memberName ?? "", item.memberEmail ?? "", item.content, item.adminNote ?? ""].some(value => value.toLowerCase().includes(term));
+      return [
+        item.memberName ?? "",
+        item.memberEmail ?? "",
+        item.content,
+        item.adminNote ?? "",
+      ].some(value => value.toLowerCase().includes(term));
     });
   }, [activeStatus, all, query]);
 
   async function remove(id: number, memberName: string | null) {
-    if (!window.confirm(`Excluir definitivamente o agradecimento de ${memberName || "este membro"}?\n\nEsta ação não poderá ser desfeita.`)) return;
+    if (
+      !window.confirm(
+        `Excluir definitivamente o agradecimento de ${memberName || "este membro"}?\n\nEsta ação não poderá ser desfeita.`
+      )
+    )
+      return;
     setDeletingId(id);
     try {
-      const response = await fetch(withAppBase(`/api/admin/relationship-maintenance/testimonials/${id}`), { method: "DELETE", credentials: "include" });
+      const response = await fetch(
+        withAppBase(`/api/admin/relationship-maintenance/testimonials/${id}`),
+        { method: "DELETE", credentials: "include" }
+      );
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(data.error || "Não foi possível excluir o agradecimento.");
+      if (!response.ok)
+        throw new Error(
+          data.error || "Não foi possível excluir o agradecimento."
+        );
       await utils.admin.testimonials.invalidate();
       toast.success("Agradecimento excluído.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível excluir o agradecimento.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível excluir o agradecimento."
+      );
     } finally {
       setDeletingId(null);
     }
@@ -237,9 +383,13 @@ export default function AdminTestimonials() {
     <DashboardLayout menuItems={menu} title="Administração">
       <main className="mx-auto w-full min-w-0 max-w-6xl space-y-6 overflow-x-clip p-4 sm:space-y-7 sm:p-6 lg:p-8">
         <header className="min-w-0 space-y-2">
-          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Gestão de agradecimentos</span>
+          <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">
+            Gestão de agradecimentos
+          </span>
           <h1 className="break-words text-2xl font-semibold text-white sm:text-3xl">
-            {activeStatus ? `Agradecimentos — ${statusLabels[activeStatus]}` : "Agradecimentos de membros"}
+            {activeStatus
+              ? `Agradecimentos — ${statusLabels[activeStatus]}`
+              : "Agradecimentos de membros"}
           </h1>
           <p className="max-w-3xl text-sm leading-6 text-zinc-300">
             {activeStatus
@@ -250,82 +400,253 @@ export default function AdminTestimonials() {
 
         {!isQueueScreen ? (
           <>
-            <section className="min-w-0 overflow-hidden rounded-2xl border border-emerald-300/15 bg-zinc-950/60 p-4 sm:p-6" aria-labelledby="public-review-counter-title">
+            <section
+              className="min-w-0 overflow-hidden rounded-2xl border border-emerald-300/15 bg-zinc-950/60 p-4 sm:p-6"
+              aria-labelledby="public-review-counter-title"
+            >
               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">Exibição pública</span>
-                  <h2 id="public-review-counter-title" className="mt-1 break-words text-lg font-semibold text-white">Contador público de avaliações</h2>
-                  <p className="mt-1 text-sm leading-6 text-zinc-400">O incremento altera somente o contador visual da página pública. Não cria agradecimentos, não muda a média real e não altera a lista cadastrada.</p>
+                  <span className="text-xs uppercase tracking-[0.16em] text-emerald-300">
+                    Exibição pública
+                  </span>
+                  <h2
+                    id="public-review-counter-title"
+                    className="mt-1 break-words text-lg font-semibold text-white"
+                  >
+                    Contador público de avaliações
+                  </h2>
+                  <p className="mt-1 text-sm leading-6 text-zinc-400">
+                    O incremento altera somente o contador visual da página
+                    pública. Não cria agradecimentos, não muda a média real e
+                    não altera a lista cadastrada.
+                  </p>
                 </div>
-                {counterControlsVisible ? <button type="button" onClick={() => setReviewCounterEditorOpen(value => !value)} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-300/30 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/10">Ajustar contador de avaliações</button> : null}
+                {counterControlsVisible ? (
+                  <button
+                    type="button"
+                    onClick={() => setReviewCounterEditorOpen(value => !value)}
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-emerald-300/30 px-3 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-300/10"
+                  >
+                    Ajustar contador de avaliações
+                  </button>
+                ) : null}
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-xs uppercase tracking-wider text-zinc-500">Avaliações reais</span><strong className="mt-1 block text-2xl text-white">{publicCounters.isLoading ? "..." : publicCounters.data?.realReviews ?? 0}</strong></div>
-                <div className="rounded-xl border border-white/10 bg-black/25 p-3"><span className="text-xs uppercase tracking-wider text-zinc-500">Incremento manual</span><strong className="mt-1 block text-2xl text-emerald-200">+{publicCounters.isLoading ? "..." : publicCounters.data?.reviewIncrement ?? 0}</strong></div>
-                <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3"><span className="text-xs uppercase tracking-wider text-emerald-200">Total exibido publicamente</span><strong className="mt-1 block text-2xl text-white">{publicCounters.isLoading ? "..." : publicCounters.data?.publicReviewsTotal ?? 0}</strong></div>
+                <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+                  <span className="text-xs uppercase tracking-wider text-zinc-500">
+                    Avaliações reais
+                  </span>
+                  <strong className="mt-1 block text-2xl text-white">
+                    {publicCounters.isLoading
+                      ? "..."
+                      : (publicCounters.data?.realReviews ?? 0)}
+                  </strong>
+                </div>
+                <div className="rounded-xl border border-white/10 bg-black/25 p-3">
+                  <span className="text-xs uppercase tracking-wider text-zinc-500">
+                    Incremento manual
+                  </span>
+                  <strong className="mt-1 block text-2xl text-emerald-200">
+                    +
+                    {publicCounters.isLoading
+                      ? "..."
+                      : (publicCounters.data?.reviewIncrement ?? 0)}
+                  </strong>
+                </div>
+                <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/10 p-3">
+                  <span className="text-xs uppercase tracking-wider text-emerald-200">
+                    Total exibido publicamente
+                  </span>
+                  <strong className="mt-1 block text-2xl text-white">
+                    {publicCounters.isLoading
+                      ? "..."
+                      : (publicCounters.data?.publicReviewsTotal ?? 0)}
+                  </strong>
+                </div>
               </div>
-              {counterControlsVisible && reviewCounterEditorOpen ? <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/10 bg-black/25 p-3 sm:flex-row sm:items-end">
-                <label className="flex-1 text-sm text-zinc-200">Quantidade adicional de avaliações
-                  <input type="number" min="0" step="1" inputMode="numeric" value={reviewCounterInput} onChange={event => setReviewCounterInput(event.target.value.replace(/\D/g, ""))} className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/40 focus:ring-2" />
-                </label>
-                <button type="button" disabled={updateReviewCounter.isPending} onClick={() => saveReviewCounterIncrement(Number(reviewCounterInput || 0))} className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"><Save className="size-4" />Salvar</button>
-                <button type="button" disabled={updateReviewCounter.isPending} onClick={() => { setReviewCounterInput("0"); saveReviewCounterIncrement(0); }} className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-200 disabled:opacity-60">Zerar incremento</button>
-              </div> : null}
+              {counterControlsVisible && reviewCounterEditorOpen ? (
+                <div className="mt-4 flex flex-col gap-3 rounded-xl border border-white/10 bg-black/25 p-3 sm:flex-row sm:items-end">
+                  <label className="flex-1 text-sm text-zinc-200">
+                    Quantidade adicional de avaliações
+                    <input
+                      type="number"
+                      min="0"
+                      step="1"
+                      inputMode="numeric"
+                      value={reviewCounterInput}
+                      onChange={event =>
+                        setReviewCounterInput(
+                          event.target.value.replace(/\D/g, "")
+                        )
+                      }
+                      className="mt-1 w-full rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/40 focus:ring-2"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    disabled={updateReviewCounter.isPending}
+                    onClick={() =>
+                      saveReviewCounterIncrement(
+                        Number(reviewCounterInput || 0)
+                      )
+                    }
+                    className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black disabled:opacity-60"
+                  >
+                    <Save className="size-4" />
+                    Salvar
+                  </button>
+                  <button
+                    type="button"
+                    disabled={updateReviewCounter.isPending}
+                    onClick={() => {
+                      setReviewCounterInput("0");
+                      saveReviewCounterIncrement(0);
+                    }}
+                    className="inline-flex min-h-10 items-center justify-center rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-200 disabled:opacity-60"
+                  >
+                    Zerar incremento
+                  </button>
+                </div>
+              ) : null}
             </section>
 
             <section className="min-w-0 overflow-hidden rounded-2xl border border-amber-300/15 bg-zinc-950/60 p-4 sm:p-6">
               <div className="grid min-w-0 gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
                 <div className="min-w-0 space-y-4">
                   <div className="min-w-0">
-                    <span className="text-xs uppercase tracking-[0.16em] text-amber-200">Importação por JSON</span>
-                    <h2 className="mt-1 break-words text-lg font-semibold text-white">Importar agradecimentos gerados por IA</h2>
-                    <p className="mt-1 text-sm leading-6 text-zinc-400">Cole uma lista no formato padrão, valide a estrutura e importe sem alterar o layout público atual.</p>
+                    <span className="text-xs uppercase tracking-[0.16em] text-amber-200">
+                      Importação por JSON
+                    </span>
+                    <h2 className="mt-1 break-words text-lg font-semibold text-white">
+                      Importar agradecimentos gerados por IA
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-zinc-400">
+                      Cole uma lista no formato padrão, valide a estrutura e
+                      importe sem alterar o layout público atual.
+                    </p>
                   </div>
                   <textarea
                     value={jsonInput}
-                    onChange={event => { setJsonInput(event.target.value); setJsonError(null); }}
+                    onChange={event => {
+                      setJsonInput(event.target.value);
+                      setJsonError(null);
+                    }}
                     className="min-h-72 w-full min-w-0 rounded-xl border border-white/15 bg-black/45 px-3 py-3 font-mono text-xs leading-5 text-zinc-100 outline-none ring-amber-300/40 focus:ring-2"
                     spellCheck={false}
                     aria-label="JSON de agradecimentos"
                   />
-                  {jsonError ? <p className="rounded-xl border border-red-300/30 bg-red-950/25 px-3 py-2 text-sm text-red-100">{jsonError}</p> : null}
+                  {jsonError ? (
+                    <p className="rounded-xl border border-red-300/30 bg-red-950/25 px-3 py-2 text-sm text-red-100">
+                      {jsonError}
+                    </p>
+                  ) : null}
                   <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:flex-wrap">
-                    <button type="button" onClick={validateJsonInput} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-amber-200/30 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-200/10"><ClipboardCheck className="size-4" />Validar JSON</button>
-                    <button type="button" onClick={importJsonInput} disabled={importTestimonials.isPending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-200 disabled:opacity-60"><Upload className="size-4" />Importar agradecimentos</button>
-                    <button type="button" onClick={() => exportTestimonials.mutate()} disabled={exportTestimonials.isPending} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 disabled:opacity-60"><Download className="size-4" />Exportar agradecimentos</button>
-                    <button type="button" onClick={deleteAllWithConfirmation} disabled={deleteAllTestimonials.isPending || counts.all === 0} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-red-400/35 px-4 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:opacity-50"><Trash2 className="size-4" />Deletar todos os agradecimentos</button>
+                    <button
+                      type="button"
+                      onClick={validateJsonInput}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-amber-200/30 px-4 py-2 text-sm font-semibold text-amber-100 transition hover:bg-amber-200/10"
+                    >
+                      <ClipboardCheck className="size-4" />
+                      Validar JSON
+                    </button>
+                    <button
+                      type="button"
+                      onClick={importJsonInput}
+                      disabled={importTestimonials.isPending}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-amber-300 px-4 py-2 text-sm font-semibold text-black transition hover:bg-amber-200 disabled:opacity-60"
+                    >
+                      <Upload className="size-4" />
+                      Importar agradecimentos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => exportTestimonials.mutate()}
+                      disabled={exportTestimonials.isPending}
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-white/15 px-4 py-2 text-sm font-semibold text-zinc-100 transition hover:bg-white/10 disabled:opacity-60"
+                    >
+                      <Download className="size-4" />
+                      Exportar agradecimentos
+                    </button>
+                    <button
+                      type="button"
+                      onClick={deleteAllWithConfirmation}
+                      disabled={
+                        deleteAllTestimonials.isPending || counts.all === 0
+                      }
+                      className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg border border-red-400/35 px-4 py-2 text-sm font-semibold text-red-200 transition hover:bg-red-500/10 disabled:opacity-50"
+                    >
+                      <Trash2 className="size-4" />
+                      Deletar todos os agradecimentos
+                    </button>
                   </div>
                   <label className="flex items-start gap-2 text-sm leading-6 text-zinc-300">
-                    <input type="checkbox" checked={replaceAllBeforeImport} onChange={event => setReplaceAllBeforeImport(event.target.checked)} className="mt-1 size-4 rounded border-white/20 bg-black text-amber-300" />
-                    Substituir todos os agradecimentos antes de importar. Use somente após exportar backup JSON.
+                    <input
+                      type="checkbox"
+                      checked={replaceAllBeforeImport}
+                      onChange={event =>
+                        setReplaceAllBeforeImport(event.target.checked)
+                      }
+                      className="mt-1 size-4 rounded border-white/20 bg-black text-amber-300"
+                    />
+                    Substituir todos os agradecimentos antes de importar. Use
+                    somente após exportar backup JSON.
                   </label>
                   {exportedJson ? (
                     <div className="min-w-0 rounded-xl border border-white/10 bg-black/30 p-3">
-                      <p className="mb-2 text-xs uppercase tracking-wider text-zinc-400">Backup/exportação JSON</p>
-                      <textarea value={exportedJson} readOnly className="min-h-36 w-full min-w-0 rounded-lg border border-white/10 bg-black px-3 py-2 font-mono text-xs leading-5 text-zinc-200" />
+                      <p className="mb-2 text-xs uppercase tracking-wider text-zinc-400">
+                        Backup/exportação JSON
+                      </p>
+                      <textarea
+                        value={exportedJson}
+                        readOnly
+                        className="min-h-36 w-full min-w-0 rounded-lg border border-white/10 bg-black px-3 py-2 font-mono text-xs leading-5 text-zinc-200"
+                      />
                     </div>
                   ) : null}
                 </div>
                 <aside className="min-w-0 space-y-4">
                   <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                    <h3 className="text-sm font-semibold text-white">Modelo para copiar e enviar para IA</h3>
-                    <pre className="mt-3 max-h-72 overflow-auto rounded-lg border border-white/10 bg-black p-3 text-xs leading-5 text-zinc-300"><code>{testimonialJsonTemplate}</code></pre>
+                    <h3 className="text-sm font-semibold text-white">
+                      Modelo para copiar e enviar para IA
+                    </h3>
+                    <pre className="mt-3 max-h-72 overflow-auto rounded-lg border border-white/10 bg-black p-3 text-xs leading-5 text-zinc-300">
+                      <code>{testimonialJsonTemplate}</code>
+                    </pre>
                   </div>
                   <div className="rounded-xl border border-white/10 bg-black/25 p-4">
-                    <h3 className="text-sm font-semibold text-white">Pré-visualização</h3>
+                    <h3 className="text-sm font-semibold text-white">
+                      Pré-visualização
+                    </h3>
                     {jsonPreview?.length ? (
                       <div className="mt-3 space-y-2">
-                        <p className="text-xs text-emerald-200">{jsonPreview.length} agradecimentos detectados</p>
+                        <p className="text-xs text-emerald-200">
+                          {jsonPreview.length} agradecimentos detectados
+                        </p>
                         {jsonPreview.slice(0, 6).map((item, index) => (
-                          <div key={`${item.nome}-${index}`} className="rounded-lg border border-white/10 bg-zinc-950/80 p-3">
-                            <p className="break-words text-sm font-semibold text-white">{item.nome}</p>
-                            <p className="mt-1 line-clamp-2 break-words text-xs leading-5 text-zinc-400">{item.texto}</p>
+                          <div
+                            key={`${item.nome}-${index}`}
+                            className="rounded-lg border border-white/10 bg-zinc-950/80 p-3"
+                          >
+                            <p className="break-words text-sm font-semibold text-white">
+                              {item.nome}
+                            </p>
+                            <p className="mt-1 line-clamp-2 break-words text-xs leading-5 text-zinc-400">
+                              {item.texto}
+                            </p>
                           </div>
                         ))}
-                        {jsonPreview.length > 6 ? <p className="text-xs text-zinc-500">Mais {jsonPreview.length - 6} itens serão importados.</p> : null}
+                        {jsonPreview.length > 6 ? (
+                          <p className="text-xs text-zinc-500">
+                            Mais {jsonPreview.length - 6} itens serão
+                            importados.
+                          </p>
+                        ) : null}
                       </div>
                     ) : (
-                      <p className="mt-3 text-sm leading-6 text-zinc-400">Valide o JSON para ver quantos agradecimentos serão importados antes de salvar.</p>
+                      <p className="mt-3 text-sm leading-6 text-zinc-400">
+                        Valide o JSON para ver quantos agradecimentos serão
+                        importados antes de salvar.
+                      </p>
                     )}
                   </div>
                 </aside>
@@ -334,8 +655,12 @@ export default function AdminTestimonials() {
 
             <section className="grid min-w-0 gap-3 sm:grid-cols-2 lg:grid-cols-5">
               <div className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-4">
-                <span className="text-xs uppercase tracking-wider text-zinc-400">Todos</span>
-                <strong className="mt-1 block text-2xl text-white">{counts.all}</strong>
+                <span className="text-xs uppercase tracking-wider text-zinc-400">
+                  Todos
+                </span>
+                <strong className="mt-1 block text-2xl text-white">
+                  {counts.all}
+                </strong>
               </div>
               {statusOrder.map(status => (
                 <button
@@ -344,48 +669,105 @@ export default function AdminTestimonials() {
                   onClick={() => setLocation(statusPaths[status])}
                   className="min-w-0 rounded-2xl border border-white/10 bg-zinc-950/60 p-4 text-left transition hover:border-emerald-300/40 hover:bg-emerald-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60"
                 >
-                  <span className="block break-words text-xs uppercase tracking-wider text-zinc-400">{statusLabels[status]}</span>
-                  <strong className="mt-1 block text-2xl text-white">{counts[status]}</strong>
+                  <span className="block break-words text-xs uppercase tracking-wider text-zinc-400">
+                    {statusLabels[status]}
+                  </span>
+                  <strong className="mt-1 block text-2xl text-white">
+                    {counts[status]}
+                  </strong>
                 </button>
               ))}
             </section>
 
-            <section id="testimonial-all-list" className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-6">
+            <section
+              id="testimonial-all-list"
+              className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-6"
+            >
               <div className="mb-4 min-w-0">
-                <h2 className="break-words font-medium text-white">Todos os agradecimentos</h2>
-                <p className="mt-1 text-xs text-zinc-500">{counts.all} registros cadastrados</p>
+                <h2 className="break-words font-medium text-white">
+                  Todos os agradecimentos
+                </h2>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {counts.all} registros cadastrados
+                </p>
               </div>
               {testimonials.isLoading ? (
-                <p className="text-sm text-zinc-400">Carregando agradecimentos...</p>
+                <p className="text-sm text-zinc-400">
+                  Carregando agradecimentos...
+                </p>
               ) : testimonials.isError ? (
-                <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">Não foi possível carregar os agradecimentos. Confirme a sessão administrativa e tente novamente.</p>
+                <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">
+                  Não foi possível carregar os agradecimentos. Confirme a sessão
+                  administrativa e tente novamente.
+                </p>
               ) : all.length ? (
                 <div className="space-y-3">
                   {all.map(item => {
                     const expanded = expandedIds.has(item.id);
                     return (
-                      <article key={item.id} className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25 p-3 sm:p-4">
-                        <button type="button" onClick={() => toggleExpanded(item.id)} aria-expanded={expanded} aria-controls={`testimonial-content-${item.id}`} className="block w-full min-w-0 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300/60">
-                          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                            <div className="min-w-0 flex-1">
-                              <span className="text-xs uppercase tracking-wider text-emerald-200">{statusLabels[item.status as TestimonialStatus]}</span>
-                              <h3 className="mt-1 break-words font-medium text-white">{item.memberName || "Membro sem nome"}</h3>
-                              <p className="break-words text-xs text-zinc-500">{item.memberEmail || "E-mail não informado"}</p>
-                            </div>
-                            <time className="shrink-0 text-xs text-zinc-500">Atualizado em {new Date(item.updatedAt).toLocaleString("pt-BR")}</time>
-                          </div>
-                          <p id={`testimonial-content-${item.id}`} className={`mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200 ${expanded ? "" : "line-clamp-3"}`}>{item.content}</p>
-                          <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-emerald-200">
-                            {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                            {expanded ? "Recolher agradecimento" : "Ver agradecimento completo"}
+                      <article
+                        key={item.id}
+                        className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => toggleExpanded(item.id)}
+                          aria-expanded={expanded}
+                          aria-controls={`testimonial-content-${item.id}`}
+                          className="flex min-h-11 w-full min-w-0 items-center gap-3 px-3 py-2 text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-300/60 sm:px-4"
+                        >
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
+                            {testimonialTitle(item)}
+                          </span>
+                          <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-200">
+                            {expanded ? (
+                              <ChevronUp className="size-4" />
+                            ) : (
+                              <ChevronDown className="size-4" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {expanded ? "Recolher" : "Expandir"}
+                            </span>
                           </span>
                         </button>
+                        {expanded ? (
+                          <div
+                            id={`testimonial-content-${item.id}`}
+                            className="border-t border-white/10 px-3 pb-4 pt-4 sm:px-4 sm:pb-5"
+                          >
+                            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="min-w-0 flex-1">
+                                <span className="text-xs uppercase tracking-wider text-emerald-200">
+                                  {
+                                    statusLabels[
+                                      item.status as TestimonialStatus
+                                    ]
+                                  }
+                                </span>
+                                <p className="mt-1 break-words text-xs text-zinc-500">
+                                  {item.memberEmail || "E-mail não informado"}
+                                </p>
+                              </div>
+                              <time className="shrink-0 text-xs text-zinc-500">
+                                Atualizado em{" "}
+                                {new Date(item.updatedAt).toLocaleString(
+                                  "pt-BR"
+                                )}
+                              </time>
+                            </div>
+                            <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200">
+                              {item.content}
+                            </p>
+                          </div>
+                        ) : null}
                       </article>
                     );
                   })}
                 </div>
               ) : (
-                <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">Ainda não há agradecimentos cadastrados.</p>
+                <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">
+                  Ainda não há agradecimentos cadastrados.
+                </p>
               )}
             </section>
           </>
@@ -400,29 +782,53 @@ export default function AdminTestimonials() {
               Voltar para Agradecimentos
             </button>
 
-            <section id="testimonial-moderation-list" className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-6">
+            <section
+              id="testimonial-moderation-list"
+              className="min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-zinc-950/60 p-4 sm:p-6"
+            >
               <div className="mb-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="min-w-0">
-                  <h2 className="break-words font-medium text-white">{activeStatus ? statusLabels[activeStatus] : "Fila de moderação"}</h2>
-                  <p className="mt-1 text-xs text-zinc-500">{activeStatus ? `${counts[activeStatus]} registros neste status` : ""}</p>
+                  <h2 className="break-words font-medium text-white">
+                    {activeStatus
+                      ? statusLabels[activeStatus]
+                      : "Fila de moderação"}
+                  </h2>
+                  <p className="mt-1 text-xs text-zinc-500">
+                    {activeStatus
+                      ? `${counts[activeStatus]} registros neste status`
+                      : ""}
+                  </p>
                 </div>
                 <label className="relative block w-full sm:max-w-sm">
                   <Search className="pointer-events-none absolute left-3 top-3 size-4 text-zinc-500" />
-                  <input value={query} onChange={event => setQuery(event.target.value)} placeholder="Buscar membro ou conteúdo" className="h-10 w-full min-w-0 rounded-lg border border-white/15 bg-black pl-9 pr-3 text-sm text-white" />
+                  <input
+                    value={query}
+                    onChange={event => setQuery(event.target.value)}
+                    placeholder="Buscar membro ou conteúdo"
+                    className="h-10 w-full min-w-0 rounded-lg border border-white/15 bg-black pl-9 pr-3 text-sm text-white"
+                  />
                 </label>
               </div>
 
               {testimonials.isLoading ? (
-                <p className="text-sm text-zinc-400">Carregando agradecimentos...</p>
+                <p className="text-sm text-zinc-400">
+                  Carregando agradecimentos...
+                </p>
               ) : testimonials.isError ? (
-                <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">Não foi possível carregar a fila de agradecimentos. Confirme a sessão administrativa e tente novamente.</p>
+                <p className="rounded-xl border border-red-300/30 p-4 text-sm text-red-200">
+                  Não foi possível carregar a fila de agradecimentos. Confirme a
+                  sessão administrativa e tente novamente.
+                </p>
               ) : visible.length ? (
                 <div className="space-y-2">
                   {visible.map(item => {
                     const expanded = expandedIds.has(item.id);
                     const detailsId = `testimonial-moderation-details-${item.id}`;
                     return (
-                      <article key={item.id} className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25">
+                      <article
+                        key={item.id}
+                        className="min-w-0 overflow-hidden rounded-xl border border-white/10 bg-black/25"
+                      >
                         <button
                           type="button"
                           onClick={() => toggleExpanded(item.id)}
@@ -430,42 +836,118 @@ export default function AdminTestimonials() {
                           aria-controls={detailsId}
                           className="flex min-h-11 w-full min-w-0 items-center gap-2 px-3 py-2 text-left transition hover:bg-white/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-emerald-300/60 sm:gap-3 sm:px-4"
                         >
-                          <span className="shrink-0 rounded-full border border-emerald-300/20 bg-emerald-300/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
-                            {statusLabels[item.status as TestimonialStatus]}
+                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">
+                            {testimonialTitle(item)}
                           </span>
-                          <span className="min-w-0 flex-1 truncate text-sm font-medium text-white">{item.memberName || "Membro sem nome"}</span>
-                          <span className="hidden min-w-0 max-w-52 truncate text-xs text-zinc-500 md:block">{item.memberEmail || "E-mail não informado"}</span>
                           <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-200">
-                            {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-                            <span className="hidden sm:inline">{expanded ? "Recolher" : "Expandir"}</span>
+                            {expanded ? (
+                              <ChevronUp className="size-4" />
+                            ) : (
+                              <ChevronDown className="size-4" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {expanded ? "Recolher" : "Expandir"}
+                            </span>
                           </span>
                         </button>
 
                         {expanded ? (
-                          <div id={detailsId} className="min-w-0 border-t border-white/10 px-3 pb-4 pt-4 sm:px-4 sm:pb-5">
+                          <div
+                            id={detailsId}
+                            className="min-w-0 border-t border-white/10 px-3 pb-4 pt-4 sm:px-4 sm:pb-5"
+                          >
                             <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                               <div className="min-w-0 flex-1">
-                                <p className="break-words text-sm text-zinc-500">{item.memberEmail || "E-mail não informado"}</p>
-                                <p className="mt-1 flex items-center gap-1 text-xs text-zinc-400"><Star className="size-3 text-emerald-300" />{item.rating ? `${item.rating}/5` : "Sem avaliação registrada"}</p>
+                                <p className="break-words text-sm text-zinc-500">
+                                  {item.memberEmail || "E-mail não informado"}
+                                </p>
+                                <p className="mt-1 flex items-center gap-1 text-xs text-zinc-400">
+                                  <Star className="size-3 text-emerald-300" />
+                                  {item.rating
+                                    ? `${item.rating}/5`
+                                    : "Sem avaliação registrada"}
+                                </p>
                               </div>
-                              <time className="shrink-0 text-xs text-zinc-500">Atualizado em {new Date(item.updatedAt).toLocaleString("pt-BR")}</time>
+                              <time className="shrink-0 text-xs text-zinc-500">
+                                Atualizado em{" "}
+                                {new Date(item.updatedAt).toLocaleString(
+                                  "pt-BR"
+                                )}
+                              </time>
                             </div>
-                            <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200">{item.content}</p>
+                            <p className="mt-4 whitespace-pre-wrap break-words text-sm leading-6 text-zinc-200">
+                              {item.content}
+                            </p>
                             <div className="mt-5 grid min-w-0 gap-3 lg:grid-cols-[minmax(0,1fr)_180px_auto]">
-                              <label className="min-w-0 text-sm text-zinc-300">Nota privada para o membro
-                                <textarea value={notes[item.id] ?? item.adminNote ?? ""} onChange={event => setNotes(current => ({ ...current, [item.id]: event.target.value }))} maxLength={4000} className="mt-1 min-h-24 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/50 focus:ring-2" placeholder="Opcional: descreva a decisão ou o ajuste necessário." />
+                              <label className="min-w-0 text-sm text-zinc-300">
+                                Nota privada para o membro
+                                <textarea
+                                  value={notes[item.id] ?? item.adminNote ?? ""}
+                                  onChange={event =>
+                                    setNotes(current => ({
+                                      ...current,
+                                      [item.id]: event.target.value,
+                                    }))
+                                  }
+                                  maxLength={4000}
+                                  className="mt-1 min-h-24 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 py-2 text-white outline-none ring-emerald-300/50 focus:ring-2"
+                                  placeholder="Opcional: descreva a decisão ou o ajuste necessário."
+                                />
                               </label>
-                              <label className="min-w-0 text-sm text-zinc-300">Status
-                                <select value={item.status} onChange={event => save(item.id, event.target.value as TestimonialStatus, item.adminNote)} className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 text-white">
-                                  <option value="pending">Em análise</option><option value="approved">Aprovado</option><option value="rejected">Necessita ajuste</option><option value="archived">Arquivado</option>
+                              <label className="min-w-0 text-sm text-zinc-300">
+                                Status
+                                <select
+                                  value={item.status}
+                                  onChange={event =>
+                                    save(
+                                      item.id,
+                                      event.target.value as TestimonialStatus,
+                                      item.adminNote
+                                    )
+                                  }
+                                  className="mt-1 h-11 w-full min-w-0 rounded-lg border border-white/15 bg-black px-3 text-white"
+                                >
+                                  <option value="pending">Em análise</option>
+                                  <option value="approved">Aprovado</option>
+                                  <option value="rejected">
+                                    Necessita ajuste
+                                  </option>
+                                  <option value="archived">Arquivado</option>
                                 </select>
                               </label>
                               <div className="mt-auto grid min-w-0 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                                <button onClick={() => save(item.id, item.status as TestimonialStatus, item.adminNote)} disabled={update.isPending} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.97] disabled:opacity-60"><Save className="size-4" />Salvar nota</button>
-                                <button onClick={() => void remove(item.id, item.memberName)} disabled={deletingId === item.id} className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-200 disabled:opacity-60"><Trash2 className="size-4" />Excluir</button>
+                                <button
+                                  onClick={() =>
+                                    save(
+                                      item.id,
+                                      item.status as TestimonialStatus,
+                                      item.adminNote
+                                    )
+                                  }
+                                  disabled={update.isPending}
+                                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-300 px-4 py-2 text-sm font-semibold text-black transition active:scale-[.97] disabled:opacity-60"
+                                >
+                                  <Save className="size-4" />
+                                  Salvar nota
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    void remove(item.id, item.memberName)
+                                  }
+                                  disabled={deletingId === item.id}
+                                  className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-400/30 px-4 py-2 text-sm font-semibold text-red-200 disabled:opacity-60"
+                                >
+                                  <Trash2 className="size-4" />
+                                  Excluir
+                                </button>
                               </div>
                             </div>
-                            <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-zinc-500"><CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-200" />Aprovação mantém a origem real do agradecimento; o conteúdo não deve ser fabricado ou alterado para simular a experiência do membro.</p>
+                            <p className="mt-3 flex items-start gap-2 text-xs leading-5 text-zinc-500">
+                              <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-200" />
+                              Aprovação mantém a origem real do agradecimento; o
+                              conteúdo não deve ser fabricado ou alterado para
+                              simular a experiência do membro.
+                            </p>
                           </div>
                         ) : null}
                       </article>
@@ -473,7 +955,10 @@ export default function AdminTestimonials() {
                   })}
                 </div>
               ) : (
-                <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">Nenhum agradecimento corresponde a este status e à busca atual.</p>
+                <p className="rounded-xl border border-dashed border-white/15 p-5 text-sm leading-6 text-zinc-400">
+                  Nenhum agradecimento corresponde a este status e à busca
+                  atual.
+                </p>
               )}
             </section>
           </>
