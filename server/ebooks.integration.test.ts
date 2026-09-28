@@ -89,6 +89,9 @@ describe("módulo canônico de e-books e Academia", () => {
     expect(reader).toContain("onProgressChange?:");
     expect(reader).toContain("data-pdf-page={pageNumber}");
     expect(reader).toContain("Página ${currentPage} de ${pageCount}");
+    expect(reader).toContain('aria-label="Diminuir zoom"');
+    expect(reader).toContain('aria-label={isFullscreen ? "Sair da tela cheia" : "Abrir em tela cheia"}');
+    expect(reader).toContain("onToggleFullscreen={() => void toggleFullscreen()}");
     expect(reader).toContain("requestFullscreen");
     expect(memberReader).toContain("<Dialog open={readerOpen}");
     expect(memberReader).toContain("setReaderOpen(true)");

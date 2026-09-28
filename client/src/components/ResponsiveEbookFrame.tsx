@@ -107,10 +107,12 @@ type PdfCanvasReaderProps = {
   title: string;
   className?: string;
   initialPage?: number | null;
+  isFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
   onProgressChange?: (progress: EbookReaderProgress) => void;
 };
 
-function PdfCanvasReader({ pdfUrl, title, className = "", initialPage = null, onProgressChange }: PdfCanvasReaderProps) {
+function PdfCanvasReader({ pdfUrl, title, className = "", initialPage = null, isFullscreen = false, onToggleFullscreen, onProgressChange }: PdfCanvasReaderProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const restoredUrlRef = useRef<string | null>(null);
   const lastReportedPageRef = useRef(0);
@@ -231,15 +233,32 @@ function PdfCanvasReader({ pdfUrl, title, className = "", initialPage = null, on
           <button
             type="button"
             onClick={() => setZoom(value => Math.max(0.8, Number((value - 0.1).toFixed(2))))}
-            className="rounded-md border border-slate-300 bg-white px-2 py-0.5 font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            aria-label="Diminuir zoom"
+            title="Diminuir zoom"
           >
             -
           </button>
+          {onToggleFullscreen ? (
+            <button
+              type="button"
+              onClick={onToggleFullscreen}
+              aria-label={isFullscreen ? "Sair da tela cheia" : "Abrir em tela cheia"}
+              aria-pressed={isFullscreen}
+              title={isFullscreen ? "Sair da tela cheia" : "Abrir em tela cheia"}
+              className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            >
+              {isFullscreen ? <Minimize2 className="h-3.5 w-3.5" aria-hidden="true" /> : <Maximize2 className="h-3.5 w-3.5" aria-hidden="true" />}
+              <span className="sr-only">{isFullscreen ? "Sair da tela cheia" : "Abrir em tela cheia"}</span>
+            </button>
+          ) : null}
           <span className="min-w-12 text-center font-semibold text-slate-600">{Math.round(zoom * 100)}%</span>
           <button
             type="button"
             onClick={() => setZoom(value => Math.min(1.8, Number((value + 0.1).toFixed(2))))}
-            className="rounded-md border border-slate-300 bg-white px-2 py-0.5 font-semibold text-slate-700 transition hover:bg-slate-100"
+            className="inline-flex min-h-8 min-w-8 items-center justify-center rounded-md border border-slate-300 bg-white px-2 py-1 font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+            aria-label="Aumentar zoom"
+            title="Aumentar zoom"
           >
             +
           </button>
@@ -595,7 +614,7 @@ export default function ResponsiveEbookFrame({
               {isFullscreen ? "Sair" : "Abrir PDF"}
             </button>
           </div>
-          <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1" initialPage={initialPage} onProgressChange={onProgressChange} />
+          <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1" initialPage={initialPage} isFullscreen={isFullscreen} onToggleFullscreen={() => void toggleFullscreen()} onProgressChange={onProgressChange} />
         </div>
       </div>
     );
@@ -638,7 +657,7 @@ export default function ResponsiveEbookFrame({
         <main className="flex min-h-0 flex-1 justify-center overflow-auto bg-neutral-900 p-1 sm:p-2">
           <div className={techFrameClass}>
             {hasPdfSource && pdfUrl ? (
-              <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1 bg-[#050811]" initialPage={initialPage} onProgressChange={onProgressChange} />
+              <PdfCanvasReader pdfUrl={pdfUrl} title={title} className="min-h-0 flex-1 bg-[#050811]" initialPage={initialPage} isFullscreen={isFullscreen} onToggleFullscreen={() => void toggleFullscreen()} onProgressChange={onProgressChange} />
             ) : (
               <iframe
                 ref={frameRef}
@@ -695,6 +714,8 @@ export default function ResponsiveEbookFrame({
           pdfUrl={pdfUrl}
           title={title}
           initialPage={initialPage}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={() => void toggleFullscreen()}
           onProgressChange={onProgressChange}
           className={isFullscreen ? "h-[calc(100dvh-3rem)] min-h-0 flex-1" : isModal ? "h-full min-h-0 flex-1" : "h-[64dvh] min-h-[430px] sm:h-[72vh] sm:min-h-[560px]"}
         />
