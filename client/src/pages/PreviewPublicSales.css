@@ -915,3 +915,347 @@
     border-radius: 24px;
   }
 }
+
+/* Preview real da página pública atual: o conteúdo vem do próprio Home.tsx e a
+   direção visual premium fica isolada sob .real-public-sales-preview. */
+.real-public-sales-preview {
+  --background: #05070d;
+  --foreground: #f8fafc;
+  --muted: #bac7d8;
+  --muted-strong: #d9e4f2;
+  --panel: #0b1627;
+  --panel-soft: #101d31;
+  --gold: #3b82f6;
+  --gold-bright: #dbeafe;
+  --gold-deep: #2563eb;
+  --ivory: #f8fafc;
+  --line: rgba(148, 163, 184, 0.34);
+  --line-soft: rgba(148, 163, 184, 0.18);
+  --shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+  display: block;
+  min-height: 100vh;
+  background: #05070d;
+}
+
+.real-public-sales-preview .sales-page {
+  color: var(--ivory);
+  background:
+    radial-gradient(circle at 16% 0%, rgba(59, 130, 246, 0.2), transparent 27%),
+    radial-gradient(
+      circle at 88% 12%,
+      rgba(139, 92, 246, 0.14),
+      transparent 24%
+    ),
+    linear-gradient(180deg, #05070d 0%, #07111f 42%, #02040a 100%);
+}
+
+.real-public-sales-preview .shell {
+  width: min(1160px, calc(100% - 40px));
+}
+
+.real-public-sales-preview .site-header {
+  border-bottom: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(5, 7, 13, 0.88);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(18px);
+}
+
+.real-public-sales-preview .nav {
+  min-height: 78px;
+  border-bottom: 0;
+}
+
+.real-public-sales-preview .brand-mark,
+.real-public-sales-preview .footer-brand-mark {
+  color: #eff6ff;
+  border: 1px solid rgba(191, 219, 254, 0.62);
+  background: linear-gradient(145deg, #2563eb, #0f172a);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    0 10px 28px rgba(37, 99, 235, 0.26);
+}
+
+.real-public-sales-preview .nav-links,
+.real-public-sales-preview .sales-kicker,
+.real-public-sales-preview .sales-hero-copy > p,
+.real-public-sales-preview .sales-section-heading p,
+.real-public-sales-preview .reference-card p,
+.real-public-sales-preview .package-grid p,
+.real-public-sales-preview .sprint-fit p,
+.real-public-sales-preview .footer p,
+.real-public-sales-preview .footer-links,
+.real-public-sales-preview .footer-bottom {
+  color: #bac7d8;
+}
+
+.real-public-sales-preview .nav-links-divider,
+.real-public-sales-preview .nav,
+.real-public-sales-preview .affiliate-banner,
+.real-public-sales-preview .footer,
+.real-public-sales-preview .footer-panel,
+.real-public-sales-preview .footer-bottom {
+  border-color: rgba(148, 163, 184, 0.26);
+}
+
+.real-public-sales-preview .nav-cta,
+.real-public-sales-preview .btn-primary,
+.real-public-sales-preview .affiliate-profile-more,
+.real-public-sales-preview .offer-card button[type="submit"] {
+  color: #ffffff;
+  border-color: rgba(191, 219, 254, 0.72);
+  background: linear-gradient(135deg, #2563eb, #3b82f6 56%, #60a5fa);
+  box-shadow:
+    0 14px 34px rgba(37, 99, 235, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+
+.real-public-sales-preview .btn-ghost,
+.real-public-sales-preview .mobile-menu-button,
+.real-public-sales-preview .affiliate-profile-modal-close,
+.real-public-sales-preview .objection-item button,
+.real-public-sales-preview .virtual-office-carousel-controls button {
+  color: #f8fafc;
+  border-color: rgba(148, 163, 184, 0.34);
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.real-public-sales-preview .nav-cta:hover,
+.real-public-sales-preview .btn-primary:hover,
+.real-public-sales-preview .offer-card button[type="submit"]:hover {
+  box-shadow:
+    0 18px 44px rgba(37, 99, 235, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.36);
+}
+
+.real-public-sales-preview .sales-hero {
+  min-height: auto;
+  padding: clamp(54px, 7vw, 96px) 0 clamp(76px, 9vw, 118px);
+  background:
+    radial-gradient(
+      ellipse at 18% 4%,
+      rgba(59, 130, 246, 0.22),
+      transparent 34%
+    ),
+    radial-gradient(
+      ellipse at 86% 28%,
+      rgba(139, 92, 246, 0.16),
+      transparent 30%
+    );
+}
+
+.real-public-sales-preview .sales-hero::before,
+.real-public-sales-preview .sales-section::before {
+  opacity: 0.34;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
+}
+
+.real-public-sales-preview .sales-kicker::before,
+.real-public-sales-preview .eyebrow span,
+.real-public-sales-preview .sales-pulse,
+.real-public-sales-preview .reference-card li::before,
+.real-public-sales-preview .fit-card li::before {
+  background: #60a5fa;
+}
+
+.real-public-sales-preview .sales-page h1 span,
+.real-public-sales-preview .sales-page h2 span,
+.real-public-sales-preview .eyebrow,
+.real-public-sales-preview .sales-kicker-tail,
+.real-public-sales-preview .footer-section-label,
+.real-public-sales-preview .affiliate-profile-modal-eyebrow {
+  color: #93c5fd;
+}
+
+.real-public-sales-preview .sales-trust-featured,
+.real-public-sales-preview .reference-presenter,
+.real-public-sales-preview .affiliate-banner,
+.real-public-sales-preview .structure-showcase,
+.real-public-sales-preview .sales-package,
+.real-public-sales-preview .sales-social-proof,
+.real-public-sales-preview .reference-copy,
+.real-public-sales-preview .sprint-fit,
+.real-public-sales-preview .sales-objections,
+.real-public-sales-preview .sales-offer {
+  border-color: rgba(148, 163, 184, 0.28);
+}
+
+.real-public-sales-preview .sales-trust-featured,
+.real-public-sales-preview .reference-presenter {
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.14),
+    rgba(15, 23, 42, 0.72)
+  );
+  box-shadow:
+    0 0 0 1px rgba(96, 165, 250, 0.08),
+    0 18px 60px rgba(0, 0, 0, 0.24);
+}
+
+.real-public-sales-preview .affiliate-banner {
+  background: linear-gradient(
+    90deg,
+    rgba(8, 21, 38, 0.96),
+    rgba(5, 7, 13, 0.98) 54%,
+    rgba(24, 18, 48, 0.72)
+  );
+}
+
+.real-public-sales-preview .structure-showcase,
+.real-public-sales-preview .sales-social-proof,
+.real-public-sales-preview .sales-objections {
+  background:
+    radial-gradient(
+      circle at 78% 18%,
+      rgba(59, 130, 246, 0.12),
+      transparent 30%
+    ),
+    linear-gradient(
+      120deg,
+      rgba(11, 23, 40, 0.96),
+      rgba(2, 4, 10, 0.98) 58%,
+      rgba(10, 23, 43, 0.88)
+    );
+}
+
+.real-public-sales-preview .sales-package,
+.real-public-sales-preview .reference-copy-alt,
+.real-public-sales-preview .sales-offer {
+  background: linear-gradient(180deg, #f3f7fb, #e7eef8);
+  color: #0f172a;
+}
+
+.real-public-sales-preview .sales-package .eyebrow,
+.real-public-sales-preview .reference-copy-alt .eyebrow,
+.real-public-sales-preview .sales-offer .eyebrow,
+.real-public-sales-preview .sales-package h2,
+.real-public-sales-preview .reference-copy-alt h2,
+.real-public-sales-preview .sales-offer h2,
+.real-public-sales-preview .sales-package p,
+.real-public-sales-preview .reference-copy-alt p,
+.real-public-sales-preview .sales-offer p {
+  color: #0f172a;
+}
+
+.real-public-sales-preview .package-grid article,
+.real-public-sales-preview .testimonial-card,
+.real-public-sales-preview .testimonial-summary-card,
+.real-public-sales-preview .reference-card,
+.real-public-sales-preview .fit-card,
+.real-public-sales-preview .objection-item,
+.real-public-sales-preview .offer-card,
+.real-public-sales-preview .hero-photo-wrap,
+.real-public-sales-preview .affiliate-profile-modal,
+.real-public-sales-preview .footer-panel {
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  background: linear-gradient(
+    145deg,
+    rgba(16, 29, 49, 0.96),
+    rgba(7, 17, 31, 0.98)
+  );
+  box-shadow:
+    0 24px 80px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.real-public-sales-preview .sales-package .package-grid article,
+.real-public-sales-preview .reference-copy-alt .reference-card,
+.real-public-sales-preview .sales-offer .offer-card {
+  color: #0f172a;
+  border-color: rgba(51, 65, 85, 0.22);
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.12);
+}
+
+.real-public-sales-preview .sales-package .package-grid article p,
+.real-public-sales-preview .reference-copy-alt .reference-card p,
+.real-public-sales-preview .sales-offer .offer-card p,
+.real-public-sales-preview .sales-offer .offer-card label {
+  color: #475569;
+}
+
+.real-public-sales-preview .package-grid article:hover,
+.real-public-sales-preview .reference-card:hover,
+.real-public-sales-preview .fit-card:hover,
+.real-public-sales-preview .objection-item:hover {
+  border-color: rgba(96, 165, 250, 0.62);
+  transform: translateY(-2px);
+}
+
+.real-public-sales-preview .offer-card input,
+.real-public-sales-preview .offer-card textarea,
+.real-public-sales-preview .offer-card select {
+  color: #0f172a;
+  border-color: rgba(51, 65, 85, 0.24);
+  background: #ffffff;
+}
+
+.real-public-sales-preview .offer-card input:focus-visible,
+.real-public-sales-preview .offer-card textarea:focus-visible,
+.real-public-sales-preview .offer-card select:focus-visible,
+.real-public-sales-preview a:focus-visible,
+.real-public-sales-preview button:focus-visible {
+  outline: 3px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.real-public-sales-preview .footer {
+  background: linear-gradient(180deg, #07111f, #02040a);
+}
+
+.real-public-sales-preview .member-chat-fab,
+.real-public-sales-preview .public-conversion-cta {
+  border-color: rgba(191, 219, 254, 0.56);
+  box-shadow: 0 18px 52px rgba(37, 99, 235, 0.28);
+}
+
+@media (max-width: 1024px) {
+  .real-public-sales-preview .shell {
+    width: min(100% - 32px, 920px);
+  }
+
+  .real-public-sales-preview .sales-hero {
+    padding-top: 48px;
+  }
+}
+
+@media (max-width: 760px) {
+  .real-public-sales-preview .shell {
+    width: min(100% - 24px, 680px);
+  }
+
+  .real-public-sales-preview .site-header {
+    background: rgba(5, 7, 13, 0.94);
+  }
+
+  .real-public-sales-preview .nav-links.is-open {
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(8, 15, 28, 0.98);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.36);
+  }
+
+  .real-public-sales-preview .sales-page h1 {
+    font-size: clamp(36px, 12vw, 54px);
+  }
+
+  .real-public-sales-preview .sales-hero-copy > p {
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .real-public-sales-preview .shell {
+    width: min(100% - 20px, 440px);
+  }
+
+  .real-public-sales-preview .sales-hero {
+    padding-top: 36px;
+  }
+
+  .real-public-sales-preview .btn,
+  .real-public-sales-preview .nav-cta,
+  .real-public-sales-preview .offer-card button[type="submit"] {
+    width: 100%;
+  }
+}
