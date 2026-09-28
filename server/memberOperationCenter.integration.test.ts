@@ -121,6 +121,9 @@ describe("Central de Divulgação", () => {
     expect(trackingCookies).toContain('const appPrefix = (process.env.VITE_DEV_PREFIX ?? "").replace(/\\/+$/, "")');
     expect(db).toContain("recordPublicAffiliateLinkClick");
     expect(db).toContain("affiliateClickTotals");
+    expect(db).toContain("eligibleAffiliateClickWhere");
+    expect(db).toContain("confirmedApplicationTotals");
+    expect(db).toContain("uniqueVisitors");
     expect(db).toContain("clicks: Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0)");
     expect(schema).toContain("affiliateLinkClickEvents");
   });

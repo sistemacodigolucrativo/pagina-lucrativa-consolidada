@@ -11,7 +11,7 @@ IFS=$'\n\t'
 # Configurações opcionais por ambiente, se necessário:
 #   DEPLOY_REF=main|nome-da-branch|tag
 #   RUN_TESTS=1
-#   HEALTHCHECK_URL=http://127.0.0.1:3000/
+#   HEALTHCHECK_URL=http://127.0.0.1:3000/healthz
 #   SERVICE_NAME=pagina-lucrativa.service
 
 APP_NAME="${APP_NAME:-pagina-lucrativa}"
@@ -26,7 +26,7 @@ SHARED_DIR="${SHARED_DIR:-${DEPLOY_ROOT}/shared}"
 CURRENT_LINK="${CURRENT_LINK:-${DEPLOY_ROOT}/current}"
 SERVICE_NAME="${SERVICE_NAME:-pagina-lucrativa.service}"
 PORT="${PORT:-3000}"
-HEALTHCHECK_URL="${HEALTHCHECK_URL:-http://127.0.0.1:${PORT}/}"
+HEALTHCHECK_URL="${HEALTHCHECK_URL:-http://127.0.0.1:${PORT}/healthz}"
 BACKUP_DIR="${BACKUP_DIR:-${DEPLOY_ROOT}/backups}"
 KEEP_RELEASES="${KEEP_RELEASES:-6}"
 RUN_TESTS="${RUN_TESTS:-0}"

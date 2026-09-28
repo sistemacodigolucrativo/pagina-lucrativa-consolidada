@@ -14,7 +14,7 @@ export function readTrackingCookie(req: Request, name: string) {
 
 export function getOrCreateTrackingCookie(req: Request, res: Response, name: string, maxAge: number) {
   const current = readTrackingCookie(req, name);
-  const value = current && /^[a-f0-9-]{16,80}$/i.test(current) ? current : randomUUID();
+  const value = current && /^[a-f0-9-]{16,64}$/i.test(current) ? current : randomUUID();
   const secure = req.secure || req.headers["x-forwarded-proto"] === "https";
   const attributes = [`${name}=${encodeURIComponent(value)}`, `Max-Age=${Math.floor(maxAge / 1000)}`, `Path=${cookiePath}`, "HttpOnly", "SameSite=Lax"];
   if (secure) attributes.push("Secure");
@@ -36,10 +36,23 @@ export function getTrackingDeviceType(userAgent: string) {
 }
 
 export function getTrackingUserAgentCategory(userAgent: string) {
-  return /bot|crawler|spider|slurp|headless/i.test(userAgent) ? "bot" : "human";
+  return /bot|crawler|spider|slurp|headless|curl|wget|httpclient|http-client|python-requests|go-http-client|axios|uptime|monitor/i.test(userAgent) ? "bot" : "human";
+}
+
+export function isTrackingRequestEligible(req: Request) {
+  if (req.method !== "GET") return false;
+  const userAgent = req.get("user-agent") ?? "";
+  if (getTrackingUserAgentCategory(userAgent) === "bot") return false;
+  const purpose = `${req.get("purpose") ?? ""} ${req.get("sec-purpose") ?? ""}`.toLowerCase();
+  if (/prefetch|prerender|preview/.test(purpose)) return false;
+  const fetchMode = (req.get("sec-fetch-mode") ?? "").toLowerCase();
+  if (fetchMode === "no-cors" && purpose.includes("prefetch")) return false;
+  return true;
 }
 
 export function getTrackingQueryValue(req: Request, key: string) {
   const value = req.query[key];
-  return typeof value === "string" ? value.slice(0, 160) : null;
+  if (typeof value !== "string") return null;
+  const maxLength = key === "utm_source" || key === "utm_medium" ? 96 : 160;
+  return value.slice(0, maxLength);
 }

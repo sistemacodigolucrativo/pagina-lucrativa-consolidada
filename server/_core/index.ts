@@ -85,6 +85,9 @@ async function startServer() {
   const trpcPaths = Array.from(new Set(["/api/trpc", appPrefix ? `${appPrefix}/api/trpc` : null].filter((path): path is string => Boolean(path))));
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+  app.get(["/healthz", appPrefix ? `${appPrefix}/healthz` : null].filter((route): route is string => Boolean(route)), (_request, response) => {
+    response.status(200).json({ ok: true });
+  });
   registerPackagedEbookFiles(app, appPrefix);
   registerStorageProxy(app);
   registerAffiliateLinkTracking(app);

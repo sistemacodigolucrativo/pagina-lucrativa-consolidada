@@ -47,6 +47,7 @@ const PUBLIC_COUNTER_CONFIG_CATEGORY = "public-counter-config";
 const PUBLIC_MEMBERS_COUNTER_INCREMENT = "public_members_counter_increment";
 const PUBLIC_REVIEWS_COUNTER_INCREMENT = "public_reviews_counter_increment";
 const SYSTEM_CONTENT_CATEGORIES = ["public-sales-copy", "public-sales-layout", "member-admin-control", "public-toast-config", "public-counter-config"] as const;
+const CLICK_DEDUPLICATION_WINDOW_MS = 5 * 60 * 1000;
 let _db: ReturnType<typeof drizzle> | null = null;
 type DbExecutor = Pick<ReturnType<typeof drizzle>, "select" | "insert" | "update">;
 
@@ -252,34 +253,56 @@ function getAnalyticsStart(period: CampaignAnalyticsPeriod) {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000);
 }
 
+function eligibleCampaignClickWhere(baseWhere: SQL | undefined) {
+  return and(
+    baseWhere,
+    or(isNull(campaignClickEvents.userAgentCategory), sql`${campaignClickEvents.userAgentCategory} <> 'bot'`),
+    or(isNull(campaignClickEvents.utmCampaign), sql`${campaignClickEvents.utmCampaign} <> 'demo-seed'`),
+  );
+}
+
+function eligibleAffiliateClickWhere(baseWhere: SQL | undefined) {
+  return and(
+    baseWhere,
+    or(isNull(affiliateLinkClickEvents.userAgentCategory), sql`${affiliateLinkClickEvents.userAgentCategory} <> 'bot'`),
+    or(isNull(affiliateLinkClickEvents.utmCampaign), sql`${affiliateLinkClickEvents.utmCampaign} <> 'demo-seed'`),
+  );
+}
+
 export async function getMemberOperationAnalytics(userId: number, period: CampaignAnalyticsPeriod = "30d") {
   const db = await getDb();
   if (!db) return { period, campaigns: [], totals: { campaigns: 0, clicks: 0, uniqueVisitors: 0, sessions: 0, conversions: 0, leads: 0, applications: 0 }, recentEvents: [] };
   const start = getAnalyticsStart(period);
-  const eventWhere = start ? and(eq(campaignClickEvents.userId, userId), gte(campaignClickEvents.occurredAt, start)) : eq(campaignClickEvents.userId, userId);
-  const affiliateEventWhere = start ? and(eq(affiliateLinkClickEvents.userId, userId), gte(affiliateLinkClickEvents.occurredAt, start)) : eq(affiliateLinkClickEvents.userId, userId);
+  const baseEventWhere = start ? and(eq(campaignClickEvents.userId, userId), gte(campaignClickEvents.occurredAt, start)) : eq(campaignClickEvents.userId, userId);
+  const baseAffiliateEventWhere = start ? and(eq(affiliateLinkClickEvents.userId, userId), gte(affiliateLinkClickEvents.occurredAt, start)) : eq(affiliateLinkClickEvents.userId, userId);
+  const eventWhere = eligibleCampaignClickWhere(baseEventWhere);
+  const affiliateEventWhere = eligibleAffiliateClickWhere(baseAffiliateEventWhere);
   const conversionWhere = start ? and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"), gte(campaignConversions.occurredAt, start)) : and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"));
-  const [campaignRows, clickTotals, visitorTotals, sessionTotals, affiliateClickTotals, affiliateVisitorTotals, affiliateSessionTotals, conversionTotals, leadTotals, applicationTotals, clickByCampaign, visitorsByCampaign, sessionsByCampaign, conversionByCampaign, recentEvents] = await Promise.all([
+  const confirmedApplicationWhere = start ? and(eq(applications.ownerUserId, userId), eq(applications.paymentStatus, "confirmed"), gte(applications.updatedAt, start)) : and(eq(applications.ownerUserId, userId), eq(applications.paymentStatus, "confirmed"));
+  const [campaignRows, clickTotals, affiliateClickTotals, conversionTotals, leadTotals, applicationTotals, confirmedApplicationTotals, clickByCampaign, visitorsByCampaign, sessionsByCampaign, conversionByCampaign, recentEvents, campaignVisitors, affiliateVisitors, campaignSessions, affiliateSessions] = await Promise.all([
     db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)).orderBy(desc(campaignLinks.createdAt)),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere),
-    db.select({ value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.visitorId})` }).from(campaignClickEvents).where(eventWhere),
-    db.select({ value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.sessionId})` }).from(campaignClickEvents).where(eventWhere),
     db.select({ value: sql<number>`COUNT(*)` }).from(affiliateLinkClickEvents).where(affiliateEventWhere),
-    db.select({ value: sql<number>`COUNT(DISTINCT ${affiliateLinkClickEvents.visitorId})` }).from(affiliateLinkClickEvents).where(affiliateEventWhere),
-    db.select({ value: sql<number>`COUNT(DISTINCT ${affiliateLinkClickEvents.sessionId})` }).from(affiliateLinkClickEvents).where(affiliateEventWhere),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(conversionWhere),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "lead"))),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "application"))),
+    db.select({ value: sql<number>`COUNT(*)` }).from(applications).where(confirmedApplicationWhere),
     db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
     db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.visitorId})` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
     db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.sessionId})` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
     db.select({ campaignId: campaignConversions.campaignId, value: sql<number>`COUNT(*)` }).from(campaignConversions).where(conversionWhere).groupBy(campaignConversions.campaignId),
     db.select({ campaignId: campaignClickEvents.campaignId, occurredAt: campaignClickEvents.occurredAt, visitorId: campaignClickEvents.visitorId, deviceType: campaignClickEvents.deviceType, referrerOrigin: campaignClickEvents.referrerOrigin }).from(campaignClickEvents).where(eventWhere).orderBy(desc(campaignClickEvents.occurredAt)).limit(50),
+    db.select({ value: campaignClickEvents.visitorId }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.visitorId),
+    db.select({ value: affiliateLinkClickEvents.visitorId }).from(affiliateLinkClickEvents).where(affiliateEventWhere).groupBy(affiliateLinkClickEvents.visitorId),
+    db.select({ value: campaignClickEvents.sessionId }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.sessionId),
+    db.select({ value: affiliateLinkClickEvents.sessionId }).from(affiliateLinkClickEvents).where(affiliateEventWhere).groupBy(affiliateLinkClickEvents.sessionId),
   ]);
   const clickMap = new Map(clickByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
   const visitorMap = new Map(visitorsByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
   const sessionMap = new Map(sessionsByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
   const conversionMap = new Map(conversionByCampaign.map(row => [row.campaignId, Number(row.value ?? 0)]));
+  const uniqueVisitors = new Set([...campaignVisitors, ...affiliateVisitors].map(row => row.value).filter(Boolean)).size;
+  const uniqueSessions = new Set([...campaignSessions, ...affiliateSessions].map(row => row.value).filter(Boolean)).size;
   const campaigns = campaignRows.map(campaign => ({
     ...campaign,
     eventClicks: clickMap.get(campaign.id) ?? 0,
@@ -293,11 +316,11 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
     totals: {
       campaigns: campaignRows.length,
       clicks: Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0),
-      uniqueVisitors: Number(visitorTotals[0]?.value ?? 0) + Number(affiliateVisitorTotals[0]?.value ?? 0),
-      sessions: Number(sessionTotals[0]?.value ?? 0) + Number(affiliateSessionTotals[0]?.value ?? 0),
-      conversions: Number(conversionTotals[0]?.value ?? 0),
+      uniqueVisitors,
+      sessions: uniqueSessions,
+      conversions: Number(conversionTotals[0]?.value ?? 0) + Number(confirmedApplicationTotals[0]?.value ?? 0),
       leads: Number(leadTotals[0]?.value ?? 0),
-      applications: Number(applicationTotals[0]?.value ?? 0),
+      applications: Number(applicationTotals[0]?.value ?? 0) + Number(confirmedApplicationTotals[0]?.value ?? 0),
     },
     recentEvents,
   };
@@ -308,18 +331,46 @@ export async function getMemberOperationConversions(userId: number, period: Camp
   if (!db) return [];
   const start = getAnalyticsStart(period);
   const where = start ? and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"), gte(campaignConversions.occurredAt, start)) : and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"));
-  return db.select({
-    id: campaignConversions.id,
-    campaignId: campaignConversions.campaignId,
-    campaignName: campaignLinks.name,
-    conversionType: campaignConversions.conversionType,
-    entityType: campaignConversions.entityType,
-    entityId: campaignConversions.entityId,
-    valueCents: campaignConversions.valueCents,
-    status: campaignConversions.status,
-    captureMode: campaignConversions.captureMode,
-    occurredAt: campaignConversions.occurredAt,
-  }).from(campaignConversions).innerJoin(campaignLinks, eq(campaignConversions.campaignId, campaignLinks.id)).where(where).orderBy(desc(campaignConversions.occurredAt)).limit(200);
+  const confirmedApplicationWhere = start ? and(eq(applications.ownerUserId, userId), eq(applications.paymentStatus, "confirmed"), gte(applications.updatedAt, start)) : and(eq(applications.ownerUserId, userId), eq(applications.paymentStatus, "confirmed"));
+  const [conversionRows, confirmedApplications] = await Promise.all([
+    db.select({
+      id: campaignConversions.id,
+      campaignId: campaignConversions.campaignId,
+      campaignName: campaignLinks.name,
+      conversionType: campaignConversions.conversionType,
+      entityType: campaignConversions.entityType,
+      entityId: campaignConversions.entityId,
+      valueCents: campaignConversions.valueCents,
+      status: campaignConversions.status,
+      captureMode: campaignConversions.captureMode,
+      occurredAt: campaignConversions.occurredAt,
+    }).from(campaignConversions).innerJoin(campaignLinks, eq(campaignConversions.campaignId, campaignLinks.id)).where(where).orderBy(desc(campaignConversions.occurredAt)).limit(200),
+    db.select({
+      id: applications.id,
+      trackingCode: applications.trackingCode,
+      fullName: applications.fullName,
+      offerAmountCents: applications.offerAmountCents,
+      updatedAt: applications.updatedAt,
+    }).from(applications).where(confirmedApplicationWhere).orderBy(desc(applications.updatedAt)).limit(200),
+  ]);
+  const existingConfirmedApplicationIds = new Set(conversionRows.filter(row => row.entityType === "application" && row.entityId != null).map(row => row.entityId));
+  const applicationRows = confirmedApplications
+    .filter(application => !existingConfirmedApplicationIds.has(application.id))
+    .map(application => ({
+      id: -application.id,
+      campaignId: null as number | null,
+      campaignName: "Link principal / indicação direta",
+      conversionType: "application" as const,
+      entityType: "application",
+      entityId: application.id,
+      valueCents: application.offerAmountCents,
+      status: "active" as const,
+      captureMode: "automatic" as const,
+      occurredAt: application.updatedAt,
+    }));
+  return [...conversionRows, ...applicationRows]
+    .sort((a, b) => b.occurredAt.getTime() - a.occurredAt.getTime())
+    .slice(0, 200);
 }
 
 type CampaignClickMetadata = {
@@ -351,6 +402,14 @@ type PublicCampaign = {
 async function recordCampaignClick(campaign: PublicCampaign, metadata: CampaignClickMetadata) {
   const db = await getDb();
   if (!db || campaign.status !== "active") return null;
+  const duplicateSince = new Date(metadata.occurredAt.getTime() - CLICK_DEDUPLICATION_WINDOW_MS);
+  const recentDuplicate = await db.select({ id: campaignClickEvents.id }).from(campaignClickEvents).where(and(
+    eq(campaignClickEvents.campaignId, campaign.id),
+    eq(campaignClickEvents.visitorId, metadata.visitorId),
+    eq(campaignClickEvents.sessionId, metadata.sessionId),
+    gte(campaignClickEvents.occurredAt, duplicateSince),
+  )).limit(1);
+  if (recentDuplicate[0]) return campaign;
   const expiresAt = new Date(metadata.occurredAt.getTime() + 30 * 24 * 60 * 60 * 1000);
   await db.transaction(async tx => {
     await tx.insert(campaignClickEvents).values({
@@ -433,6 +492,14 @@ export async function recordPublicAffiliateLinkClick(memberSlug: string, metadat
   const members = await db.select({ userId: memberProfiles.userId }).from(memberProfiles).where(eq(memberProfiles.slug, memberSlug)).limit(1);
   const member = members[0];
   if (!member) return null;
+  const duplicateSince = new Date(metadata.occurredAt.getTime() - CLICK_DEDUPLICATION_WINDOW_MS);
+  const recentDuplicate = await db.select({ id: affiliateLinkClickEvents.id }).from(affiliateLinkClickEvents).where(and(
+    eq(affiliateLinkClickEvents.userId, member.userId),
+    eq(affiliateLinkClickEvents.visitorId, metadata.visitorId),
+    eq(affiliateLinkClickEvents.sessionId, metadata.sessionId),
+    gte(affiliateLinkClickEvents.occurredAt, duplicateSince),
+  )).limit(1);
+  if (recentDuplicate[0]) return { userId: member.userId };
   await db.insert(affiliateLinkClickEvents).values({
     userId: member.userId,
     visitorId: metadata.visitorId,

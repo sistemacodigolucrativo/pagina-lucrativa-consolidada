@@ -91,7 +91,7 @@ export default function MemberOperationCenter() {
   const createCampaign = trpc.member.createCampaign.useMutation({
     onSuccess: async () => {
       setCampaignForm({ name: "", slug: "", destinationUrl: referralUrl, source: "", medium: "social", content: "" });
-      await Promise.all([utils.member.campaigns.invalidate(), utils.member.analytics.invalidate()]);
+      await Promise.all([utils.member.campaigns.invalidate(), utils.member.analytics.invalidate(), utils.member.conversions.invalidate()]);
       toast.success("Campanha criada.");
       setLocation("/membros/operacao/campanhas");
     },
@@ -99,7 +99,7 @@ export default function MemberOperationCenter() {
   });
   const deleteCampaign = trpc.member.deleteCampaign.useMutation({
     onSuccess: async () => {
-      await Promise.all([utils.member.campaigns.invalidate(), utils.member.analytics.invalidate()]);
+      await Promise.all([utils.member.campaigns.invalidate(), utils.member.analytics.invalidate(), utils.member.conversions.invalidate()]);
       toast.success("Campanha removida.");
     },
     onError: error => toast.error(error.message),
@@ -107,14 +107,14 @@ export default function MemberOperationCenter() {
   const createContact = trpc.member.createContact.useMutation({
     onSuccess: async () => {
       setContact({ name: "", email: "", whatsapp: "", source: "", campaignId: "", consentNote: "", consent: false });
-      await Promise.all([utils.member.contacts.invalidate(), utils.member.analytics.invalidate()]);
+      await Promise.all([utils.member.contacts.invalidate(), utils.member.analytics.invalidate(), utils.member.conversions.invalidate()]);
       toast.success("Contato consentido registrado.");
     },
     onError: error => toast.error(error.message),
   });
   const updateContact = trpc.member.updateContact.useMutation({
     onSuccess: async () => {
-      await Promise.all([utils.member.contacts.invalidate(), utils.member.analytics.invalidate()]);
+      await Promise.all([utils.member.contacts.invalidate(), utils.member.analytics.invalidate(), utils.member.conversions.invalidate()]);
       toast.success("Status atualizado.");
     },
     onError: error => toast.error(error.message),
@@ -324,7 +324,7 @@ export default function MemberOperationCenter() {
 
         {activeTab === "conversions" && <Panel title="Conversões atribuídas" icon={<ClipboardList className="size-5 text-emerald-300" />}>
           <div className="mb-5 grid gap-4 sm:grid-cols-3"><Metric label="Total" value={analytics.data?.totals.conversions ?? 0} detail="conversões" accent /><Metric label="Leads" value={analytics.data?.totals.leads ?? 0} detail="contatos" /><Metric label="Aplicações" value={analytics.data?.totals.applications ?? 0} detail="solicitações" /></div>
-          {conversions.data?.length ? <div className="divide-y divide-white/10">{conversions.data.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div><a href={withAppBase(`/membros/operacao/${item.campaignId}`)} className="font-medium text-white hover:text-emerald-200">{item.campaignName}</a><p className="text-sm text-zinc-400">{item.conversionType} · {item.captureMode === "automatic" ? "atribuída automaticamente" : "registrada manualmente"}</p></div><span className="text-sm text-zinc-500">{formatDate(item.occurredAt)}</span></div>)}</div> : <Empty text="Você ainda não possui conversões. Continue divulgando suas campanhas. Assim que seu primeiro resultado for registrado, ele aparecerá aqui e a última etapa dos Primeiros Passos será concluída automaticamente." />}
+          {conversions.data?.length ? <div className="divide-y divide-white/10">{conversions.data.map(item => <div key={item.id} className="flex flex-wrap items-center justify-between gap-4 py-4"><div>{item.campaignId ? <a href={withAppBase(`/membros/operacao/${item.campaignId}`)} className="font-medium text-white hover:text-emerald-200">{item.campaignName}</a> : <h3 className="font-medium text-white">{item.campaignName}</h3>}<p className="text-sm text-zinc-400">{item.conversionType} · {item.captureMode === "automatic" ? "atribuída automaticamente" : "registrada manualmente"}</p></div><span className="text-sm text-zinc-500">{formatDate(item.occurredAt)}</span></div>)}</div> : <Empty text="Você ainda não possui conversões. Continue divulgando suas campanhas. Assim que seu primeiro resultado for registrado, ele aparecerá aqui e a última etapa dos Primeiros Passos será concluída automaticamente." />}
         </Panel>}
 
         {activeTab === "contacts" && <section className="grid gap-6 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)]">

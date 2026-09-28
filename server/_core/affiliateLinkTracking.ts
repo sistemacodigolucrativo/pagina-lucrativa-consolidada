@@ -6,6 +6,7 @@ import {
   getTrackingOrigin,
   getTrackingQueryValue,
   getTrackingUserAgentCategory,
+  isTrackingRequestEligible,
   trackingCookieNames,
 } from "./trackingCookies";
 
@@ -16,7 +17,7 @@ const affiliateLandingPaths = new Set(["/", "/dev", "/dev/", appPrefix || null, 
 export function registerAffiliateLinkTracking(app: Express) {
   app.use(async (req: Request, res: Response, next: NextFunction) => {
     try {
-      if (req.method !== "GET" || !affiliateLandingPaths.has(req.path)) {
+      if (!isTrackingRequestEligible(req) || !affiliateLandingPaths.has(req.path)) {
         next();
         return;
       }

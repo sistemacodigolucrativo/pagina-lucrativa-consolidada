@@ -546,7 +546,7 @@ validate_installation() {
   as_root systemctl is-active --quiet "$SERVICE_NAME"
   local app_ready=0
   for _ in $(seq 1 30); do
-    if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$PORT/" >/dev/null 2>&1; then
+    if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$PORT/healthz" >/dev/null 2>&1; then
       app_ready=1
       break
     fi
@@ -557,7 +557,7 @@ validate_installation() {
     local nginx_ready=0
     local nginx_health_url="http://127.0.0.1/"
     if [[ "$ENABLE_SSL" == "1" && -n "$DOMAIN" ]]; then
-      nginx_health_url="https://$DOMAIN/"
+      nginx_health_url="https://$DOMAIN/healthz"
     fi
     for _ in $(seq 1 10); do
       if curl --fail --silent --show-error --max-time 10 "$nginx_health_url" >/dev/null 2>&1; then

@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   resolvePublicCampaignAndRecordClick: vi.fn(),
@@ -20,6 +20,7 @@ function getRoutes() {
 
 function request(params: Record<string, string>, path: string) {
   return {
+    method: "GET",
     params,
     path,
     hostname: "ocodigolucrativo.site",
@@ -31,6 +32,11 @@ function request(params: Record<string, string>, path: string) {
 }
 
 describe("campaign redirect route", () => {
+  beforeEach(() => {
+    mocks.resolvePublicCampaignAndRecordClick.mockReset();
+    mocks.resolvePublicMemberCampaignAndRecordClick.mockReset();
+  });
+
   it("resolves a member campaign, records metadata and keeps the sponsor visible on the landing page", async () => {
     mocks.resolvePublicMemberCampaignAndRecordClick.mockResolvedValueOnce({ destinationUrl: "https://ocodigolucrativo.site/dev/", status: "active" });
     const route = getRoutes().find(item => item.path.endsWith("/r/:memberSlug/:campaignSlug"));
@@ -74,6 +80,19 @@ describe("campaign redirect route", () => {
     expect(mocks.resolvePublicCampaignAndRecordClick).toHaveBeenCalledWith("facebook-acess", expect.objectContaining({ visitorId: expect.any(String) }));
     expect(response.redirect).toHaveBeenCalledWith(302, "https://ocodigolucrativo.site/dev/");
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it("does not record bot or healthcheck-like campaign probes", async () => {
+    const route = getRoutes().find(item => item.path.endsWith("/r/:memberSlug/:campaignSlug"));
+    const response = { redirect: vi.fn(), append: vi.fn() };
+    const next = vi.fn();
+    const botRequest = { ...request({ memberSlug: "marcelo", campaignSlug: "facebook-acess" }, "/r/marcelo/facebook-acess"), get: (name: string) => name.toLowerCase() === "user-agent" ? "curl/8.0" : undefined };
+
+    await route!.handler(botRequest, response, next);
+
+    expect(mocks.resolvePublicMemberCampaignAndRecordClick).not.toHaveBeenCalled();
+    expect(response.append).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledOnce();
   });
 
   it("passes unknown slugs to the application fallback", async () => {

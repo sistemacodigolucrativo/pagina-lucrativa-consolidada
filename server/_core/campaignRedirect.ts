@@ -6,6 +6,7 @@ import {
   getTrackingOrigin,
   getTrackingQueryValue,
   getTrackingUserAgentCategory,
+  isTrackingRequestEligible,
   trackingCookieNames,
 } from "./trackingCookies";
 
@@ -36,6 +37,10 @@ function withCampaignAffiliate(destinationUrl: string, memberSlug: string) {
 export function registerCampaignRedirectRoutes(app: Express) {
   const handleCampaignRedirect = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      if (!isTrackingRequestEligible(req)) {
+        next();
+        return;
+      }
       const memberSlug = String(req.params.memberSlug ?? "").trim().toLowerCase();
       const campaignSlug = String(req.params.campaignSlug ?? "").trim().toLowerCase();
       if (!/^[a-z0-9-]{3,128}$/.test(memberSlug) || !/^[a-z0-9-]{3,128}$/.test(campaignSlug)) {
@@ -71,6 +76,10 @@ export function registerCampaignRedirectRoutes(app: Express) {
 
   const handleLegacyCampaignRedirect = async (req: Request, res: Response, next: NextFunction) => {
     try {
+      if (!isTrackingRequestEligible(req)) {
+        next();
+        return;
+      }
       const slug = String(req.params.campaignSlug ?? "").trim().toLowerCase();
       if (!/^[a-z0-9-]{3,128}$/.test(slug)) {
         next();

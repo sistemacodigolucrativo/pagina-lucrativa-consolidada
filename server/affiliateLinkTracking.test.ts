@@ -46,6 +46,19 @@ describe("affiliate link tracking", () => {
     expect(next).toHaveBeenCalledOnce();
   });
 
+  it("does not record technical curl probes as affiliate clicks", async () => {
+    const handler = getHandler();
+    const response = { append: vi.fn() };
+    const next = vi.fn();
+    const technicalRequest = { ...request({ afiliado: "marcelo" }), get: (name: string) => name.toLowerCase() === "user-agent" ? "curl/8.0" : undefined };
+
+    await handler(technicalRequest, response, next);
+
+    expect(mocks.recordPublicAffiliateLinkClick).not.toHaveBeenCalled();
+    expect(response.append).not.toHaveBeenCalled();
+    expect(next).toHaveBeenCalledOnce();
+  });
+
   it("records regular affiliate landing clicks", async () => {
     mocks.recordPublicAffiliateLinkClick.mockResolvedValueOnce({ userId: 1 });
     const handler = getHandler();

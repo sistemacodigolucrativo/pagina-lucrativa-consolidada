@@ -4,10 +4,10 @@ set -Eeuo pipefail
 TARGET_SHA="${1:-}"
 DEPLOY_ROOT="${2:-}"
 ARTIFACT_PATH="${3:-}"
-HEALTHCHECK_URL="${4:-http://127.0.0.1:3101/}"
+HEALTHCHECK_URL="${4:-http://127.0.0.1:3101/healthz}"
 SERVICE_NAME="${SERVICE_NAME:-pagina-lucrativa.service}"
 SMOKE_PORT="${SMOKE_PORT:-3199}"
-PUBLIC_HEALTHCHECK_URL="${PUBLIC_HEALTHCHECK_URL:-https://ocodigolucrativo.site/}"
+PUBLIC_HEALTHCHECK_URL="${PUBLIC_HEALTHCHECK_URL:-https://ocodigolucrativo.site/healthz}"
 PNPM_BIN="${PNPM_BIN:-}"
 DEPLOY_INVOCATION="${DEPLOY_INVOCATION:-auto}"
 
@@ -178,7 +178,7 @@ SMOKE_PID=$!
 cleanup_smoke() { kill "$SMOKE_PID" >/dev/null 2>&1 || true; wait "$SMOKE_PID" >/dev/null 2>&1 || true; }
 SMOKE_OK=0
 for _ in $(seq 1 30); do
-  if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$SMOKE_PORT/" >/dev/null 2>&1; then SMOKE_OK=1; break; fi
+  if curl --fail --silent --show-error --max-time 5 "http://127.0.0.1:$SMOKE_PORT/healthz" >/dev/null 2>&1; then SMOKE_OK=1; break; fi
   if ! kill -0 "$SMOKE_PID" >/dev/null 2>&1; then break; fi
   sleep 2
 done
