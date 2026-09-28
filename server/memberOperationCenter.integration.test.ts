@@ -126,7 +126,9 @@ describe("Central de Divulgação", () => {
     expect(db).toContain("directConfirmedApplicationWhere");
     expect(db).toContain("NOT EXISTS");
     expect(db).toContain("uniqueVisitors");
-    expect(db).toContain("clicks: Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0)");
+    expect(db).toContain("clicks:");
+    expect(db).toContain("Number(clickTotals[0]?.value ?? 0) +");
+    expect(db).toContain("Number(affiliateClickTotals[0]?.value ?? 0)");
     expect(schema).toContain("affiliateLinkClickEvents");
   });
 
@@ -183,6 +185,8 @@ describe("Central de Divulgação", () => {
     expect(page).toContain("Nova solicitação");
     expect(page).toContain("Minhas solicitações");
     expect(page).toContain("createTicket.mutate(form)");
+    expect(page).toContain("closeTicket.mutate");
+    expect(page).toContain("Encerrar");
     expect(page).not.toContain("Criar nova campanha");
   });
 

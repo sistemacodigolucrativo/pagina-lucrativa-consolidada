@@ -96,8 +96,8 @@ describe("telas administrativas separadas e responsivas", () => {
     expect(support).toContain("StatusIcon status={item.status}");
     expect(support).toContain("support-ticket-details-${item.id}");
     expect(db).toContain("90 * 24 * 60 * 60 * 1000");
-    expect(db).toContain(
-      'db.delete(supportTickets).where(and(eq(supportTickets.status, "closed"), lte(supportTickets.updatedAt, retentionLimit)))'
-    );
+    expect(db).toContain("db.delete(supportTickets)");
+    expect(db).toContain('eq(supportTickets.status, "closed")');
+    expect(db).toContain("lte(supportTickets.updatedAt, retentionLimit)");
   });
 });

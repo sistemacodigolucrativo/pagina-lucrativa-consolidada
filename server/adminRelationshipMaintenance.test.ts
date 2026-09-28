@@ -23,12 +23,15 @@ describe("manutenção administrativa de relacionamento", () => {
     expect(source).toContain('item.status !== "closed"');
     expect(source).toContain("support-ticket-details-${item.id}");
     expect(source).toContain("Buscar assunto ou mensagem");
-    expect(source).toContain(
-      "Escreva uma resposta antes de marcar o ticket como respondido."
-    );
+    expect(source).toContain('option value="auto"');
     expect(source).toContain('option value="closed"');
+    expect(source).toContain("deleteTicket.mutate");
+    expect(source).toContain("Excluir este ticket definitivamente?");
     const db = read("server/db.ts");
     const layout = read("client/src/components/DashboardLayout.tsx");
+    expect(db).toContain('status: "open"');
+    expect(db).toContain("const nextStatus =");
+    expect(db).toContain("deleteAdminTicket");
     expect(db).toContain('type: "support_ticket_answered"');
     expect(db).toContain('entityType: "support_ticket"');
     expect(db).toContain("A administração respondeu seu ticket");

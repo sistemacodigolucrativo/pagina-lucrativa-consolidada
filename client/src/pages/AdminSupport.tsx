@@ -10,6 +10,7 @@ import {
   MessageSquareReply,
   Save,
   Search,
+  Trash2,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -52,6 +53,17 @@ export default function AdminSupport() {
         utils.member.tickets.invalidate(),
       ]);
       toast.success("Solicitação de suporte atualizada.");
+    },
+    onError: error => toast.error(error.message),
+  });
+
+  const deleteTicket = trpc.admin.deleteTicket.useMutation({
+    onSuccess: async () => {
+      await Promise.all([
+        utils.admin.tickets.invalidate(),
+        utils.member.tickets.invalidate(),
+      ]);
+      toast.success("Ticket excluído definitivamente.");
     },
     onError: error => toast.error(error.message),
   });
@@ -237,7 +249,7 @@ export default function AdminSupport() {
                             </p>
                           </div>
                         ) : null}
-                        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_170px_auto]">
+                        <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_190px_auto_auto]">
                           <label className="text-sm text-zinc-300">
                             Resposta administrativa
                             <textarea
@@ -256,14 +268,15 @@ export default function AdminSupport() {
                             />
                           </label>
                           <label className="text-sm text-zinc-300">
-                            Status
+                            Ação manual
                             <select
-                              defaultValue={item.status}
+                              defaultValue={
+                                item.status === "closed" ? "closed" : "auto"
+                              }
                               id={`support-status-${item.id}`}
                               className="mt-1 h-11 w-full rounded-lg border border-white/15 bg-black px-3 text-white"
                             >
-                              <option value="open">Aberto</option>
-                              <option value="answered">Respondido</option>
+                              <option value="auto">Status automático</option>
                               <option value="closed">Encerrado</option>
                             </select>
                           </label>
@@ -273,19 +286,13 @@ export default function AdminSupport() {
                               const select = document.getElementById(
                                 `support-status-${item.id}`
                               ) as HTMLSelectElement | null;
-                              const status = (select?.value ??
-                                item.status) as TicketStatus;
+                              const status = (select?.value ?? "auto") as
+                                | TicketStatus
+                                | "auto";
                               const adminResponse =
                                 responses[item.id] ??
                                 item.adminResponse ??
                                 null;
-                              if (
-                                status === "answered" &&
-                                !adminResponse?.trim()
-                              )
-                                return void toast.error(
-                                  "Escreva uma resposta antes de marcar o ticket como respondido."
-                                );
                               updateTicket.mutate({
                                 id: item.id,
                                 status,
@@ -297,6 +304,23 @@ export default function AdminSupport() {
                           >
                             <Save className="size-4" />
                             Salvar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                !window.confirm(
+                                  "Excluir este ticket definitivamente?"
+                                )
+                              )
+                                return;
+                              deleteTicket.mutate({ id: item.id });
+                            }}
+                            disabled={deleteTicket.isPending}
+                            className="mt-auto inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-lg border border-red-300/40 px-4 py-2 text-sm font-semibold text-red-100 transition hover:bg-red-500/10 disabled:opacity-60 lg:w-auto"
+                          >
+                            <Trash2 className="size-4" />
+                            Excluir
                           </button>
                         </div>
                       </div>

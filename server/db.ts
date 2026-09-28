@@ -1126,8 +1126,18 @@ export async function getMemberTickets(userId: number) {
 export async function createMemberTicket(userId: number, input: { subject: string; message: string }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  const result = await db.insert(supportTickets).values({ userId, ...input });
+  const result = await db.insert(supportTickets).values({ userId, ...input, status: "open" });
   return { id: Number(result[0].insertId) };
+}
+
+export async function closeMemberTicket(userId: number, ticketId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const rows = await db.select().from(supportTickets).where(and(eq(supportTickets.id, ticketId), eq(supportTickets.userId, userId))).limit(1);
+  const ticket = rows[0];
+  if (!ticket) throw new Error("Ticket não encontrado.");
+  await db.update(supportTickets).set({ status: "closed" }).where(and(eq(supportTickets.id, ticketId), eq(supportTickets.userId, userId)));
+  return { success: true } as const;
 }
 
 export async function getPublicSalesSectionImages() {
@@ -2180,15 +2190,16 @@ export async function getAdminTickets() {
   return db.select().from(supportTickets).orderBy(desc(supportTickets.updatedAt));
 }
 
-export async function updateAdminTicket(ticketId: number, input: { status: "open" | "answered" | "closed"; adminResponse?: string | null }) {
+export async function updateAdminTicket(ticketId: number, input: { status?: "open" | "answered" | "closed" | "auto"; adminResponse?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
   const response = input.adminResponse?.trim() || null;
   const rows = await db.select().from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);
   const ticket = rows[0];
   if (!ticket) throw new Error("Ticket não encontrado.");
-  await db.update(supportTickets).set({ status: input.status, adminResponse: response }).where(eq(supportTickets.id, ticketId));
-  const shouldNotifyMember = input.status === "answered" && Boolean(response) && (ticket.status !== "answered" || ticket.adminResponse !== response);
+  const nextStatus = input.status === "closed" || ticket.status === "closed" ? "closed" : response ? "answered" : "open";
+  await db.update(supportTickets).set({ status: nextStatus, adminResponse: response }).where(eq(supportTickets.id, ticketId));
+  const shouldNotifyMember = Boolean(response) && (ticket.status !== "answered" || ticket.adminResponse !== response);
   if (shouldNotifyMember) {
     await db.insert(memberNotifications).values({
       userId: ticket.userId,
@@ -2199,6 +2210,15 @@ export async function updateAdminTicket(ticketId: number, input: { status: "open
       entityId: ticket.id,
     });
   }
+  return { success: true } as const;
+}
+
+export async function deleteAdminTicket(ticketId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Banco de dados indisponível.");
+  const rows = await db.select({ id: supportTickets.id }).from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);
+  if (!rows[0]) throw new Error("Ticket não encontrado.");
+  await db.delete(supportTickets).where(eq(supportTickets.id, ticketId));
   return { success: true } as const;
 }
 
