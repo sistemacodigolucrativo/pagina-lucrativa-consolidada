@@ -9,6 +9,7 @@ import {
   ClipboardList,
   FileText,
   Gift,
+  Globe2,
   GraduationCap,
   History,
   Link2,
@@ -30,6 +31,7 @@ export type MemberNavigationItem = {
   label: string;
   path: string;
   group: string;
+  externalHref?: string;
 };
 
 const iconByKey: Record<string, LucideIcon> = {
@@ -37,6 +39,7 @@ const iconByKey: Record<string, LucideIcon> = {
   operation: PanelTop,
   how: Sparkles,
   page: PanelTop,
+  publicPage: Globe2,
   data: ClipboardList,
   receiving: WalletCards,
   message: Mail,
@@ -74,6 +77,7 @@ export const memberDashboardMenuItems: MemberNavigationItem[] = memberOfficeNavi
     label: item.label,
     path: item.path,
     group: group.label,
+    externalHref: item.externalHref,
   })),
 );
 

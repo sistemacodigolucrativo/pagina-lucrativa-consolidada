@@ -132,6 +132,23 @@ describe("Central de Divulgação", () => {
     expect(center).toContain("Não foi possível copiar o link.");
   });
 
+  it("usa página dedicada para criação de campanha", async () => {
+    const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
+    const app = await readFile(path.join(root, "client/src/App.tsx"), "utf8");
+    expect(app).toContain('path="/membros/operacao/campanhas/nova" component={MemberOperationCenter}');
+    expect(center).toContain('pathname === "/membros/operacao/campanhas/nova"');
+    expect(center).toContain('activeTab === "createCampaign"');
+    expect(center).toContain('href={withAppBase("/membros/operacao/campanhas/nova")}');
+    expect(center).toContain('setLocation("/membros/operacao/campanhas")');
+    const campaignsSection = center.slice(center.indexOf('{activeTab === "campaigns" && ('), center.indexOf('{activeTab === "createCampaign" &&'));
+    expect(campaignsSection).toContain("Criar Nova Campanha");
+    expect(campaignsSection).not.toContain("Nome da campanha *");
+    expect(campaignsSection).not.toContain("Destino automático *");
+    const createSection = center.slice(center.indexOf('{activeTab === "createCampaign" &&'), center.indexOf('{activeTab === "detail" &&'));
+    expect(createSection).toContain("Nome da campanha *");
+    expect(createSection).toContain("Destino automático *");
+  });
+
   it("isola a Etapa 4 em uma experiência de divulgação sem gestão de campanhas", async () => {
     const center = await readFile(path.join(root, "client/src/pages/MemberOperationCenter.tsx"), "utf8");
     const progressHook = await readFile(path.join(root, "client/src/hooks/useMemberGettingStartedProgress.ts"), "utf8");

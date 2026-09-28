@@ -90,6 +90,7 @@ function AppRoutes() {
     <Route path="/perguntas-frequentes" component={FaqPage} />
     <Route path="/contato" component={ContactPage} />
     <Route path="/membros/operacao" component={MemberOperationCenter} />
+    <Route path="/membros/operacao/campanhas/nova" component={MemberOperationCenter} />
     <Route path="/membros/operacao/campanhas" component={MemberOperationCenter} />
     <Route path="/membros/operacao/trafego" component={MemberOperationCenter} />
     <Route path="/membros/operacao/conversoes" component={MemberOperationCenter} />

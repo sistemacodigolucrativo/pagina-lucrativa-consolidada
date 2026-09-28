@@ -10,7 +10,7 @@ const dbMocks = vi.hoisted(() => ({
 
 vi.mock("./db", () => dbMocks);
 
-import { createDemoSession, resolveDemoAccount, resolveDemoSession } from "./demoAuth";
+import { createDemoSession, DEMO_SESSION_DURATION_MS, resolveDemoAccount, resolveDemoSession } from "./demoAuth";
 
 describe("resolveDemoAccount", () => {
   beforeEach(() => {
@@ -49,5 +49,9 @@ describe("resolveDemoAccount", () => {
     expect(token.split(".")).toHaveLength(2);
     expect(resolveDemoSession(token)).toMatchObject({ openId: "local_demo_admin", role: "admin", loginMethod: "local_demo" });
     expect(resolveDemoSession(`${token}invalid`)).toBeNull();
+  });
+
+  it("mantém a sessão persistente por 30 dias para uso em abas do mesmo navegador", () => {
+    expect(DEMO_SESSION_DURATION_MS).toBe(1000 * 60 * 60 * 24 * 30);
   });
 });

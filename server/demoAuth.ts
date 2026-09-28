@@ -31,7 +31,7 @@ type DemoSessionPayload = {
   loginMethod?: string | null;
 };
 
-const DEMO_SESSION_DURATION_MS = 1000 * 60 * 60 * 12;
+export const DEMO_SESSION_DURATION_MS = 1000 * 60 * 60 * 24 * 30;
 const DEMO_ACCOUNTS_ENABLED = process.env.ENABLE_DEMO_ACCOUNTS === "true" || process.env.NODE_ENV !== "production";
 
 function resolveSessionSecret() {

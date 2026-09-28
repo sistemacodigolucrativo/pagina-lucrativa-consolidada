@@ -104,7 +104,7 @@ import {
   updateMemberCourseProgress,
   updateMemberEbookReadingProgress,
 } from "./academyCanonical";
-import { createDemoSession, DEMO_SESSION_COOKIE_NAME, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
+import { createDemoSession, DEMO_SESSION_COOKIE_NAME, DEMO_SESSION_DURATION_MS, demoLoginInputSchema, resolveDemoAccount } from "./demoAuth";
 import { applicationReceiptUploadSchema, memberPaymentLinksInputSchema, paymentAccessInputSchema } from "@shared/applications";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -125,7 +125,7 @@ function normalizePostalCode(value: string) {
 
 export const profileInput = z.object({
   slug: z.string().trim().toLowerCase().regex(/^(?=.*[a-z0-9])[a-z0-9-]+$/, "Use letras, números e hífens.").min(3).max(96),
-  bio: z.string().trim().max(2000).optional().nullable(),
+  bio: z.string().trim().max(500).optional().nullable(),
   whatsapp: optionalPhoneZodSchema,
   websiteUrl: httpUrlZodSchema.max(512).optional().nullable(),
   facebookUrl: httpUrlZodSchema.max(512).optional().nullable(),
@@ -321,7 +321,7 @@ export const appRouter = router({
       if (!account) throw new Error("Usuário ou senha inválidos.");
       const token = createDemoSession(account);
       const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, { ...cookieOptions, sameSite: cookieOptions.secure ? "none" : "lax", maxAge: 1000 * 60 * 60 * 12 });
+      ctx.res.cookie(DEMO_SESSION_COOKIE_NAME, token, { ...cookieOptions, sameSite: cookieOptions.secure ? "none" : "lax", maxAge: DEMO_SESSION_DURATION_MS });
       return { role: account.role } as const;
     }),
     startPasswordRecovery: publicProcedure.input(passwordRecoveryStartInput).mutation(({ input }) => startSecurityPasswordRecoverySafe(input.identifier)),

@@ -33,6 +33,7 @@ import {
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { withAppBase } from "@/lib/devPath";
 import { useMemberGettingStartedProgress } from "@/hooks/useMemberGettingStartedProgress";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import {
@@ -48,6 +49,7 @@ export type DashboardMenuItem = {
   label: string;
   path: string;
   group?: string;
+  externalHref?: string;
 };
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -358,7 +360,8 @@ function DashboardLayoutContent({
                           isActive={isActive}
                           onClick={() => {
                             rememberSidebarScroll();
-                            setLocation(item.path);
+                            if (item.externalHref) window.location.href = item.externalHref.startsWith("http") ? item.externalHref : withAppBase(item.externalHref);
+                            else setLocation(item.path);
                             if (isMobile) setOpenMobile(false);
                           }}
                           tooltip={item.label}

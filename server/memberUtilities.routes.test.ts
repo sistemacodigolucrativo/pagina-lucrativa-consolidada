@@ -9,6 +9,7 @@ describe("rotas funcionais do Escritório Virtual", () => {
     expect(appSource).toContain('<Route path="/membros/como-divulgar" component={MemberGettingStarted} />');
     expect(appSource).toContain('<Route path="/membros/fale-conosco" component={MemberSupport} />');
     expect(appSource).toContain('<Route path="/membros/operacao" component={MemberOperationCenter} />');
+    expect(appSource).toContain('<Route path="/membros/operacao/campanhas/nova" component={MemberOperationCenter} />');
     expect(appSource).toContain('<Route path="/membros/operacao/:campaignId" component={MemberOperationCenter} />');
   });
 

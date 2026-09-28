@@ -52,6 +52,11 @@ describe("Editar perfil — contrato completo", () => {
     expect(result.addressComplement).toBeNull();
   });
 
+  it("limita a descrição sobre você a 500 caracteres", () => {
+    expect(profileInput.parse({ ...fullProfile, bio: "a".repeat(500) }).bio).toHaveLength(500);
+    expect(() => profileInput.parse({ ...fullProfile, bio: "a".repeat(501) })).toThrow();
+  });
+
   it("rejeita perfil sem endereço completo obrigatório", () => {
     expect(() => profileInput.parse({ ...fullProfile, address: "" })).toThrow("Este campo é obrigatório.");
     expect(() => profileInput.parse({ ...fullProfile, postalCode: "" })).toThrow("Este campo é obrigatório.");

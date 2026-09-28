@@ -4,11 +4,17 @@ import { memberOfficeModuleCount, memberOfficeNavigation } from "./memberOfficeC
 describe("catálogo do Escritório Virtual", () => {
   it("mantém uma navegação enxuta, sem ferramentas duplicadas", () => {
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
-    expect(memberOfficeModuleCount).toBe(16);
+    expect(memberOfficeModuleCount).toBe(17);
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "operation",
       label: "Central de Divulgação",
       path: "/membros/operacao",
+    });
+    expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
+      icon: "publicPage",
+      label: "Página pública de vendas",
+      path: "/membros/pagina-publica",
+      externalHref: "/",
     });
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "materials",

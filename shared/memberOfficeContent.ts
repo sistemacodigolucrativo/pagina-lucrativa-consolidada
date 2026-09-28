@@ -2,6 +2,7 @@ export type MemberOfficeNavigationItem = {
   icon: string;
   label: string;
   path: string;
+  externalHref?: string;
 };
 
 export type MemberOfficeNavigationGroup = {
@@ -21,6 +22,7 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
       { icon: "overview", label: "Visão geral", path: "/membros" },
       { icon: "how", label: "Primeiros passos", path: "/membros/como-divulgar" },
       { icon: "operation", label: "Central de Divulgação", path: "/membros/operacao" },
+      { icon: "publicPage", label: "Página pública de vendas", path: "/membros/pagina-publica", externalHref: "/" },
     ],
   },
   {

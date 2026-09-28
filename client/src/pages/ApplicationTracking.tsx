@@ -63,10 +63,10 @@ export default function ApplicationTracking() {
     <section className="access-steps">
       <div><b>PL</b><span><strong>Código de acompanhamento: {result.trackingCode}</strong><br />Registrado em {new Date(result.createdAt).toLocaleDateString("pt-BR")} · Valor: {formatCurrency(result.offerAmountCents)}</span></div>
       {state === "awaiting" ? <div><b>01</b><span><strong>Aguardando pagamento</strong><br />Conclua o pagamento na tela indicada. Se usar PIX, envie o comprovante para que a análise continue.</span></div> : null}
-      {state === "receipt" ? <div><b>02</b><span><strong>Comprovante recebido</strong><br />Seu comprovante foi recebido e está em análise. A liberação segue após conferência do responsável.</span></div> : null}
       {state === "rejected" ? <div><b><XCircle size={18} /></b><span><strong>Pagamento não aprovado</strong><br />Não foi possível confirmar seu pagamento. Se necessário, volte para a tela de pagamento e envie novo comprovante.</span></div> : null}
       {state === "approved" ? <div><b><CheckCircle2 size={18} /></b><span><strong>Pagamento aprovado</strong><br />Seu Código Lucrativo foi liberado para personalização.</span></div> : null}
       <div><b>→</b><span><strong>Pagamento:</strong> {applicationPaymentStatusLabel[result.paymentStatus]}<br /><strong>Acesso:</strong> {applicationActivationStatusLabel[result.activationStatus]}</span></div>
+      {state === "receipt" ? <div><b>02</b><span><strong>Comprovante recebido</strong><br />Seu comprovante foi recebido e está em análise. A liberação segue após a conferência do responsável.</span></div> : null}
     </section>
 
     {result.sponsorContact ? <section className="mt-5 rounded-2xl border border-red-400/35 bg-red-500/10 p-4 text-left">
