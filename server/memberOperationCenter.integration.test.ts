@@ -123,6 +123,8 @@ describe("Central de Divulgação", () => {
     expect(db).toContain("affiliateClickTotals");
     expect(db).toContain("eligibleAffiliateClickWhere");
     expect(db).toContain("confirmedApplicationTotals");
+    expect(db).toContain("directConfirmedApplicationWhere");
+    expect(db).toContain("NOT EXISTS");
     expect(db).toContain("uniqueVisitors");
     expect(db).toContain("clicks: Number(clickTotals[0]?.value ?? 0) + Number(affiliateClickTotals[0]?.value ?? 0)");
     expect(schema).toContain("affiliateLinkClickEvents");

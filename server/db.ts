@@ -269,6 +269,13 @@ function eligibleAffiliateClickWhere(baseWhere: SQL | undefined) {
   );
 }
 
+function directConfirmedApplicationWhere(baseWhere: SQL | undefined) {
+  return and(
+    baseWhere,
+    sql`NOT EXISTS (SELECT 1 FROM ${campaignConversions} WHERE ${campaignConversions.userId} = ${applications.ownerUserId} AND ${campaignConversions.entityType} = 'application' AND ${campaignConversions.entityId} = ${applications.id} AND ${campaignConversions.status} = 'active')`,
+  );
+}
+
 export async function getMemberOperationAnalytics(userId: number, period: CampaignAnalyticsPeriod = "30d") {
   const db = await getDb();
   if (!db) return { period, campaigns: [], totals: { campaigns: 0, clicks: 0, uniqueVisitors: 0, sessions: 0, conversions: 0, leads: 0, applications: 0 }, recentEvents: [] };
@@ -279,6 +286,7 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
   const affiliateEventWhere = eligibleAffiliateClickWhere(baseAffiliateEventWhere);
   const conversionWhere = start ? and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"), gte(campaignConversions.occurredAt, start)) : and(eq(campaignConversions.userId, userId), eq(campaignConversions.status, "active"));
   const confirmedApplicationWhere = start ? and(eq(applications.ownerUserId, userId), eq(applications.paymentStatus, "confirmed"), gte(applications.updatedAt, start)) : and(eq(applications.ownerUserId, userId), eq(applications.paymentStatus, "confirmed"));
+  const directConfirmedApplicationFilter = directConfirmedApplicationWhere(confirmedApplicationWhere);
   const [campaignRows, clickTotals, affiliateClickTotals, conversionTotals, leadTotals, applicationTotals, confirmedApplicationTotals, clickByCampaign, visitorsByCampaign, sessionsByCampaign, conversionByCampaign, recentEvents, campaignVisitors, affiliateVisitors, campaignSessions, affiliateSessions] = await Promise.all([
     db.select().from(campaignLinks).where(eq(campaignLinks.userId, userId)).orderBy(desc(campaignLinks.createdAt)),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere),
@@ -286,7 +294,7 @@ export async function getMemberOperationAnalytics(userId: number, period: Campai
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(conversionWhere),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "lead"))),
     db.select({ value: sql<number>`COUNT(*)` }).from(campaignConversions).where(and(conversionWhere, eq(campaignConversions.conversionType, "application"))),
-    db.select({ value: sql<number>`COUNT(*)` }).from(applications).where(confirmedApplicationWhere),
+    db.select({ value: sql<number>`COUNT(*)` }).from(applications).where(directConfirmedApplicationFilter),
     db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(*)` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
     db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.visitorId})` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
     db.select({ campaignId: campaignClickEvents.campaignId, value: sql<number>`COUNT(DISTINCT ${campaignClickEvents.sessionId})` }).from(campaignClickEvents).where(eventWhere).groupBy(campaignClickEvents.campaignId),
