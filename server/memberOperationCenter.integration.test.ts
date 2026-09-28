@@ -67,6 +67,8 @@ describe("Central de Divulgação", () => {
     expect(progressHook).toContain('label: "Primeiro clique no seu link"');
     expect(progressHook).toContain('label: "Acessou suas métricas"');
     expect(progressHook).toContain('label: "Primeira conversão gerada"');
+    expect(progressHook).toContain("trpc.member.affiliateApplications.useQuery");
+    expect(progressHook).toContain('application.paymentStatus === "confirmed" || application.activationStatus === "member_activated"');
     expect(progressHook).toContain("done: step.requirements.every(requirement => requirement.done)");
     expect(gettingStarted).toContain("Parabéns! Etapa {index + 1} concluída.");
     expect(progressHook).toContain("validatePhoneBR(profile.data?.whatsapp)");

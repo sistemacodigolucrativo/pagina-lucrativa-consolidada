@@ -19,7 +19,6 @@ export const memberOfficeNavigation: MemberOfficeNavigationGroup[] = [
   {
     label: "Início",
     items: [
-      { icon: "publicPage", label: "Página pública de vendas", path: "/membros/pagina-publica", externalHref: "/" },
       { icon: "overview", label: "Visão geral", path: "/membros" },
       { icon: "how", label: "Primeiros passos", path: "/membros/como-divulgar" },
       { icon: "operation", label: "Central de Divulgação", path: "/membros/operacao" },

@@ -198,6 +198,9 @@ describe("public responsive header and hero layout", () => {
     expect(violetaSource).toContain('className="violeta-neon-activation-card application-form"');
     expect(violetaSource).toContain('Promoção de ativação');
     expect(cssSource).toContain('.violeta-neon-border-glow');
+    expect(cssSource).toContain('#b7b0a1');
+    expect(cssSource).toContain('animation: violeta-border-orbit 6.8s linear infinite');
+    expect(cssSource).not.toContain('radial-gradient(circle at 80% 0%, rgba(209, 140, 255');
     expect(cssSource).toContain('.violeta-neon-seal { position: absolute; top: 36px;');
     expect(violetaSource).toContain('onSubmit={onSubmit}');
   });
