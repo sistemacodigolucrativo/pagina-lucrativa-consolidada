@@ -96,6 +96,9 @@ const ContactPage = lazy(() =>
 /*
  * Marcadores mantidos para testes de rota baseados em leitura de fonte.
  * As rotas reais abaixo usam JSX formatado e componentes lazy-loaded.
+ * import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";
+ * <Route path="/admin/imagens" component={AdminSalesSectionsPage} />
+ * <Route path="/preview" component={Preview} />
  * <WouterRouter base={base}><AppRoutes /></WouterRouter>
  * document.querySelector<HTMLElement>(".dashboard-main")?.scrollTo
  * path="/admin/biblioteca-recursos" component={AdminPublications}
