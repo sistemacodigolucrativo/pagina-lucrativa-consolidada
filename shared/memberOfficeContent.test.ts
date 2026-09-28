@@ -21,6 +21,7 @@ describe("catálogo do Escritório Virtual", () => {
       label: "Biblioteca de Recursos",
       path: "/membros/materiais",
     });
+    expect(memberOfficeNavigation[0]?.items[0]).toMatchObject({ label: "Página pública de vendas", externalHref: "/" });
     expect(paths).toContain("/membros/como-divulgar");
     expect(paths).toContain("/membros/operacao");
     expect(paths).toContain("/membros/recebimentos");

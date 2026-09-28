@@ -21,8 +21,9 @@ describe("memberOfficeNavigation", () => {
     expect(memberOfficeModuleCount).toBe(17);
     const paths = memberOfficeNavigation.flatMap(group => group.items.map(item => item.path));
     expect(new Set(paths).size).toBe(paths.length);
-    expect(itemsFor("Início")).toEqual(["/membros", "/membros/como-divulgar", "/membros/operacao", "/membros/pagina-publica"]);
+    expect(itemsFor("Início")).toEqual(["/membros/pagina-publica", "/membros", "/membros/como-divulgar", "/membros/operacao"]);
     expect(itemsFor("Minha página")).toEqual(["/membros/configuracoes", "/membros/meus-dados", "/membros/recebimentos"]);
+    expect(memberOfficeNavigation[0]?.items[0]).toMatchObject({ label: "Página pública de vendas", externalHref: "/" });
     expect(memberOfficeNavigation.flatMap(group => group.items)).toContainEqual({
       icon: "operation",
       label: "Central de Divulgação",

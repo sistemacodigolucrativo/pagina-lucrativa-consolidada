@@ -22,6 +22,14 @@ const internalLinkSources = [
 ].map(file => readFileSync(resolve(process.cwd(), file), "utf8"));
 
 describe("public responsive header and hero layout", () => {
+
+  it("troca Entrar por acesso ao escritório quando existe sessão", () => {
+    expect(homeSource).toContain("trpc.auth.me.useQuery()");
+    expect(homeSource).toContain("Ir para o escritório virtual");
+    expect(homeSource).toContain('withAppBase(isLoggedIn ? officeHref : "/acesso")');
+    expect(homeSource).toContain('session.data?.role === "admin" ? "/admin" : "/membros"');
+  });
+
   it("renders one header before the hero profile presentation", () => {
     expect((homeSource.match(/className=\"site-header\"/g) ?? []).length).toBe(1);
     expect(homeSource.indexOf('className="site-header"')).toBeLessThan(homeSource.indexOf('className="affiliate-banner"'));
@@ -197,7 +205,7 @@ describe("public responsive header and hero layout", () => {
   it("keeps the floating public conversion CTA removed while preserving conversion paths", () => {
     expect(appSource).not.toContain("PublicConversionCta");
     expect(homeSource).toContain('href="#f" className="nav-cta nav-cta-activation"');
-    expect(homeSource).toContain('href={withAppBase("/acesso")} className="nav-cta nav-cta-login-mobile"');
+    expect(homeSource).toContain('href={withAppBase(isLoggedIn ? officeHref : "/acesso")} className="nav-cta nav-cta-login-mobile"');
     expect(homeSource).toContain('<div className="sales-actions"><JoinButton />');
     expect(homeSource).toContain('className="member-chat-fab"');
     expect(homeSource).toContain('id="f"');
@@ -335,8 +343,8 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('utilityNavigation.map');
     expect(homeSource).toContain('className="nav-links-divider"');
     expect(homeSource).toContain('href="#f" className="nav-cta nav-cta-activation"');
-    expect(homeSource).toContain('href={withAppBase("/acesso")} className="nav-cta nav-cta-login-mobile"');
-    expect(homeSource).toContain('Entrar <ArrowUpRight size={15} />');
+    expect(homeSource).toContain('href={withAppBase(isLoggedIn ? officeHref : "/acesso")} className="nav-cta nav-cta-login-mobile"');
+    expect(homeSource).toContain('{isLoggedIn ? "Ir para o escritório virtual" : "Entrar"} <ArrowUpRight size={15} />');
     expect(cssSource).toContain('.nav-cta {');
     expect(cssSource).toContain('.nav-cta-login-mobile { display: none; }');
     expect(cssSource).toContain('.nav-links .nav-cta-login-mobile { display: flex; }');

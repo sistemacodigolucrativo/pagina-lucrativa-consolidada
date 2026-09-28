@@ -237,6 +237,7 @@ export default function Home() {
   const [applicationContact, setApplicationContact] = useState({ email: "", whatsapp: "" });
   const navMenuRef = useRef<HTMLElement | null>(null);
   const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const session = trpc.auth.me.useQuery();
   const sectionImages = trpc.public.salesSectionImages.useQuery();
   const socialProof = trpc.public.salesSocialProof.useQuery();
   const { overrides } = usePublicSalesCopy();
@@ -314,6 +315,8 @@ export default function Home() {
   }
 
   const closeMenu = () => setMenuOpen(false);
+  const isLoggedIn = Boolean(session.data);
+  const officeHref = session.data?.role === "admin" ? "/admin" : "/membros";
   const testimonialItems = socialProof.data?.testimonials ?? [];
   const reviewCount = socialProof.data?.reviewCount ?? 0;
   const averageRating = socialProof.data?.averageRating ?? null;
@@ -336,7 +339,7 @@ export default function Home() {
           <div className="nav-links-group nav-links-utility" aria-label="Ações e rotas utilitárias">
             {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} onClick={closeMenu}>{label}</a>)}
           </div>
-          <a href={withAppBase("/acesso")} className="nav-cta nav-cta-login-mobile" onClick={closeMenu}>Entrar <ArrowUpRight size={15} /></a>
+          <a href={withAppBase(isLoggedIn ? officeHref : "/acesso")} className="nav-cta nav-cta-login-mobile" onClick={closeMenu}>{isLoggedIn ? "Ir para o escritório virtual" : "Entrar"} <ArrowUpRight size={15} /></a>
           <a href="#f" className="nav-cta nav-cta-activation" onClick={closeMenu}>Quero ativar minha estrutura <ArrowUpRight size={15} /></a>
         </nav>
         <button ref={menuButtonRef} className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
