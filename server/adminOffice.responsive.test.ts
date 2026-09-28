@@ -14,6 +14,9 @@ describe("AdminOffice — visão administrativa sem fila global de pedidos", () 
     expect(source).toContain("trpc.admin.overview.useQuery");
     expect(source).toContain("hasAttentionQueue ? (");
     expect(source).toContain("const hasAttentionQueue = openTickets > 0 || pendingTestimonials > 0");
+    expect(source).toContain('item.kind === "material" || item.kind === "article"');
+    expect(source).toContain("data?.publishedResourceCount");
+    expect(source).toContain("data?.totalResourceCount");
     expect(source).toContain("const hasOperationalLog = !activities.isLoading && Boolean(activities.data?.length)");
     expect(source).toContain("Biblioteca de Recursos");
     expect(source).toContain('onClick={() => openCard("/admin/biblioteca-recursos")}');

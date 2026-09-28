@@ -36,9 +36,10 @@ export default function AdminOffice() {
   const contentItems = content.data;
   const ticketItems = tickets.data;
   const testimonialItems = testimonials.data;
-  const draftContent = contentItems?.filter(item => item.status === "draft").length ?? 0;
-  const publishedContent = contentItems?.filter(item => item.status === "published").length ?? 0;
-  const totalContent = contentItems?.length ?? 0;
+  const resourceContentItems = contentItems?.filter(item => item.kind === "material" || item.kind === "article") ?? [];
+  const draftContent = resourceContentItems.filter(item => item.status === "draft").length;
+  const publishedContent = data?.publishedResourceCount ?? resourceContentItems.filter(item => item.status === "published").length;
+  const totalContent = data?.totalResourceCount ?? resourceContentItems.length;
   const publicationRate = totalContent > 0 ? (publishedContent / totalContent) * 100 : 0;
   const openTickets = ticketItems?.filter(ticket => ticket.status === "open").length ?? 0;
   const pendingTestimonials = testimonialItems?.filter(item => item.status === "pending").length ?? 0;

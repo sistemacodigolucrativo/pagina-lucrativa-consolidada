@@ -193,6 +193,7 @@ function DashboardLayoutContent({
     onSuccess: async notification => {
       await notifications.refetch();
       if (notification.entityType === "application") setLocation(`/membros/meus-pedidos`);
+      if (notification.entityType === "support_ticket") setLocation(`/membros/fale-conosco`);
     },
   });
 

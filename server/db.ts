@@ -46,6 +46,7 @@ const PAYMENT_ACCESS_TOKEN_TTL_MS = 30 * 60 * 1000;
 const PUBLIC_COUNTER_CONFIG_CATEGORY = "public-counter-config";
 const PUBLIC_MEMBERS_COUNTER_INCREMENT = "public_members_counter_increment";
 const PUBLIC_REVIEWS_COUNTER_INCREMENT = "public_reviews_counter_increment";
+const SYSTEM_CONTENT_CATEGORIES = ["public-sales-copy", "public-sales-layout", "member-admin-control", "public-toast-config", "public-counter-config"] as const;
 let _db: ReturnType<typeof drizzle> | null = null;
 type DbExecutor = Pick<ReturnType<typeof drizzle>, "select" | "insert" | "update">;
 
@@ -1215,10 +1216,32 @@ export async function removeAdminPublicSalesSectionImage(sectionId: string) {
   return { success: true } as const;
 }
 
+function publicMemberContentFilter() {
+  return and(
+    eq(managedContent.status, "published"),
+    or(
+      eq(managedContent.kind, "material"),
+      eq(managedContent.kind, "article"),
+      eq(managedContent.kind, "faq"),
+      and(
+        eq(managedContent.kind, "notice"),
+        or(
+          isNull(managedContent.resourceCategory),
+          and(...SYSTEM_CONTENT_CATEGORIES.map(category => sql`${managedContent.resourceCategory} <> ${category}`)),
+        ),
+      ),
+    ),
+  );
+}
+
+function resourceLibraryContentFilter() {
+  return or(eq(managedContent.kind, "material"), eq(managedContent.kind, "article"));
+}
+
 export async function getPublishedContent() {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(managedContent).where(eq(managedContent.status, "published")).orderBy(desc(managedContent.updatedAt));
+  return db.select().from(managedContent).where(publicMemberContentFilter()).orderBy(desc(managedContent.updatedAt));
 }
 
 const ebookListFields = {
@@ -2021,12 +2044,18 @@ export async function reviewPaymentReceipt(userId: number, input: { applicationI
 export async function getAdminOverview() {
   const db = await getDb();
   if (!db) return null;
-  const [memberRows, academyCourses] = await Promise.all([
-    db.select().from(users), getAcademyEbookCourses(0),
+  const [memberRows, academyCourses, resourceRows] = await Promise.all([
+    db.select().from(users),
+    getAcademyEbookCourses(0),
+    db.select({ id: managedContent.id, status: managedContent.status }).from(managedContent).where(resourceLibraryContentFilter()),
   ]);
+  const totalResourceCount = resourceRows.length;
+  const publishedResourceCount = resourceRows.filter(item => item.status === "published").length;
   return {
     memberCount: memberRows.filter(user => user.role === "user").length,
     publishedCourseCount: academyCourses.length,
+    totalResourceCount,
+    publishedResourceCount,
   };
 }
 
@@ -2077,7 +2106,22 @@ export async function getAdminTickets() {
 export async function updateAdminTicket(ticketId: number, input: { status: "open" | "answered" | "closed"; adminResponse?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Banco de dados indisponível.");
-  await db.update(supportTickets).set({ status: input.status, adminResponse: input.adminResponse ?? null }).where(eq(supportTickets.id, ticketId));
+  const response = input.adminResponse?.trim() || null;
+  const rows = await db.select().from(supportTickets).where(eq(supportTickets.id, ticketId)).limit(1);
+  const ticket = rows[0];
+  if (!ticket) throw new Error("Ticket não encontrado.");
+  await db.update(supportTickets).set({ status: input.status, adminResponse: response }).where(eq(supportTickets.id, ticketId));
+  const shouldNotifyMember = input.status === "answered" && Boolean(response) && (ticket.status !== "answered" || ticket.adminResponse !== response);
+  if (shouldNotifyMember) {
+    await db.insert(memberNotifications).values({
+      userId: ticket.userId,
+      type: "support_ticket_answered",
+      title: "Resposta da administração",
+      message: `A administração respondeu seu ticket: ${ticket.subject}`,
+      entityType: "support_ticket",
+      entityId: ticket.id,
+    });
+  }
   return { success: true } as const;
 }
 

@@ -56,6 +56,12 @@ describe("central editorial", () => {
     expect(library).not.toContain("Categorias</span>");
     expect(library).toContain('target="_blank"');
     expect(member).toContain('item.kind === "faq"');
+    const db = await readFile(path.join(root, "server/db.ts"), "utf8");
+    expect(db).toContain("function publicMemberContentFilter()");
+    expect(db).toContain("SYSTEM_CONTENT_CATEGORIES");
+    expect(db).toContain("function resourceLibraryContentFilter()");
+    expect(db).toContain("publishedResourceCount");
+    expect(db).toContain("totalResourceCount");
   });
 
   it("unifica Material de divulgação na Biblioteca de Recursos e preserva redirects legados", async () => {

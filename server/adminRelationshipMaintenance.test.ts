@@ -21,6 +21,13 @@ describe("manutenção administrativa de relacionamento", () => {
     expect(source).toContain("Buscar assunto ou mensagem");
     expect(source).toContain("Escreva uma resposta antes de marcar o ticket como respondido.");
     expect(source).toContain('option value="closed"');
+    const db = read("server/db.ts");
+    const layout = read("client/src/components/DashboardLayout.tsx");
+    expect(db).toContain('type: "support_ticket_answered"');
+    expect(db).toContain('entityType: "support_ticket"');
+    expect(db).toContain("A administração respondeu seu ticket");
+    expect(layout).toContain('notification.entityType === "support_ticket"');
+    expect(layout).toContain("/membros/fale-conosco");
   });
 
   it("mantém exclusão de conteúdos e permite operar também sobre arquivados", () => {
