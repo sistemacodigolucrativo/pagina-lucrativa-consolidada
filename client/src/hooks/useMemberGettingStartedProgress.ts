@@ -42,6 +42,7 @@ export function useMemberGettingStartedProgress(options: UseMemberGettingStarted
   const paymentLinks = trpc.member.paymentLinks.useQuery(undefined, { enabled });
   const campaigns = trpc.member.campaigns.useQuery(undefined, { enabled });
   const analytics = trpc.member.analytics.useQuery({ period: "all" }, { enabled });
+  const overview = trpc.member.overview.useQuery(undefined, { enabled });
   const affiliateApplications = trpc.member.affiliateApplications.useQuery(undefined, { enabled });
 
   const profilePhotoReady = Boolean(profile.data?.photoUrl);
@@ -79,7 +80,7 @@ export function useMemberGettingStartedProgress(options: UseMemberGettingStarted
   const firstClick = (analytics.data?.totals.clicks ?? 0) > 0;
   const metricsViewed = Boolean(profile.data?.metricsViewedAt);
   const attributedConversion = affiliateApplications.data?.some(application => application.paymentStatus === "confirmed" || application.activationStatus === "member_activated") ?? false;
-  const firstConversion = (analytics.data?.totals.conversions ?? 0) > 0 || attributedConversion;
+  const firstConversion = (analytics.data?.totals.conversions ?? 0) > 0 || (overview.data?.confirmedApplicationCount ?? 0) > 0 || attributedConversion;
 
   const steps: MemberGettingStartedStep[] = useMemo(() => {
     const baseSteps = [
@@ -168,6 +169,7 @@ export function useMemberGettingStartedProgress(options: UseMemberGettingStarted
     paymentLinks,
     campaigns,
     analytics,
+    overview,
     affiliateApplications,
     steps,
     completed,

@@ -50,6 +50,8 @@ export default function MemberGettingStarted() {
       utils.member.paymentLinks.invalidate(),
       utils.member.campaigns.invalidate(),
       utils.member.analytics.invalidate(),
+      utils.member.overview.invalidate(),
+      utils.member.affiliateApplications.invalidate(),
     ]);
   }, [returnedStep]);
 
