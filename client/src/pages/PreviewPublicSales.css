@@ -3,6 +3,12 @@
   background: #05070b;
 }
 
+.premium-public-preview-fullscreen {
+  min-height: 100vh;
+  padding: 0;
+  background: #05070d;
+}
+
 .premium-public-preview-note {
   display: flex;
   flex-wrap: wrap;
@@ -868,6 +874,12 @@
 }
 
 @media (max-width: 640px) {
+  .premium-public-preview-fullscreen {
+    min-height: 100vh;
+    padding: 0;
+    background: #05070d;
+  }
+
   .premium-public-preview-note {
     align-items: flex-start;
     flex-direction: column;
