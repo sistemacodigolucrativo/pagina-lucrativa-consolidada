@@ -198,7 +198,7 @@ jobs:
         run: |
           REMOTE_DIR="/tmp/pagina-lucrativa-deploy-${TARGET_SHA}"
           ssh -i ~/.ssh/id_ed25519 -p "$VPS_PORT" -o BatchMode=yes -o StrictHostKeyChecking=yes "$VPS_USER@$VPS_HOST" \
-            "chmod 700 '$REMOTE_DIR/deploy-vps.sh' && '$REMOTE_DIR/deploy-vps.sh' '$TARGET_SHA' '$VPS_DEPLOY_PATH' '$REMOTE_DIR/pagina-lucrativa-${TARGET_SHA}.tar.gz' 'http://127.0.0.1:3101/'"
+            "chmod 700 '$REMOTE_DIR/deploy-vps.sh' && PNPM_BIN=/usr/bin/pnpm '$REMOTE_DIR/deploy-vps.sh' '$TARGET_SHA' '$VPS_DEPLOY_PATH' '$REMOTE_DIR/pagina-lucrativa-${TARGET_SHA}.tar.gz' 'http://127.0.0.1:3101/'"
 
       - name: Limpar temporários após deploy
         if: always() && steps.config.outputs.ready == 'true'
