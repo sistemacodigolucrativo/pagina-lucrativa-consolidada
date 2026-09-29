@@ -284,6 +284,7 @@ export default function Home() {
   const effectiveAffiliateSlug = effectiveAffiliate?.slug ?? null;
   const publicProfileName = effectiveAffiliate?.name || effectiveAffiliate?.slug || "Perfil público";
   const publicSocialLinks = effectiveAffiliate ? [
+    ["WhatsApp", effectiveAffiliate.whatsapp ? `https://wa.me/${effectiveAffiliate.whatsapp.replace(/\D/g, "")}` : null],
     ["Website", effectiveAffiliate.websiteUrl],
     ["Facebook", effectiveAffiliate.facebookUrl],
     ["Instagram", effectiveAffiliate.instagramUrl],
@@ -352,8 +353,8 @@ export default function Home() {
             <div className="affiliate-profile-summary">
               {effectiveAffiliate.photoUrl ? <img src={withAppBase(effectiveAffiliate.photoUrl)} alt={`Foto de ${publicProfileName}`} className="affiliate-profile-avatar" /> : <div className="affiliate-profile-avatar affiliate-profile-avatar-fallback" aria-hidden="true">{publicProfileName.slice(0, 1).toUpperCase()}</div>}
               <div className="affiliate-profile-summary-main">
-                <strong className="affiliate-profile-name">{publicProfileName}</strong>
-                {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Redes sociais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : <span className="affiliate-profile-no-socials">Perfil público identificável</span>}
+                <div className="affiliate-profile-identity"><span className="affiliate-profile-presenter">Oportunidade apresentada por</span><strong className="affiliate-profile-name">{publicProfileName}</strong></div>
+                {publicSocialLinks.length ? <nav className="affiliate-profile-socials" aria-label={`Canais de ${publicProfileName}`}>{publicSocialLinks.map(([label, url]) => <a key={label} href={url.startsWith("http") ? url : undefined} target={url.startsWith("http") ? "_blank" : undefined} rel={url.startsWith("http") ? "noreferrer" : undefined}>{label}</a>)}</nav> : null}
               </div>
               <button type="button" className="affiliate-profile-more" aria-haspopup="dialog" aria-expanded={profileDetailsOpen} onClick={() => setProfileDetailsOpen(true)}>Ver perfil</button>
             </div>
