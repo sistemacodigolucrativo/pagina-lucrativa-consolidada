@@ -37,10 +37,10 @@ describe("public counter increments", () => {
     expect(testimonialsSource).toContain("public_reviews_counter_increment");
   });
 
-  it("keeps the public home consuming the adjusted public counters only", () => {
-    expect(homeSource).toContain("socialProof.data?.memberCount");
-    expect(homeSource).toContain("const reviewCount = socialProof.data?.reviewCount ?? 0");
-    expect(homeSource).not.toContain("realMemberCount");
-    expect(homeSource).not.toContain("realReviewCount");
+  it("keeps the public home consuming real proof counts only", () => {
+    expect(homeSource).toContain("socialProof.data?.realMemberCount");
+    expect(homeSource).toContain("const reviewCount = socialProof.data?.realReviewCount ?? 0");
+    expect(homeSource).not.toContain("socialProof.data?.memberCount");
+    expect(homeSource).not.toContain("socialProof.data?.reviewCount");
   });
 });

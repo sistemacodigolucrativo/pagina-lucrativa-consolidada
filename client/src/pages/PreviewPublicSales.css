@@ -2146,3 +2146,146 @@
 .real-public-sales-preview main [id] {
   scroll-margin-top: 88px;
 }
+
+/* Ajustes do hero premium: mantém a arte e as ações na identidade azul. */
+.real-public-sales-preview .sales-hero-copy > .top-promo-banner img {
+  filter: hue-rotate(65deg) saturate(0.82) drop-shadow(0 22px 54px rgba(37, 99, 235, 0.18));
+}
+
+.real-public-sales-preview .public-conversion-cta {
+  border-color: rgba(191, 219, 254, 0.56);
+  color: #ffffff;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.real-public-sales-preview .public-conversion-cta:focus-visible {
+  outline-color: #bfdbfe;
+}
+
+@media (min-width: 1025px) {
+  .real-public-sales-preview .nav-links,
+  .real-public-sales-preview .nav-cta {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1024px) {
+  .real-public-sales-preview .sales-hero-copy {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "kicker"
+      "title"
+      "description"
+      "actions"
+      "trust"
+      "visual";
+    column-gap: 0;
+    row-gap: 0;
+    align-items: start;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > .sales-kicker {
+    grid-area: kicker;
+    max-width: 520px;
+    margin: 0 0 12px;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > h1 {
+    grid-area: title;
+    max-width: 720px;
+    margin: 0 0 14px;
+    font-size: clamp(28px, 8vw, 38px);
+    line-height: 1;
+    letter-spacing: -0.068em;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > p {
+    grid-area: description;
+    max-width: 680px;
+    font-size: 14.5px;
+    line-height: 1.55;
+  }
+
+  .real-public-sales-preview .sales-actions {
+    grid-area: actions;
+    margin: 14px 0 12px;
+    gap: 9px;
+  }
+
+  .real-public-sales-preview .sales-trust-featured {
+    grid-area: trust;
+    width: min(100%, 680px);
+    margin: 0;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > .top-promo-banner {
+    grid-area: visual;
+    width: 100%;
+    max-width: 720px;
+    margin: 18px 0 0;
+    padding: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .real-public-sales-preview .sales-hero {
+    padding-top: 24px;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > .sales-kicker {
+    margin-bottom: 10px;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > h1 {
+    margin-bottom: 12px;
+    font-size: clamp(28px, 8vw, 36px);
+  }
+
+  .real-public-sales-preview .sales-hero-copy > p {
+    font-size: 14.5px;
+    line-height: 1.52;
+  }
+
+  .real-public-sales-preview .sales-actions {
+    margin: 12px 0 10px;
+  }
+
+  .real-public-sales-preview .sales-trust-featured {
+    padding: 11px 12px;
+  }
+}
+
+@media (max-width: 360px) {
+  .real-public-sales-preview .nav {
+    min-height: 68px;
+    gap: 10px;
+  }
+
+  .real-public-sales-preview .brand {
+    gap: 7px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  .real-public-sales-preview .brand-mark {
+    width: 26px;
+    height: 26px;
+    font-size: 13px;
+  }
+
+  .real-public-sales-preview .sales-kicker {
+    font-size: 9px;
+    letter-spacing: 0.06em;
+  }
+
+  .real-public-sales-preview .sales-kicker::before {
+    width: 16px;
+    margin-right: 6px;
+  }
+
+  .real-public-sales-preview .sales-actions {
+    margin: 8px 0;
+  }
+}

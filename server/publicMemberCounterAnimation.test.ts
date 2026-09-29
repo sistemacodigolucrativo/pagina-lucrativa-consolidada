@@ -11,7 +11,7 @@ describe("public member counter animation", () => {
     expect(homeSource).toContain("threshold: 0.35");
     expect(homeSource).toContain("requestAnimationFrame");
     expect(homeSource).toContain("prefers-reduced-motion: reduce");
-    expect(homeSource).toContain("<AnimatedMemberCount value={socialProof.data?.memberCount ?? 0} />");
+    expect(homeSource).toContain("<AnimatedMemberCount value={socialProof.data?.realMemberCount ?? 0} />");
   });
 
   it("formats the animated counter using Brazilian thousands separators", () => {
