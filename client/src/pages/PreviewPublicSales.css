@@ -2140,3 +2140,9 @@
 .real-public-sales-preview .member-chat-fab-wrap {
   display: none;
 }
+
+
+/* Evita que âncoras da página fiquem encobertas pelo cabeçalho fixo. */
+.real-public-sales-preview main [id] {
+  scroll-margin-top: 88px;
+}

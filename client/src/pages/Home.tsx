@@ -249,6 +249,23 @@ export default function Home() {
   };
   const heroImage = resolveSectionImage(heroSection.id, heroSection.defaultImage);
   useEffect(() => {
+    if (sectionImages.isLoading || socialProof.isLoading) return;
+    const targetId = window.location.hash.slice(1);
+    if (!targetId) return;
+    let firstFrame = 0;
+    let secondFrame = 0;
+    firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        document.getElementById(targetId)?.scrollIntoView({ block: "start" });
+      });
+    });
+    return () => {
+      if (firstFrame) window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) window.cancelAnimationFrame(secondFrame);
+    };
+  }, [sectionImages.isLoading, socialProof.isLoading]);
+
+  useEffect(() => {
     if (!profileDetailsOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") setProfileDetailsOpen(false);
@@ -319,7 +336,7 @@ export default function Home() {
   const isLoggedIn = Boolean(session.data);
   const officeHref = session.data?.role === "admin" ? "/admin" : "/membros";
   const testimonialItems = socialProof.data?.testimonials ?? [];
-  const reviewCount = socialProof.data?.reviewCount ?? 0;
+  const reviewCount = socialProof.data?.realReviewCount ?? 0;
   const averageRating = socialProof.data?.averageRating ?? null;
   const formattedAverageRating = averageRating !== null ? averageRating.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : null;
   const previousTestimonial = () => setActiveTestimonialIndex(current => testimonialItems.length ? current === 0 ? testimonialItems.length - 1 : current - 1 : 0);
@@ -435,7 +452,7 @@ export default function Home() {
             <p>{publicCopy(overrides, "social_proof", "description", "Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
           </div>
           <div className="social-proof-stats">
-            <article><span>Total de membros</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : <AnimatedMemberCount value={socialProof.data?.memberCount ?? 0} />}</article>
+            <article><span>Total de membros</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : <AnimatedMemberCount value={socialProof.data?.realMemberCount ?? 0} />}</article>
           </div>
           {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : testimonialItems.length ? <div className="testimonial-carousel" aria-label="Agradecimentos de membros">
             <div className="testimonial-carousel-track">

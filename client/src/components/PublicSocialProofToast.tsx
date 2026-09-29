@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import "./PublicSocialProofToast.css";
-import { isPublicSocialProofRoute, randomBetween } from "@shared/publicSocialProof";
+import { isPublicSocialProofRoute, publicSocialProofDisclaimer, randomBetween } from "@shared/publicSocialProof";
 import {
   normalizePublicToastSettings,
   publicToastCities,
@@ -228,7 +228,14 @@ export default function PublicSocialProofToast() {
         const template = templates[index];
         if (!template) return;
         const rendered = renderTemplate(template.message, displayedNamesRef.current);
-        setNotice({ ...rendered, disclaimer: template.disclaimer, key: Date.now() });
+        setNotice({
+          ...rendered,
+          disclaimer: publicSocialProofDisclaimer,
+          key: Date.now(),
+          forceSimulationNotice: true,
+          headerMessage: "Demonstração ilustrativa",
+          footerMessage: publicSocialProofDisclaimer,
+        });
         dismissTimer = window.setTimeout(() => {
           if (cancelled) return;
           setNotice(null);
