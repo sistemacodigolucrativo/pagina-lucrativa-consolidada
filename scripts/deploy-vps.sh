@@ -10,6 +10,7 @@ SMOKE_PORT="${SMOKE_PORT:-3199}"
 PUBLIC_HEALTHCHECK_URL="${PUBLIC_HEALTHCHECK_URL:-https://ocodigolucrativo.site/healthz}"
 PNPM_BIN="${PNPM_BIN:-}"
 DEPLOY_INVOCATION="${DEPLOY_INVOCATION:-auto}"
+RUNTIME_ENV_FILE="${RUNTIME_ENV_FILE:-}"
 
 log() { printf '[deploy] %s\n' "$*"; }
 fail() { printf '[deploy] ERRO: %s\n' "$*" >&2; exit 1; }
@@ -58,6 +59,17 @@ fi
 PNPM_VERSION="$($PNPM_BIN --version)"
 [[ "$PNPM_VERSION" == "10.4.1" ]] || fail "Versão pnpm incompatível: $PNPM_VERSION (esperada 10.4.1)."
 write_deploy_status "deploying" 12 "Ambiente validado"
+
+load_runtime_env() {
+  local env_file="${RUNTIME_ENV_FILE:-$DEPLOY_ROOT/.env}"
+  [[ -f "$env_file" ]] || fail "Arquivo de ambiente da VPS não encontrado: $env_file"
+  set -a
+  # shellcheck disable=SC1090
+  . "$env_file"
+  set +a
+  [[ -n "${JWT_SECRET:-}" ]] || fail "JWT_SECRET ausente no ambiente da VPS."
+  [[ -n "${DATABASE_URL:-${REMOTE_DATABASE_URL:-}}" ]] || fail "DATABASE_URL/REMOTE_DATABASE_URL ausente no ambiente da VPS."
+}
 
 restart_service() {
   # Requer sudoers NOPASSWD restrito exclusivamente ao restart deste serviço.
@@ -169,6 +181,9 @@ write_deploy_status "deploying" 55 "Gerando build de produção"
 log "Gerando build de produção"
 "$PNPM_BIN" build
 [[ -f dist/index.js ]] || fail "Build não gerou dist/index.js."
+
+write_deploy_status "deploying" 68 "Carregando ambiente seguro da VPS"
+load_runtime_env
 
 write_deploy_status "deploying" 70 "Validando nova versão"
 log "Smoke test isolado na porta $SMOKE_PORT"
