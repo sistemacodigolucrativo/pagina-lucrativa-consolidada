@@ -7,9 +7,38 @@ import {
   PUBLIC_SALES_COPY_SECTIONS,
   defaultValuesForSection,
 } from "@shared/publicSalesCopyEditor";
-import { Check, Eye, ImagePlus, Maximize2, Minimize2, Monitor, MousePointer2, RotateCcw, Save, Smartphone, Tablet, X } from "lucide-react";
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  Check,
+  Eye,
+  ImagePlus,
+  LayoutTemplate,
+  Maximize2,
+  Minimize2,
+  Monitor,
+  MousePointer2,
+  RotateCcw,
+  Save,
+  Smartphone,
+  Tablet,
+  X,
+} from "lucide-react";
+import {
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
+import {
+  DEFAULT_PUBLIC_PAGE_TEMPLATE,
+  PUBLIC_PAGE_TEMPLATE_CATEGORY,
+  PUBLIC_PAGE_TEMPLATE_RESOURCE,
+  normalizePublicPageTemplate,
+  parsePublicPageTemplateConfig,
+  type PublicPageTemplate,
+} from "@shared/publicPageTemplate";
 import "./AdminVisualSalesEditor.css";
 
 const acceptedTypes = ["image/jpeg", "image/png", "image/gif"] as const;
@@ -20,24 +49,59 @@ type Breakpoint = "desktop" | "tablet" | "mobile";
 type FloatingId = "fab" | "cta" | "toast";
 type Point = { x: number; y: number };
 type FloatingLayout = Record<Breakpoint, Record<FloatingId, Point>>;
-type EditingState = { sectionId: string; key: string; element: HTMLElement; originalValue: string };
-type PendingImage = { imageSectionId: string; dataUrl: string; contentType: AcceptedImageType; originalName: string; element: HTMLImageElement; originalSrc: string };
-
-const DEFAULT_LAYOUT: FloatingLayout = {
-  desktop: { fab: { x: 94, y: 88 }, cta: { x: 88, y: 78 }, toast: { x: 50, y: 12 } },
-  tablet: { fab: { x: 92, y: 88 }, cta: { x: 82, y: 78 }, toast: { x: 50, y: 12 } },
-  mobile: { fab: { x: 88, y: 86 }, cta: { x: 72, y: 76 }, toast: { x: 50, y: 14 } },
+type EditingState = {
+  sectionId: string;
+  key: string;
+  element: HTMLElement;
+  originalValue: string;
+};
+type PendingImage = {
+  imageSectionId: string;
+  dataUrl: string;
+  contentType: AcceptedImageType;
+  originalName: string;
+  element: HTMLImageElement;
+  originalSrc: string;
 };
 
-function sectionRoot(doc: Document, section: (typeof PUBLIC_SALES_COPY_SECTIONS)[number]) {
+const DEFAULT_LAYOUT: FloatingLayout = {
+  desktop: {
+    fab: { x: 94, y: 88 },
+    cta: { x: 88, y: 78 },
+    toast: { x: 50, y: 12 },
+  },
+  tablet: {
+    fab: { x: 92, y: 88 },
+    cta: { x: 82, y: 78 },
+    toast: { x: 50, y: 12 },
+  },
+  mobile: {
+    fab: { x: 88, y: 86 },
+    cta: { x: 72, y: 76 },
+    toast: { x: 50, y: 14 },
+  },
+};
+
+function sectionRoot(
+  doc: Document,
+  section: (typeof PUBLIC_SALES_COPY_SECTIONS)[number]
+) {
   if (typeof section.referenceCopyIndex === "number") {
-    return doc.querySelectorAll<HTMLElement>("section.reference-copy")[section.referenceCopyIndex] ?? null;
+    return (
+      doc.querySelectorAll<HTMLElement>("section.reference-copy")[
+        section.referenceCopyIndex
+      ] ?? null
+    );
   }
-  return section.sectionSelector ? doc.querySelector<HTMLElement>(section.sectionSelector) : null;
+  return section.sectionSelector
+    ? doc.querySelector<HTMLElement>(section.sectionSelector)
+    : null;
 }
 
 function queryWithin(root: HTMLElement, selector: string) {
-  const normalized = selector.trim().startsWith(">") ? `:scope ${selector.trim()}` : selector;
+  const normalized = selector.trim().startsWith(">")
+    ? `:scope ${selector.trim()}`
+    : selector;
   return root.querySelector<HTMLElement>(normalized);
 }
 
@@ -56,7 +120,10 @@ export default function AdminSalesImages() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const fullscreenAreaRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const imageTargetRef = useRef<{ imageSectionId: string; element: HTMLImageElement } | null>(null);
+  const imageTargetRef = useRef<{
+    imageSectionId: string;
+    element: HTMLImageElement;
+  } | null>(null);
   const cleanupEditorRef = useRef<(() => void) | null>(null);
   const [breakpoint, setBreakpoint] = useState<Breakpoint>("desktop");
   const [interactionMode, setInteractionMode] = useState(false);
@@ -69,9 +136,50 @@ export default function AdminSalesImages() {
   const [frameReady, setFrameReady] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  const copyRecords = useMemo(() => (content.data ?? []).filter(item => item.kind === "notice" && item.resourceCategory === PUBLIC_SALES_COPY_CATEGORY && item.status !== "archived"), [content.data]);
-  const copyRecordBySection = useMemo(() => new Map(copyRecords.map(item => [item.resourceType ?? "", item])), [copyRecords]);
-  const layoutRecord = useMemo(() => (content.data ?? []).find(item => item.kind === "notice" && item.resourceCategory === FLOATING_LAYOUT_CATEGORY && item.resourceType === FLOATING_LAYOUT_RESOURCE && item.status !== "archived"), [content.data]);
+  const copyRecords = useMemo(
+    () =>
+      (content.data ?? []).filter(
+        item =>
+          item.kind === "notice" &&
+          item.resourceCategory === PUBLIC_SALES_COPY_CATEGORY &&
+          item.status !== "archived"
+      ),
+    [content.data]
+  );
+  const copyRecordBySection = useMemo(
+    () => new Map(copyRecords.map(item => [item.resourceType ?? "", item])),
+    [copyRecords]
+  );
+  const layoutRecord = useMemo(
+    () =>
+      (content.data ?? []).find(
+        item =>
+          item.kind === "notice" &&
+          item.resourceCategory === FLOATING_LAYOUT_CATEGORY &&
+          item.resourceType === FLOATING_LAYOUT_RESOURCE &&
+          item.status !== "archived"
+      ),
+    [content.data]
+  );
+  const templateRecord = useMemo(
+    () =>
+      (content.data ?? []).find(
+        item =>
+          item.kind === "notice" &&
+          item.resourceCategory === PUBLIC_PAGE_TEMPLATE_CATEGORY &&
+          item.resourceType === PUBLIC_PAGE_TEMPLATE_RESOURCE &&
+          item.status !== "archived"
+      ),
+    [content.data]
+  );
+  const activeTemplate = useMemo(
+    () => parsePublicPageTemplateConfig(templateRecord?.body),
+    [templateRecord?.body]
+  );
+  const [templateDraft, setTemplateDraft] = useState<PublicPageTemplate>(
+    DEFAULT_PUBLIC_PAGE_TEMPLATE
+  );
+  const [savingTemplate, setSavingTemplate] = useState(false);
 
   useEffect(() => {
     if (!layoutRecord?.body) return;
@@ -88,9 +196,53 @@ export default function AdminSalesImages() {
   }, [layoutRecord?.body]);
 
   useEffect(() => {
-    const onFullscreenChange = () => setIsFullscreen(document.fullscreenElement === fullscreenAreaRef.current);
+    setTemplateDraft(activeTemplate);
+  }, [activeTemplate]);
+
+  const saveTemplateSelection = useCallback(async () => {
+    const nextTemplate = normalizePublicPageTemplate(templateDraft);
+    const payload = {
+      kind: "notice" as const,
+      title: "Template da página pública",
+      summary:
+        nextTemplate === "premium" ? "Template Premium" : "Template Oficial",
+      body: JSON.stringify({ activeTemplate: nextTemplate }),
+      resourceUrl: null,
+      resourceCategory: PUBLIC_PAGE_TEMPLATE_CATEGORY,
+      resourceType: PUBLIC_PAGE_TEMPLATE_RESOURCE,
+      status: "published" as const,
+    };
+    setSavingTemplate(true);
+    try {
+      if (templateRecord)
+        await updateContent.mutateAsync({ id: templateRecord.id, ...payload });
+      else await createContent.mutateAsync(payload);
+      await utils.admin.content.invalidate();
+      iframeRef.current?.contentWindow?.location.reload();
+      toast.success("Template da página pública salvo.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar o template."
+      );
+    } finally {
+      setSavingTemplate(false);
+    }
+  }, [
+    templateDraft,
+    templateRecord,
+    updateContent,
+    createContent,
+    utils.admin.content,
+  ]);
+
+  useEffect(() => {
+    const onFullscreenChange = () =>
+      setIsFullscreen(document.fullscreenElement === fullscreenAreaRef.current);
     document.addEventListener("fullscreenchange", onFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
+    return () =>
+      document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
   const toggleFullscreen = useCallback(async () => {
@@ -102,7 +254,11 @@ export default function AdminSalesImages() {
       if (document.fullscreenElement) await document.exitFullscreen();
       await fullscreenAreaRef.current?.requestFullscreen();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível abrir o editor em tela cheia.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível abrir o editor em tela cheia."
+      );
     }
   }, []);
 
@@ -123,54 +279,65 @@ export default function AdminSalesImages() {
     });
   }, [finishEditing]);
 
-  const applyLayoutInsideFrame = useCallback((nextLayout: FloatingLayout, activeBreakpoint: Breakpoint) => {
-    const doc = iframeRef.current?.contentDocument;
-    if (!doc) return;
-    const selectors: Record<FloatingId, string> = {
-      fab: ".member-chat-fab-wrap",
-      cta: ".public-conversion-cta",
-      toast: ".public-social-proof-toast",
-    };
-    (Object.keys(selectors) as FloatingId[]).forEach(id => {
-      const element = doc.querySelector<HTMLElement>(selectors[id]);
-      const point = nextLayout[activeBreakpoint][id];
-      if (!element) return;
-      element.dataset.visualDraggable = id;
-      element.style.left = `${point.x}%`;
-      element.style.top = `${point.y}%`;
-      element.style.right = "auto";
-      element.style.bottom = "auto";
-      element.style.transform = "translate(-50%, -50%)";
-    });
-  }, []);
+  const applyLayoutInsideFrame = useCallback(
+    (nextLayout: FloatingLayout, activeBreakpoint: Breakpoint) => {
+      const doc = iframeRef.current?.contentDocument;
+      if (!doc) return;
+      const selectors: Record<FloatingId, string> = {
+        fab: ".member-chat-fab-wrap",
+        cta: ".public-conversion-cta",
+        toast: ".public-social-proof-toast",
+      };
+      (Object.keys(selectors) as FloatingId[]).forEach(id => {
+        const element = doc.querySelector<HTMLElement>(selectors[id]);
+        const point = nextLayout[activeBreakpoint][id];
+        if (!element) return;
+        element.dataset.visualDraggable = id;
+        element.style.left = `${point.x}%`;
+        element.style.top = `${point.y}%`;
+        element.style.right = "auto";
+        element.style.bottom = "auto";
+        element.style.transform = "translate(-50%, -50%)";
+      });
+    },
+    []
+  );
 
   useEffect(() => {
     if (frameReady) applyLayoutInsideFrame(layout, breakpoint);
   }, [layout, breakpoint, frameReady, applyLayoutInsideFrame]);
 
-  const persistLayout = useCallback(async (nextLayout: FloatingLayout) => {
-    const payload = {
-      kind: "notice" as const,
-      title: "Posição dos elementos flutuantes da página pública",
-      summary: null,
-      body: JSON.stringify(nextLayout),
-      resourceUrl: null,
-      resourceCategory: FLOATING_LAYOUT_CATEGORY,
-      resourceType: FLOATING_LAYOUT_RESOURCE,
-      status: "published" as const,
-    };
-    setSavingLayout(true);
-    try {
-      if (layoutRecord) await updateContent.mutateAsync({ id: layoutRecord.id, ...payload });
-      else await createContent.mutateAsync(payload);
-      await utils.admin.content.invalidate();
-      toast.success("Posição salva para este tamanho de tela.");
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível salvar a posição.");
-    } finally {
-      setSavingLayout(false);
-    }
-  }, [layoutRecord, updateContent, createContent, utils.admin.content]);
+  const persistLayout = useCallback(
+    async (nextLayout: FloatingLayout) => {
+      const payload = {
+        kind: "notice" as const,
+        title: "Posição dos elementos flutuantes da página pública",
+        summary: null,
+        body: JSON.stringify(nextLayout),
+        resourceUrl: null,
+        resourceCategory: FLOATING_LAYOUT_CATEGORY,
+        resourceType: FLOATING_LAYOUT_RESOURCE,
+        status: "published" as const,
+      };
+      setSavingLayout(true);
+      try {
+        if (layoutRecord)
+          await updateContent.mutateAsync({ id: layoutRecord.id, ...payload });
+        else await createContent.mutateAsync(payload);
+        await utils.admin.content.invalidate();
+        toast.success("Posição salva para este tamanho de tela.");
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Não foi possível salvar a posição."
+        );
+      } finally {
+        setSavingLayout(false);
+      }
+    },
+    [layoutRecord, updateContent, createContent, utils.admin.content]
+  );
 
   const installEditor = useCallback(() => {
     cleanupEditorRef.current?.();
@@ -179,8 +346,12 @@ export default function AdminSalesImages() {
     const win = frame?.contentWindow;
     if (!frame || !doc || !win) return;
 
-    doc.documentElement.dataset.visualSalesEditor = interactionMode ? "preview" : "editing";
-    let style = doc.getElementById("visual-sales-editor-injected-style") as HTMLStyleElement | null;
+    doc.documentElement.dataset.visualSalesEditor = interactionMode
+      ? "preview"
+      : "editing";
+    let style = doc.getElementById(
+      "visual-sales-editor-injected-style"
+    ) as HTMLStyleElement | null;
     if (!style) {
       style = doc.createElement("style");
       style.id = "visual-sales-editor-injected-style";
@@ -194,7 +365,12 @@ export default function AdminSalesImages() {
       doc.head.appendChild(style);
     }
 
-    const activateText = (sectionId: string, key: string, fieldLabel: string, element: HTMLElement) => {
+    const activateText = (
+      sectionId: string,
+      key: string,
+      fieldLabel: string,
+      element: HTMLElement
+    ) => {
       setEditing(current => {
         if (current && current.element !== element) {
           current.element.textContent = current.originalValue;
@@ -230,7 +406,10 @@ export default function AdminSalesImages() {
           if (image && root.contains(image)) {
             event.preventDefault();
             event.stopPropagation();
-            imageTargetRef.current = { imageSectionId: section.imageSectionId, element: image };
+            imageTargetRef.current = {
+              imageSectionId: section.imageSectionId,
+              element: image,
+            };
             fileInputRef.current?.click();
             return;
           }
@@ -238,7 +417,11 @@ export default function AdminSalesImages() {
         for (const field of section.fields) {
           if (!field.selector) continue;
           const fieldElement = queryWithin(root, field.selector);
-          if (!fieldElement || !(fieldElement === target || fieldElement.contains(target))) continue;
+          if (
+            !fieldElement ||
+            !(fieldElement === target || fieldElement.contains(target))
+          )
+            continue;
           event.preventDefault();
           event.stopPropagation();
           activateText(section.id, field.key, field.label, fieldElement);
@@ -250,29 +433,53 @@ export default function AdminSalesImages() {
     let dragId: FloatingId | null = null;
     const onPointerDown = (event: PointerEvent) => {
       if (interactionMode || savingLayout) return;
-      const element = (event.target as HTMLElement | null)?.closest<HTMLElement>("[data-visual-draggable]");
+      const element = (
+        event.target as HTMLElement | null
+      )?.closest<HTMLElement>("[data-visual-draggable]");
       const id = element?.dataset.visualDraggable as FloatingId | undefined;
       if (!element || !id) return;
       event.preventDefault();
       event.stopPropagation();
       dragId = id;
-      try { element.setPointerCapture(event.pointerId); } catch { /* navegador pode não suportar */ }
+      try {
+        element.setPointerCapture(event.pointerId);
+      } catch {
+        /* navegador pode não suportar */
+      }
     };
     const onPointerMove = (event: PointerEvent) => {
       if (!dragId) return;
-      const x = Math.max(3, Math.min(97, (event.clientX / Math.max(1, win.innerWidth)) * 100));
-      const y = Math.max(4, Math.min(96, (event.clientY / Math.max(1, win.innerHeight)) * 100));
+      const x = Math.max(
+        3,
+        Math.min(97, (event.clientX / Math.max(1, win.innerWidth)) * 100)
+      );
+      const y = Math.max(
+        4,
+        Math.min(96, (event.clientY / Math.max(1, win.innerHeight)) * 100)
+      );
       const id = dragId;
-      setLayout(current => ({ ...current, [breakpoint]: { ...current[breakpoint], [id]: { x, y } } }));
+      setLayout(current => ({
+        ...current,
+        [breakpoint]: { ...current[breakpoint], [id]: { x, y } },
+      }));
     };
     const onPointerUp = (event: PointerEvent) => {
       if (!dragId) return;
       const id = dragId;
       dragId = null;
-      const x = Math.max(3, Math.min(97, (event.clientX / Math.max(1, win.innerWidth)) * 100));
-      const y = Math.max(4, Math.min(96, (event.clientY / Math.max(1, win.innerHeight)) * 100));
+      const x = Math.max(
+        3,
+        Math.min(97, (event.clientX / Math.max(1, win.innerWidth)) * 100)
+      );
+      const y = Math.max(
+        4,
+        Math.min(96, (event.clientY / Math.max(1, win.innerHeight)) * 100)
+      );
       setLayout(current => {
-        const next = { ...current, [breakpoint]: { ...current[breakpoint], [id]: { x, y } } };
+        const next = {
+          ...current,
+          [breakpoint]: { ...current[breakpoint], [id]: { x, y } },
+        };
         void persistLayout(next);
         return next;
       });
@@ -305,7 +512,17 @@ export default function AdminSalesImages() {
       doc.removeEventListener("pointerup", onPointerUp, true);
       doc.removeEventListener("keydown", onKeyDown, true);
     };
-  }, [interactionMode, savingLayout, breakpoint, layout, editing, finishEditing, discardTextEdit, applyLayoutInsideFrame, persistLayout]);
+  }, [
+    interactionMode,
+    savingLayout,
+    breakpoint,
+    layout,
+    editing,
+    finishEditing,
+    discardTextEdit,
+    applyLayoutInsideFrame,
+    persistLayout,
+  ]);
 
   useEffect(() => {
     if (frameReady) installEditor();
@@ -314,7 +531,9 @@ export default function AdminSalesImages() {
 
   const saveTextEdit = async () => {
     if (!editing) return;
-    const section = PUBLIC_SALES_COPY_SECTIONS.find(item => item.id === editing.sectionId);
+    const section = PUBLIC_SALES_COPY_SECTIONS.find(
+      item => item.id === editing.sectionId
+    );
     if (!section) return;
     const value = editing.element.textContent?.trim() ?? "";
     const defaults = defaultValuesForSection(section);
@@ -323,7 +542,14 @@ export default function AdminSalesImages() {
     if (record?.body) {
       try {
         const parsed = JSON.parse(record.body) as Record<string, unknown>;
-        currentValues = { ...defaults, ...Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === "string")) };
+        currentValues = {
+          ...defaults,
+          ...Object.fromEntries(
+            Object.entries(parsed).filter(
+              (entry): entry is [string, string] => typeof entry[1] === "string"
+            )
+          ),
+        };
       } catch {
         currentValues = defaults;
       }
@@ -340,14 +566,19 @@ export default function AdminSalesImages() {
     };
     setSavingText(true);
     try {
-      if (record) await updateContent.mutateAsync({ id: record.id, ...payload });
+      if (record)
+        await updateContent.mutateAsync({ id: record.id, ...payload });
       else await createContent.mutateAsync(payload);
       await utils.admin.content.invalidate();
       finishEditing(editing);
       setEditing(null);
       toast.success("Texto salvo e publicado.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível salvar o texto.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar o texto."
+      );
       editing.element.focus();
     } finally {
       setSavingText(false);
@@ -359,16 +590,26 @@ export default function AdminSalesImages() {
     event.target.value = "";
     const target = imageTargetRef.current;
     if (!file || !target) return;
-    if (!(acceptedTypes as readonly string[]).includes(file.type)) return void toast.error("Envie uma imagem JPG, PNG ou GIF.");
-    if (file.size > 4 * 1024 * 1024) return void toast.error("A imagem deve ter no máximo 4 MB.");
+    if (!(acceptedTypes as readonly string[]).includes(file.type))
+      return void toast.error("Envie uma imagem JPG, PNG ou GIF.");
+    if (file.size > 4 * 1024 * 1024)
+      return void toast.error("A imagem deve ter no máximo 4 MB.");
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result !== "string") return;
       const originalSrc = target.element.src;
       target.element.src = reader.result;
-      setPendingImage({ imageSectionId: target.imageSectionId, dataUrl: reader.result, contentType: file.type as AcceptedImageType, originalName: file.name, element: target.element, originalSrc });
+      setPendingImage({
+        imageSectionId: target.imageSectionId,
+        dataUrl: reader.result,
+        contentType: file.type as AcceptedImageType,
+        originalName: file.name,
+        element: target.element,
+        originalSrc,
+      });
     };
-    reader.onerror = () => toast.error("Não foi possível ler a imagem selecionada.");
+    reader.onerror = () =>
+      toast.error("Não foi possível ler a imagem selecionada.");
     reader.readAsDataURL(file);
   };
 
@@ -383,13 +624,25 @@ export default function AdminSalesImages() {
     if (!pendingImage) return;
     setSavingImage(true);
     try {
-      await saveImage.mutateAsync({ sectionId: pendingImage.imageSectionId, dataUrl: pendingImage.dataUrl, contentType: pendingImage.contentType, originalName: pendingImage.originalName });
-      await Promise.all([utils.admin.publicSalesSectionImages.invalidate(), utils.public.salesSectionImages.invalidate()]);
+      await saveImage.mutateAsync({
+        sectionId: pendingImage.imageSectionId,
+        dataUrl: pendingImage.dataUrl,
+        contentType: pendingImage.contentType,
+        originalName: pendingImage.originalName,
+      });
+      await Promise.all([
+        utils.admin.publicSalesSectionImages.invalidate(),
+        utils.public.salesSectionImages.invalidate(),
+      ]);
       setPendingImage(null);
       imageTargetRef.current = null;
       toast.success("Imagem salva e publicada.");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Não foi possível salvar a imagem.");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar a imagem."
+      );
     } finally {
       setSavingImage(false);
     }
@@ -397,44 +650,207 @@ export default function AdminSalesImages() {
 
   const width = breakpointWidth(breakpoint);
 
-  return <DashboardLayout menuItems={adminMenu} title="Administração">
-    <main className="visual-editor-shell">
-      <header className="visual-editor-toolbar" data-visual-editor-ui>
-        <div className="visual-editor-brand"><MousePointer2 size={18} /><div><strong>Editor visual da página</strong><span>A página pública real é carregada abaixo em modo de edição WYSIWYG.</span></div></div>
-        <div className="visual-editor-breakpoints" role="group" aria-label="Tamanho da visualização">
-          <button className={breakpoint === "desktop" ? "is-active" : ""} onClick={() => setBreakpoint("desktop")} type="button"><Monitor size={16} /><span>Desktop</span></button>
-          <button className={breakpoint === "tablet" ? "is-active" : ""} onClick={() => setBreakpoint("tablet")} type="button"><Tablet size={16} /><span>Tablet</span></button>
-          <button className={breakpoint === "mobile" ? "is-active" : ""} onClick={() => setBreakpoint("mobile")} type="button"><Smartphone size={16} /><span>Mobile</span></button>
-        </div>
-        <button type="button" className={`visual-editor-preview-toggle ${interactionMode ? "is-active" : ""}`} onClick={() => { discardTextEdit(); setInteractionMode(value => !value); }}><Eye size={16} />{interactionMode ? "Voltar a editar" : "Testar interação"}</button>
-        <button type="button" className={`visual-editor-fullscreen-toggle ${isFullscreen ? "is-active" : ""}`} onClick={toggleFullscreen}><Maximize2 size={16} />Tela cheia</button>
-      </header>
+  return (
+    <DashboardLayout menuItems={adminMenu} title="Administração">
+      <main className="visual-editor-shell">
+        <section
+          className="visual-template-selector"
+          aria-labelledby="public-template-title"
+        >
+          <div className="visual-template-selector-copy">
+            <LayoutTemplate size={18} />
+            <div>
+              <span>TEMPLATE DA PÁGINA PÚBLICA</span>
+              <strong id="public-template-title">
+                Escolha a apresentação global da página de vendas.
+              </strong>
+              <p>
+                A seleção é salva no banco e passa a valer para todos os
+                visitantes.
+              </p>
+            </div>
+          </div>
+          <div className="visual-template-selector-controls">
+            <label htmlFor="public-template-select">Template ativo</label>
+            <select
+              id="public-template-select"
+              value={templateDraft}
+              onChange={event =>
+                setTemplateDraft(
+                  normalizePublicPageTemplate(event.target.value)
+                )
+              }
+            >
+              <option value="official">Template Oficial</option>
+              <option value="premium">Template Premium</option>
+            </select>
+            <button
+              type="button"
+              onClick={saveTemplateSelection}
+              disabled={savingTemplate || templateDraft === activeTemplate}
+            >
+              <Save size={15} />
+              {savingTemplate
+                ? "Salvando..."
+                : templateDraft === activeTemplate
+                  ? "Salvo"
+                  : "Salvar template"}
+            </button>
+          </div>
+        </section>
+        <header className="visual-editor-toolbar" data-visual-editor-ui>
+          <div className="visual-editor-brand">
+            <MousePointer2 size={18} />
+            <div>
+              <strong>Editor visual da página</strong>
+              <span>
+                A página pública real é carregada abaixo em modo de edição
+                WYSIWYG.
+              </span>
+            </div>
+          </div>
+          <div
+            className="visual-editor-breakpoints"
+            role="group"
+            aria-label="Tamanho da visualização"
+          >
+            <button
+              className={breakpoint === "desktop" ? "is-active" : ""}
+              onClick={() => setBreakpoint("desktop")}
+              type="button"
+            >
+              <Monitor size={16} />
+              <span>Desktop</span>
+            </button>
+            <button
+              className={breakpoint === "tablet" ? "is-active" : ""}
+              onClick={() => setBreakpoint("tablet")}
+              type="button"
+            >
+              <Tablet size={16} />
+              <span>Tablet</span>
+            </button>
+            <button
+              className={breakpoint === "mobile" ? "is-active" : ""}
+              onClick={() => setBreakpoint("mobile")}
+              type="button"
+            >
+              <Smartphone size={16} />
+              <span>Mobile</span>
+            </button>
+          </div>
+          <button
+            type="button"
+            className={`visual-editor-preview-toggle ${interactionMode ? "is-active" : ""}`}
+            onClick={() => {
+              discardTextEdit();
+              setInteractionMode(value => !value);
+            }}
+          >
+            <Eye size={16} />
+            {interactionMode ? "Voltar a editar" : "Testar interação"}
+          </button>
+          <button
+            type="button"
+            className={`visual-editor-fullscreen-toggle ${isFullscreen ? "is-active" : ""}`}
+            onClick={toggleFullscreen}
+          >
+            <Maximize2 size={16} />
+            Tela cheia
+          </button>
+        </header>
 
-      <section ref={fullscreenAreaRef} className="visual-editor-iframe-area">
-        <iframe
-          ref={iframeRef}
-          src={withAppBase("/?visual-editor=1")}
-          title="Editor visual da página pública"
-          className="visual-editor-iframe"
-          style={{ width: width ? `${width}px` : "100%" }}
-          onLoad={() => { setFrameReady(true); window.setTimeout(installEditor, 50); }}
+        <section ref={fullscreenAreaRef} className="visual-editor-iframe-area">
+          <iframe
+            ref={iframeRef}
+            src={withAppBase("/?visual-editor=1")}
+            title="Editor visual da página pública"
+            className="visual-editor-iframe"
+            style={{ width: width ? `${width}px` : "100%" }}
+            onLoad={() => {
+              setFrameReady(true);
+              window.setTimeout(installEditor, 50);
+            }}
+          />
+          {isFullscreen ? (
+            <button
+              type="button"
+              className="visual-editor-fullscreen-exit"
+              onClick={toggleFullscreen}
+              aria-label="Sair da tela cheia"
+            >
+              <Minimize2 size={17} />
+              <span>Sair da tela cheia</span>
+            </button>
+          ) : null}
+        </section>
+
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="sr-only"
+          accept="image/jpeg,image/png,image/gif"
+          onChange={handleFile}
         />
-        {isFullscreen ? <button type="button" className="visual-editor-fullscreen-exit" onClick={toggleFullscreen} aria-label="Sair da tela cheia"><Minimize2 size={17} /><span>Sair da tela cheia</span></button> : null}
-      </section>
 
-      <input ref={fileInputRef} type="file" className="sr-only" accept="image/jpeg,image/png,image/gif" onChange={handleFile} />
+        {editing ? (
+          <div
+            className="visual-editor-actionbar"
+            data-visual-editor-ui
+            role="dialog"
+            aria-label="Controles de edição do texto"
+          >
+            <span>
+              <Save size={15} />
+              Texto em edição
+            </span>
+            <button
+              type="button"
+              className="save"
+              disabled={savingText}
+              onClick={saveTextEdit}
+            >
+              <Check size={16} />
+              {savingText ? "Salvando..." : "Salvar"}
+            </button>
+            <button
+              type="button"
+              disabled={savingText}
+              onClick={discardTextEdit}
+            >
+              <RotateCcw size={16} />
+              Descartar
+            </button>
+          </div>
+        ) : null}
 
-      {editing ? <div className="visual-editor-actionbar" data-visual-editor-ui role="dialog" aria-label="Controles de edição do texto">
-        <span><Save size={15} />Texto em edição</span>
-        <button type="button" className="save" disabled={savingText} onClick={saveTextEdit}><Check size={16} />{savingText ? "Salvando..." : "Salvar"}</button>
-        <button type="button" disabled={savingText} onClick={discardTextEdit}><RotateCcw size={16} />Descartar</button>
-      </div> : null}
-
-      {pendingImage ? <div className="visual-editor-actionbar" data-visual-editor-ui role="dialog" aria-label="Controles da nova imagem">
-        <span><ImagePlus size={15} />Nova imagem em pré-visualização</span>
-        <button type="button" className="save" disabled={savingImage} onClick={persistImage}><Check size={16} />{savingImage ? "Salvando..." : "Salvar imagem"}</button>
-        <button type="button" disabled={savingImage} onClick={discardImage}><X size={16} />Descartar</button>
-      </div> : null}
-    </main>
-  </DashboardLayout>;
+        {pendingImage ? (
+          <div
+            className="visual-editor-actionbar"
+            data-visual-editor-ui
+            role="dialog"
+            aria-label="Controles da nova imagem"
+          >
+            <span>
+              <ImagePlus size={15} />
+              Nova imagem em pré-visualização
+            </span>
+            <button
+              type="button"
+              className="save"
+              disabled={savingImage}
+              onClick={persistImage}
+            >
+              <Check size={16} />
+              {savingImage ? "Salvando..." : "Salvar imagem"}
+            </button>
+            <button type="button" disabled={savingImage} onClick={discardImage}>
+              <X size={16} />
+              Descartar
+            </button>
+          </div>
+        ) : null}
+      </main>
+    </DashboardLayout>
+  );
 }

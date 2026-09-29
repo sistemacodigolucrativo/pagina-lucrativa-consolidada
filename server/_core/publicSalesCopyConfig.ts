@@ -1,7 +1,17 @@
 import type { Express } from "express";
 import { getAdminContent } from "../db";
 import { processPendingPublicHeroTitleResetForDeploy } from "../publicHeroTitleReset";
-import { PUBLIC_SALES_COPY_CATEGORY, type PublicSalesCopyOverrides } from "@shared/publicSalesCopyEditor";
+import {
+  PUBLIC_SALES_COPY_CATEGORY,
+  type PublicSalesCopyOverrides,
+} from "@shared/publicSalesCopyEditor";
+import {
+  DEFAULT_PUBLIC_PAGE_TEMPLATE,
+  PUBLIC_PAGE_TEMPLATE_CATEGORY,
+  PUBLIC_PAGE_TEMPLATE_RESOURCE,
+  parsePublicPageTemplateConfig,
+  type PublicPageTemplate,
+} from "@shared/publicPageTemplate";
 
 const FLOATING_LAYOUT_CATEGORY = "public-sales-layout";
 const FLOATING_LAYOUT_RESOURCE = "floating";
@@ -9,10 +19,14 @@ const FLOATING_LAYOUT_RESOURCE = "floating";
 export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
   void processPendingPublicHeroTitleResetForDeploy();
 
-  const paths = Array.from(new Set([
-    "/api/public-sales-copy",
-    appPrefix ? `${appPrefix}/api/public-sales-copy` : null,
-  ].filter((value): value is string => Boolean(value))));
+  const paths = Array.from(
+    new Set(
+      [
+        "/api/public-sales-copy",
+        appPrefix ? `${appPrefix}/api/public-sales-copy` : null,
+      ].filter((value): value is string => Boolean(value))
+    )
+  );
 
   for (const path of paths) {
     app.get(path, async (_req, res) => {
@@ -21,31 +35,64 @@ export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
         const content = await getAdminContent();
         const overrides: PublicSalesCopyOverrides = {};
         let floatingLayout: Record<string, unknown> = {};
+        let pageTemplate: PublicPageTemplate = DEFAULT_PUBLIC_PAGE_TEMPLATE;
+        let floatingLayoutLoaded = false;
+        let pageTemplateLoaded = false;
         for (const item of content) {
           if (item.kind !== "notice" || item.status === "archived") continue;
-          if (item.resourceCategory === FLOATING_LAYOUT_CATEGORY && item.resourceType === FLOATING_LAYOUT_RESOURCE) {
+          if (
+            item.resourceCategory === FLOATING_LAYOUT_CATEGORY &&
+            item.resourceType === FLOATING_LAYOUT_RESOURCE
+          ) {
             try {
-              const parsed = JSON.parse(item.body ?? "{}") as Record<string, unknown>;
+              const parsed = JSON.parse(item.body ?? "{}") as Record<
+                string,
+                unknown
+              >;
               floatingLayout = parsed;
             } catch {
               floatingLayout = {};
             }
             continue;
           }
-          if (item.resourceCategory !== PUBLIC_SALES_COPY_CATEGORY || !item.resourceType) continue;
+          if (
+            item.resourceCategory === PUBLIC_PAGE_TEMPLATE_CATEGORY &&
+            item.resourceType === PUBLIC_PAGE_TEMPLATE_RESOURCE
+          ) {
+            pageTemplate = parsePublicPageTemplateConfig(item.body);
+            continue;
+          }
+          if (
+            item.resourceCategory !== PUBLIC_SALES_COPY_CATEGORY ||
+            !item.resourceType
+          )
+            continue;
           try {
-            const parsed = JSON.parse(item.body ?? "{}") as Record<string, unknown>;
+            const parsed = JSON.parse(item.body ?? "{}") as Record<
+              string,
+              unknown
+            >;
             overrides[item.resourceType] = Object.fromEntries(
-              Object.entries(parsed).filter((entry): entry is [string, string] => typeof entry[1] === "string"),
+              Object.entries(parsed).filter(
+                (entry): entry is [string, string] =>
+                  typeof entry[1] === "string"
+              )
             );
           } catch {
             // Ignora somente o registro malformado; os demais continuam disponíveis.
           }
         }
-        res.json({ overrides, floatingLayout });
+        res.json({ overrides, floatingLayout, pageTemplate });
       } catch (error) {
-        console.warn("[PublicSalesCopy] Failed to load admin configuration:", error);
-        res.json({ overrides: {}, floatingLayout: {} });
+        console.warn(
+          "[PublicSalesCopy] Failed to load admin configuration:",
+          error
+        );
+        res.json({
+          overrides: {},
+          floatingLayout: {},
+          pageTemplate: DEFAULT_PUBLIC_PAGE_TEMPLATE,
+        });
       }
     });
   }

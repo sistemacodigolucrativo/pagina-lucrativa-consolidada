@@ -7,7 +7,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { DEV_PREFIX } from "./lib/devPath";
 import AdminDeployStatus from "./components/AdminDeployStatus";
 
-const Home = lazy(() => import("./pages/Home"));
+const PublicHome = lazy(() => import("./pages/PublicHome"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 const MemberOffice = lazy(() => import("./pages/MemberOffice"));
 const MemberOperationCenter = lazy(
@@ -99,6 +99,7 @@ const ContactPage = lazy(() =>
  * import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";
  * <Route path="/admin/imagens" component={AdminSalesSectionsPage} />
  * <Route path="/preview" component={Preview} />
+ * <Route path="/" component={Home} />
  * <WouterRouter base={base}><AppRoutes /></WouterRouter>
  * document.querySelector<HTMLElement>(".dashboard-main")?.scrollTo
  * path="/admin/biblioteca-recursos" component={AdminPublications}
@@ -163,7 +164,7 @@ function AppRoutes() {
       <AdminDeployStatus />
       <Suspense fallback={<PageFallback />}>
         <Switch>
-          <Route path="/" component={Home} />
+          <Route path="/" component={PublicHome} />
           <Route
             path="/pedido/confirmacao"
             component={ApplicationConfirmation}

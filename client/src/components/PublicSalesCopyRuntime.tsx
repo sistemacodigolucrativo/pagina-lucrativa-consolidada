@@ -1,20 +1,51 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  type ReactNode,
+} from "react";
 import { withAppBase } from "@/lib/devPath";
 import type { PublicSalesCopyOverrides } from "@shared/publicSalesCopyEditor";
-import { PUBLIC_HERO_TITLE, splitPublicHeroTitle } from "@shared/publicHeroTitle";
+import {
+  PUBLIC_HERO_TITLE,
+  splitPublicHeroTitle,
+} from "@shared/publicHeroTitle";
+import {
+  DEFAULT_PUBLIC_PAGE_TEMPLATE,
+  normalizePublicPageTemplate,
+  type PublicPageTemplate,
+} from "@shared/publicPageTemplate";
 
 type Point = { x?: number; y?: number };
-export type FloatingLayout = Partial<Record<"desktop" | "tablet" | "mobile", Partial<Record<"fab" | "cta" | "toast", Point>>>>;
+export type FloatingLayout = Partial<
+  Record<
+    "desktop" | "tablet" | "mobile",
+    Partial<Record<"fab" | "cta" | "toast", Point>>
+  >
+>;
 
 type PublicSalesCopyState = {
   overrides: PublicSalesCopyOverrides;
   floatingLayout: FloatingLayout;
+  pageTemplate: PublicPageTemplate;
   ready: boolean;
 };
 
 const PUBLIC_SALES_COPY_ENDPOINT = "/api/public-sales-copy";
-const PublicSalesCopyContext = createContext<PublicSalesCopyState>({ overrides: {}, floatingLayout: {}, ready: false });
-const FLOATING_POSITION_PROPS = ["left", "top", "right", "bottom", "transform"] as const;
+const PublicSalesCopyContext = createContext<PublicSalesCopyState>({
+  overrides: {},
+  floatingLayout: {},
+  pageTemplate: DEFAULT_PUBLIC_PAGE_TEMPLATE,
+  ready: false,
+});
+const FLOATING_POSITION_PROPS = [
+  "left",
+  "top",
+  "right",
+  "bottom",
+  "transform",
+] as const;
 const HERO_TITLE_SELECTOR = ".reference-page .sales-hero .sales-hero-copy > h1";
 
 export function usePublicSalesCopy() {
@@ -22,17 +53,27 @@ export function usePublicSalesCopy() {
 }
 
 export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<PublicSalesCopyState>({ overrides: {}, floatingLayout: {}, ready: false });
+  const [state, setState] = useState<PublicSalesCopyState>({
+    overrides: {},
+    floatingLayout: {},
+    pageTemplate: DEFAULT_PUBLIC_PAGE_TEMPLATE,
+    ready: false,
+  });
 
   useEffect(() => {
     let active = true;
     fetch(withAppBase(PUBLIC_SALES_COPY_ENDPOINT), { credentials: "include" })
-      .then(response => response.ok ? response.json() : Promise.reject(new Error("Falha ao carregar copy pública")))
+      .then(response =>
+        response.ok
+          ? response.json()
+          : Promise.reject(new Error("Falha ao carregar copy pública"))
+      )
       .then((payload: Omit<PublicSalesCopyState, "ready">) => {
         if (!active) return;
         setState({
           overrides: payload.overrides ?? {},
           floatingLayout: payload.floatingLayout ?? {},
+          pageTemplate: normalizePublicPageTemplate(payload.pageTemplate),
           ready: true,
         });
       })
@@ -40,10 +81,16 @@ export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
         console.warn("[PublicSalesCopy] copy pública indisponível:", error);
         if (active) setState(current => ({ ...current, ready: true }));
       });
-    return () => { active = false; };
+    return () => {
+      active = false;
+    };
   }, []);
 
-  return <PublicSalesCopyContext.Provider value={state}>{children}</PublicSalesCopyContext.Provider>;
+  return (
+    <PublicSalesCopyContext.Provider value={state}>
+      {children}
+    </PublicSalesCopyContext.Provider>
+  );
 }
 
 function breakpointForWidth(width: number): "desktop" | "tablet" | "mobile" {
@@ -57,7 +104,9 @@ function clamp(min: number, value: number, max: number) {
 }
 
 function resetFloatingPosition(element: HTMLElement) {
-  FLOATING_POSITION_PROPS.forEach(property => element.style.removeProperty(property));
+  FLOATING_POSITION_PROPS.forEach(property =>
+    element.style.removeProperty(property)
+  );
 }
 
 function clampPointToViewport(element: HTMLElement, point: Required<Point>) {
@@ -77,7 +126,12 @@ function clampPointToViewport(element: HTMLElement, point: Required<Point>) {
 }
 
 function rectanglesOverlap(first: DOMRect, second: DOMRect) {
-  return first.left < second.right && first.right > second.left && first.top < second.bottom && first.bottom > second.top;
+  return (
+    first.left < second.right &&
+    first.right > second.left &&
+    first.top < second.bottom &&
+    first.bottom > second.top
+  );
 }
 
 function preventFloatingActionOverlap() {
@@ -85,31 +139,39 @@ function preventFloatingActionOverlap() {
   const fab = document.querySelector<HTMLElement>(".member-chat-fab-wrap");
   if (!cta || !fab) return;
 
-  if (rectanglesOverlap(cta.getBoundingClientRect(), fab.getBoundingClientRect())) {
+  if (
+    rectanglesOverlap(cta.getBoundingClientRect(), fab.getBoundingClientRect())
+  ) {
     resetFloatingPosition(cta);
     resetFloatingPosition(fab);
   }
 }
 
 function applyHeroTitle(overrides: PublicSalesCopyOverrides, ready: boolean) {
-  document.querySelectorAll<HTMLHeadingElement>(HERO_TITLE_SELECTOR).forEach(element => {
-    if (!ready) {
-      element.classList.remove("public-hero-title-ready");
-      return;
-    }
+  document
+    .querySelectorAll<HTMLHeadingElement>(HERO_TITLE_SELECTOR)
+    .forEach(element => {
+      if (!ready) {
+        element.classList.remove("public-hero-title-ready");
+        return;
+      }
 
-    const title = overrides.hero?.title?.trim() || PUBLIC_HERO_TITLE;
-    if (element.dataset.publicHeroTitle === title && element.classList.contains("public-hero-title-ready")) return;
+      const title = overrides.hero?.title?.trim() || PUBLIC_HERO_TITLE;
+      if (
+        element.dataset.publicHeroTitle === title &&
+        element.classList.contains("public-hero-title-ready")
+      )
+        return;
 
-    const { accent, remainder } = splitPublicHeroTitle(title);
-    const accentNode = document.createElement("span");
-    accentNode.className = "public-hero-title-accent";
-    accentNode.textContent = accent;
-    element.replaceChildren(accentNode);
-    if (remainder) element.append(document.createTextNode(` ${remainder}`));
-    element.dataset.publicHeroTitle = title;
-    element.classList.add("public-hero-title-ready");
-  });
+      const { accent, remainder } = splitPublicHeroTitle(title);
+      const accentNode = document.createElement("span");
+      accentNode.className = "public-hero-title-accent";
+      accentNode.textContent = accent;
+      element.replaceChildren(accentNode);
+      if (remainder) element.append(document.createTextNode(` ${remainder}`));
+      element.dataset.publicHeroTitle = title;
+      element.classList.add("public-hero-title-ready");
+    });
 }
 
 function applyFloatingLayout(layout: FloatingLayout) {
@@ -127,14 +189,18 @@ function applyFloatingLayout(layout: FloatingLayout) {
         resetFloatingPosition(element);
         return;
       }
-      if (element.classList.contains("public-social-proof-toast-inline")) return;
+      if (element.classList.contains("public-social-proof-toast-inline"))
+        return;
       const point = positions[id];
       if (typeof point?.x !== "number" || typeof point?.y !== "number") {
         resetFloatingPosition(element);
         return;
       }
 
-      const nextPoint = clampPointToViewport(element, { x: point.x, y: point.y });
+      const nextPoint = clampPointToViewport(element, {
+        x: point.x,
+        y: point.y,
+      });
       element.style.left = nextPoint.x + "%";
       element.style.top = nextPoint.y + "%";
       element.style.right = "auto";
