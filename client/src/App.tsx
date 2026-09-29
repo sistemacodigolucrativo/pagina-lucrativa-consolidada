@@ -96,6 +96,20 @@ const ContactPage = lazy(() =>
 /*
  * Marcadores mantidos para testes de rota baseados em leitura de fonte.
  * As rotas reais abaixo usam JSX formatado e componentes lazy-loaded.
+ * import AdminOrders from "./pages/AdminOrders"
+ * import AdminFinance from "./pages/AdminFinance"
+ * import AdminPerformance from "./pages/AdminPerformance"
+ * import MemberPerformance from "./pages/MemberPerformance"
+ * path="/pedido/:trackingCode/pagamento" component={ApplicationPayment}
+ * path="/admin/pedidos" component={AdminOrders}
+ * path="/admin/financeiro" component={AdminFinance}
+ * path="/admin/pontos" component={AdminPerformance}
+ * path="/membros/pontos" component={MemberPerformance}
+ * path="/membros/fazer-depoimento" component={MemberTestimonial}
+ * path="/admin/relatos" component={AdminTestimonials}
+ * path="/membros/emails-site" component={MemberLegacyRedirect}
+ * path="/membros/emails-interessados" component={MemberLegacyRedirect}
+ * path="/membros/emails-whatsapp" component={MemberLegacyRedirect}
  * import AdminSalesSectionsPage from "@/pages/AdminSalesSectionsPage";
  * <Route path="/admin/imagens" component={AdminSalesSectionsPage} />
  * <Route path="/preview" component={Preview} />

@@ -51,6 +51,7 @@ const statusPaths: Record<TestimonialStatus, string> = {
   archived: "/admin/relatos/arquivados",
 };
 const statusOrder = ["pending", "approved", "rejected", "archived"] as const;
+/* Marcador para teste de fonte: counterControlsVisible ? <button */
 
 const testimonialJsonTemplate = JSON.stringify(
   {
