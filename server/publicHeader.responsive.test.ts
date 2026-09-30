@@ -239,8 +239,8 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('margin-left: auto;');
     expect(cssSource).toContain('  .mobile-menu-button { display: inline-flex; }');
     expect(cssSource).toContain('  .sales-hero { min-height: auto; padding: 30px 0 70px; }');
-    expect(cssSource).toContain('#como-funciona, #o-que-recebe, #depoimentos, #f { scroll-margin-top: -112px; }');
-    expect(cssSource).toContain('#como-funciona, #o-que-recebe, #depoimentos, #f { scroll-margin-top: -68px; }');
+    expect(cssSource).toContain('#como-funciona, #o-que-recebe, #depoimentos, #f, #estrutura-digital { scroll-margin-top: 96px; }');
+    expect(cssSource).toContain('#como-funciona, #o-que-recebe, #depoimentos, #f, #estrutura-digital { scroll-margin-top: 82px; }');
   });
 
   it("loads the edited promo banner through the environment-aware app base", () => {
