@@ -14,3 +14,157 @@ mtime_ms = 1789166768869
 storage_uri = "gcs://replit-rams-assets-kirk/rams/assets/repl:0c7b1acb-cde7-4591-9c74-8766a2b8ac3c/d860a97a-0729-4dd6-9bf0-d2c8f5467046/1f1a04c2-66a6-4463-a4bd-6198c7a19b0a"
 storage_version_token = "1789166774503671"
 content_type = "text/markdown"
+
+[[outputs]]
+id = "ryYrsRwVhFc0KnxSPt7Vb"
+uri = "file://screenshots/public-sales-full-desktop-01-top.jpg"
+type = "image"
+title = "01 · Topo e hero"
+description = "Captura desktop 1280px do topo da página pública de vendas."
+logical_id = "27de6749-ce5a-48f5-bb62-1e39c79efa07"
+content_hash = "sha256:933003bd5a50539dd6e360e48e7f5ce728b30fd82665cd332f89a2893ad96c1e"
+size = 107923
+mtime_ms = 1790743334778
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/27de6749-ce5a-48f5-bb62-1e39c79efa07/09ec4cf0-3aa1-4cdc-8108-173a42bc983c"
+storage_version_token = "1790743504653723"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "2hrFTObtgLvRy3NF7tIbE"
+uri = "file://screenshots/public-sales-full-desktop-02-structure.jpg"
+type = "image"
+title = "02 · Estrutura digital"
+description = "Seção de estrutura digital e apresentação visual do método."
+logical_id = "6166fb94-26df-433a-8c61-83c3d58be7d5"
+content_hash = "sha256:5b57fd7ea2c65ebb48e00cf80d8acd9e5d89023f4227b8cbd766bf0a0a35c617"
+size = 57520
+mtime_ms = 1790743349154
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/6166fb94-26df-433a-8c61-83c3d58be7d5/204525b0-3e53-46b8-8c40-e04e0730cf01"
+storage_version_token = "1790743505152768"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "PkQUTNfjEkDeCAfHVEOD7"
+uri = "file://screenshots/public-sales-full-desktop-03-package.jpg"
+type = "image"
+title = "03 · O que você recebe"
+description = "Cards com os componentes da estrutura oferecida."
+logical_id = "e9392df7-c730-4187-84e5-6eb0bff617c7"
+content_hash = "sha256:fe344308ae1b5e1c5b727325b440189f3a5ccc11d839d1cb2f86a808e29288b8"
+size = 108614
+mtime_ms = 1790743352066
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/e9392df7-c730-4187-84e5-6eb0bff617c7/8788b0d3-f9d3-4825-83dc-c53c4fc0e32e"
+storage_version_token = "1790743505627948"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "qHXXKtLesfPewiASnbDCE"
+uri = "file://screenshots/public-sales-full-desktop-04-social-proof.jpg"
+type = "image"
+title = "04 · Prova social"
+description = "Seção de membros e estado atual sem avaliações publicadas."
+logical_id = "fc9a26de-69e4-4c6b-9da3-a1b5f4e0f45b"
+content_hash = "sha256:95a41db567d48646454d2ff5a0ff2b6cd0e761da443b09469adfc69d8d637e1d"
+size = 54076
+mtime_ms = 1790743355934
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/fc9a26de-69e4-4c6b-9da3-a1b5f4e0f45b/1b9c3b7e-8cf8-478c-b199-24d0b1a67d75"
+storage_version_token = "1790743506134686"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "qiwaopCLgPY4ErcgHAFyS"
+uri = "file://screenshots/public-sales-full-desktop-05-how-it-works.jpg"
+type = "image"
+title = "05 · Como funciona"
+description = "Seção editorial explicando a origem e o funcionamento do método."
+logical_id = "72b1d78c-ee78-467c-857d-91c6ae2c6438"
+content_hash = "sha256:1883d64096b703d9dc6f43f68b8fb3c12496a9e7f0cac3f20944ca249319bd21"
+size = 111320
+mtime_ms = 1790743358974
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/72b1d78c-ee78-467c-857d-91c6ae2c6438/ea7422b6-ed14-4ec9-96f1-92317fc0ff39"
+storage_version_token = "1790743506702703"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "v3FkuXSETT2TGoaRz_7uE"
+uri = "file://screenshots/public-sales-full-desktop-06-profile.jpg"
+type = "image"
+title = "06 · Perfil ideal"
+description = "Blocos sobre para quem a estrutura é indicada e para quem não é."
+logical_id = "cb95b319-1fd3-4649-968d-79efd0bc9eb3"
+content_hash = "sha256:cb530e891dac66a849ca72ac1da1bee5e8378c70bee940ba03c79f9d9b6fb801"
+size = 84378
+mtime_ms = 1790743362054
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/cb95b319-1fd3-4649-968d-79efd0bc9eb3/9d3a5999-d5a4-433a-8247-a6ca4489e8ca"
+storage_version_token = "1790743507172797"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "JRNHWw7ypKwQKVNXwrXa6"
+uri = "file://screenshots/public-sales-full-desktop-07-questions.jpg"
+type = "image"
+title = "07 · Dúvidas comuns"
+description = "Accordion com as principais dúvidas antes da ativação."
+logical_id = "fe8c6d29-9322-4fc9-bdc7-b558a1fe92f6"
+content_hash = "sha256:479ba57658f5ea47ecd35b326298ec088004532a66e3bda5d5e785f8c71267fd"
+size = 62522
+mtime_ms = 1790743365058
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/fe8c6d29-9322-4fc9-bdc7-b558a1fe92f6/d9589a6f-5457-43c6-8d51-68ac6d83abee"
+storage_version_token = "1790743507628600"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "VJvrfIEUmDYEJRMcbqij_"
+uri = "file://screenshots/public-sales-full-desktop-08-offer.jpg"
+type = "image"
+title = "08 · Oferta"
+description = "Seção de ativação com preço, benefícios e formulário."
+logical_id = "b888eed0-dab9-406c-b74f-fd7f51129300"
+content_hash = "sha256:7d9d75922f81b8287b6bf841c5587052fe73e04f6728777e89dedc5d8a25f201"
+size = 58967
+mtime_ms = 1790743367922
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/b888eed0-dab9-406c-b74f-fd7f51129300/7de97a17-6dde-48fa-9d62-ca7bccaabfbf"
+storage_version_token = "1790743508105426"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "WqKvAMwOmsLAz3mqvOF8c"
+uri = "file://screenshots/public-sales-full-desktop-09-footer.jpg"
+type = "image"
+title = "09 · Rodapé"
+description = "Captura final com o encerramento da oferta, links institucionais e direitos autorais."
+logical_id = "112253f2-fa94-4d24-b0f0-5612ae938c2f"
+content_hash = "sha256:71a1f0d5dbaa68f14ab1d1624ee399f62393793d4f5e66a3fd879b1eae4a4dd9"
+size = 76183
+mtime_ms = 1790743492750
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/112253f2-fa94-4d24-b0f0-5612ae938c2f/df6ba65e-4d45-4710-ac81-3ae398c72e3b"
+storage_version_token = "1790743508620640"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "q25zFcoB1W_BulNWuUHE8"
+uri = "file://screenshots/public-sales-full-desktop-05-how-it-works-fixed.jpg"
+type = "image"
+title = "05 · Como funciona — corrigido"
+description = "Captura desktop após corrigir a sobreposição entre o título e a imagem no bloco editorial."
+logical_id = "304caf2e-de2d-492d-8cc3-12716eed44aa"
+content_hash = "sha256:7036c85f256c4d6d0efd6ed28e2b187c8fc0033e769e07fcf7bd46c8c10a6cbd"
+size = 103408
+mtime_ms = 1790743568238
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/304caf2e-de2d-492d-8cc3-12716eed44aa/fc1a0d6e-4d10-42df-897a-2db6b81ffd53"
+storage_version_token = "1790743582392715"
+content_type = "image/jpeg"
+
+[[outputs]]
+id = "a3cVkcyOj66A8k1pU_cj9"
+uri = "file://screenshots/public-sales-full-desktop-comparison-fixed.jpg"
+type = "image"
+title = "Comparação — corrigido"
+description = "Captura desktop após corrigir o mesmo problema no bloco editorial alternado."
+logical_id = "b7f8f24c-35a8-414c-a7ee-4b87555616c2"
+content_hash = "sha256:dc3c7618f242c8bd71c8b766c001a0c0d2cc7c3d1cb41eb7ec156f9247694b82"
+size = 106274
+mtime_ms = 1790743571274
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/b7f8f24c-35a8-414c-a7ee-4b87555616c2/bd81d59a-7503-4140-8eca-02a0fdd807d8"
+storage_version_token = "1790743582895882"
+content_type = "image/jpeg"
