@@ -1951,6 +1951,11 @@
     .reference-copy:nth-of-type(even)
     .reference-copy-content {
     grid-template-columns: minmax(360px, 0.82fr) minmax(0, 0.95fr);
+    grid-template-areas:
+      "image eyebrow"
+      "image title"
+      "image copy"
+      "image cta";
   }
 
   .real-public-sales-preview
@@ -1964,25 +1969,6 @@
     .reference-copy:nth-of-type(even)
     .reference-copy-content
     > .eyebrow,
-  .real-public-sales-preview
-    .reference-copy:nth-of-type(even)
-    .reference-copy
-    h2,
-  .real-public-sales-preview .reference-copy:nth-of-type(even) .copy-stack,
-  .real-public-sales-preview
-    .reference-copy:nth-of-type(even)
-    .reference-copy-cta {
-    grid-column: 2;
-  }
-
-  .real-public-sales-preview
-    .reference-copy:nth-of-type(even)
-    .reference-copy-content
-    > .inline-reference-image {
-    grid-column: 1;
-    grid-row: 1 / span 4;
-  }
-
   .real-public-sales-preview .sprint-fit {
     padding-bottom: clamp(72px, 5vw, 96px);
   }
@@ -2016,7 +2002,12 @@
   }
 
   .real-public-sales-preview .sales-offer-grid {
-    align-items: center;
+    align-items: start;
+  }
+
+  .real-public-sales-preview .offer-copy {
+    align-self: start;
+    padding-top: 10px;
   }
 
   .real-public-sales-preview .offer-copy h2 {
@@ -2547,6 +2538,15 @@
   .real-public-sales-preview .social-proof-stats {
     max-width: 260px;
     margin: 0 auto 22px;
+  }
+
+  .real-public-sales-preview .social-proof-empty {
+    max-width: 720px;
+    margin: 22px auto 0;
+    border-color: rgba(148, 163, 184, 0.3);
+    color: #475569;
+    background: rgba(255, 255, 255, 0.56);
+    text-align: center;
   }
 
   .real-public-sales-preview .social-proof-stats article {
