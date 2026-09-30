@@ -50,14 +50,11 @@ fi
 
 write_deploy_status "deploying" 5 "Preparando publicação"
 
-# A preparação da VPS deve disponibilizar pnpm 10.4.1 ao usuário de deploy.
 # Aceita caminho absoluto via PNPM_BIN para não depender do PATH de uma sessão SSH não interativa.
 if [[ -z "$PNPM_BIN" ]]; then
   PNPM_BIN="$(command -v pnpm || true)"
 fi
-[[ -n "$PNPM_BIN" && -x "$PNPM_BIN" ]] || fail "pnpm não está disponível. Prepare pnpm 10.4.1 na VPS ou defina PNPM_BIN com caminho absoluto executável."
-PNPM_VERSION="$($PNPM_BIN --version)"
-[[ "$PNPM_VERSION" == "10.4.1" ]] || fail "Versão pnpm incompatível: $PNPM_VERSION (esperada 10.4.1)."
+[[ -n "$PNPM_BIN" && -x "$PNPM_BIN" ]] || fail "pnpm não está disponível. Prepare pnpm na VPS ou defina PNPM_BIN com caminho absoluto executável."
 write_deploy_status "deploying" 12 "Ambiente validado"
 
 load_runtime_env() {
@@ -173,6 +170,8 @@ printf '%s\n' "$TARGET_SHA" > "$NEW_RELEASE/.deployed-sha"
 
 cd "$NEW_RELEASE"
 [[ -f package.json && -f pnpm-lock.yaml ]] || fail "Artefato não contém package.json/pnpm-lock.yaml."
+PNPM_VERSION="$($PNPM_BIN --version)"
+[[ "$PNPM_VERSION" == "10.4.1" ]] || fail "Versão pnpm incompatível: $PNPM_VERSION (esperada 10.4.1)."
 
 write_deploy_status "deploying" 35 "Instalando dependências"
 log "Instalando dependências do release com pnpm $PNPM_VERSION"
