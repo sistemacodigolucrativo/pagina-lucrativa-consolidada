@@ -2289,3 +2289,495 @@
     margin: 8px 0;
   }
 }
+
+/* Revisão editorial desktop da página pública: proporção, leitura e áreas seguras. */
+@media (min-width: 1025px) {
+  .real-public-sales-preview {
+    --desktop-shell: min(1240px, calc(100% - 64px));
+    --desktop-section-y: clamp(64px, 4.8vw, 88px);
+    --desktop-card-radius: 22px;
+  }
+
+  .real-public-sales-preview .shell {
+    width: var(--desktop-shell);
+  }
+
+  .real-public-sales-preview .sales-page {
+    scroll-padding-top: 92px;
+  }
+
+  .real-public-sales-preview .site-header {
+    background: rgba(5, 7, 13, 0.94);
+  }
+
+  .real-public-sales-preview .nav {
+    min-height: 74px;
+    grid-template-columns: minmax(220px, 0.68fr) minmax(0, 1.7fr);
+    gap: clamp(16px, 2vw, 28px);
+  }
+
+  .real-public-sales-preview .nav-links {
+    grid-template-columns: minmax(0, 1fr) auto max-content max-content;
+    gap: clamp(6px, 0.8vw, 12px);
+    font-size: clamp(11px, 0.82vw, 12px);
+  }
+
+  .real-public-sales-preview .nav-links-public,
+  .real-public-sales-preview .nav-links-utility {
+    gap: clamp(3px, 0.45vw, 7px);
+    white-space: nowrap;
+  }
+
+  .real-public-sales-preview .nav-links a:not(.nav-cta) {
+    padding-inline: clamp(5px, 0.65vw, 9px);
+  }
+
+  .real-public-sales-preview .nav-cta {
+    min-height: 42px;
+    padding-inline: clamp(10px, 0.95vw, 15px);
+    font-size: clamp(11px, 0.8vw, 12px);
+    white-space: nowrap;
+  }
+
+  .real-public-sales-preview .affiliate-banner {
+    border-top-color: rgba(148, 163, 184, 0.16);
+    border-bottom-color: rgba(148, 163, 184, 0.2);
+  }
+
+  .real-public-sales-preview .affiliate-profile-hero {
+    padding-block: 11px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-summary {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+    gap: clamp(12px, 1.2vw, 18px);
+    align-items: center;
+  }
+
+  .real-public-sales-preview .affiliate-profile-avatar,
+  .real-public-sales-preview .affiliate-profile-avatar-fallback {
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-summary-main {
+    min-width: 0;
+    grid-template-columns: minmax(210px, 0.52fr) minmax(0, 1fr);
+    gap: clamp(16px, 2vw, 28px);
+    align-items: center;
+  }
+
+  .real-public-sales-preview .affiliate-profile-summary:not(:has(.affiliate-profile-socials)) {
+    grid-template-columns: 48px max-content max-content;
+    justify-content: center;
+  }
+
+  .real-public-sales-preview
+    .affiliate-profile-summary:not(:has(.affiliate-profile-socials))
+    .affiliate-profile-summary-main {
+    width: max-content;
+    max-width: min(100%, 42ch);
+    grid-template-columns: max-content;
+  }
+
+  .real-public-sales-preview .affiliate-profile-identity {
+    gap: 4px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-presenter {
+    font-size: 10px;
+    line-height: 1.25;
+    letter-spacing: 0.1em;
+  }
+
+  .real-public-sales-preview .affiliate-profile-name {
+    max-width: 42ch;
+    font-size: clamp(15px, 1.12vw, 18px);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .real-public-sales-preview .affiliate-profile-socials {
+    min-width: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-socials a {
+    min-height: 34px;
+    padding-inline: clamp(10px, 0.9vw, 14px);
+    font-size: 10.5px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-more {
+    min-height: 36px;
+    padding-inline: 14px;
+  }
+
+  .real-public-sales-preview .sales-hero {
+    padding-top: clamp(30px, 3.1vw, 48px);
+    padding-bottom: clamp(44px, 4.2vw, 66px);
+  }
+
+  .real-public-sales-preview .sales-hero-copy {
+    grid-template-columns: minmax(0, 1.06fr) minmax(390px, 0.88fr);
+    column-gap: clamp(32px, 4.2vw, 64px);
+  }
+
+  .real-public-sales-preview .sales-hero-copy > h1 {
+    max-width: 660px;
+    font-size: clamp(48px, 4.1vw, 62px);
+    line-height: 0.99;
+    letter-spacing: -0.072em;
+    text-wrap: balance;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > p {
+    max-width: 610px;
+    font-size: clamp(15px, 1.05vw, 17px);
+    line-height: 1.68;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > .top-promo-banner {
+    max-width: 500px;
+  }
+
+  .real-public-sales-preview .sales-hero-copy > .top-promo-banner img {
+    max-height: clamp(350px, 30vw, 440px);
+  }
+
+  .real-public-sales-preview .sales-actions {
+    margin-block: 22px 16px;
+  }
+
+  .real-public-sales-preview .sales-proof {
+    padding-bottom: 22px;
+    transform: translateY(-16px);
+  }
+
+  .real-public-sales-preview .structure-showcase > .shell {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(36px, 4vw, 64px);
+    align-items: center;
+  }
+
+  .real-public-sales-preview .structure-showcase-heading {
+    max-width: 500px;
+  }
+
+  .real-public-sales-preview .structure-showcase-heading h2 {
+    max-width: 12ch;
+    font-size: clamp(38px, 3.3vw, 48px);
+    line-height: 1.04;
+    text-wrap: balance;
+  }
+
+  .real-public-sales-preview .structure-showcase-heading p,
+  .real-public-sales-preview .sales-section-heading p {
+    max-width: 54ch;
+    font-size: 15px;
+    line-height: 1.68;
+  }
+
+  .real-public-sales-preview .sales-section-heading {
+    grid-template-columns: minmax(0, 1.08fr) minmax(300px, 0.78fr);
+    align-items: end;
+    gap: clamp(28px, 3.8vw, 54px);
+    margin-bottom: clamp(26px, 2.5vw, 36px);
+  }
+
+  .real-public-sales-preview .sales-section-heading > div {
+    min-width: 0;
+  }
+
+  .real-public-sales-preview .sales-section-heading h2 {
+    max-width: 22ch;
+    font-size: clamp(36px, 3.15vw, 47px);
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
+  .real-public-sales-preview .sales-package .sales-section-heading {
+    margin-bottom: clamp(26px, 2.4vw, 34px);
+  }
+
+  .real-public-sales-preview .sales-package .sales-section-heading h2 {
+    max-width: 19ch;
+    font-size: clamp(35px, 3.05vw, 46px);
+    line-height: 1.06;
+  }
+
+  .real-public-sales-preview .sales-package .sales-section-heading p {
+    max-width: 48ch;
+    align-self: end;
+    padding: 16px 18px;
+    font-size: 15px;
+    line-height: 1.62;
+  }
+
+  .real-public-sales-preview .package-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: clamp(12px, 1.2vw, 18px);
+  }
+
+  .real-public-sales-preview .package-grid article {
+    min-height: clamp(154px, 11.4vw, 176px);
+    gap: 10px;
+    padding: clamp(18px, 1.45vw, 22px);
+    border-radius: var(--desktop-card-radius);
+  }
+
+  .real-public-sales-preview .package-grid strong {
+    min-height: 0;
+    font-size: 16px;
+    line-height: 1.25;
+    text-wrap: balance;
+  }
+
+  .real-public-sales-preview .package-grid p,
+  .real-public-sales-preview .objection-grid p,
+  .real-public-sales-preview .copy-stack p {
+    font-size: 14px;
+    line-height: 1.66;
+  }
+
+  .real-public-sales-preview .social-proof-stats {
+    max-width: 260px;
+    margin: 0 auto 22px;
+  }
+
+  .real-public-sales-preview .social-proof-stats article {
+    min-height: 98px;
+    border-radius: 20px;
+  }
+
+  .real-public-sales-preview .testimonial-carousel {
+    width: 100%;
+    max-width: min(100%, 64vw, 980px);
+    margin-inline: auto;
+  }
+
+  .real-public-sales-preview .testimonial-card {
+    min-height: 220px;
+    padding: clamp(24px, 2.2vw, 34px);
+    border-radius: 24px;
+  }
+
+  .real-public-sales-preview .testimonial-card > p {
+    max-width: 72ch;
+    font-size: 15.5px;
+    line-height: 1.7;
+  }
+
+  .real-public-sales-preview .testimonial-carousel-rating-bar {
+    width: 100%;
+    max-width: min(100%, 64vw, 980px);
+    margin-inline: auto;
+  }
+
+  .real-public-sales-preview .reference-copy {
+    padding-block: clamp(62px, 4.8vw, 84px);
+  }
+
+  .real-public-sales-preview .reference-copy-grid {
+    grid-template-columns: 52px minmax(0, 1fr);
+    gap: clamp(18px, 2vw, 28px);
+  }
+
+  .real-public-sales-preview .reference-copy-content {
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 0.86fr);
+    column-gap: clamp(30px, 3.8vw, 56px);
+  }
+
+  .real-public-sales-preview .reference-copy h2 {
+    max-width: 18ch;
+    font-size: clamp(36px, 3vw, 46px);
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+
+  .real-public-sales-preview .copy-stack {
+    max-width: 64ch;
+    gap: 13px;
+  }
+
+  .real-public-sales-preview .sprint-fit-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 0.94fr);
+    gap: clamp(30px, 3.8vw, 58px);
+  }
+
+  .real-public-sales-preview .sprint-fit-grid > div,
+  .real-public-sales-preview .sprint-not-fit {
+    min-height: 0;
+    padding: clamp(23px, 2vw, 30px);
+    border-radius: 24px;
+  }
+
+  .real-public-sales-preview .sprint-fit-grid h2 {
+    max-width: 18ch;
+    margin-bottom: 20px;
+    font-size: clamp(35px, 3vw, 45px);
+    line-height: 1.06;
+    text-wrap: balance;
+  }
+
+  .real-public-sales-preview .sprint-fit li {
+    font-size: 14px;
+    line-height: 1.65;
+  }
+
+  .real-public-sales-preview .sales-objections .sales-section-heading {
+    max-width: 1080px;
+    margin-inline: auto;
+  }
+
+  .real-public-sales-preview .sales-objections .objection-grid {
+    width: 100%;
+    max-width: min(920px, 60vw);
+    margin-inline: auto;
+  }
+
+  .real-public-sales-preview .objection-accordion button {
+    min-height: 56px;
+    padding: 16px 20px;
+  }
+
+  .real-public-sales-preview .objection-accordion button strong {
+    font-size: 15px;
+    line-height: 1.45;
+  }
+
+  .real-public-sales-preview .objection-accordion p {
+    padding: 0 20px 20px;
+    font-size: 14.5px;
+    line-height: 1.68;
+  }
+
+  .real-public-sales-preview .sales-offer {
+    padding-block: clamp(66px, 4.8vw, 90px);
+  }
+
+  .real-public-sales-preview .sales-offer-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(360px, 440px);
+    gap: clamp(36px, 4vw, 62px);
+    align-items: center;
+  }
+
+  .real-public-sales-preview .offer-copy h2 {
+    max-width: 17ch;
+    font-size: clamp(38px, 3.4vw, 50px);
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+
+  .real-public-sales-preview .offer-card {
+    width: 100%;
+    max-width: 430px;
+    padding: clamp(24px, 2vw, 32px);
+    justify-self: end;
+    border-radius: 26px;
+  }
+
+  .real-public-sales-preview .application-form {
+    gap: 13px;
+  }
+
+  .real-public-sales-preview .application-field input {
+    min-height: 48px;
+  }
+
+  .real-public-sales-preview .footer {
+    padding-block: 48px 26px;
+  }
+
+  .real-public-sales-preview .footer-shell {
+    grid-template-columns: minmax(240px, 0.58fr) minmax(0, 1.42fr);
+    gap: 18px;
+    align-items: stretch;
+  }
+
+  .real-public-sales-preview .footer-brand-block {
+    min-height: 0;
+    gap: 14px;
+    padding: 20px 22px;
+  }
+
+  .real-public-sales-preview .footer-panel {
+    padding: 18px 20px;
+    border-radius: 22px;
+  }
+
+  .real-public-sales-preview .footer p,
+  .real-public-sales-preview .footer-links,
+  .real-public-sales-preview .footer-bottom {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* O toast ocupa fluxo somente enquanto existe, evitando cobrir a barra ou o hero. */
+  .real-public-sales-preview #public-social-proof-toast-slot {
+    position: relative;
+    inset: auto;
+    z-index: 2;
+    width: var(--desktop-shell);
+    min-height: 0;
+    height: auto;
+    margin: 0 auto;
+    align-items: center;
+    justify-content: flex-end;
+    transform: none;
+    pointer-events: none;
+  }
+
+  .real-public-sales-preview #public-social-proof-toast-slot:has(.public-social-proof-toast) {
+    padding-block: 8px;
+  }
+}
+
+@media (min-width: 1025px) and (max-width: 1366px) {
+  .real-public-sales-preview .nav-links {
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .real-public-sales-preview .nav-links-public,
+  .real-public-sales-preview .nav-links-utility {
+    gap: 3px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-summary-main {
+    grid-template-columns: minmax(196px, 0.48fr) minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-socials {
+    gap: 6px;
+  }
+
+  .real-public-sales-preview .affiliate-profile-socials a {
+    padding-inline: 9px;
+    font-size: 10px;
+  }
+}
+
+/* A ação flutuante só usa a margem externa quando há largura para não cobrir conteúdo. */
+@media (min-width: 1025px) and (max-width: 1759px) {
+  .real-public-sales-preview .public-conversion-cta {
+    display: none;
+  }
+}
+
+@media (min-width: 1760px) {
+  .real-public-sales-preview .public-conversion-cta {
+    right: max(24px, calc((100vw - 1240px) / 2 - 244px));
+    bottom: 24px;
+    max-width: 220px;
+    padding-inline: 12px;
+    font-size: 11px;
+    white-space: nowrap;
+    transform: none;
+  }
+}
