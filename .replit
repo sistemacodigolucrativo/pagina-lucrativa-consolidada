@@ -40,3 +40,5 @@ packages = ["glib", "nspr", "nss", "atk", "at-spi2-atk", "cairo", "cups", "dbus"
 
 [userenv.shared]
 MYSQL_HOST = "3.141.97.135"
+MYSQL_PORT = "3306"
+MYSQL_DATABASE = "pagina_lucrativa"
