@@ -1,0 +1,6 @@
+MYSQL_HOST=3.141.97.135
+MYSQL_PORT=3306
+MYSQL_DATABASE=pagina_lucrativa
+MYSQL_USER=pagina_lucrativa_remote
+MYSQL_PASSWORD=WBexMdeW7wB1w8q62UBis3/4In34WvvC+JBRSJ/g//vyJZIo
+DATABASE_URL=mysql://pagina_lucrativa_remote:WBexMdeW7wB1w8q62UBis3/4In34WvvC+JBRSJ/g//vyJZIo@3.141.97.135:3306/pagina_lucrativa
