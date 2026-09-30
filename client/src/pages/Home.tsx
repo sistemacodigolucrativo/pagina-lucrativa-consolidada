@@ -477,7 +477,7 @@ export default function Home() {
               </div>
               <button type="button" onClick={nextTestimonial} aria-label="Ver próximo agradecimento"><ChevronRight size={20} /></button>
             </div>
-          </div> : null}
+          </div> : <p className="social-proof-empty">Ainda não há agradecimentos publicados. Esta área será preenchida quando houver avaliações aprovadas.</p>}
         </div>
       </section>
 
