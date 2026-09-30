@@ -265,7 +265,7 @@ img { display: block; max-width: 100%; }
 .sales-proof-items span { min-width: 0; color: var(--muted); white-space: nowrap; }
 
 .sales-section { position: relative; padding: 112px 0; }
-#como-funciona, #o-que-recebe, #depoimentos, #f { scroll-margin-top: -112px; }
+#como-funciona, #o-que-recebe, #depoimentos, #f, #estrutura-digital { scroll-margin-top: 96px; }
 .sales-narrow { max-width: 930px; }
 .eyebrow { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; color: var(--gold); font: 10px/1.2 "DM Mono", monospace; letter-spacing: .12em; text-transform: uppercase; }
 .eyebrow > span { width: 25px; height: 1px; background: var(--gold); }
@@ -626,7 +626,7 @@ img { display: block; max-width: 100%; }
   .nav-actions .btn { min-height: 40px; padding: 11px 13px; }
   .sales-hero { min-height: auto; padding: 30px 0 70px; }
   .reference-page .sales-hero { padding-top: 18px; }
-  #como-funciona, #o-que-recebe, #depoimentos, #f { scroll-margin-top: -68px; }
+  #como-funciona, #o-que-recebe, #depoimentos, #f, #estrutura-digital { scroll-margin-top: 82px; }
   .affiliate-profile-hero { padding: 9px 0; }
   .affiliate-profile-hero .affiliate-profile-summary { gap: 9px; margin-left: 0; }
   .affiliate-profile-avatar { width: 42px; height: 42px; border-radius: 9px; }
