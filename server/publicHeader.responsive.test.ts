@@ -209,7 +209,7 @@ describe("public responsive header and hero layout", () => {
     expect(appSource).not.toContain("PublicConversionCta");
     expect(homeSource).toContain('href="#f" className="nav-cta nav-cta-activation"');
     expect(homeSource).toContain('href={withAppBase(isLoggedIn ? officeHref : "/acesso")} className="nav-cta nav-cta-login-mobile"');
-    expect(homeSource).toContain('<div className="sales-actions"><JoinButton />');
+    expect(homeSource).toContain('<div className="sales-actions"><JoinButton className="sales-action-button" />');
     expect(homeSource).toContain('className="member-chat-fab"');
     expect(homeSource).toContain('id="f"');
     expect(conversionCtaSource).toContain('const PACKAGE_SECTION_ID = "o-que-recebe";');
@@ -227,7 +227,7 @@ describe("public responsive header and hero layout", () => {
 
   it("removes only the navbar CTA and keeps other section CTAs", () => {
     expect(homeSource).not.toContain('<div className="nav-actions"><JoinButton /></div>');
-    expect(homeSource).toContain('<div className="sales-actions"><JoinButton />');
+    expect(homeSource).toContain('<div className="sales-actions"><JoinButton className="sales-action-button" />');
     expect((homeSource.match(/<JoinButton/g) ?? []).length).toBe(2);
     expect(homeSource).toContain('className="mobile-menu-button"');
     expect(homeSource.indexOf('className="mobile-menu-button"')).toBeGreaterThan(homeSource.indexOf('aria-label="Navegação principal"'));
@@ -253,10 +253,12 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('className="sales-trust-copy"');
     expect(homeSource).toContain('className="sales-trust-break"');
     expect(homeSource).toContain('className="sales-trust sales-trust-featured"');
+    expect(homeSource.indexOf('className="sales-trust sales-trust-featured"')).toBeGreaterThan(homeSource.indexOf('className="hero-photo-wrap virtual-office-carousel"'));
     expect(cssSource).toContain('justify-content: center;');
     expect(cssSource).toContain('text-align: center;');
     expect(cssSource).toContain('.sales-trust-break { display: block; }');
     expect(cssSource).toContain('.sales-trust-featured {');
+    expect(cssSource).toContain('.structure-showcase-stage > .sales-trust-featured');
     expect(cssSource).toContain('@keyframes sales-trust-glow');
   });
 

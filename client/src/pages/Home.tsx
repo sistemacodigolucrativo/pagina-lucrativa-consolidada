@@ -223,6 +223,7 @@ function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; i
             <button type="button" onClick={nextSlide} aria-label="Ver próxima tela do Escritório Virtual"><ChevronRight size={16} /></button>
           </div>
         </div>
+        <div className="sales-trust sales-trust-featured"><span className="sales-pulse" />{overrides.hero?.trust ? <span className="sales-trust-copy">{overrides.hero.trust}</span> : <span className="sales-trust-copy">Você recebe uma estrutura pronta, entende o método,<br className="sales-trust-break" />ativa sua operação e acompanha tudo em um só lugar.</span>}</div>
         <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
       </div>
     </div>
@@ -420,8 +421,7 @@ export default function Home() {
             {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
             <TopPromoBanner />
              <p>{publicCopy(overrides, "hero", "description", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.")}</p>
-            <div className="sales-actions"><JoinButton /><a href="#como-funciona" className="btn btn-ghost">Ver como funciona <ArrowDown size={16} /></a></div>
-             <div className="sales-trust sales-trust-featured"><span className="sales-pulse" />{overrides.hero?.trust ? <span className="sales-trust-copy">{overrides.hero.trust}</span> : <span className="sales-trust-copy">Você recebe uma estrutura pronta, entende o método,<br className="sales-trust-break" />ativa sua operação e acompanha tudo em um só lugar.</span>}</div>
+            <div className="sales-actions"><JoinButton className="sales-action-button" /><a href="#como-funciona" className="btn btn-ghost sales-action-button">Ver como funciona <ArrowDown size={16} /></a></div>
           </div>
         </div>
       </section>
