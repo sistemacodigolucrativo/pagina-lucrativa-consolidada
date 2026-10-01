@@ -115,7 +115,10 @@ export async function getDb() {
       });
     }
   } catch (error) {
-    console.warn("[Database] Failed to connect:", error);
+    const errorCode = error instanceof Error && "code" in error && typeof error.code === "string"
+      ? error.code
+      : "UNKNOWN";
+    console.warn(`[Database] Failed to initialize connection (code=${errorCode}).`);
     _db = null;
     if (ENV.isProduction) throw error;
   }
