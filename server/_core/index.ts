@@ -1,6 +1,5 @@
 import "dotenv/config";
 import express, { type RequestHandler } from "express";
-import { sql } from "drizzle-orm";
 import { parse as parseCookieHeader } from "cookie";
 import { createServer, type ServerResponse } from "http";
 import net from "net";
@@ -22,7 +21,6 @@ import { registerAdminCommercialOperations } from "./adminCommercialOperations";
 import { serveStatic, setupVite } from "./vite";
 import { PACKAGED_EBOOK_FILE_ROUTE } from "../staticEbooks";
 import { DEMO_SESSION_COOKIE_NAME, resolveDemoSession } from "../demoAuth";
-import { getDb } from "../db";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -89,22 +87,6 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   app.get(["/healthz", appPrefix ? `${appPrefix}/healthz` : null].filter((route): route is string => Boolean(route)), (_request, response) => {
     response.status(200).json({ ok: true });
-  });
-  app.get("/__temporary_preview_db_probe_638c61", async (_request, response) => {
-    try {
-      const db = await getDb();
-      if (!db) {
-        response.status(503).json({ connected: false, reason: "database_not_configured" });
-        return;
-      }
-      await db.execute(sql`SELECT 1`);
-      response.status(200).json({ connected: true });
-    } catch (error) {
-      const code = error instanceof Error && "code" in error && typeof error.code === "string"
-        ? error.code
-        : "QUERY_FAILED";
-      response.status(503).json({ connected: false, reason: code });
-    }
   });
   registerPackagedEbookFiles(app, appPrefix);
   registerStorageProxy(app);
