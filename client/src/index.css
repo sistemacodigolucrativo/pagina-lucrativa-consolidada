@@ -932,6 +932,26 @@ img { display: block; max-width: 100%; }
   cursor: nwse-resize;
 }
 
+.public-visual-guide {
+  position: fixed;
+  z-index: 2147482999;
+  pointer-events: none;
+  background: rgba(110, 231, 183, .9);
+  box-shadow: 0 0 0 1px rgba(0, 12, 8, .38), 0 0 18px rgba(110, 231, 183, .46);
+}
+
+.public-visual-guide-x {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.public-visual-guide-y {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
 .public-visual-savebar {
   position: fixed;
   right: max(18px, env(safe-area-inset-right));

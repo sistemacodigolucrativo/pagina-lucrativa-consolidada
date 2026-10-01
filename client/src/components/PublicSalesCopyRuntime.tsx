@@ -268,7 +268,7 @@ type EditableTarget = {
   sectionId: string;
   fieldKey: string;
   label: string;
-  kind: "text" | "image" | "button";
+  kind: "text" | "image" | "button" | "block";
   element: HTMLElement;
 };
 
@@ -296,6 +296,16 @@ function labelForInteractiveElement(element: HTMLElement, index: number) {
   return label ? `Botao - ${label}` : `Botao ${index + 1}`;
 }
 
+function labelForBlockElement(sectionLabel: string, index: number) {
+  return `${sectionLabel} - bloco ${index + 1}`;
+}
+
+function editableBlockElements(root: HTMLElement) {
+  return root.querySelectorAll<HTMLElement>(
+    ".package-grid > article, .objection-grid > article, .social-proof-stats > article, .testimonial-card, .reference-image-frame, .sales-actions"
+  );
+}
+
 function editableTargets(doc: Document): EditableTarget[] {
   const targets: EditableTarget[] = [];
   for (const section of PUBLIC_SALES_COPY_SECTIONS) {
@@ -319,6 +329,20 @@ function editableTargets(doc: Document): EditableTarget[] {
         "copy"
       );
     }
+    editableBlockElements(root).forEach((block, index) => {
+      assignEditableTarget(
+        targets,
+        {
+          id: `${section.id}.block${index + 1}`,
+          sectionId: section.id,
+          fieldKey: `block${index + 1}`,
+          label: labelForBlockElement(section.adminLabel, index),
+          kind: "block",
+          element: block,
+        },
+        "layout"
+      );
+    });
     root.querySelectorAll<HTMLElement>("img").forEach((image, index) => {
       assignEditableTarget(
         targets,
@@ -406,9 +430,25 @@ function removeGeneratedDuplicates() {
 function applyVisualLayout(layout: PublicVisualLayout | undefined) {
   const targets = editableTargets(document);
   removeGeneratedDuplicates();
+  const orderedGroups = new Map<HTMLElement, EditableTarget[]>();
   for (const target of targets) {
     applyVisualElementStyle(target.element, layout?.elements[target.id]);
+    const order = layout?.elements[target.id]?.order;
+    if (typeof order === "number" && target.element.parentElement) {
+      const group = orderedGroups.get(target.element.parentElement) ?? [];
+      group.push(target);
+      orderedGroups.set(target.element.parentElement, group);
+    }
   }
+  orderedGroups.forEach((group, parent) => {
+    group
+      .sort((first, second) => {
+        const firstOrder = layout?.elements[first.id]?.order ?? 0;
+        const secondOrder = layout?.elements[second.id]?.order ?? 0;
+        return firstOrder - secondOrder;
+      })
+      .forEach(target => parent.appendChild(target.element));
+  });
   if (!layout) return;
   for (const [id, config] of Object.entries(layout.elements)) {
     if (!config.duplicateOf) continue;
@@ -433,6 +473,11 @@ type RectBounds = {
   top: number;
   right: number;
   bottom: number;
+};
+
+type AlignmentGuide = {
+  axis: "x" | "y";
+  position: number;
 };
 
 function rectBounds(rect: DOMRect): RectBounds {
@@ -468,7 +513,10 @@ function dragBoundsForElement(element: HTMLElement) {
     element.closest<HTMLElement>("section") ??
     element.closest<HTMLElement>(".sales-page") ??
     document.documentElement;
-  return intersectBounds(viewportBounds(), rectBounds(container.getBoundingClientRect()));
+  return intersectBounds(
+    viewportBounds(),
+    rectBounds(container.getBoundingClientRect())
+  );
 }
 
 function clampOffsetToBounds(
@@ -486,6 +534,166 @@ function clampOffsetToBounds(
     x: clamp(minX, desiredX, Math.max(minX, maxX)),
     y: clamp(minY, desiredY, Math.max(minY, maxY)),
   };
+}
+
+function elementCenter(rect: DOMRect | RectBounds) {
+  return {
+    x: (rect.left + rect.right) / 2,
+    y: (rect.top + rect.bottom) / 2,
+  };
+}
+
+function snapOffsetForElement(
+  element: HTMLElement,
+  startRect: DOMRect,
+  desiredX: number,
+  desiredY: number
+) {
+  const threshold = 8;
+  let x = desiredX;
+  let y = desiredY;
+  const guides: AlignmentGuide[] = [];
+  const dragged = {
+    left: startRect.left + desiredX,
+    right: startRect.right + desiredX,
+    top: startRect.top + desiredY,
+    bottom: startRect.bottom + desiredY,
+  };
+  const draggedCenter = elementCenter(dragged);
+  const container = dragBoundsForElement(element);
+  const xCandidates = [
+    container.left,
+    elementCenter(container).x,
+    container.right,
+  ];
+  const yCandidates = [
+    container.top,
+    elementCenter(container).y,
+    container.bottom,
+  ];
+
+  document
+    .querySelectorAll<HTMLElement>("[data-public-visual-editable]")
+    .forEach(candidate => {
+      if (
+        candidate === element ||
+        candidate.contains(element) ||
+        element.contains(candidate)
+      )
+        return;
+      const rect = candidate.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+      const center = elementCenter(rect);
+      xCandidates.push(rect.left, center.x, rect.right);
+      yCandidates.push(rect.top, center.y, rect.bottom);
+    });
+
+  const draggedXPoints = [
+    { value: dragged.left, adjust: "left" as const },
+    { value: draggedCenter.x, adjust: "center" as const },
+    { value: dragged.right, adjust: "right" as const },
+  ];
+  const draggedYPoints = [
+    { value: dragged.top, adjust: "top" as const },
+    { value: draggedCenter.y, adjust: "center" as const },
+    { value: dragged.bottom, adjust: "bottom" as const },
+  ];
+
+  let bestX = threshold + 1;
+  for (const candidate of xCandidates) {
+    for (const point of draggedXPoints) {
+      const distance = Math.abs(candidate - point.value);
+      if (distance >= bestX || distance > threshold) continue;
+      bestX = distance;
+      const nextX =
+        point.adjust === "left"
+          ? candidate - startRect.left
+          : point.adjust === "right"
+            ? candidate - startRect.right
+            : candidate - (startRect.left + startRect.width / 2);
+      x = nextX;
+      guides[0] = { axis: "x", position: candidate };
+    }
+  }
+
+  let bestY = threshold + 1;
+  for (const candidate of yCandidates) {
+    for (const point of draggedYPoints) {
+      const distance = Math.abs(candidate - point.value);
+      if (distance >= bestY || distance > threshold) continue;
+      bestY = distance;
+      const nextY =
+        point.adjust === "top"
+          ? candidate - startRect.top
+          : point.adjust === "bottom"
+            ? candidate - startRect.bottom
+            : candidate - (startRect.top + startRect.height / 2);
+      y = nextY;
+      guides[1] = { axis: "y", position: candidate };
+    }
+  }
+
+  return { x, y, guides: guides.filter(Boolean) };
+}
+
+function editableDirectChildren(parent: HTMLElement) {
+  return Array.from(parent.children).filter(
+    (child): child is HTMLElement =>
+      child instanceof HTMLElement &&
+      Boolean(child.dataset.publicVisualEditable) &&
+      child.parentElement === parent
+  );
+}
+
+function orderedEditableIds(parent: HTMLElement) {
+  return editableDirectChildren(parent)
+    .map(element => element.dataset.publicVisualEditable)
+    .filter((id): id is string => Boolean(id));
+}
+
+function shouldReorderTarget(kind: string | undefined) {
+  return kind === "block" || kind === "button" || kind === "image";
+}
+
+function reorderElementNearPointer(
+  element: HTMLElement,
+  pointerX: number,
+  pointerY: number
+) {
+  if (!shouldReorderTarget(element.dataset.publicVisualKind)) return null;
+  const parent = element.parentElement;
+  if (!parent) return null;
+  const siblings = editableDirectChildren(parent);
+  if (siblings.length < 2 || !siblings.includes(element)) return null;
+
+  const target = siblings.find(sibling => {
+    if (sibling === element) return false;
+    const rect = sibling.getBoundingClientRect();
+    return (
+      pointerX >= rect.left &&
+      pointerX <= rect.right &&
+      pointerY >= rect.top &&
+      pointerY <= rect.bottom
+    );
+  });
+  if (!target) return null;
+
+  const targetRect = target.getBoundingClientRect();
+  const rowLike =
+    siblings.filter(sibling => {
+      const rect = sibling.getBoundingClientRect();
+      return Math.abs(rect.top - targetRect.top) < targetRect.height * 0.6;
+    }).length > 1;
+  const insertAfter = rowLike
+    ? pointerX > targetRect.left + targetRect.width / 2
+    : pointerY > targetRect.top + targetRect.height / 2;
+  const reference = insertAfter ? target.nextSibling : target;
+  if (reference === element || target === element.nextSibling) return null;
+
+  parent.insertBefore(element, reference);
+  element.style.setProperty("--public-visual-x", "0px");
+  element.style.setProperty("--public-visual-y", "0px");
+  return orderedEditableIds(parent);
 }
 
 export default function PublicSalesCopyRuntime() {
@@ -519,9 +727,10 @@ export default function PublicSalesCopyRuntime() {
     sectionId: string;
     fieldKey: string;
     label: string;
-    kind: "text" | "image" | "button";
+    kind: "text" | "image" | "button" | "block";
     rect: DOMRect;
   } | null>(null);
+  const [alignmentGuides, setAlignmentGuides] = useState<AlignmentGuide[]>([]);
   const [textEditing, setTextEditing] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -529,7 +738,8 @@ export default function PublicSalesCopyRuntime() {
 
   const cloneLayout = useCallback(
     (layout: PublicVisualLayout | null | undefined): PublicVisualLayout => {
-      if (layout) return JSON.parse(JSON.stringify(layout)) as PublicVisualLayout;
+      if (layout)
+        return JSON.parse(JSON.stringify(layout)) as PublicVisualLayout;
       return createEmptyPublicVisualLayout(pageTemplate, activeBreakpoint);
     },
     [activeBreakpoint, pageTemplate]
@@ -558,7 +768,9 @@ export default function PublicSalesCopyRuntime() {
           ? "image"
           : element.dataset.publicVisualKind === "button"
             ? "button"
-            : "text";
+            : element.dataset.publicVisualKind === "block"
+              ? "block"
+              : "text";
       setSelected({
         id,
         sectionId,
@@ -612,6 +824,26 @@ export default function PublicSalesCopyRuntime() {
     [activeSavedLayout, cloneLayout, refreshSelectionRect]
   );
 
+  const persistElementOrder = useCallback(
+    (ids: string[]) => {
+      if (!ids.length) return;
+      setDirty(true);
+      setPendingLayout(current => {
+        const next = cloneLayout(current ?? activeSavedLayout);
+        ids.forEach((id, index) => {
+          next.elements[id] = {
+            ...(next.elements[id] ?? {}),
+            order: index,
+            x: 0,
+            y: 0,
+          };
+        });
+        return next;
+      });
+    },
+    [activeSavedLayout, cloneLayout]
+  );
+
   const beginPointerEdit = useCallback(
     (event: ReactPointerEvent<HTMLButtonElement>, mode: "move" | "resize") => {
       const selectedNow = selected;
@@ -631,15 +863,29 @@ export default function PublicSalesCopyRuntime() {
       const bounds = dragBoundsForElement(element);
       const previousTouchAction = document.body.style.touchAction;
       const previousUserSelect = document.body.style.userSelect;
+      let hasDragged = false;
+      let lastPointerX = startX;
+      let lastPointerY = startY;
       document.body.style.touchAction = "none";
       document.body.style.userSelect = "none";
 
       const onMove = (moveEvent: PointerEvent) => {
         moveEvent.preventDefault();
+        lastPointerX = moveEvent.clientX;
+        lastPointerY = moveEvent.clientY;
         const dx = moveEvent.clientX - startX;
         const dy = moveEvent.clientY - startY;
+        if (!hasDragged && Math.hypot(dx, dy) < 5) return;
+        hasDragged = true;
         if (mode === "move") {
-          const nextOffset = clampOffsetToBounds(rect, bounds, dx, dy);
+          const snapped = snapOffsetForElement(element, rect, dx, dy);
+          const nextOffset = clampOffsetToBounds(
+            rect,
+            bounds,
+            snapped.x,
+            snapped.y
+          );
+          setAlignmentGuides(snapped.guides);
           patchElement(
             selectedNow.id,
             {
@@ -650,6 +896,7 @@ export default function PublicSalesCopyRuntime() {
           );
           return;
         }
+        setAlignmentGuides([]);
         patchElement(
           selectedNow.id,
           {
@@ -664,11 +911,30 @@ export default function PublicSalesCopyRuntime() {
         window.removeEventListener("pointerup", onUp);
         document.body.style.touchAction = previousTouchAction;
         document.body.style.userSelect = previousUserSelect;
+        setAlignmentGuides([]);
+        if (mode === "move" && hasDragged) {
+          const order = reorderElementNearPointer(
+            element,
+            lastPointerX,
+            lastPointerY
+          );
+          if (order) {
+            persistElementOrder(order);
+            window.requestAnimationFrame(() => refreshSelectionRect(element));
+          }
+        }
       };
       window.addEventListener("pointermove", onMove, { passive: false });
       window.addEventListener("pointerup", onUp, { once: true });
     },
-    [activeSavedLayout, patchElement, pendingLayout, selected]
+    [
+      activeSavedLayout,
+      patchElement,
+      pendingLayout,
+      persistElementOrder,
+      refreshSelectionRect,
+      selected,
+    ]
   );
 
   useEffect(() => {
@@ -730,7 +996,9 @@ export default function PublicSalesCopyRuntime() {
 
     const onPointerDown = (event: PointerEvent) => {
       const target = event.target as HTMLElement | null;
-      const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
+      const element = target?.closest<HTMLElement>(
+        "[data-public-visual-editable]"
+      );
       if (!element) return;
       if (holdTimerRef.current) window.clearTimeout(holdTimerRef.current);
       const startX = event.clientX;
@@ -755,17 +1023,28 @@ export default function PublicSalesCopyRuntime() {
         const bounds = dragBoundsForElement(startElement);
         const previousTouchAction = document.body.style.touchAction;
         const previousUserSelect = document.body.style.userSelect;
+        let hasDragged = false;
+        let lastPointerX = startX;
+        let lastPointerY = startY;
         document.body.style.touchAction = "none";
         document.body.style.userSelect = "none";
 
         const onDirectMove = (moveEvent: PointerEvent) => {
           moveEvent.preventDefault();
+          lastPointerX = moveEvent.clientX;
+          lastPointerY = moveEvent.clientY;
+          const dx = moveEvent.clientX - startX;
+          const dy = moveEvent.clientY - startY;
+          if (!hasDragged && Math.hypot(dx, dy) < 5) return;
+          hasDragged = true;
+          const snapped = snapOffsetForElement(startElement, rect, dx, dy);
           const nextOffset = clampOffsetToBounds(
             rect,
             bounds,
-            moveEvent.clientX - startX,
-            moveEvent.clientY - startY
+            snapped.x,
+            snapped.y
           );
+          setAlignmentGuides(snapped.guides);
           patchElement(
             id,
             {
@@ -780,6 +1059,20 @@ export default function PublicSalesCopyRuntime() {
           window.removeEventListener("pointerup", onDirectUp);
           document.body.style.touchAction = previousTouchAction;
           document.body.style.userSelect = previousUserSelect;
+          setAlignmentGuides([]);
+          if (hasDragged) {
+            const order = reorderElementNearPointer(
+              startElement,
+              lastPointerX,
+              lastPointerY
+            );
+            if (order) {
+              persistElementOrder(order);
+              window.requestAnimationFrame(() =>
+                refreshSelectionRect(startElement)
+              );
+            }
+          }
         };
         window.addEventListener("pointermove", onDirectMove, {
           passive: false,
@@ -796,7 +1089,9 @@ export default function PublicSalesCopyRuntime() {
 
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
-      const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
+      const element = target?.closest<HTMLElement>(
+        "[data-public-visual-editable]"
+      );
       if (!element) return;
       event.preventDefault();
       event.stopPropagation();
@@ -807,7 +1102,9 @@ export default function PublicSalesCopyRuntime() {
 
     const onDblClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
-      const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
+      const element = target?.closest<HTMLElement>(
+        "[data-public-visual-editable]"
+      );
       if (!element || element.dataset.publicVisualKind === "image") return;
       event.preventDefault();
       event.stopPropagation();
@@ -817,10 +1114,13 @@ export default function PublicSalesCopyRuntime() {
     };
 
     const onInput = (event: Event) => {
-      const element = (event.target as HTMLElement | null)?.closest<HTMLElement>(
-        "[data-public-visual-editable]"
-      );
-      if (!element || element.getAttribute("contenteditable") !== "plaintext-only")
+      const element = (
+        event.target as HTMLElement | null
+      )?.closest<HTMLElement>("[data-public-visual-editable]");
+      if (
+        !element ||
+        element.getAttribute("contenteditable") !== "plaintext-only"
+      )
         return;
       const sectionId = element.dataset.publicVisualSection;
       const fieldKey = element.dataset.publicVisualField;
@@ -871,6 +1171,7 @@ export default function PublicSalesCopyRuntime() {
     editorEnabled,
     patchElement,
     pendingLayout,
+    persistElementOrder,
     refreshSelectionRect,
     selectVisualElement,
   ]);
@@ -969,8 +1270,12 @@ export default function PublicSalesCopyRuntime() {
     setSaving(true);
     try {
       const records = adminContent.data ?? [];
-      for (const [sectionId, values] of Object.entries(pendingTextsRef.current)) {
-        const section = PUBLIC_SALES_COPY_SECTIONS.find(item => item.id === sectionId);
+      for (const [sectionId, values] of Object.entries(
+        pendingTextsRef.current
+      )) {
+        const section = PUBLIC_SALES_COPY_SECTIONS.find(
+          item => item.id === sectionId
+        );
         if (!section) continue;
         const record = records.find(
           item =>
@@ -1006,7 +1311,8 @@ export default function PublicSalesCopyRuntime() {
           resourceType: sectionId,
           status: "published" as const,
         };
-        if (record) await updateContent.mutateAsync({ id: record.id, ...payload });
+        if (record)
+          await updateContent.mutateAsync({ id: record.id, ...payload });
         else await createContent.mutateAsync(payload);
       }
 
@@ -1038,7 +1344,8 @@ export default function PublicSalesCopyRuntime() {
         };
         const parsed = parsePublicVisualLayout(payload.body);
         if (!parsed) throw new Error("Layout visual invalido.");
-        if (record) await updateContent.mutateAsync({ id: record.id, ...payload });
+        if (record)
+          await updateContent.mutateAsync({ id: record.id, ...payload });
         else await createContent.mutateAsync(payload);
       }
 
@@ -1102,11 +1409,9 @@ export default function PublicSalesCopyRuntime() {
               Editar texto
             </button>
           ) : null}
-          {selected.kind === "text" || selected.kind === "button" ? (
-            <button type="button" onClick={duplicateSelected}>
-              Duplicar
-            </button>
-          ) : null}
+          <button type="button" onClick={duplicateSelected}>
+            Duplicar
+          </button>
           <button type="button" onClick={deleteSelected}>
             Excluir
           </button>
@@ -1118,8 +1423,23 @@ export default function PublicSalesCopyRuntime() {
           />
         </div>
       ) : null}
+      {alignmentGuides.map((guide, index) => (
+        <div
+          key={`${guide.axis}-${guide.position}-${index}`}
+          className={`public-visual-guide public-visual-guide-${guide.axis}`}
+          style={
+            guide.axis === "x"
+              ? { left: guide.position }
+              : { top: guide.position }
+          }
+        />
+      ))}
       {dirty ? (
-        <div className="public-visual-savebar" role="dialog" aria-label="Alteracoes pendentes">
+        <div
+          className="public-visual-savebar"
+          role="dialog"
+          aria-label="Alteracoes pendentes"
+        >
           <span>Alteracoes pendentes em {activeBreakpoint}</span>
           <button type="button" onClick={savePending} disabled={saving}>
             {saving ? "Salvando..." : "Salvar"}

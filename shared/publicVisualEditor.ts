@@ -28,6 +28,7 @@ export const publicVisualElementSchema = z
     hidden: z.boolean().optional(),
     duplicateOf: z.string().trim().max(160).optional(),
     text: z.string().trim().max(6000).optional(),
+    order: z.number().int().min(0).max(500).optional(),
   })
   .strict();
 
@@ -101,4 +102,3 @@ export function createEmptyPublicVisualLayout(
     elements: {},
   };
 }
-
