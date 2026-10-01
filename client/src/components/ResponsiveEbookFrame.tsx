@@ -71,8 +71,9 @@ function PdfCanvasPage({ pdfDoc, pageNumber, containerWidth, zoom }: PdfCanvasPa
       canvas.style.height = `${Math.floor(viewport.height)}px`;
       canvasContext.clearRect(0, 0, canvas.width, canvas.height);
 
-      renderTask = page.render({ canvasContext, viewport, transform });
-      await renderTask.promise;
+      const pageRenderTask = page.render({ canvasContext, viewport, transform });
+      renderTask = pageRenderTask;
+      await pageRenderTask.promise;
       if (!cancelled) setStatus("ready");
     };
 
