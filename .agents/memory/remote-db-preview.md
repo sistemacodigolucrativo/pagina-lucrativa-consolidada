@@ -14,3 +14,9 @@ No Preview, a existência de um Secret no painel não prova que o processo do wo
 **Why:** Um diagnóstico do Preview encontrou `MYSQL_PASSWORD` e `REMOTE_DATABASE_URL` cadastrados, mas ausentes no processo do workflow; a aplicação ficou sem URL de banco apesar da configuração visual.
 
 **How to apply:** Para confirmar conectividade, verifique apenas se a configuração foi carregada e rode `SELECT 1`; não exponha valores nem considere uma resposta HTTP com dados padrão como prova de conexão.
+
+Valores opcionais de URL também podem ser strings vazias; `??` não avança para o fallback nesse caso.
+
+**Why:** A URL montada para o Preview podia ser `""`, bloqueando a URL remota alternativa mesmo quando ela estivesse configurada.
+
+**How to apply:** Ao escolher entre URLs opcionais, trate strings vazias como ausentes e mantenha o Preview separado da exigência de `DATABASE_URL` em produção.

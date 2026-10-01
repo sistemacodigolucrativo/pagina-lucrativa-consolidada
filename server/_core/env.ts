@@ -11,13 +11,31 @@ function buildPreviewDatabaseUrl() {
   return `mysql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(database)}`;
 }
 
+export function resolveDatabaseUrl({
+  databaseUrl,
+  previewDatabaseUrl,
+  remoteDatabaseUrl,
+  isProduction,
+}: {
+  databaseUrl?: string;
+  previewDatabaseUrl: string;
+  remoteDatabaseUrl?: string;
+  isProduction: boolean;
+}) {
+  if (databaseUrl) return databaseUrl;
+  if (isProduction) return "";
+  if (previewDatabaseUrl) return previewDatabaseUrl;
+  return remoteDatabaseUrl || "";
+}
+
 const isProduction = process.env.NODE_ENV === "production";
 const previewDatabaseUrl = isProduction ? "" : buildPreviewDatabaseUrl();
-const databaseUrl =
-  process.env.DATABASE_URL ??
-  previewDatabaseUrl ??
-  process.env.REMOTE_DATABASE_URL ??
-  "";
+const databaseUrl = resolveDatabaseUrl({
+  databaseUrl: process.env.DATABASE_URL,
+  previewDatabaseUrl,
+  remoteDatabaseUrl: process.env.REMOTE_DATABASE_URL,
+  isProduction,
+});
 
 export const ENV = {
   appId: process.env.VITE_APP_ID ?? "",
