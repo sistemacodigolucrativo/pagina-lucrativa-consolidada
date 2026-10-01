@@ -39,6 +39,11 @@ import {
   parsePublicPageTemplateConfig,
   type PublicPageTemplate,
 } from "@shared/publicPageTemplate";
+import {
+  PUBLIC_VISUAL_EDITOR_CATEGORY,
+  PUBLIC_VISUAL_EDITOR_MODE_RESOURCE,
+  parsePublicVisualMode,
+} from "@shared/publicVisualEditor";
 import "./AdminVisualSalesEditor.css";
 
 const acceptedTypes = ["image/jpeg", "image/png", "image/gif"] as const;
@@ -172,14 +177,31 @@ export default function AdminSalesImages() {
       ),
     [content.data]
   );
+  const visualModeRecord = useMemo(
+    () =>
+      (content.data ?? []).find(
+        item =>
+          item.kind === "notice" &&
+          item.resourceCategory === PUBLIC_VISUAL_EDITOR_CATEGORY &&
+          item.resourceType === PUBLIC_VISUAL_EDITOR_MODE_RESOURCE &&
+          item.status !== "archived"
+      ),
+    [content.data]
+  );
   const activeTemplate = useMemo(
     () => parsePublicPageTemplateConfig(templateRecord?.body),
     [templateRecord?.body]
+  );
+  const visualModeEnabled = useMemo(
+    () => parsePublicVisualMode(visualModeRecord?.body).enabled,
+    [visualModeRecord?.body]
   );
   const [templateDraft, setTemplateDraft] = useState<PublicPageTemplate>(
     DEFAULT_PUBLIC_PAGE_TEMPLATE
   );
   const [savingTemplate, setSavingTemplate] = useState(false);
+  const [visualModeDraft, setVisualModeDraft] = useState(false);
+  const [savingVisualMode, setSavingVisualMode] = useState(false);
 
   useEffect(() => {
     if (!layoutRecord?.body) return;
@@ -198,6 +220,10 @@ export default function AdminSalesImages() {
   useEffect(() => {
     setTemplateDraft(activeTemplate);
   }, [activeTemplate]);
+
+  useEffect(() => {
+    setVisualModeDraft(visualModeEnabled);
+  }, [visualModeEnabled]);
 
   const saveTemplateSelection = useCallback(async () => {
     const nextTemplate = normalizePublicPageTemplate(templateDraft);
@@ -235,6 +261,46 @@ export default function AdminSalesImages() {
     updateContent,
     createContent,
     utils.admin.content,
+  ]);
+
+  const saveVisualMode = useCallback(async () => {
+    const payload = {
+      kind: "notice" as const,
+      title: "Modo de edição visual da página pública",
+      summary: visualModeDraft ? "Ativo para administradores" : "Desativado",
+      body: JSON.stringify({ enabled: visualModeDraft }),
+      resourceUrl: null,
+      resourceCategory: PUBLIC_VISUAL_EDITOR_CATEGORY,
+      resourceType: PUBLIC_VISUAL_EDITOR_MODE_RESOURCE,
+      status: "published" as const,
+    };
+    setSavingVisualMode(true);
+    try {
+      if (visualModeRecord)
+        await updateContent.mutateAsync({ id: visualModeRecord.id, ...payload });
+      else await createContent.mutateAsync(payload);
+      await utils.admin.content.invalidate();
+      iframeRef.current?.contentWindow?.location.reload();
+      toast.success(
+        visualModeDraft
+          ? "Modo de edição visual ativado."
+          : "Modo de edição visual desativado."
+      );
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar o modo de edição visual."
+      );
+    } finally {
+      setSavingVisualMode(false);
+    }
+  }, [
+    createContent,
+    updateContent,
+    utils.admin.content,
+    visualModeDraft,
+    visualModeRecord,
   ]);
 
   useEffect(() => {
@@ -695,6 +761,35 @@ export default function AdminSalesImages() {
                 : templateDraft === activeTemplate
                   ? "Salvo"
                   : "Salvar template"}
+            </button>
+          </div>
+          <div className="visual-template-selector-controls visual-template-editor-toggle">
+            <label htmlFor="public-visual-mode-toggle">
+              Modo de edição visual
+            </label>
+            <button
+              id="public-visual-mode-toggle"
+              type="button"
+              className={`visual-editor-mode-toggle ${visualModeDraft ? "is-active" : ""}`}
+              onClick={() => setVisualModeDraft(value => !value)}
+              aria-pressed={visualModeDraft}
+            >
+              <span aria-hidden="true" />
+              {visualModeDraft ? "Ativado" : "Desativado"}
+            </button>
+            <button
+              type="button"
+              onClick={saveVisualMode}
+              disabled={
+                savingVisualMode || visualModeDraft === visualModeEnabled
+              }
+            >
+              <Save size={15} />
+              {savingVisualMode
+                ? "Salvando..."
+                : visualModeDraft === visualModeEnabled
+                  ? "Salvo"
+                  : "Salvar modo"}
             </button>
           </div>
         </section>

@@ -1,12 +1,23 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
+  useMemo,
+  useRef,
   useState,
   type ReactNode,
+  type PointerEvent as ReactPointerEvent,
 } from "react";
 import { withAppBase } from "@/lib/devPath";
-import type { PublicSalesCopyOverrides } from "@shared/publicSalesCopyEditor";
+import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import {
+  PUBLIC_SALES_COPY_CATEGORY,
+  PUBLIC_SALES_COPY_SECTIONS,
+  defaultValuesForSection,
+  type PublicSalesCopyOverrides,
+} from "@shared/publicSalesCopyEditor";
 import {
   PUBLIC_HERO_TITLE,
   splitPublicHeroTitle,
@@ -16,6 +27,16 @@ import {
   normalizePublicPageTemplate,
   type PublicPageTemplate,
 } from "@shared/publicPageTemplate";
+import {
+  PUBLIC_VISUAL_EDITOR_CATEGORY,
+  createEmptyPublicVisualLayout,
+  publicVisualLayoutResource,
+  parsePublicVisualLayout,
+  type PublicVisualBreakpoint,
+  type PublicVisualElement,
+  type PublicVisualEditorConfig,
+  type PublicVisualLayout,
+} from "@shared/publicVisualEditor";
 
 type Point = { x?: number; y?: number };
 export type FloatingLayout = Partial<
@@ -29,6 +50,7 @@ type PublicSalesCopyState = {
   overrides: PublicSalesCopyOverrides;
   floatingLayout: FloatingLayout;
   pageTemplate: PublicPageTemplate;
+  visualEditor: PublicVisualEditorConfig;
   ready: boolean;
 };
 
@@ -37,6 +59,7 @@ const PublicSalesCopyContext = createContext<PublicSalesCopyState>({
   overrides: {},
   floatingLayout: {},
   pageTemplate: DEFAULT_PUBLIC_PAGE_TEMPLATE,
+  visualEditor: { enabled: false, layouts: {} },
   ready: false,
 });
 const FLOATING_POSITION_PROPS = [
@@ -57,6 +80,7 @@ export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
     overrides: {},
     floatingLayout: {},
     pageTemplate: DEFAULT_PUBLIC_PAGE_TEMPLATE,
+    visualEditor: { enabled: false, layouts: {} },
     ready: false,
   });
 
@@ -74,6 +98,7 @@ export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
           overrides: payload.overrides ?? {},
           floatingLayout: payload.floatingLayout ?? {},
           pageTemplate: normalizePublicPageTemplate(payload.pageTemplate),
+          visualEditor: payload.visualEditor ?? { enabled: false, layouts: {} },
           ready: true,
         });
       })
@@ -97,6 +122,10 @@ function breakpointForWidth(width: number): "desktop" | "tablet" | "mobile" {
   if (width <= 560) return "mobile";
   if (width <= 980) return "tablet";
   return "desktop";
+}
+
+function publicVisualBreakpointForWidth(width: number): PublicVisualBreakpoint {
+  return breakpointForWidth(width);
 }
 
 function clamp(min: number, value: number, max: number) {
@@ -211,8 +240,235 @@ function applyFloatingLayout(layout: FloatingLayout) {
   preventFloatingActionOverlap();
 }
 
+function sectionRoot(
+  doc: Document,
+  section: (typeof PUBLIC_SALES_COPY_SECTIONS)[number]
+) {
+  if (typeof section.referenceCopyIndex === "number") {
+    return (
+      doc.querySelectorAll<HTMLElement>("section.reference-copy")[
+        section.referenceCopyIndex
+      ] ?? null
+    );
+  }
+  return section.sectionSelector
+    ? doc.querySelector<HTMLElement>(section.sectionSelector)
+    : null;
+}
+
+function queryWithin(root: HTMLElement, selector: string) {
+  const normalized = selector.trim().startsWith(">")
+    ? `:scope ${selector.trim()}`
+    : selector;
+  return root.querySelector<HTMLElement>(normalized);
+}
+
+type EditableTarget = {
+  id: string;
+  sectionId: string;
+  fieldKey: string;
+  label: string;
+  element: HTMLElement;
+};
+
+function editableTargets(doc: Document): EditableTarget[] {
+  const targets: EditableTarget[] = [];
+  for (const section of PUBLIC_SALES_COPY_SECTIONS) {
+    const root = sectionRoot(doc, section);
+    if (!root) continue;
+    for (const field of section.fields) {
+      if (!field.selector) continue;
+      const element = queryWithin(root, field.selector);
+      if (!element) continue;
+      const id = `${section.id}.${field.key}`;
+      element.dataset.publicVisualEditable = id;
+      element.dataset.publicVisualSection = section.id;
+      element.dataset.publicVisualField = field.key;
+      element.dataset.publicVisualLabel = field.label;
+      targets.push({
+        id,
+        sectionId: section.id,
+        fieldKey: field.key,
+        label: field.label,
+        element,
+      });
+    }
+  }
+  return targets;
+}
+
+function applyVisualElementStyle(
+  element: HTMLElement,
+  config: PublicVisualElement | undefined
+) {
+  element.classList.add("public-visual-layout-target");
+  element.style.removeProperty("--public-visual-x");
+  element.style.removeProperty("--public-visual-y");
+  element.style.removeProperty("--public-visual-width");
+  element.style.removeProperty("--public-visual-height");
+  element.style.removeProperty("display");
+  if (!config) return;
+  if (config.hidden) {
+    element.style.display = "none";
+    return;
+  }
+  if (typeof config.x === "number")
+    element.style.setProperty("--public-visual-x", `${config.x}px`);
+  if (typeof config.y === "number")
+    element.style.setProperty("--public-visual-y", `${config.y}px`);
+  if (typeof config.width === "number")
+    element.style.setProperty("--public-visual-width", `${config.width}px`);
+  if (typeof config.height === "number")
+    element.style.setProperty("--public-visual-height", `${config.height}px`);
+}
+
+function removeGeneratedDuplicates() {
+  document
+    .querySelectorAll<HTMLElement>("[data-public-visual-generated-duplicate]")
+    .forEach(element => element.remove());
+}
+
+function applyVisualLayout(layout: PublicVisualLayout | undefined) {
+  const targets = editableTargets(document);
+  removeGeneratedDuplicates();
+  for (const target of targets) {
+    applyVisualElementStyle(target.element, layout?.elements[target.id]);
+  }
+  if (!layout) return;
+  for (const [id, config] of Object.entries(layout.elements)) {
+    if (!config.duplicateOf) continue;
+    const source = targets.find(target => target.id === config.duplicateOf);
+    if (!source || config.hidden) continue;
+    const clone = source.element.cloneNode(true) as HTMLElement;
+    clone.dataset.publicVisualGeneratedDuplicate = id;
+    clone.dataset.publicVisualEditable = id;
+    clone.dataset.publicVisualSection = source.sectionId;
+    clone.dataset.publicVisualField = source.fieldKey;
+    clone.dataset.publicVisualLabel = `${source.label} duplicado`;
+    source.element.insertAdjacentElement("afterend", clone);
+    applyVisualElementStyle(clone, config);
+  }
+}
+
 export default function PublicSalesCopyRuntime() {
-  const { floatingLayout, overrides, ready } = usePublicSalesCopy();
+  const { floatingLayout, overrides, pageTemplate, ready, visualEditor } =
+    usePublicSalesCopy();
+  const session = trpc.auth.me.useQuery(undefined, { retry: false });
+  const isAdmin = session.data?.role === "admin";
+  const adminContent = trpc.admin.content.useQuery(undefined, {
+    enabled: Boolean(isAdmin && visualEditor.enabled),
+  });
+  const createContent = trpc.admin.createContent.useMutation();
+  const updateContent = trpc.admin.updateContent.useMutation();
+  const utils = trpc.useUtils();
+  const [activeBreakpoint, setActiveBreakpoint] =
+    useState<PublicVisualBreakpoint>(() =>
+      typeof window === "undefined"
+        ? "desktop"
+        : publicVisualBreakpointForWidth(window.innerWidth)
+    );
+  const activeSavedLayout =
+    visualEditor.layouts[pageTemplate]?.[activeBreakpoint];
+  const [pendingLayout, setPendingLayout] = useState<PublicVisualLayout | null>(
+    null
+  );
+  const activeVisualLayout = pendingLayout ?? activeSavedLayout;
+  const pendingTextsRef = useRef<Record<string, Record<string, string>>>({});
+  const selectedElementRef = useRef<HTMLElement | null>(null);
+  const [selected, setSelected] = useState<{
+    id: string;
+    sectionId: string;
+    fieldKey: string;
+    label: string;
+    rect: DOMRect;
+  } | null>(null);
+  const [dirty, setDirty] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const editorEnabled = ready && visualEditor.enabled && isAdmin;
+
+  const cloneLayout = useCallback(
+    (layout: PublicVisualLayout | null | undefined): PublicVisualLayout => {
+      if (layout) return JSON.parse(JSON.stringify(layout)) as PublicVisualLayout;
+      return createEmptyPublicVisualLayout(pageTemplate, activeBreakpoint);
+    },
+    [activeBreakpoint, pageTemplate]
+  );
+
+  const refreshSelectionRect = useCallback((element?: HTMLElement | null) => {
+    const target = element ?? selectedElementRef.current;
+    if (!target) return;
+    const rect = target.getBoundingClientRect();
+    setSelected(current => (current ? { ...current, rect } : current));
+  }, []);
+
+  const patchElement = useCallback(
+    (
+      id: string,
+      patch: PublicVisualElement,
+      target: HTMLElement | null = selectedElementRef.current
+    ) => {
+      setDirty(true);
+      setPendingLayout(current => {
+        const next = cloneLayout(current ?? activeSavedLayout);
+        next.elements[id] = { ...(next.elements[id] ?? {}), ...patch };
+        if (target?.dataset.publicVisualEditable === id)
+          applyVisualElementStyle(target, next.elements[id]);
+        return next;
+      });
+      window.requestAnimationFrame(() => refreshSelectionRect(target));
+    },
+    [activeSavedLayout, cloneLayout, refreshSelectionRect]
+  );
+
+  const beginPointerEdit = useCallback(
+    (event: ReactPointerEvent<HTMLButtonElement>, mode: "move" | "resize") => {
+      const selectedNow = selected;
+      const element = selectedElementRef.current;
+      if (!selectedNow || !element) return;
+      event.preventDefault();
+      event.stopPropagation();
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const rect = element.getBoundingClientRect();
+      const startConfig =
+        (pendingLayout ?? activeSavedLayout)?.elements[selectedNow.id] ?? {};
+      const startOffsetX = startConfig.x ?? 0;
+      const startOffsetY = startConfig.y ?? 0;
+      const startWidth = startConfig.width ?? rect.width;
+      const startHeight = startConfig.height ?? rect.height;
+
+      const onMove = (moveEvent: PointerEvent) => {
+        const dx = moveEvent.clientX - startX;
+        const dy = moveEvent.clientY - startY;
+        if (mode === "move") {
+          patchElement(
+            selectedNow.id,
+            {
+              x: Math.round(startOffsetX + dx),
+              y: Math.round(startOffsetY + dy),
+            },
+            element
+          );
+          return;
+        }
+        patchElement(
+          selectedNow.id,
+          {
+            width: Math.round(Math.max(40, startWidth + dx)),
+            height: Math.round(Math.max(24, startHeight + dy)),
+          },
+          element
+        );
+      };
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp, { once: true });
+    },
+    [activeSavedLayout, patchElement, pendingLayout, selected]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -223,6 +479,7 @@ export default function PublicSalesCopyRuntime() {
       if (cancelled) return;
       applyHeroTitle(overrides, ready);
       applyFloatingLayout(floatingLayout);
+      applyVisualLayout(activeVisualLayout);
     };
 
     const scheduleApply = () => {
@@ -249,7 +506,271 @@ export default function PublicSalesCopyRuntime() {
       observer?.disconnect();
       window.removeEventListener("resize", handleResize);
     };
-  }, [floatingLayout, overrides, ready]);
+  }, [activeVisualLayout, floatingLayout, overrides, ready]);
 
-  return null;
+  useEffect(() => {
+    const updateBreakpoint = () =>
+      setActiveBreakpoint(publicVisualBreakpointForWidth(window.innerWidth));
+    window.addEventListener("resize", updateBreakpoint);
+    updateBreakpoint();
+    return () => window.removeEventListener("resize", updateBreakpoint);
+  }, []);
+
+  useEffect(() => {
+    if (!editorEnabled) return;
+    const style = document.createElement("style");
+    style.dataset.publicVisualRuntimeStyle = "true";
+    style.textContent = `
+      [data-public-visual-editable]{cursor:pointer}
+      [data-public-visual-editable]:hover{outline:1px dashed rgba(110,231,183,.8);outline-offset:4px}
+      [data-public-visual-editing="true"]{outline:2px solid #6ee7b7!important;outline-offset:5px}
+    `;
+    document.head.appendChild(style);
+
+    const onClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
+      if (!element) return;
+      event.preventDefault();
+      event.stopPropagation();
+      selectedElementRef.current?.removeAttribute("data-public-visual-editing");
+      selectedElementRef.current?.setAttribute("contenteditable", "false");
+      selectedElementRef.current = element;
+      element.dataset.publicVisualEditing = "true";
+      element.setAttribute("contenteditable", "plaintext-only");
+      element.setAttribute("role", "textbox");
+      const id = element.dataset.publicVisualEditable ?? "";
+      const sectionId = element.dataset.publicVisualSection ?? "";
+      const fieldKey = element.dataset.publicVisualField ?? "";
+      const label = element.dataset.publicVisualLabel ?? "Elemento";
+      setSelected({ id, sectionId, fieldKey, label, rect: element.getBoundingClientRect() });
+      window.requestAnimationFrame(() => {
+        element.focus();
+        refreshSelectionRect(element);
+      });
+    };
+
+    const onInput = (event: Event) => {
+      const element = (event.target as HTMLElement | null)?.closest<HTMLElement>(
+        "[data-public-visual-editable]"
+      );
+      if (!element) return;
+      const sectionId = element.dataset.publicVisualSection;
+      const fieldKey = element.dataset.publicVisualField;
+      if (!sectionId || !fieldKey) return;
+      pendingTextsRef.current[sectionId] ??= {};
+      pendingTextsRef.current[sectionId][fieldKey] =
+        element.textContent?.trim() ?? "";
+      setDirty(true);
+      refreshSelectionRect(element);
+    };
+
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (!dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    };
+
+    document.addEventListener("click", onClick, true);
+    document.addEventListener("input", onInput, true);
+    window.addEventListener("beforeunload", onBeforeUnload);
+    editableTargets(document);
+    return () => {
+      document.removeEventListener("click", onClick, true);
+      document.removeEventListener("input", onInput, true);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      selectedElementRef.current?.removeAttribute("data-public-visual-editing");
+      selectedElementRef.current?.setAttribute("contenteditable", "false");
+      style.remove();
+    };
+  }, [dirty, editorEnabled, refreshSelectionRect]);
+
+  const duplicateSelected = useCallback(() => {
+    if (!selected || !selectedElementRef.current) return;
+    const source = selectedElementRef.current;
+    const rect = source.getBoundingClientRect();
+    const id = `${selected.id}#copy-${Date.now()}`;
+    setDirty(true);
+    setPendingLayout(current => {
+      const next = cloneLayout(current ?? activeSavedLayout);
+      next.elements[id] = {
+        duplicateOf: selected.id,
+        x: 18,
+        y: 18,
+        width: Math.round(rect.width),
+        height: Math.round(rect.height),
+      };
+      window.requestAnimationFrame(() => applyVisualLayout(next));
+      return next;
+    });
+  }, [activeSavedLayout, cloneLayout, selected]);
+
+  const deleteSelected = useCallback(() => {
+    if (!selected) return;
+    patchElement(selected.id, { hidden: true });
+    setSelected(null);
+    selectedElementRef.current = null;
+  }, [patchElement, selected]);
+
+  const discardPending = useCallback(() => {
+    pendingTextsRef.current = {};
+    setPendingLayout(null);
+    setDirty(false);
+    setSelected(null);
+    selectedElementRef.current = null;
+    window.location.reload();
+  }, []);
+
+  const savePending = useCallback(async () => {
+    if (!editorEnabled) return;
+    setSaving(true);
+    try {
+      const records = adminContent.data ?? [];
+      for (const [sectionId, values] of Object.entries(pendingTextsRef.current)) {
+        const section = PUBLIC_SALES_COPY_SECTIONS.find(item => item.id === sectionId);
+        if (!section) continue;
+        const record = records.find(
+          item =>
+            item.kind === "notice" &&
+            item.resourceCategory === PUBLIC_SALES_COPY_CATEGORY &&
+            item.resourceType === sectionId &&
+            item.status !== "archived"
+        );
+        let currentValues = defaultValuesForSection(section);
+        if (record?.body) {
+          try {
+            const parsed = JSON.parse(record.body) as Record<string, unknown>;
+            currentValues = {
+              ...currentValues,
+              ...Object.fromEntries(
+                Object.entries(parsed).filter(
+                  (entry): entry is [string, string] =>
+                    typeof entry[1] === "string"
+                )
+              ),
+            };
+          } catch {
+            /* Mantem os valores padrao da secao. */
+          }
+        }
+        const payload = {
+          kind: "notice" as const,
+          title: `Copy: ${section.adminLabel}`,
+          summary: null,
+          body: JSON.stringify({ ...currentValues, ...values }),
+          resourceUrl: null,
+          resourceCategory: PUBLIC_SALES_COPY_CATEGORY,
+          resourceType: sectionId,
+          status: "published" as const,
+        };
+        if (record) await updateContent.mutateAsync({ id: record.id, ...payload });
+        else await createContent.mutateAsync(payload);
+      }
+
+      if (pendingLayout) {
+        const resourceType = publicVisualLayoutResource(
+          pageTemplate,
+          activeBreakpoint
+        );
+        const record = records.find(
+          item =>
+            item.kind === "notice" &&
+            item.resourceCategory === PUBLIC_VISUAL_EDITOR_CATEGORY &&
+            item.resourceType === resourceType &&
+            item.status !== "archived"
+        );
+        const payload = {
+          kind: "notice" as const,
+          title: `Layout visual ${pageTemplate}/${activeBreakpoint}`,
+          summary: "Ajustes visuais da pagina publica",
+          body: JSON.stringify({
+            ...pendingLayout,
+            template: pageTemplate,
+            breakpoint: activeBreakpoint,
+          }),
+          resourceUrl: null,
+          resourceCategory: PUBLIC_VISUAL_EDITOR_CATEGORY,
+          resourceType,
+          status: "published" as const,
+        };
+        const parsed = parsePublicVisualLayout(payload.body);
+        if (!parsed) throw new Error("Layout visual invalido.");
+        if (record) await updateContent.mutateAsync({ id: record.id, ...payload });
+        else await createContent.mutateAsync(payload);
+      }
+
+      pendingTextsRef.current = {};
+      setPendingLayout(null);
+      setDirty(false);
+      await utils.admin.content.invalidate();
+      toast.success("Alteracoes da pagina publica salvas.");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Nao foi possivel salvar as alteracoes."
+      );
+    } finally {
+      setSaving(false);
+    }
+  }, [
+    activeBreakpoint,
+    adminContent.data,
+    createContent,
+    editorEnabled,
+    pageTemplate,
+    pendingLayout,
+    updateContent,
+    utils.admin.content,
+  ]);
+
+  if (!editorEnabled) return null;
+
+  return (
+    <>
+      {selected ? (
+        <div
+          className="public-visual-selection-box"
+          style={{
+            left: selected.rect.left,
+            top: selected.rect.top,
+            width: selected.rect.width,
+            height: selected.rect.height,
+          }}
+        >
+          <div className="public-visual-selection-label">{selected.label}</div>
+          <button
+            type="button"
+            className="public-visual-move-handle"
+            onPointerDown={event => beginPointerEdit(event, "move")}
+          >
+            Mover
+          </button>
+          <button type="button" onClick={duplicateSelected}>
+            Duplicar
+          </button>
+          <button type="button" onClick={deleteSelected}>
+            Excluir
+          </button>
+          <button
+            type="button"
+            className="public-visual-resize-handle"
+            aria-label="Redimensionar"
+            onPointerDown={event => beginPointerEdit(event, "resize")}
+          />
+        </div>
+      ) : null}
+      {dirty ? (
+        <div className="public-visual-savebar" role="dialog" aria-label="Alteracoes pendentes">
+          <span>Alteracoes pendentes em {activeBreakpoint}</span>
+          <button type="button" onClick={savePending} disabled={saving}>
+            {saving ? "Salvando..." : "Salvar"}
+          </button>
+          <button type="button" onClick={discardPending} disabled={saving}>
+            Descartar
+          </button>
+        </div>
+      ) : null}
+    </>
+  );
 }

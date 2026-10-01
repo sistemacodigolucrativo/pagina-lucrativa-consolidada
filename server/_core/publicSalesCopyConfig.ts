@@ -12,6 +12,13 @@ import {
   parsePublicPageTemplateConfig,
   type PublicPageTemplate,
 } from "@shared/publicPageTemplate";
+import {
+  PUBLIC_VISUAL_EDITOR_CATEGORY,
+  PUBLIC_VISUAL_EDITOR_MODE_RESOURCE,
+  parsePublicVisualLayout,
+  parsePublicVisualMode,
+  type PublicVisualEditorConfig,
+} from "@shared/publicVisualEditor";
 
 const FLOATING_LAYOUT_CATEGORY = "public-sales-layout";
 const FLOATING_LAYOUT_RESOURCE = "floating";
@@ -36,8 +43,10 @@ export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
         const overrides: PublicSalesCopyOverrides = {};
         let floatingLayout: Record<string, unknown> = {};
         let pageTemplate: PublicPageTemplate = DEFAULT_PUBLIC_PAGE_TEMPLATE;
-        let floatingLayoutLoaded = false;
-        let pageTemplateLoaded = false;
+        const visualEditor: PublicVisualEditorConfig = {
+          enabled: false,
+          layouts: {},
+        };
         for (const item of content) {
           if (item.kind !== "notice" || item.status === "archived") continue;
           if (
@@ -62,6 +71,18 @@ export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
             pageTemplate = parsePublicPageTemplateConfig(item.body);
             continue;
           }
+          if (item.resourceCategory === PUBLIC_VISUAL_EDITOR_CATEGORY) {
+            if (item.resourceType === PUBLIC_VISUAL_EDITOR_MODE_RESOURCE) {
+              visualEditor.enabled = parsePublicVisualMode(item.body).enabled;
+              continue;
+            }
+            const layout = parsePublicVisualLayout(item.body);
+            if (layout) {
+              visualEditor.layouts[layout.template] ??= {};
+              visualEditor.layouts[layout.template]![layout.breakpoint] = layout;
+            }
+            continue;
+          }
           if (
             item.resourceCategory !== PUBLIC_SALES_COPY_CATEGORY ||
             !item.resourceType
@@ -82,7 +103,7 @@ export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
             // Ignora somente o registro malformado; os demais continuam disponíveis.
           }
         }
-        res.json({ overrides, floatingLayout, pageTemplate });
+        res.json({ overrides, floatingLayout, pageTemplate, visualEditor });
       } catch (error) {
         console.warn(
           "[PublicSalesCopy] Failed to load admin configuration:",
@@ -92,6 +113,7 @@ export function registerPublicSalesCopyConfig(app: Express, appPrefix = "") {
           overrides: {},
           floatingLayout: {},
           pageTemplate: DEFAULT_PUBLIC_PAGE_TEMPLATE,
+          visualEditor: { enabled: false, layouts: {} },
         });
       }
     });
