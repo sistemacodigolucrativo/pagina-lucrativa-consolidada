@@ -168,3 +168,17 @@ mtime_ms = 1790743571274
 storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/b7f8f24c-35a8-414c-a7ee-4b87555616c2/bd81d59a-7503-4140-8eca-02a0fdd807d8"
 storage_version_token = "1790743582895882"
 content_type = "image/jpeg"
+
+[[outputs]]
+id = "896l37zAqeYMk7ntSLk3y"
+uri = "file://screenshots/public-sales-desktop-1280x720.jpg"
+type = "image"
+title = "Página de vendas — desktop"
+description = "Captura real do Preview em 1280×720, mostrando o card abaixo da imagem promocional no desktop."
+logical_id = "420a1aed-c079-456c-900c-ea08e5f3a028"
+content_hash = "sha256:a6ff6629a9843d6cb79a9dfb675081046bbfe39690d27b9d30c46498c86fed66"
+size = 109800
+mtime_ms = 1790885961078
+storage_uri = "gcs://replit-rams-assets-janeway/rams/assets/repl:804fdf2b-8625-4d9f-87c0-575b18a22e6e/420a1aed-c079-456c-900c-ea08e5f3a028/59b220c7-2d2f-4c49-ab3a-796047fa34af"
+storage_version_token = "1790885967839802"
+content_type = "image/jpeg"
