@@ -268,9 +268,33 @@ type EditableTarget = {
   sectionId: string;
   fieldKey: string;
   label: string;
-  kind: "text" | "image";
+  kind: "text" | "image" | "button";
   element: HTMLElement;
 };
+
+function assignEditableTarget(
+  targets: EditableTarget[],
+  target: EditableTarget,
+  storage: "copy" | "layout"
+) {
+  if (target.element.closest("[data-visual-editor-ui]")) return;
+  target.element.dataset.publicVisualEditable = target.id;
+  target.element.dataset.publicVisualSection = target.sectionId;
+  target.element.dataset.publicVisualField = target.fieldKey;
+  target.element.dataset.publicVisualLabel = target.label;
+  target.element.dataset.publicVisualKind = target.kind;
+  target.element.dataset.publicVisualStorage = storage;
+  targets.push(target);
+}
+
+function labelForInteractiveElement(element: HTMLElement, index: number) {
+  const explicit =
+    element.getAttribute("aria-label") ??
+    element.getAttribute("title") ??
+    element.textContent;
+  const label = explicit?.replace(/\s+/g, " ").trim();
+  return label ? `Botao - ${label}` : `Botao ${index + 1}`;
+}
 
 function editableTargets(doc: Document): EditableTarget[] {
   const targets: EditableTarget[] = [];
@@ -282,40 +306,64 @@ function editableTargets(doc: Document): EditableTarget[] {
       const element = queryWithin(root, field.selector);
       if (!element) continue;
       const id = `${section.id}.${field.key}`;
-      element.dataset.publicVisualEditable = id;
-      element.dataset.publicVisualSection = section.id;
-      element.dataset.publicVisualField = field.key;
-      element.dataset.publicVisualLabel = field.label;
-      element.dataset.publicVisualKind = "text";
-      targets.push({
-        id,
-        sectionId: section.id,
-        fieldKey: field.key,
-        label: field.label,
-        kind: "text",
-        element,
-      });
+      assignEditableTarget(
+        targets,
+        {
+          id,
+          sectionId: section.id,
+          fieldKey: field.key,
+          label: field.label,
+          kind: "text",
+          element,
+        },
+        "copy"
+      );
     }
-    if (section.imageSectionId) {
-      const image = root.querySelector<HTMLElement>("img");
-      if (!image) continue;
-      const id = `${section.id}.image`;
-      image.dataset.publicVisualEditable = id;
-      image.dataset.publicVisualSection = section.id;
-      image.dataset.publicVisualField = "image";
-      image.dataset.publicVisualLabel = `${section.adminLabel} - imagem`;
-      image.dataset.publicVisualKind = "image";
-      targets.push({
-        id,
-        sectionId: section.id,
-        fieldKey: "image",
-        label: `${section.adminLabel} - imagem`,
-        kind: "image",
-        element: image,
+    root.querySelectorAll<HTMLElement>("img").forEach((image, index) => {
+      assignEditableTarget(
+        targets,
+        {
+          id: `${section.id}.image${index + 1}`,
+          sectionId: section.id,
+          fieldKey: `image${index + 1}`,
+          label: `${section.adminLabel} - imagem ${index + 1}`,
+          kind: "image",
+          element: image,
+        },
+        "layout"
+      );
+    });
+    root
+      .querySelectorAll<HTMLElement>("a, button, [role='button']")
+      .forEach((action, index) => {
+        if (action.closest("[data-public-visual-editable]") !== action) return;
+        assignEditableTarget(
+          targets,
+          {
+            id: `${section.id}.action${index + 1}`,
+            sectionId: section.id,
+            fieldKey: `action${index + 1}`,
+            label: labelForInteractiveElement(action, index),
+            kind: "button",
+            element: action,
+          },
+          "layout"
+        );
       });
-    }
   }
   return targets;
+}
+
+function setEditableElementText(element: HTMLElement, text: string) {
+  const normalized = text.trim();
+  const textNode = Array.from(element.childNodes).find(
+    node => node.nodeType === Node.TEXT_NODE && (node.textContent ?? "").trim()
+  );
+  if (textNode) {
+    textNode.textContent = normalized ? `${normalized} ` : "";
+    return;
+  }
+  element.textContent = normalized;
 }
 
 function applyVisualElementStyle(
@@ -341,6 +389,12 @@ function applyVisualElementStyle(
     element.style.setProperty("--public-visual-width", `${config.width}px`);
   if (typeof config.height === "number")
     element.style.setProperty("--public-visual-height", `${config.height}px`);
+  if (
+    typeof config.text === "string" &&
+    element.dataset.publicVisualKind !== "image"
+  ) {
+    setEditableElementText(element, config.text);
+  }
 }
 
 function removeGeneratedDuplicates() {
@@ -366,6 +420,9 @@ function applyVisualLayout(layout: PublicVisualLayout | undefined) {
     clone.dataset.publicVisualSection = source.sectionId;
     clone.dataset.publicVisualField = source.fieldKey;
     clone.dataset.publicVisualLabel = `${source.label} duplicado`;
+    clone.dataset.publicVisualKind = source.kind;
+    clone.dataset.publicVisualStorage =
+      source.element.dataset.publicVisualStorage ?? "layout";
     source.element.insertAdjacentElement("afterend", clone);
     applyVisualElementStyle(clone, config);
   }
@@ -462,7 +519,7 @@ export default function PublicSalesCopyRuntime() {
     sectionId: string;
     fieldKey: string;
     label: string;
-    kind: "text" | "image";
+    kind: "text" | "image" | "button";
     rect: DOMRect;
   } | null>(null);
   const [textEditing, setTextEditing] = useState(false);
@@ -497,7 +554,11 @@ export default function PublicSalesCopyRuntime() {
       const fieldKey = element.dataset.publicVisualField ?? "";
       const label = element.dataset.publicVisualLabel ?? "Elemento";
       const kind =
-        element.dataset.publicVisualKind === "image" ? "image" : "text";
+        element.dataset.publicVisualKind === "image"
+          ? "image"
+          : element.dataset.publicVisualKind === "button"
+            ? "button"
+            : "text";
       setSelected({
         id,
         sectionId,
@@ -675,6 +736,10 @@ export default function PublicSalesCopyRuntime() {
       const startX = event.clientX;
       const startY = event.clientY;
       const startElement = element;
+      if (startElement.closest("a, button, [role='button']")) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
       holdTimerRef.current = window.setTimeout(() => {
         holdTimerRef.current = null;
         selectVisualElement(startElement);
@@ -735,6 +800,7 @@ export default function PublicSalesCopyRuntime() {
       if (!element) return;
       event.preventDefault();
       event.stopPropagation();
+      event.stopImmediatePropagation();
       clearHoldTimer();
       selectVisualElement(element);
     };
@@ -745,6 +811,7 @@ export default function PublicSalesCopyRuntime() {
       if (!element || element.dataset.publicVisualKind === "image") return;
       event.preventDefault();
       event.stopPropagation();
+      event.stopImmediatePropagation();
       clearHoldTimer();
       beginTextEditing(element);
     };
@@ -757,10 +824,15 @@ export default function PublicSalesCopyRuntime() {
         return;
       const sectionId = element.dataset.publicVisualSection;
       const fieldKey = element.dataset.publicVisualField;
-      if (!sectionId || !fieldKey) return;
+      const elementId = element.dataset.publicVisualEditable;
+      if (!sectionId || !fieldKey || !elementId) return;
+      const value = element.textContent?.trim() ?? "";
+      if (element.dataset.publicVisualStorage === "layout") {
+        patchElement(elementId, { text: value }, element);
+        return;
+      }
       pendingTextsRef.current[sectionId] ??= {};
-      pendingTextsRef.current[sectionId][fieldKey] =
-        element.textContent?.trim() ?? "";
+      pendingTextsRef.current[sectionId][fieldKey] = value;
       setDirty(true);
       refreshSelectionRect(element);
     };
@@ -1019,7 +1091,7 @@ export default function PublicSalesCopyRuntime() {
           >
             Mover
           </button>
-          {selected.kind === "text" ? (
+          {selected.kind === "text" || selected.kind === "button" ? (
             <button
               type="button"
               onClick={() => {
@@ -1030,7 +1102,7 @@ export default function PublicSalesCopyRuntime() {
               Editar texto
             </button>
           ) : null}
-          {selected.kind === "text" ? (
+          {selected.kind === "text" || selected.kind === "button" ? (
             <button type="button" onClick={duplicateSelected}>
               Duplicar
             </button>
