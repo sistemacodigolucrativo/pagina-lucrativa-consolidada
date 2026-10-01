@@ -45,6 +45,8 @@ describe("editor visual real da pagina publica", () => {
 
     expect(admin).toContain("Modo de edição visual");
     expect(admin).toContain("saveVisualMode");
+    expect(admin).toContain("if (nextEnabled) void saveVisualMode(nextEnabled)");
+    expect(admin).toContain('window.location.assign(withAppBase("/?visual-editor=1"))');
     expect(admin).toContain("PUBLIC_VISUAL_EDITOR_MODE_RESOURCE");
     expect(runtime).toContain('session.data?.role === "admin"');
     expect(runtime).toContain("editorEnabled = ready && visualEditor.enabled && isAdmin");

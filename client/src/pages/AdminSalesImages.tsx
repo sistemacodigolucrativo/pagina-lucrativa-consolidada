@@ -263,12 +263,12 @@ export default function AdminSalesImages() {
     utils.admin.content,
   ]);
 
-  const saveVisualMode = useCallback(async () => {
+  const saveVisualMode = useCallback(async (enabled = visualModeDraft) => {
     const payload = {
       kind: "notice" as const,
       title: "Modo de edição visual da página pública",
-      summary: visualModeDraft ? "Ativo para administradores" : "Desativado",
-      body: JSON.stringify({ enabled: visualModeDraft }),
+      summary: enabled ? "Ativo para administradores" : "Desativado",
+      body: JSON.stringify({ enabled }),
       resourceUrl: null,
       resourceCategory: PUBLIC_VISUAL_EDITOR_CATEGORY,
       resourceType: PUBLIC_VISUAL_EDITOR_MODE_RESOURCE,
@@ -279,14 +279,15 @@ export default function AdminSalesImages() {
       if (visualModeRecord)
         await updateContent.mutateAsync({ id: visualModeRecord.id, ...payload });
       else await createContent.mutateAsync(payload);
+      if (enabled) {
+        window.location.assign(withAppBase("/?visual-editor=1"));
+        return;
+      }
       await utils.admin.content.invalidate();
       iframeRef.current?.contentWindow?.location.reload();
-      toast.success(
-        visualModeDraft
-          ? "Modo de edição visual ativado."
-          : "Modo de edição visual desativado."
-      );
+      toast.success("Modo de edição visual desativado.");
     } catch (error) {
+      setVisualModeDraft(visualModeEnabled);
       toast.error(
         error instanceof Error
           ? error.message
@@ -301,6 +302,7 @@ export default function AdminSalesImages() {
     utils.admin.content,
     visualModeDraft,
     visualModeRecord,
+      visualModeEnabled,
   ]);
 
   useEffect(() => {
@@ -771,7 +773,12 @@ export default function AdminSalesImages() {
               id="public-visual-mode-toggle"
               type="button"
               className={`visual-editor-mode-toggle ${visualModeDraft ? "is-active" : ""}`}
-              onClick={() => setVisualModeDraft(value => !value)}
+              onClick={() => {
+                const nextEnabled = !visualModeDraft;
+                setVisualModeDraft(nextEnabled);
+                if (nextEnabled) void saveVisualMode(nextEnabled);
+              }}
+              disabled={savingVisualMode || content.isLoading}
               aria-pressed={visualModeDraft}
             >
               <span aria-hidden="true" />
@@ -779,7 +786,7 @@ export default function AdminSalesImages() {
             </button>
             <button
               type="button"
-              onClick={saveVisualMode}
+              onClick={() => void saveVisualMode()}
               disabled={
                 savingVisualMode || visualModeDraft === visualModeEnabled
               }
