@@ -1,5 +1,5 @@
 import { FormEvent, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowDown, ArrowUpRight, ChevronLeft, ChevronRight, Menu, MessageCircle, Star, X } from "lucide-react";
+import { ArrowDown, ArrowUpRight, ChevronLeft, ChevronRight, LogIn, Menu, MessageCircle, Star, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { withAppBase } from "@/lib/devPath";
@@ -359,7 +359,7 @@ export default function Home() {
             {utilityNavigation.map(([label, path]) => <a key={path} href={resolveNavigationHref(path)} onClick={closeMenu}>{label}</a>)}
           </div>
           <a href={withAppBase(isLoggedIn ? officeHref : "/acesso")} className="nav-cta nav-cta-login-mobile" onClick={closeMenu}>{isLoggedIn ? "Ir para o escritório virtual" : "Entrar"} <ArrowUpRight size={15} /></a>
-          <a href="#f" className="nav-cta nav-cta-activation" onClick={closeMenu}>Quero ativar minha estrutura <ArrowUpRight size={15} /></a>
+          <a href={withAppBase("/acesso")} className="nav-cta nav-cta-login-desktop" onClick={closeMenu}>Entrar <LogIn size={15} /></a>
         </nav>
         <button ref={menuButtonRef} className="mobile-menu-button" type="button" aria-label={menuOpen ? "Fechar menu" : "Abrir menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(value => !value)}>{menuOpen ? <X size={20} /> : <Menu size={20} />}</button>
       </div>
