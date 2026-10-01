@@ -371,6 +371,66 @@ function applyVisualLayout(layout: PublicVisualLayout | undefined) {
   }
 }
 
+type RectBounds = {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+};
+
+function rectBounds(rect: DOMRect): RectBounds {
+  return {
+    left: rect.left,
+    top: rect.top,
+    right: rect.right,
+    bottom: rect.bottom,
+  };
+}
+
+function viewportBounds(): RectBounds {
+  return {
+    left: 0,
+    top: 0,
+    right: window.innerWidth,
+    bottom: window.innerHeight,
+  };
+}
+
+function intersectBounds(first: RectBounds, second: RectBounds): RectBounds {
+  const left = Math.max(first.left, second.left);
+  const top = Math.max(first.top, second.top);
+  const right = Math.min(first.right, second.right);
+  const bottom = Math.min(first.bottom, second.bottom);
+  if (right <= left || bottom <= top) return first;
+  return { left, top, right, bottom };
+}
+
+function dragBoundsForElement(element: HTMLElement) {
+  const container =
+    element.closest<HTMLElement>(".shell") ??
+    element.closest<HTMLElement>("section") ??
+    element.closest<HTMLElement>(".sales-page") ??
+    document.documentElement;
+  return intersectBounds(viewportBounds(), rectBounds(container.getBoundingClientRect()));
+}
+
+function clampOffsetToBounds(
+  startRect: DOMRect,
+  bounds: RectBounds,
+  desiredX: number,
+  desiredY: number
+) {
+  const padding = 4;
+  const minX = bounds.left + padding - startRect.left;
+  const maxX = bounds.right - padding - startRect.right;
+  const minY = bounds.top + padding - startRect.top;
+  const maxY = bounds.bottom - padding - startRect.bottom;
+  return {
+    x: clamp(minX, desiredX, Math.max(minX, maxX)),
+    y: clamp(minY, desiredY, Math.max(minY, maxY)),
+  };
+}
+
 export default function PublicSalesCopyRuntime() {
   const { floatingLayout, overrides, pageTemplate, ready, visualEditor } =
     usePublicSalesCopy();
@@ -507,16 +567,23 @@ export default function PublicSalesCopyRuntime() {
       const startOffsetY = startConfig.y ?? 0;
       const startWidth = startConfig.width ?? rect.width;
       const startHeight = startConfig.height ?? rect.height;
+      const bounds = dragBoundsForElement(element);
+      const previousTouchAction = document.body.style.touchAction;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.touchAction = "none";
+      document.body.style.userSelect = "none";
 
       const onMove = (moveEvent: PointerEvent) => {
+        moveEvent.preventDefault();
         const dx = moveEvent.clientX - startX;
         const dy = moveEvent.clientY - startY;
         if (mode === "move") {
+          const nextOffset = clampOffsetToBounds(rect, bounds, dx, dy);
           patchElement(
             selectedNow.id,
             {
-              x: Math.round(startOffsetX + dx),
-              y: Math.round(startOffsetY + dy),
+              x: Math.round(startOffsetX + nextOffset.x),
+              y: Math.round(startOffsetY + nextOffset.y),
             },
             element
           );
@@ -534,8 +601,10 @@ export default function PublicSalesCopyRuntime() {
       const onUp = () => {
         window.removeEventListener("pointermove", onMove);
         window.removeEventListener("pointerup", onUp);
+        document.body.style.touchAction = previousTouchAction;
+        document.body.style.userSelect = previousUserSelect;
       };
-      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointermove", onMove, { passive: false });
       window.addEventListener("pointerup", onUp, { once: true });
     },
     [activeSavedLayout, patchElement, pendingLayout, selected]
@@ -594,7 +663,7 @@ export default function PublicSalesCopyRuntime() {
     style.textContent = `
       [data-public-visual-editable]{cursor:pointer}
       [data-public-visual-editable]:hover{outline:1px dashed rgba(110,231,183,.8);outline-offset:4px}
-      [data-public-visual-editing="true"]{outline:2px solid #6ee7b7!important;outline-offset:5px}
+      [data-public-visual-kind="image"]{touch-action:none}
     `;
     document.head.appendChild(style);
 
@@ -603,8 +672,54 @@ export default function PublicSalesCopyRuntime() {
       const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
       if (!element) return;
       if (holdTimerRef.current) window.clearTimeout(holdTimerRef.current);
+      const startX = event.clientX;
+      const startY = event.clientY;
+      const startElement = element;
       holdTimerRef.current = window.setTimeout(() => {
-        selectVisualElement(element);
+        holdTimerRef.current = null;
+        selectVisualElement(startElement);
+        if (startElement.dataset.publicVisualKind !== "image") return;
+
+        const id = startElement.dataset.publicVisualEditable;
+        if (!id) return;
+        const rect = startElement.getBoundingClientRect();
+        const startConfig =
+          (pendingLayout ?? activeSavedLayout)?.elements[id] ?? {};
+        const startOffsetX = startConfig.x ?? 0;
+        const startOffsetY = startConfig.y ?? 0;
+        const bounds = dragBoundsForElement(startElement);
+        const previousTouchAction = document.body.style.touchAction;
+        const previousUserSelect = document.body.style.userSelect;
+        document.body.style.touchAction = "none";
+        document.body.style.userSelect = "none";
+
+        const onDirectMove = (moveEvent: PointerEvent) => {
+          moveEvent.preventDefault();
+          const nextOffset = clampOffsetToBounds(
+            rect,
+            bounds,
+            moveEvent.clientX - startX,
+            moveEvent.clientY - startY
+          );
+          patchElement(
+            id,
+            {
+              x: Math.round(startOffsetX + nextOffset.x),
+              y: Math.round(startOffsetY + nextOffset.y),
+            },
+            startElement
+          );
+        };
+        const onDirectUp = () => {
+          window.removeEventListener("pointermove", onDirectMove);
+          window.removeEventListener("pointerup", onDirectUp);
+          document.body.style.touchAction = previousTouchAction;
+          document.body.style.userSelect = previousUserSelect;
+        };
+        window.addEventListener("pointermove", onDirectMove, {
+          passive: false,
+        });
+        window.addEventListener("pointerup", onDirectUp, { once: true });
       }, 320);
     };
 
@@ -679,11 +794,51 @@ export default function PublicSalesCopyRuntime() {
     };
   }, [
     beginTextEditing,
+    activeSavedLayout,
     dirty,
     editorEnabled,
+    patchElement,
+    pendingLayout,
     refreshSelectionRect,
     selectVisualElement,
   ]);
+
+  useEffect(() => {
+    if (!editorEnabled || !selected) return;
+    let queued = false;
+    const updateSelection = () => {
+      if (queued) return;
+      queued = true;
+      window.requestAnimationFrame(() => {
+        queued = false;
+        const target = selectedElementRef.current;
+        if (!target || target.style.display === "none") {
+          setSelected(null);
+          return;
+        }
+        const rect = target.getBoundingClientRect();
+        const visible =
+          rect.bottom > 0 &&
+          rect.right > 0 &&
+          rect.top < window.innerHeight &&
+          rect.left < window.innerWidth;
+        if (!visible) {
+          setSelected(null);
+          target.removeAttribute("data-public-visual-editing");
+          target.setAttribute("contenteditable", "false");
+          return;
+        }
+        setSelected(current => (current ? { ...current, rect } : current));
+      });
+    };
+    window.addEventListener("scroll", updateSelection, { passive: true });
+    window.addEventListener("resize", updateSelection);
+    updateSelection();
+    return () => {
+      window.removeEventListener("scroll", updateSelection);
+      window.removeEventListener("resize", updateSelection);
+    };
+  }, [editorEnabled, selected]);
 
   useEffect(() => {
     if (!textEditing) return;
