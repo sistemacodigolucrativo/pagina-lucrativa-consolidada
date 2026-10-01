@@ -268,6 +268,7 @@ type EditableTarget = {
   sectionId: string;
   fieldKey: string;
   label: string;
+  kind: "text" | "image";
   element: HTMLElement;
 };
 
@@ -285,12 +286,32 @@ function editableTargets(doc: Document): EditableTarget[] {
       element.dataset.publicVisualSection = section.id;
       element.dataset.publicVisualField = field.key;
       element.dataset.publicVisualLabel = field.label;
+      element.dataset.publicVisualKind = "text";
       targets.push({
         id,
         sectionId: section.id,
         fieldKey: field.key,
         label: field.label,
+        kind: "text",
         element,
+      });
+    }
+    if (section.imageSectionId) {
+      const image = root.querySelector<HTMLElement>("img");
+      if (!image) continue;
+      const id = `${section.id}.image`;
+      image.dataset.publicVisualEditable = id;
+      image.dataset.publicVisualSection = section.id;
+      image.dataset.publicVisualField = "image";
+      image.dataset.publicVisualLabel = `${section.adminLabel} - imagem`;
+      image.dataset.publicVisualKind = "image";
+      targets.push({
+        id,
+        sectionId: section.id,
+        fieldKey: "image",
+        label: `${section.adminLabel} - imagem`,
+        kind: "image",
+        element: image,
       });
     }
   }
@@ -375,13 +396,16 @@ export default function PublicSalesCopyRuntime() {
   const activeVisualLayout = pendingLayout ?? activeSavedLayout;
   const pendingTextsRef = useRef<Record<string, Record<string, string>>>({});
   const selectedElementRef = useRef<HTMLElement | null>(null);
+  const holdTimerRef = useRef<number | null>(null);
   const [selected, setSelected] = useState<{
     id: string;
     sectionId: string;
     fieldKey: string;
     label: string;
+    kind: "text" | "image";
     rect: DOMRect;
   } | null>(null);
+  const [textEditing, setTextEditing] = useState(false);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const editorEnabled = ready && visualEditor.enabled && isAdmin;
@@ -400,6 +424,53 @@ export default function PublicSalesCopyRuntime() {
     const rect = target.getBoundingClientRect();
     setSelected(current => (current ? { ...current, rect } : current));
   }, []);
+
+  const selectVisualElement = useCallback(
+    (element: HTMLElement) => {
+      selectedElementRef.current?.removeAttribute("data-public-visual-editing");
+      selectedElementRef.current?.setAttribute("contenteditable", "false");
+      setTextEditing(false);
+      selectedElementRef.current = element;
+      element.dataset.publicVisualEditing = "true";
+      const id = element.dataset.publicVisualEditable ?? "";
+      const sectionId = element.dataset.publicVisualSection ?? "";
+      const fieldKey = element.dataset.publicVisualField ?? "";
+      const label = element.dataset.publicVisualLabel ?? "Elemento";
+      const kind =
+        element.dataset.publicVisualKind === "image" ? "image" : "text";
+      setSelected({
+        id,
+        sectionId,
+        fieldKey,
+        label,
+        kind,
+        rect: element.getBoundingClientRect(),
+      });
+      window.requestAnimationFrame(() => refreshSelectionRect(element));
+    },
+    [refreshSelectionRect]
+  );
+
+  const beginTextEditing = useCallback(
+    (element: HTMLElement) => {
+      if (element.dataset.publicVisualKind === "image") return;
+      selectVisualElement(element);
+      element.setAttribute("contenteditable", "plaintext-only");
+      element.setAttribute("role", "textbox");
+      setTextEditing(true);
+      window.requestAnimationFrame(() => {
+        element.focus();
+        const selection = window.getSelection();
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        range.collapse(false);
+        selection?.removeAllRanges();
+        selection?.addRange(range);
+        refreshSelectionRect(element);
+      });
+    },
+    [refreshSelectionRect, selectVisualElement]
+  );
 
   const patchElement = useCallback(
     (
@@ -527,34 +598,48 @@ export default function PublicSalesCopyRuntime() {
     `;
     document.head.appendChild(style);
 
+    const onPointerDown = (event: PointerEvent) => {
+      const target = event.target as HTMLElement | null;
+      const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
+      if (!element) return;
+      if (holdTimerRef.current) window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = window.setTimeout(() => {
+        selectVisualElement(element);
+      }, 320);
+    };
+
+    const clearHoldTimer = () => {
+      if (!holdTimerRef.current) return;
+      window.clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    };
+
     const onClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement | null;
       const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
       if (!element) return;
       event.preventDefault();
       event.stopPropagation();
-      selectedElementRef.current?.removeAttribute("data-public-visual-editing");
-      selectedElementRef.current?.setAttribute("contenteditable", "false");
-      selectedElementRef.current = element;
-      element.dataset.publicVisualEditing = "true";
-      element.setAttribute("contenteditable", "plaintext-only");
-      element.setAttribute("role", "textbox");
-      const id = element.dataset.publicVisualEditable ?? "";
-      const sectionId = element.dataset.publicVisualSection ?? "";
-      const fieldKey = element.dataset.publicVisualField ?? "";
-      const label = element.dataset.publicVisualLabel ?? "Elemento";
-      setSelected({ id, sectionId, fieldKey, label, rect: element.getBoundingClientRect() });
-      window.requestAnimationFrame(() => {
-        element.focus();
-        refreshSelectionRect(element);
-      });
+      clearHoldTimer();
+      selectVisualElement(element);
+    };
+
+    const onDblClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      const element = target?.closest<HTMLElement>("[data-public-visual-editable]");
+      if (!element || element.dataset.publicVisualKind === "image") return;
+      event.preventDefault();
+      event.stopPropagation();
+      clearHoldTimer();
+      beginTextEditing(element);
     };
 
     const onInput = (event: Event) => {
       const element = (event.target as HTMLElement | null)?.closest<HTMLElement>(
         "[data-public-visual-editable]"
       );
-      if (!element) return;
+      if (!element || element.getAttribute("contenteditable") !== "plaintext-only")
+        return;
       const sectionId = element.dataset.publicVisualSection;
       const fieldKey = element.dataset.publicVisualField;
       if (!sectionId || !fieldKey) return;
@@ -571,19 +656,49 @@ export default function PublicSalesCopyRuntime() {
       event.returnValue = "";
     };
 
+    document.addEventListener("pointerdown", onPointerDown, true);
+    document.addEventListener("pointerup", clearHoldTimer, true);
+    document.addEventListener("pointercancel", clearHoldTimer, true);
     document.addEventListener("click", onClick, true);
+    document.addEventListener("dblclick", onDblClick, true);
     document.addEventListener("input", onInput, true);
     window.addEventListener("beforeunload", onBeforeUnload);
     editableTargets(document);
     return () => {
+      clearHoldTimer();
+      document.removeEventListener("pointerdown", onPointerDown, true);
+      document.removeEventListener("pointerup", clearHoldTimer, true);
+      document.removeEventListener("pointercancel", clearHoldTimer, true);
       document.removeEventListener("click", onClick, true);
+      document.removeEventListener("dblclick", onDblClick, true);
       document.removeEventListener("input", onInput, true);
       window.removeEventListener("beforeunload", onBeforeUnload);
       selectedElementRef.current?.removeAttribute("data-public-visual-editing");
       selectedElementRef.current?.setAttribute("contenteditable", "false");
       style.remove();
     };
-  }, [dirty, editorEnabled, refreshSelectionRect]);
+  }, [
+    beginTextEditing,
+    dirty,
+    editorEnabled,
+    refreshSelectionRect,
+    selectVisualElement,
+  ]);
+
+  useEffect(() => {
+    if (!textEditing) return;
+    const htmlOverflow = document.documentElement.style.overflow;
+    const bodyOverflow = document.body.style.overflow;
+    const bodyTouchAction = document.body.style.touchAction;
+    document.documentElement.style.overflow = "hidden";
+    document.body.style.overflow = "hidden";
+    document.body.style.touchAction = "none";
+    return () => {
+      document.documentElement.style.overflow = htmlOverflow;
+      document.body.style.overflow = bodyOverflow;
+      document.body.style.touchAction = bodyTouchAction;
+    };
+  }, [textEditing]);
 
   const duplicateSelected = useCallback(() => {
     if (!selected || !selectedElementRef.current) return;
@@ -617,6 +732,7 @@ export default function PublicSalesCopyRuntime() {
     setPendingLayout(null);
     setDirty(false);
     setSelected(null);
+    setTextEditing(false);
     selectedElementRef.current = null;
     window.location.reload();
   }, []);
@@ -702,6 +818,8 @@ export default function PublicSalesCopyRuntime() {
       pendingTextsRef.current = {};
       setPendingLayout(null);
       setDirty(false);
+      setTextEditing(false);
+      selectedElementRef.current?.setAttribute("contenteditable", "false");
       await utils.admin.content.invalidate();
       toast.success("Alteracoes da pagina publica salvas.");
     } catch (error) {
@@ -746,9 +864,22 @@ export default function PublicSalesCopyRuntime() {
           >
             Mover
           </button>
-          <button type="button" onClick={duplicateSelected}>
-            Duplicar
-          </button>
+          {selected.kind === "text" ? (
+            <button
+              type="button"
+              onClick={() => {
+                if (selectedElementRef.current)
+                  beginTextEditing(selectedElementRef.current);
+              }}
+            >
+              Editar texto
+            </button>
+          ) : null}
+          {selected.kind === "text" ? (
+            <button type="button" onClick={duplicateSelected}>
+              Duplicar
+            </button>
+          ) : null}
           <button type="button" onClick={deleteSelected}>
             Excluir
           </button>
