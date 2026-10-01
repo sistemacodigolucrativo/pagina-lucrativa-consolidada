@@ -313,7 +313,18 @@ function editableTargets(doc: Document): EditableTarget[] {
     if (!root) continue;
     for (const field of section.fields) {
       if (!field.selector) continue;
-      const element = queryWithin(root, field.selector);
+      let element = queryWithin(root, field.selector);
+      if (
+        section.id === "hero" &&
+        field.key === "trust" &&
+        element &&
+        element.getClientRects().length === 0
+      ) {
+        element =
+          Array.from(
+            doc.querySelectorAll<HTMLElement>(field.selector)
+          ).find(candidate => candidate.getClientRects().length > 0) ?? element;
+      }
       if (!element) continue;
       const id = `${section.id}.${field.key}`;
       assignEditableTarget(

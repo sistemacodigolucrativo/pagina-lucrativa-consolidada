@@ -4,6 +4,7 @@ import { resolve } from "node:path";
 
 const homeSource = readFileSync(resolve(process.cwd(), "client/src/pages/Home.tsx"), "utf8");
 const cssSource = readFileSync(resolve(process.cwd(), "client/src/index.css"), "utf8");
+const previewCssSource = readFileSync(resolve(process.cwd(), "client/src/pages/PreviewPublicSales.css"), "utf8");
 const publicMobileCssSource = readFileSync(resolve(process.cwd(), "client/src/public-mobile-compact-header.css"), "utf8");
 const appSource = readFileSync(resolve(process.cwd(), "client/src/App.tsx"), "utf8");
 const socialProofSource = readFileSync(resolve(process.cwd(), "client/src/components/PublicSocialProofToast.tsx"), "utf8");
@@ -252,13 +253,20 @@ describe("public responsive header and hero layout", () => {
   it("breaks and centers the hero trust statement responsively", () => {
     expect(homeSource).toContain('className="sales-trust-copy"');
     expect(homeSource).toContain('className="sales-trust-break"');
-    expect(homeSource).toContain('className="sales-trust sales-trust-featured"');
-    expect(homeSource.indexOf('className="sales-trust sales-trust-featured"')).toBeGreaterThan(homeSource.indexOf('className="hero-photo-wrap virtual-office-carousel"'));
+    expect(homeSource).toContain("sales-trust-featured-${placement}");
+    const bannerIndex = homeSource.indexOf("<TopPromoBanner />");
+    const desktopTrustIndex = homeSource.indexOf('placement="desktop"');
+    const mobileTrustIndex = homeSource.indexOf('placement="mobile"');
+    expect(desktopTrustIndex).toBeGreaterThan(bannerIndex);
+    expect(desktopTrustIndex).toBeLessThan(homeSource.indexOf('<p>{publicCopy(overrides, "hero"'));
+    expect(mobileTrustIndex).toBeGreaterThan(homeSource.indexOf('className="hero-photo-wrap virtual-office-carousel"'));
     expect(cssSource).toContain('justify-content: center;');
     expect(cssSource).toContain('text-align: center;');
     expect(cssSource).toContain('.sales-trust-break { display: block; }');
     expect(cssSource).toContain('.sales-trust-featured {');
-    expect(cssSource).toContain('.structure-showcase-stage > .sales-trust-featured');
+    expect(cssSource).toContain('.sales-trust-featured-desktop { display: none; }');
+    expect(cssSource).toContain('.sales-trust-featured-mobile { display: none; }');
+    expect(previewCssSource).toContain('"actions trust";');
     expect(cssSource).toContain('@keyframes sales-trust-glow');
   });
 

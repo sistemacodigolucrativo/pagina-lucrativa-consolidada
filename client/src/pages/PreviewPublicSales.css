@@ -1366,7 +1366,7 @@
       "title visual"
       "description visual"
       "actions visual"
-      "trust visual";
+      "actions trust";
     column-gap: clamp(34px, 4.4vw, 68px);
     row-gap: 0;
     align-items: center;

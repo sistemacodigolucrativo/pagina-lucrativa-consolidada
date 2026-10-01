@@ -103,6 +103,15 @@ function TopPromoBanner() {
   </section>;
 }
 
+function SalesTrustCard({ trust, placement }: { trust?: string; placement: "desktop" | "mobile" }) {
+  return <div className={`sales-trust sales-trust-featured sales-trust-featured-${placement}`}>
+    <span className="sales-pulse" />
+    {trust
+      ? <span className="sales-trust-copy">{trust}</span>
+      : <span className="sales-trust-copy">Você recebe uma estrutura pronta, entende o método,<br className="sales-trust-break" />ativa sua operação e acompanha tudo em um só lugar.</span>}
+  </div>;
+}
+
 function RatingStars({ rating }: { rating: number }) {
   return <span className="rating-stars" aria-hidden="true">
     {Array.from({ length: 5 }).map((_, index) => {
@@ -223,7 +232,7 @@ function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; i
             <button type="button" onClick={nextSlide} aria-label="Ver próxima tela do Escritório Virtual"><ChevronRight size={16} /></button>
           </div>
         </div>
-        <div className="sales-trust sales-trust-featured"><span className="sales-pulse" />{overrides.hero?.trust ? <span className="sales-trust-copy">{overrides.hero.trust}</span> : <span className="sales-trust-copy">Você recebe uma estrutura pronta, entende o método,<br className="sales-trust-break" />ativa sua operação e acompanha tudo em um só lugar.</span>}</div>
+        <SalesTrustCard trust={overrides.hero?.trust} placement="mobile" />
         <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
       </div>
     </div>
@@ -420,6 +429,7 @@ export default function Home() {
             {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer entrar no digital com <span className="sales-kicker-tail">método pronto</span></div>}
             {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
             <TopPromoBanner />
+            <SalesTrustCard trust={overrides.hero?.trust} placement="desktop" />
              <p>{publicCopy(overrides, "hero", "description", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.")}</p>
             <div className="sales-actions"><JoinButton className="sales-action-button" /><a href="#como-funciona" className="btn btn-ghost sales-action-button">Ver como funciona <ArrowDown size={16} /></a></div>
           </div>
