@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { getPublicSalesPresentation } from "@/lib/publicSalesPresentation";
+import { getDesktopOnMobileViewportContent } from "@shared/publicSalesPresentation";
 
 const COARSE_POINTER_QUERY = "(pointer: coarse)";
 const COMPACT_SCROLL_THRESHOLD = 28;
@@ -9,7 +10,24 @@ const PRESENTATION_ATTRIBUTE = "data-public-sales-presentation";
 export default function PublicMobileCompactHeaderRuntime() {
   useEffect(() => {
     const pointerMedia = window.matchMedia(COARSE_POINTER_QUERY);
+    const viewportMeta =
+      document.querySelector<HTMLMetaElement>('meta[name="viewport"]');
+    const originalViewportContent = viewportMeta?.content ?? null;
+    const desktopViewportContent =
+      originalViewportContent === null
+        ? null
+        : getDesktopOnMobileViewportContent(originalViewportContent);
     let frame = 0;
+
+    const setDesktopViewport = (enabled: boolean) => {
+      if (!viewportMeta || originalViewportContent === null) return;
+      const content = enabled
+        ? desktopViewportContent
+        : originalViewportContent;
+      if (content !== null && viewportMeta.content !== content) {
+        viewportMeta.content = content;
+      }
+    };
 
     const sync = () => {
       frame = 0;
@@ -20,8 +38,10 @@ export default function PublicMobileCompactHeaderRuntime() {
           PRESENTATION_ATTRIBUTE,
           presentation.mode
         );
+        setDesktopViewport(presentation.mode === "desktop-on-mobile");
       } else {
         document.documentElement.removeAttribute(PRESENTATION_ATTRIBUTE);
+        setDesktopViewport(false);
       }
       const shouldCompact =
         isPublicSalesPage &&
@@ -48,6 +68,7 @@ export default function PublicMobileCompactHeaderRuntime() {
       routeObserver.disconnect();
       document.documentElement.classList.remove(COMPACT_CLASS);
       document.documentElement.removeAttribute(PRESENTATION_ATTRIBUTE);
+      setDesktopViewport(false);
       window.removeEventListener("scroll", scheduleSync);
       window.removeEventListener("resize", scheduleSync);
       window.removeEventListener("orientationchange", scheduleSync);

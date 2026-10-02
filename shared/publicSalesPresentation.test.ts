@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { resolvePublicSalesPresentation } from "./publicSalesPresentation";
+import {
+  getDesktopOnMobileViewportContent,
+  resolvePublicSalesPresentation,
+} from "./publicSalesPresentation";
 
 describe("public sales presentation resolver", () => {
   it("keeps a normal mobile viewport in the mobile presentation", () => {
@@ -30,7 +33,7 @@ describe("public sales presentation resolver", () => {
     });
   });
 
-  it("distinguishes a desktop site opened on a phone without changing its width breakpoint", () => {
+  it("forces the desktop composition when desktop mode is detected on a phone", () => {
     expect(
       resolvePublicSalesPresentation({
         viewportWidth: 980,
@@ -39,7 +42,7 @@ describe("public sales presentation resolver", () => {
       })
     ).toEqual({
       mode: "desktop-on-mobile",
-      visualBreakpoint: "tablet",
+      visualBreakpoint: "desktop",
       compactHeader: false,
     });
   });
@@ -52,13 +55,13 @@ describe("public sales presentation resolver", () => {
         hasTouchInput: false,
       })
     ).toEqual({
-      mode: "desktop",
-      visualBreakpoint: "desktop",
+      mode: "tablet",
+      visualBreakpoint: "tablet",
       compactHeader: false,
     });
   });
 
-  it("preserves the established width boundaries", () => {
+  it("uses the documented mobile, tablet, and desktop boundaries", () => {
     const resolve = (viewportWidth: number) =>
       resolvePublicSalesPresentation({
         viewportWidth,
@@ -66,10 +69,10 @@ describe("public sales presentation resolver", () => {
         hasTouchInput: false,
       });
 
-    expect(resolve(560).visualBreakpoint).toBe("mobile");
-    expect(resolve(561).visualBreakpoint).toBe("tablet");
-    expect(resolve(980).visualBreakpoint).toBe("tablet");
-    expect(resolve(981).visualBreakpoint).toBe("desktop");
+    expect(resolve(767).visualBreakpoint).toBe("mobile");
+    expect(resolve(768).visualBreakpoint).toBe("tablet");
+    expect(resolve(1199).visualBreakpoint).toBe("tablet");
+    expect(resolve(1200).visualBreakpoint).toBe("desktop");
     expect(resolve(900).compactHeader).toBe(true);
     expect(resolve(901).compactHeader).toBe(false);
   });
@@ -82,5 +85,19 @@ describe("public sales presentation resolver", () => {
         hasTouchInput: true,
       }).mode
     ).toBe("desktop-on-mobile");
+  });
+
+  it("sets a fixed desktop canvas width without dropping other viewport directives", () => {
+    expect(
+      getDesktopOnMobileViewportContent(
+        "width=device-width, initial-scale=1.0, viewport-fit=cover"
+      )
+    ).toBe("width=1366, initial-scale=1.0, viewport-fit=cover");
+  });
+
+  it("adds the desktop canvas width when the viewport meta tag has no width", () => {
+    expect(
+      getDesktopOnMobileViewportContent("initial-scale=1.0, viewport-fit=cover")
+    ).toBe("initial-scale=1.0, viewport-fit=cover, width=1366");
   });
 });

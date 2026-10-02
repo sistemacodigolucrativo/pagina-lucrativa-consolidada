@@ -296,7 +296,7 @@ Executar a validação final da Etapa 7 em uma sessão sem acesso às variáveis
 
 ## Etapa 8 — Primeiro template plug-and-play adicional
 
-**Status:** implementação concluída; validação automatizada e prévias concluídas.
+**Status:** implementação concluída; Marco 8 em validação final.
 
 ### Relação com a sequência oficial
 
@@ -343,4 +343,65 @@ As fases 0–7 do `03-PLANO-DE-ACAO.md` e a implementação local da Etapa 8 est
 | 5 — Editor visual por contrato | Concluída | IDs canônicos por chave lógica com aliases legados; contrato persistido continua v1 e sem migração remota automática. |
 | 6 — Contrato para novos templates | Concluída | Documentado o caminho de registry/renderer e a compatibilidade dos templates e layouts existentes. |
 | 7 — Validação final | Concluída | Check/build passaram; 328 testes passaram com concorrência limitada; previews público, mobile e Premium carregaram. |
-| 8 — Primeiro template novo (Marco 7 do roadmap) | Concluída | `journey` compartilha `Home` e conteúdo, usa CSS isolado e tem prévia não persistente; resta a validação manual do Marco 8. |
+| 8 — Primeiro template novo (Marco 7 do roadmap) | Implementação concluída; Marco 8 em andamento | `journey` compartilha `Home` e conteúdo, usa CSS isolado e tem prévia não persistente; seguem pendentes verificações finais em aparelho e painel autenticado. |
+
+## Retomada — validação do Marco 8 (02/10/2026)
+
+### Estado da etapa
+
+- As etapas 0–7 do `03-PLANO-DE-ACAO.md` e a implementação do template `journey` continuam concluídas.
+- O Marco 8 do `04-ROADMAP.md` está em andamento; esta retomada corrigiu a divergência prioritária de desktop no navegador mobile e atualizou evidências.
+- A documentação externa `06-CONFRONTO-DOCUMENTACAO-X-IMPLEMENTACAO.md` foi lida no GitHub. Ela ainda não está na cópia local da pasta `DESENVOLVIMENTO DE LAYOUT`, que contém os arquivos 00–05; não foi feito fetch/merge de branches.
+
+### Alterações feitas
+
+- `shared/publicSalesPresentation.ts` agora classifica os breakpoints do runtime conforme a arquitetura: mobile até 767 px, tablet até 1199 px e desktop a partir de 1200 px.
+- Ao detectar `desktop-on-mobile`, o resolver força `visualBreakpoint: "desktop"` e desativa a compactação do cabeçalho.
+- `PublicMobileCompactHeaderRuntime` aplica largura de viewport de 1366 px somente enquanto a Página Pública de Vendas está em `desktop-on-mobile`; ao sair da página, restaura o conteúdo original da meta viewport.
+- Testes do resolver cobrem os limites canônicos, o breakpoint desktop forçado e a preservação das demais diretivas da meta viewport.
+- Foram salvas capturas em 1366 px e 820 px para `official`, `premium` e `journey`:
+  - `docs/visual-checks/public-sales-official-desktop-1366.jpg`
+  - `docs/visual-checks/public-sales-premium-desktop-1366.jpg`
+  - `docs/visual-checks/public-sales-journey-desktop-1366.jpg`
+  - `docs/visual-checks/public-sales-official-tablet-820.jpg`
+  - `docs/visual-checks/public-sales-premium-tablet-820.jpg`
+  - `docs/visual-checks/public-sales-journey-tablet-820.jpg`
+
+### Decisões tomadas
+
+- O breakpoint visual do modo desktop em telefone não deve depender do viewport inicial reportado pelo navegador: o modo explícito resolve para desktop e usa um canvas de 1366 px.
+- O CSS Premium real continua ativo: os seletores `.real-public-sales-preview` e `.public-sales-premium-preview` são aplicados pelo registry e encontrados na folha `PreviewPublicSales.css`.
+- A família antiga `.premium-preview-*` não tem consumidor em markup, componentes ou testes encontrados no repositório. A folha contém também o CSS Premium real; nenhum trecho foi removido nesta retomada.
+- Não houve alteração de conteúdo, lógica comercial, templates, seleção persistida ou dados do banco. Não foi necessário editar `replit.md`.
+
+### Verificações executadas e resultados
+
+- `env -u DATABASE_URL -u MYSQL_PASSWORD -u REMOTE_DATABASE_URL pnpm exec vitest run shared/publicSalesPresentation.test.ts`: 8 testes passaram.
+- `pnpm check`: passou.
+- `pnpm build`: passou; permanece o aviso conhecido de chunk JavaScript acima de 500 kB.
+- `git diff --check`: passou com o registro atualizado.
+- Chromium com emulação de toque, viewport inicial 980 px e tela de 430 px: confirmou `desktop-on-mobile`, meta viewport em 1366 px, mídia desktop ativa e cabeçalho compacto inativo.
+- Na mesma emulação, a rota `/institucional` restaurou a meta viewport original; ao retornar à página em 390 px, o modo mobile permaneceu em `width=device-width`.
+- Workflow `Start application` reiniciado em `DEMO_PREVIEW=1`; log confirma servidor na porta 5000 sem erro de inicialização.
+- Capturas públicas de `official`, `premium` e `journey` em desktop (1366 px) e tablet (820 px) carregaram sem erros da aplicação no console. Os avisos vistos foram somente conexão Vite e dica do React DevTools.
+- Nenhum teste com gravação, consulta manual ou migração de banco foi executado. A prévia foi mantida em modo de demonstração.
+
+### Erros e limitações
+
+- `pnpm test` completo não foi repetido nesta alteração focada; somente a suíte do resolver foi executada. O status anterior registra 328 testes passando com concorrência reduzida.
+- A emulação Chromium confirma a mudança de viewport e as regras CSS desktop, mas não substitui a validação num aparelho Android físico com “Versão para computador”.
+- A captura do navegador não possui sessão administrativa: o seletor e o salvamento de template no painel não foram verificados visualmente nem persistidos.
+- As capturas registram o primeiro viewport de cada rota; não cobrem fluxo de pedido, conteúdo abaixo da dobra ou comportamento após interação.
+- Os breakpoints do resolvedor agora seguem 767/1199 px; regras CSS de componentes continuam distribuídas por valores próprios (por exemplo, 760, 900, 980 e 1024 px). A consolidação geral de todos esses media queries ainda precisa de auditoria antes de alegar que cada regra CSS usa um único contrato.
+- Uma simulação CDP inicial modificou a meta viewport antes da montagem do app e, por isso, não representava corretamente o valor original a restaurar. A validação foi refeita com métricas de dispositivo/tela e entrada tátil; desktop, restauração de rota e mobile normal passaram.
+
+### Pendências
+
+- Validar num Chrome Android físico a equivalência de composição do modo desktop com notebook, mantendo modo mobile normal e tablet.
+- Com sessão autorizada e ambiente de dados isolado, validar o seletor de `journey` e os controles administrativos sem salvar na configuração do banco remoto.
+- Executar a matriz funcional final do Marco 8 para pedido, referral/tracking, FAQ, prova social e editor; não declarar esses fluxos verificados com base apenas nas capturas.
+- Decidir, após confirmar o restante dos consumidores e testes, se o CSS legado `.premium-preview-*` deve permanecer como demonstração ou ser retirado em mudança própria.
+
+### Próximo passo exato
+
+Continuar o Marco 8 sem tocar no banco remoto: validar o modo desktop em aparelho Android físico e, em ambiente isolado com sessão administrativa autorizada, conferir o seletor `journey`; depois executar a matriz funcional pendente e decidir separadamente o destino do CSS legado.
