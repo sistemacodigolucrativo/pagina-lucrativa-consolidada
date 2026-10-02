@@ -2790,3 +2790,116 @@
     transform: none;
   }
 }
+
+/* O template Premium mantém o menu utilizável em celulares na horizontal. */
+@media (max-width: 1024px) and (max-height: 540px) and (orientation: landscape) {
+  .real-public-sales-preview .nav {
+    position: relative;
+  }
+
+  .real-public-sales-preview .mobile-menu-button {
+    display: inline-flex;
+  }
+
+  .real-public-sales-preview .nav-links {
+    position: absolute;
+    z-index: 60;
+    top: calc(100% + 8px);
+    right: 0;
+    left: 0;
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 8px;
+    max-height: calc(100dvh - 84px);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    padding: 10px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    border-radius: 16px;
+    background: rgba(8, 15, 28, 0.98);
+    box-shadow: 0 20px 70px rgba(0, 0, 0, 0.36);
+  }
+
+  .real-public-sales-preview .nav-links.is-open {
+    display: flex;
+  }
+
+  .real-public-sales-preview .nav-links-group {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .real-public-sales-preview .nav-links-divider {
+    width: 100%;
+    height: 1px;
+  }
+
+  .real-public-sales-preview .nav-links a {
+    width: 100%;
+    min-height: 42px;
+    justify-content: flex-start;
+  }
+}
+
+/* Separa os controles flutuantes e respeita as áreas seguras do celular. */
+@media (max-width: 760px) {
+  .real-public-sales-preview .sales-page {
+    padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .real-public-sales-preview .member-chat-fab-wrap {
+    position: fixed;
+    z-index: 90;
+    top: auto;
+    right: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    left: calc(env(safe-area-inset-left, 0px) + 12px);
+    display: flex;
+    transform: none;
+  }
+
+  .real-public-sales-preview .member-chat-fab {
+    width: 52px;
+    height: 52px;
+    min-height: 52px;
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
+
+  .real-public-sales-preview .public-conversion-cta {
+    position: fixed;
+    z-index: 91;
+    top: auto;
+    right: calc(env(safe-area-inset-right, 0px) + 12px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
+    left: auto;
+    width: fit-content;
+    max-width: calc(100vw - 88px);
+    min-height: 52px;
+    padding-inline: 14px;
+    font-size: clamp(11px, 3vw, 13px);
+    line-height: 1.2;
+    text-align: center;
+    white-space: normal;
+    transform: none;
+  }
+}
+
+/* O breakpoint desktop usado pelo modo explícito no celular também mantém o CTA. */
+html[data-public-sales-presentation="desktop-on-mobile"]
+  .real-public-sales-preview
+  .public-conversion-cta {
+  display: inline-flex;
+  right: 24px;
+  bottom: 24px;
+  max-width: 220px;
+  transform: none;
+}

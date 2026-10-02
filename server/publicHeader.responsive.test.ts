@@ -321,6 +321,17 @@ describe("public responsive header and hero layout", () => {
     expect(cssSource).toContain('.member-chat-fab { width: 58px; height: 58px; min-height: 58px; }');
   });
 
+  it("keeps Premium floating actions visible and separates them across mobile breakpoints", () => {
+    expect(previewCssSource).toContain("@media (max-width: 1024px) and (max-height: 540px) and (orientation: landscape)");
+    expect(previewCssSource).toContain(".real-public-sales-preview .nav-links.is-open");
+    expect(previewCssSource).toContain("overflow-x: hidden;");
+    expect(previewCssSource).toContain("touch-action: pan-y;");
+    expect(previewCssSource).toContain("@media (max-width: 760px)");
+    expect(previewCssSource).toContain("bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);");
+    expect(previewCssSource).toContain('html[data-public-sales-presentation="desktop-on-mobile"]');
+    expect(previewCssSource).toContain("display: inline-flex;");
+  });
+
   it("keeps the simplified commercial navigation before utility routes and the CTA", () => {
     const publicNavigationStart = homeSource.indexOf("const publicNavigation = [");
     const utilityNavigationStart = homeSource.indexOf("const utilityNavigation = [");

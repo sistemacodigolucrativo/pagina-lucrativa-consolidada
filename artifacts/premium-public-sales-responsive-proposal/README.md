@@ -1,10 +1,11 @@
-# Premium responsive CSS proposal
+# Premium responsive CSS proposal (historical)
 
-An isolated, append-only CSS override proposal for the Método Código Lucrativo
-Premium public sales page. It does not modify application files, markup, copy,
-routes, data, or submission logic. To trial it, load
-`premium-responsive-proposal.css` after `PreviewPublicSales.css` in a local
-branch.
+This file records the original isolated override proposal for the Método Código
+Lucrativo Premium public sales page. The selected responsive behaviors have
+since been integrated directly into `client/src/pages/PreviewPublicSales.css`.
+Do not load this proposal alongside the active stylesheet; that would duplicate
+rules and could make later changes diverge. The original proposal is retained
+for reference only.
 
 ## Selectors and breakpoints
 

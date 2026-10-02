@@ -405,3 +405,43 @@ As fases 0–7 do `03-PLANO-DE-ACAO.md` e a implementação local da Etapa 8 est
 ### Próximo passo exato
 
 Continuar o Marco 8 sem tocar no banco remoto: validar o modo desktop em aparelho Android físico e, em ambiente isolado com sessão administrativa autorizada, conferir o seletor `journey`; depois executar a matriz funcional pendente e decidir separadamente o destino do CSS legado.
+
+## Continuidade — correções responsivas focadas no Premium (02/10/2026)
+
+### Escopo e estado
+
+- O foco desta rodada segue a decisão registrada nos resultados de teste: estabilizar `premium` como base visual principal. `official` e `journey` permanecem preservados e não foram alterados nesta rodada.
+- Esta rodada corrige no CSS ativo problemas reportados no celular deitado e na visibilidade/posição dos controles flutuantes. Não substitui a validação manual em Chrome Android.
+- A aplicação continua usando o mesmo `Home`, renderer e conteúdo compartilhado. Não houve mudança em pedidos, copy, pagamentos, seleção persistida ou banco.
+
+### Alterações feitas
+
+- Em telas baixas na orientação paisagem (largura até 1024 px e altura até 540 px), o Premium usa o botão de menu compacto. O menu aberto fica em coluna, pode rolar verticalmente e não exige arraste lateral.
+- Em celular estreito (até 760 px), o CTA flutuante fica no canto inferior direito e o controle de chat indisponível fica no canto inferior esquerdo, com margens para áreas seguras e espaço de rolagem após o conteúdo.
+- O botão de chat continua intencionalmente desativado (“em breve”); esta alteração apenas torna o controle visível, sem simular uma funcionalidade de chat.
+- Em `desktop-on-mobile`, o CTA flutuante permanece visível mesmo quando o breakpoint de viewport usado pelo modo desktop normalmente o ocultaria.
+- O ordenamento do banner/imagem do hero logo após o título e o `scroll-margin-top` de 92 px para `#f` já estavam ativos antes desta rodada; devem ser confirmados no aparelho, não tratados como teste físico aprovado.
+- As regras selecionadas da proposta CSS foram integradas à folha ativa. `artifacts/premium-public-sales-responsive-proposal/` agora está explicitamente marcado como referência histórica e não deve ser carregado separadamente.
+- Foi acrescentada uma verificação de contrato CSS para os breakpoints e os controles flutuantes Premium.
+
+### Verificações desta rodada
+
+- `pnpm check`: passou.
+- `pnpm exec vitest run server/publicHeader.responsive.test.ts --maxWorkers=2`: 25 testes passaram.
+- `pnpm build`: passou; permanece o aviso conhecido de chunk JavaScript acima de 500 kB.
+- `git diff --check`: passou após as alterações de código, documentação e inclusão das capturas.
+- Workflow `Start application` reiniciado em `DEMO_PREVIEW=1` e permaneceu ativo na porta 5000. `/preview` carregou em 390×844, 844×390 e 1366×900 sem erro da aplicação no console.
+- Capturas persistidas para a próxima retomada:
+  - `docs/visual-checks/public-sales-premium-mobile-portrait-390x844.jpg`
+  - `docs/visual-checks/public-sales-premium-mobile-landscape-844x390.jpg`
+  - `docs/visual-checks/public-sales-premium-desktop-1366x900.jpg`
+- A captura 844×390 mostra o botão compacto do menu; a captura 390×844 mostra o hero e o controle de chat no canto inferior esquerdo. As capturas são somente do primeiro viewport: não abriram o menu nem rolaram até a seção de pacotes.
+- A visibilidade do CTA após a seção de pacotes, o scroll real até `#f` e o seletor CSS `desktop-on-mobile` ainda não foram confirmados visualmente em interação. A suíte executada valida os contratos CSS, não substitui esses testes.
+- O relatório físico disponível no workspace é de Redmi 10C / Android 13 / MIUI 14 usando Opera. Não foi encontrado relatório de Chrome Android das etapas 3 e 4. Também não foi localizado Chromium executável no container para rodar o script Playwright local existente.
+- Nenhum teste de pedido, envio do formulário, pagamento, gravação administrativa ou acesso ao banco remoto foi executado.
+
+### Próximo passo exato
+
+1. Fazer validação manual em Chrome Android no aparelho físico: mobile em pé e deitado; “Versão para computador” ligada em pé e deitado. Confirmar menu, CTA após a seção de pacotes, botão de chat visível porém desativado, âncoras e ausência de cortes; parar no formulário sem preencher/enviar.
+3. Ajustar o CSS somente se os resultados físicos mostrarem problema reproduzível. Não voltar a ampliar a matriz aos três templates até o Premium estar estável.
+4. Depois, seguir as pendências do Marco 8 já listadas acima: seletor administrativo em ambiente isolado e matriz funcional sem gravações remotas.
