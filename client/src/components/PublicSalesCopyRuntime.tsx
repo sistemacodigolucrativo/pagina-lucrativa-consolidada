@@ -19,6 +19,10 @@ import {
   type PublicSalesCopyOverrides,
 } from "@shared/publicSalesCopyEditor";
 import {
+  resolvePublicSalesContent,
+  type PublicSalesContentSnapshot,
+} from "@shared/publicSalesContent";
+import {
   PUBLIC_HERO_TITLE,
   splitPublicHeroTitle,
 } from "@shared/publicHeroTitle";
@@ -54,13 +58,19 @@ type PublicSalesCopyState = {
   ready: boolean;
 };
 
+type PublicSalesCopyContextValue = PublicSalesCopyState & {
+  content: PublicSalesContentSnapshot;
+};
+
 const PUBLIC_SALES_COPY_ENDPOINT = "/api/public-sales-copy";
-const PublicSalesCopyContext = createContext<PublicSalesCopyState>({
+const DEFAULT_PUBLIC_SALES_CONTENT = resolvePublicSalesContent();
+const PublicSalesCopyContext = createContext<PublicSalesCopyContextValue>({
   overrides: {},
   floatingLayout: {},
   pageTemplate: DEFAULT_PUBLIC_PAGE_TEMPLATE,
   visualEditor: { enabled: false, layouts: {} },
   ready: false,
+  content: DEFAULT_PUBLIC_SALES_CONTENT,
 });
 const FLOATING_POSITION_PROPS = [
   "left",
@@ -111,8 +121,17 @@ export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  const content = useMemo(
+    () => resolvePublicSalesContent(state.overrides),
+    [state.overrides]
+  );
+  const contextValue = useMemo(
+    () => ({ ...state, content }),
+    [state, content]
+  );
+
   return (
-    <PublicSalesCopyContext.Provider value={state}>
+    <PublicSalesCopyContext.Provider value={contextValue}>
       {children}
     </PublicSalesCopyContext.Provider>
   );

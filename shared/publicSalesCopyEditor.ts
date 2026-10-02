@@ -1,3 +1,5 @@
+import { PUBLIC_SALES_DECISION_OBJECTIONS } from "./publicSalesObjections";
+
 export type PublicSalesCopyField = {
   key: string;
   label: string;
@@ -94,8 +96,8 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
     sectionSelector: ".sales-social-proof",
     fields: [
       f("eyebrow", "Identificação", "Quem já faz parte", "text", ".eyebrow"),
-      f("title", "Título", "Veja experiências de quem já utiliza o método.", "textarea", "h2"),
-      f("description", "Texto", "Conheça experiências de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.", "textarea", ".sales-section-heading > p"),
+      f("title", "Título", "Veja agradecimentos de quem já utiliza o método.", "textarea", "h2"),
+      f("description", "Texto", "Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.", "textarea", ".sales-section-heading > p"),
     ],
   },
   ...[
@@ -226,18 +228,9 @@ export const PUBLIC_SALES_COPY_SECTIONS: PublicSalesCopySection[] = [
       f("eyebrow", "Identificação", "DÚVIDAS COMUNS", "text", ".eyebrow"),
       f("title", "Título", "Tudo o que você precisa saber antes de ativar sua estrutura.", "textarea", "h2"),
       f("description", "Texto", "Confira as respostas para as principais dúvidas sobre o Método Código Lucrativo, a estrutura e o processo de ativação.", "textarea", ".sales-section-heading > p"),
-      ...[
-        ["Não sei exatamente o que vou receber.", "Você recebe o Método Código Lucrativo, uma estrutura digital pronta, Escritório Virtual, campanhas, pedidos, histórico, biblioteca, academia e suporte em um fluxo organizado."],
-        ["Tenho medo de ser apenas uma página.", "A página é a porta de entrada; o Método Código Lucrativo inclui também ambiente operacional, acompanhamento, recursos e organização da operação."],
-        ["Não entendo de marketing digital nem programação.", "A proposta é entregar a base pronta para uso. Seu foco fica em entender o fluxo, divulgar com constância e acompanhar pedidos."],
-        ["Não sei divulgar.", "A estrutura centraliza links, campanhas e materiais de apoio para facilitar a divulgação sem improviso."],
-        ["Tenho pouco tempo.", "O fluxo foi pensado para uso direto, com cadastro, pagamento, comprovante e acompanhamento em etapas claras."],
-        ["Tenho receio de assumir uma mensalidade.", "Não existe mensalidade neste modelo atual. O valor informado corresponde à solicitação de ativação."],
-        ["Tenho medo de criar uma expectativa de ganho automático.", "Não existe promessa de ganho. Resultado depende da sua execução, divulgação, constância e contexto."],
-        ["Tenho medo de pagar e não saber o que acontece depois.", "Após o cadastro, você segue para pagamento, envia o comprovante e acompanha a análise até a liberação pelo fluxo oficial."],
-      ].flatMap((item, index) => [
-        f(`q${index + 1}`, `Objeção ${index + 1}`, item[0], "textarea", `.objection-grid article:nth-child(${index + 1}) strong`),
-        f(`a${index + 1}`, `Resposta ${index + 1}`, item[1], "textarea", `.objection-grid article:nth-child(${index + 1}) p`),
+      ...PUBLIC_SALES_DECISION_OBJECTIONS.flatMap(({ question, answer }, index) => [
+        f(`q${index + 1}`, `Objeção ${index + 1}`, question, "textarea", `.objection-grid article:nth-child(${index + 1}) strong`),
+        f(`a${index + 1}`, `Resposta ${index + 1}`, answer, "textarea", `.objection-grid article:nth-child(${index + 1}) p`),
       ]),
     ],
   },

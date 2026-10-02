@@ -6,13 +6,17 @@ import { withAppBase } from "@/lib/devPath";
 import { normalizeAffiliateSlug } from "@shared/affiliateAttribution";
 import { normalizeEmail, normalizePhone } from "@shared/contactValidation";
 import { PUBLIC_SALES_SECTIONS } from "@shared/publicSalesSections";
-import { PUBLIC_SALES_DECISION_OBJECTIONS } from "@shared/publicSalesObjections";
 import { savePaymentAccessToken } from "@/lib/applicationPaymentAccess";
 import { toast } from "sonner";
 import VioletaNeonActivationCard from "@/components/VioletaNeonActivationCard";
 import PublicSocialProofToast from "@/components/PublicSocialProofToast";
 import PublicConversionCta from "@/components/PublicConversionCta";
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
+import {
+  getPublicSalesContentOverride,
+  getPublicSalesContentValue,
+  type PublicSalesContentSnapshot,
+} from "@shared/publicSalesContent";
 
 const promoBannerImage = withAppBase("/codigo-lucrativo-banner.png");
 const heroSection = PUBLIC_SALES_SECTIONS[0];
@@ -25,35 +29,6 @@ const coreSalesSectionIds = new Set([
   "ease_real",
 ]);
 const contentBlocks = PUBLIC_SALES_SECTIONS.filter(section => coreSalesSectionIds.has(section.id));
-
-
-
-const packageItems = [
-  ["Método Código Lucrativo", "Base pronta e consolidada para receber, conhecer, personalizar, operar e evoluir sua execução."],
-  ["Escritório Virtual", "Ambiente operacional para organizar perfil, pedidos, campanhas, recebimentos e acompanhamento."],
-  ["Link principal de indicação", "Endereço próprio para divulgar sua estrutura com mais clareza."],
-  ["Campanhas de divulgação", "Links organizados por canal para acompanhar a origem das visitas."],
-  ["Pedidos e comprovantes", "Área para acompanhar solicitações, pagamentos, envio de comprovantes e andamento da análise."],
-  ["Dados de recebimento", "Cadastro dos meios que você usa para receber diretamente dos compradores."],
-  ["Biblioteca de Recursos", "Ferramentas e materiais que sustentam o método e apoiam sua divulgação."],
-  ["Academia", "Conteúdos de aprendizado para orientar a utilização do método."],
-];
-
-const fitItems = [
-  "Pessoas dispostas a aprender a operar uma estrutura digital.",
-  "Quem quer divulgar com consistência e acompanhar os próprios resultados.",
-  "Quem entende que pedidos, vendas e ganhos dependem de execução real.",
-  "Quem precisa de uma base organizada para começar com estrutura pronta.",
-];
-
-const notFitItems = [
-  "Quem busca uma solução de renda automática ou resultados garantidos.",
-  "Quem não pretende utilizar e divulgar a própria estrutura.",
-  "Quem espera que a plataforma venda sozinha sem ação comercial.",
-  "Quem busca uma promessa de resultado fixo em vez de uma ferramenta de trabalho.",
-];
-
-const objectionItems = PUBLIC_SALES_DECISION_OBJECTIONS.map(({ question, answer }) => [question, answer] as const);
 
 
 
@@ -77,8 +52,8 @@ const utilityNavigation = [
   ["Acompanhar pedido", "/pedido/acompanhar"],
 ] as const;
 
-function publicCopy(overrides: Record<string, Record<string, string>>, sectionId: string, key: string, fallback: string) {
-  return overrides[sectionId]?.[key] ?? fallback;
+function publicCopy(content: PublicSalesContentSnapshot, sectionId: string, key: string, fallback: string) {
+  return getPublicSalesContentValue(content, sectionId, key) ?? fallback;
 }
 
 function resolveNavigationHref(path: string) {
@@ -187,11 +162,10 @@ const virtualOfficeSlides = [
   { title: "Biblioteca e Academia", caption: "Materiais e conteúdos de apoio para aprender e executar." },
 ];
 
-function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; imageAlt: string }) {
+function StructureDigitalShowcase({ image, imageAlt, content }: { image: string | null; imageAlt: string; content: PublicSalesContentSnapshot }) {
   const [activeSlide, setActiveSlide] = useState(0);
   const touchStartX = useRef<number | null>(null);
-  const { overrides } = usePublicSalesCopy();
-  const sectionCopy = (key: string, fallback: string) => publicCopy(overrides, "structure_showcase", key, fallback);
+  const sectionCopy = (key: string, fallback: string) => publicCopy(content, "structure_showcase", key, fallback);
   const previousSlide = () => setActiveSlide(current => current === 0 ? virtualOfficeSlides.length - 1 : current - 1);
   const nextSlide = () => setActiveSlide(current => current === virtualOfficeSlides.length - 1 ? 0 : current + 1);
   const handleCarouselKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
@@ -232,14 +206,14 @@ function StructureDigitalShowcase({ image, imageAlt }: { image: string | null; i
             <button type="button" onClick={nextSlide} aria-label="Ver próxima tela do Escritório Virtual"><ChevronRight size={16} /></button>
           </div>
         </div>
-        <SalesTrustCard trust={overrides.hero?.trust} placement="mobile" />
+        <SalesTrustCard trust={getPublicSalesContentOverride(content, "hero", "trust")} placement="mobile" />
         <div className="sales-author-badge"><strong>Estrutura digital</strong><span>·</span> pronta para operar</div>
       </div>
     </div>
   </section>;
 }
 
-export default function Home() {
+export default function Home({ content: providedContent }: { content?: PublicSalesContentSnapshot } = {}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileDetailsOpen, setProfileDetailsOpen] = useState(false);
   const [openObjectionIndex, setOpenObjectionIndex] = useState<number | null>(null);
@@ -250,7 +224,8 @@ export default function Home() {
   const session = trpc.auth.me.useQuery();
   const sectionImages = trpc.public.salesSectionImages.useQuery();
   const socialProof = trpc.public.salesSocialProof.useQuery();
-  const { overrides } = usePublicSalesCopy();
+  const providerContent = usePublicSalesCopy().content;
+  const content = providedContent ?? providerContent;
   const imageBySection = useMemo(() => new Map((sectionImages.data ?? []).map(image => [image.sectionId, image])), [sectionImages.data]);
   const resolveSectionImage = (sectionId: string, fallback: string | null) => {
     const saved = imageBySection.get(sectionId);
@@ -351,6 +326,12 @@ export default function Home() {
   const formattedAverageRating = averageRating !== null ? averageRating.toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : null;
   const previousTestimonial = () => setActiveTestimonialIndex(current => testimonialItems.length ? current === 0 ? testimonialItems.length - 1 : current - 1 : 0);
   const nextTestimonial = () => setActiveTestimonialIndex(current => testimonialItems.length ? current === testimonialItems.length - 1 ? 0 : current + 1 : 0);
+  const heroKickerOverride = getPublicSalesContentOverride(content, "hero", "kicker");
+  const heroTitleOverride = getPublicSalesContentOverride(content, "hero", "title");
+  const socialProofEyebrowOverride = getPublicSalesContentOverride(content, "social_proof", "eyebrow");
+  const socialProofTitleOverride = getPublicSalesContentOverride(content, "social_proof", "title");
+  const notFitTitleOverride = getPublicSalesContentOverride(content, "fit", "notTitle");
+  const offerTitleOverride = getPublicSalesContentOverride(content, "offer", "title");
   useEffect(() => {
     if (activeTestimonialIndex >= testimonialItems.length) setActiveTestimonialIndex(0);
   }, [activeTestimonialIndex, testimonialItems.length]);
@@ -426,40 +407,40 @@ export default function Home() {
         <div className="sales-grid-glow" aria-hidden="true" />
         <div className="shell sales-hero-grid">
           <div className="sales-hero-copy reveal-item">
-            {overrides.hero?.kicker ? <div className="sales-kicker">{overrides.hero.kicker}</div> : <div className="sales-kicker">Para quem quer entrar no digital com <span className="sales-kicker-tail">método pronto</span></div>}
-            {overrides.hero?.title ? <h1>{overrides.hero.title}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
+            {heroKickerOverride ? <div className="sales-kicker">{heroKickerOverride}</div> : <div className="sales-kicker">Para quem quer entrar no digital com <span className="sales-kicker-tail">método pronto</span></div>}
+            {heroTitleOverride ? <h1>{heroTitleOverride}</h1> : <h1><span>Receba o Método Código Lucrativo pronto</span> para começar — com estrutura consolidada para ativar e operar.</h1>}
             <TopPromoBanner />
-            <SalesTrustCard trust={overrides.hero?.trust} placement="desktop" />
-             <p>{publicCopy(overrides, "hero", "description", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.")}</p>
+            <SalesTrustCard trust={getPublicSalesContentOverride(content, "hero", "trust")} placement="desktop" />
+             <p>{publicCopy(content, "hero", "description", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.")}</p>
             <div className="sales-actions"><JoinButton className="sales-action-button" /><a href="#como-funciona" className="btn btn-ghost sales-action-button">Ver como funciona <ArrowDown size={16} /></a></div>
           </div>
         </div>
       </section>
 
-       <StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} />
+        <StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} content={content} />
 
       <section className="sales-proof" aria-label="O que a estrutura reúne">
         <div className="shell sales-proof-grid">
-          <div className="sales-proof-group"><strong>{publicCopy(overrides, "structure_summary", "group1", "Método e estrutura")}</strong><div className="sales-proof-items">{publicCopy(overrides, "structure_summary", "group1items", "Método · Perfil · Escritório").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
-          <div className="sales-proof-group"><strong>{publicCopy(overrides, "structure_summary", "group2", "Operação organizada")}</strong><div className="sales-proof-items">{publicCopy(overrides, "structure_summary", "group2items", "Campanhas · Pedidos · Conteúdos").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
+          <div className="sales-proof-group"><strong>{publicCopy(content, "structure_summary", "group1", "Método e estrutura")}</strong><div className="sales-proof-items">{publicCopy(content, "structure_summary", "group1items", "Método · Perfil · Escritório").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
+          <div className="sales-proof-group"><strong>{publicCopy(content, "structure_summary", "group2", "Operação organizada")}</strong><div className="sales-proof-items">{publicCopy(content, "structure_summary", "group2items", "Campanhas · Pedidos · Conteúdos").split("·").map(item => <span key={item.trim()}>{item.trim()}</span>)}</div></div>
         </div>
       </section>
 
       <section className="sales-section sales-package" id="o-que-recebe">
         <div className="shell">
           <div className="sales-section-heading">
-            <div><Eyebrow>{publicCopy(overrides, "package", "eyebrow", "Tudo o que você recebe")}</Eyebrow><h2>{publicCopy(overrides, "package", "title", "Você recebe o método com uma estrutura de operação, não uma explicação solta.")}</h2></div>
-            <p>{publicCopy(overrides, "package", "description", "Método Código Lucrativo, Escritório Virtual, campanhas, recebimentos, pedidos, histórico, biblioteca, academia e suporte reunidos no mesmo fluxo.")}</p>
+            <div><Eyebrow>{publicCopy(content, "package", "eyebrow", "Tudo o que você recebe")}</Eyebrow><h2>{publicCopy(content, "package", "title", "Você recebe o método com uma estrutura de operação, não uma explicação solta.")}</h2></div>
+            <p>{publicCopy(content, "package", "description", "Método Código Lucrativo, Escritório Virtual, campanhas, recebimentos, pedidos, histórico, biblioteca, academia e suporte reunidos no mesmo fluxo.")}</p>
           </div>
-          <div className="package-grid">{packageItems.map(([title, description], index) => <article key={title}><strong>{publicCopy(overrides, "package", `item${index + 1}Title`, title)}</strong><p>{publicCopy(overrides, "package", `item${index + 1}Text`, description)}</p></article>)}</div>
+          <div className="package-grid">{content.packageItems.map(item => <article key={item.id}><strong>{item.title}</strong><p>{item.description}</p></article>)}</div>
         </div>
       </section>
 
       <section className="sales-section sales-social-proof" id="depoimentos">
         <div className="shell">
           <div className="sales-section-heading">
-            <div>{overrides.social_proof?.eyebrow ? <Eyebrow>{overrides.social_proof.eyebrow}</Eyebrow> : <Eyebrow>Quem já faz parte</Eyebrow>}{overrides.social_proof?.title ? <h2>{overrides.social_proof.title}</h2> : <h2>Veja agradecimentos de quem já utiliza o método.</h2>}</div>
-            <p>{publicCopy(overrides, "social_proof", "description", "Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
+            <div>{socialProofEyebrowOverride ? <Eyebrow>{socialProofEyebrowOverride}</Eyebrow> : <Eyebrow>{publicCopy(content, "social_proof", "eyebrow", "Quem já faz parte")}</Eyebrow>}{socialProofTitleOverride ? <h2>{socialProofTitleOverride}</h2> : <h2>{publicCopy(content, "social_proof", "title", "Veja agradecimentos de quem já utiliza o método.")}</h2>}</div>
+            <p>{publicCopy(content, "social_proof", "description", "Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
           </div>
           <div className="social-proof-stats">
             <article><span>Total de membros</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : <AnimatedMemberCount value={socialProof.data?.realMemberCount ?? 0} />}</article>
@@ -493,7 +474,7 @@ export default function Home() {
 
       {contentBlocks.map((block, index) => {
         const sectionImage = resolveSectionImage(block.id, block.defaultImage);
-         const sectionCopy = (key: string, fallback: string) => publicCopy(overrides, block.id, key, fallback);
+          const sectionCopy = (key: string, fallback: string) => publicCopy(content, block.id, key, fallback);
         return <section id={block.id === "problem_start" ? "como-funciona" : block.id === "comparison" ? "comparacao" : undefined} className={`sales-section reference-copy ${index % 2 ? "reference-copy-alt" : ""}`} key={block.id}>
           <div className="shell reference-copy-grid">
             <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
@@ -506,8 +487,8 @@ export default function Home() {
 
       <section className="sales-section sprint-fit" id="perfil-ideal">
         <div className="shell sprint-fit-grid">
-           <div><Eyebrow>{publicCopy(overrides, "fit", "fitEyebrow", "Para quem é")}</Eyebrow><h2>{publicCopy(overrides, "fit", "fitTitle", "Para quem quer operar com execução.")}</h2><ul>{fitItems.map((item, index) => <li key={item}>{publicCopy(overrides, "fit", `fit${index + 1}`, item)}</li>)}</ul></div>
-           <div className="sprint-not-fit"><Eyebrow>{publicCopy(overrides, "fit", "notEyebrow", "Para quem não é")}</Eyebrow><h2>{overrides.fit?.notTitle ?? <>Não é promessa de <span>resultado automático.</span></>}</h2><ul>{notFitItems.map((item, index) => <li key={item}>{publicCopy(overrides, "fit", `not${index + 1}`, item)}</li>)}</ul></div>
+           <div><Eyebrow>{publicCopy(content, "fit", "fitEyebrow", "Para quem é")}</Eyebrow><h2>{publicCopy(content, "fit", "fitTitle", "Para quem quer operar com execução.")}</h2><ul>{content.fitItems.map((item, index) => <li key={`fit-${index}`}>{item}</li>)}</ul></div>
+           <div className="sprint-not-fit"><Eyebrow>{publicCopy(content, "fit", "notEyebrow", "Para quem não é")}</Eyebrow><h2>{notFitTitleOverride ?? <>Não é promessa de <span>resultado automático.</span></>}</h2><ul>{content.notFitItems.map((item, index) => <li key={`not-fit-${index}`}>{item}</li>)}</ul></div>
         </div>
       </section>
 
@@ -516,18 +497,18 @@ export default function Home() {
       <section className="sales-section sales-objections" id="duvidas-decisao">
         <div className="shell">
           <div className="sales-section-heading">
-             <div><Eyebrow>{publicCopy(overrides, "objections", "eyebrow", "DÚVIDAS COMUNS")}</Eyebrow><h2>{publicCopy(overrides, "objections", "title", "Tudo o que você precisa saber antes de ativar sua estrutura.")}</h2></div>
-             <p>{publicCopy(overrides, "objections", "description", "Confira as respostas para as principais dúvidas sobre o Método Código Lucrativo, a estrutura e o processo de ativação.")}</p>
+             <div><Eyebrow>{publicCopy(content, "objections", "eyebrow", "DÚVIDAS COMUNS")}</Eyebrow><h2>{publicCopy(content, "objections", "title", "Tudo o que você precisa saber antes de ativar sua estrutura.")}</h2></div>
+             <p>{publicCopy(content, "objections", "description", "Confira as respostas para as principais dúvidas sobre o Método Código Lucrativo, a estrutura e o processo de ativação.")}</p>
           </div>
-          <div className="objection-grid objection-accordion">{objectionItems.map(([question, answer], index) => {
+          <div className="objection-grid objection-accordion">{content.objectionItems.map(({ id, question, answer }, index) => {
             const isOpen = openObjectionIndex === index;
-            const answerId = `objection-answer-${index}`;
-            return <article key={question} className={isOpen ? "is-open" : ""}>
+            const answerId = `objection-answer-${id}`;
+            return <article key={id} className={isOpen ? "is-open" : ""}>
               <button type="button" aria-expanded={isOpen} aria-controls={answerId} onClick={() => setOpenObjectionIndex(current => current === index ? null : index)}>
-                <strong>{publicCopy(overrides, "objections", `q${index + 1}`, question)}</strong>
+                <strong>{question}</strong>
                 <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
               </button>
-              <p id={answerId} hidden={!isOpen}>{publicCopy(overrides, "objections", `a${index + 1}`, answer)}</p>
+              <p id={answerId} hidden={!isOpen}>{answer}</p>
             </article>;
           })}</div>
           <section className="offer-closing faq-compact-cta" aria-label="Perguntas frequentes completas">
@@ -539,7 +520,7 @@ export default function Home() {
 
       <section className="sales-section sales-offer" id="f">
         <div className="shell sales-offer-grid">
-           <div className="offer-copy"><Eyebrow>{publicCopy(overrides, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{overrides.offer?.title ?? <>Ative o <span>Método Código Lucrativo com estrutura pronta para operar.</span></>}</h2></div>
+           <div className="offer-copy"><Eyebrow>{publicCopy(content, "offer", "eyebrow", "Próximo passo")}</Eyebrow><h2>{offerTitleOverride ?? <>Ative o <span>Método Código Lucrativo com estrutura pronta para operar.</span></>}</h2></div>
           <VioletaNeonActivationCard
             contact={applicationContact}
             isPending={application.isPending}

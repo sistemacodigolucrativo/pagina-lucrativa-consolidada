@@ -18,7 +18,8 @@ describe("melhorias da página pública", () => {
     expect(home).toContain("Para quem é");
     expect(home).toContain("Para quem não é");
     expect(home).toContain("DÚVIDAS COMUNS");
-    expect(home).toContain("PUBLIC_SALES_DECISION_OBJECTIONS");
+    expect(home).toContain("content.objectionItems.map");
+    expect(read("shared/publicSalesCopyEditor.ts")).toContain("PUBLIC_SALES_DECISION_OBJECTIONS.flatMap");
     expect(home).toContain("coreSalesSectionIds");
     expect(home).toContain('"activation_journey"');
     expect(activationCard).toContain("pagamento único");

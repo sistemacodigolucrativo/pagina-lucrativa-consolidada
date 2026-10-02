@@ -1,9 +1,9 @@
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
-import Home from "./Home";
+import { PublicSalesTemplateRenderer } from "./PublicSalesTemplateRegistry";
 import "./PreviewPublicSales.css";
 
 export default function PublicHome() {
-  const { pageTemplate, ready } = usePublicSalesCopy();
+  const { content, pageTemplate, ready } = usePublicSalesCopy();
 
   if (!ready) {
     return (
@@ -14,16 +14,5 @@ export default function PublicHome() {
     );
   }
 
-  if (pageTemplate === "premium") {
-    return (
-      <div
-        className="public-sales-premium-preview real-public-sales-preview"
-        data-public-template="premium"
-      >
-        <Home />
-      </div>
-    );
-  }
-
-  return <Home />;
+  return <PublicSalesTemplateRenderer template={pageTemplate} content={content} />;
 }

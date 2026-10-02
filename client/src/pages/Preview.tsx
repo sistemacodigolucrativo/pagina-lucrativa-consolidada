@@ -1,4 +1,5 @@
-import Home from "./Home";
+import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
+import { PublicSalesTemplateRenderer } from "./PublicSalesTemplateRegistry";
 import "./PreviewPublicSales.css";
 
 /*
@@ -17,13 +18,14 @@ import "./PreviewPublicSales.css";
  */
 
 export default function Preview() {
+  const { content } = usePublicSalesCopy();
+
   return (
     <main className="premium-public-preview-admin-shell premium-public-preview-fullscreen">
       <div
-        className="public-sales-premium-preview real-public-sales-preview"
         data-preview-scope="public-sales-page"
       >
-        <Home />
+        <PublicSalesTemplateRenderer template="premium" content={content} />
       </div>
     </main>
   );

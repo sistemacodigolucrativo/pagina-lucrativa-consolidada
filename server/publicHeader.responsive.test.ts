@@ -62,7 +62,7 @@ describe("public responsive header and hero layout", () => {
 
   it("extracts the digital structure visual into one independent landing section", () => {
     const heroStart = homeSource.indexOf('<section className="sales-hero" id="inicio">');
-    const showcaseStart = homeSource.indexOf('<StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} />');
+    const showcaseStart = homeSource.indexOf('<StructureDigitalShowcase image={heroImage} imageAlt={heroSection.defaultAlt} content={content} />');
     expect(heroStart).toBeGreaterThan(-1);
     expect(showcaseStart).toBeGreaterThan(heroStart);
     expect((homeSource.match(/<StructureDigitalShowcase/g) ?? []).length).toBe(1);
@@ -100,9 +100,9 @@ describe("public responsive header and hero layout", () => {
   });
 
   it("uses natural social proof heading, copy and premium carousel", () => {
-    expect(homeSource).toContain("<Eyebrow>Quem já faz parte</Eyebrow>");
+    expect(homeSource).toContain('publicCopy(content, "social_proof", "eyebrow", "Quem já faz parte")');
     expect(homeSource).not.toContain("<Eyebrow>Prova social</Eyebrow>");
-    expect(homeSource).toContain("<h2>Veja agradecimentos de quem já utiliza o método.</h2>");
+    expect(homeSource).toContain('publicCopy(content, "social_proof", "title", "Veja agradecimentos de quem já utiliza o método.")');
     expect(homeSource).toContain("Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.");
     expect(homeSource).toContain("activeTestimonialIndex");
     expect(homeSource).toContain("testimonial-carousel");
@@ -208,7 +208,7 @@ describe("public responsive header and hero layout", () => {
 
   it("keeps the floating public conversion CTA removed while preserving conversion paths", () => {
     expect(appSource).not.toContain("PublicConversionCta");
-    expect(homeSource).toContain('href="#f" className="nav-cta nav-cta-activation"');
+    expect(homeSource).toContain('href={withAppBase("/acesso")} className="nav-cta nav-cta-login-desktop"');
     expect(homeSource).toContain('href={withAppBase(isLoggedIn ? officeHref : "/acesso")} className="nav-cta nav-cta-login-mobile"');
     expect(homeSource).toContain('<div className="sales-actions"><JoinButton className="sales-action-button" />');
     expect(homeSource).toContain('className="member-chat-fab"');
@@ -258,7 +258,7 @@ describe("public responsive header and hero layout", () => {
     const desktopTrustIndex = homeSource.indexOf('placement="desktop"');
     const mobileTrustIndex = homeSource.indexOf('placement="mobile"');
     expect(desktopTrustIndex).toBeGreaterThan(bannerIndex);
-    expect(desktopTrustIndex).toBeLessThan(homeSource.indexOf('<p>{publicCopy(overrides, "hero"'));
+    expect(desktopTrustIndex).toBeLessThan(homeSource.indexOf('<p>{publicCopy(content, "hero"'));
     expect(mobileTrustIndex).toBeGreaterThan(homeSource.indexOf('className="hero-photo-wrap virtual-office-carousel"'));
     expect(cssSource).toContain('justify-content: center;');
     expect(cssSource).toContain('text-align: center;');
@@ -355,13 +355,13 @@ describe("public responsive header and hero layout", () => {
     expect(homeSource).toContain('publicNavigation.map');
     expect(homeSource).toContain('utilityNavigation.map');
     expect(homeSource).toContain('className="nav-links-divider"');
-    expect(homeSource).toContain('href="#f" className="nav-cta nav-cta-activation"');
+    expect(homeSource).toContain('href={withAppBase("/acesso")} className="nav-cta nav-cta-login-desktop"');
     expect(homeSource).toContain('href={withAppBase(isLoggedIn ? officeHref : "/acesso")} className="nav-cta nav-cta-login-mobile"');
     expect(homeSource).toContain('{isLoggedIn ? "Ir para o escritório virtual" : "Entrar"} <ArrowUpRight size={15} />');
     expect(cssSource).toContain('.nav-cta {');
     expect(cssSource).toContain('.nav-cta-login-mobile { display: none; }');
     expect(cssSource).toContain('.nav-links .nav-cta-login-mobile { display: flex; }');
-    expect(cssSource).toContain('.nav-links .nav-cta-activation { display: none; }');
+    expect(cssSource).toContain('.nav-links .nav-cta-login-desktop { display: none; }');
     expect(homeSource).not.toContain('href={withAppBase("/preview")}');
     expect(homeSource).not.toContain('Preview</a>');
   });

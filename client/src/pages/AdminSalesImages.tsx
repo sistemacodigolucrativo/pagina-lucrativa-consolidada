@@ -34,7 +34,9 @@ import { toast } from "sonner";
 import {
   DEFAULT_PUBLIC_PAGE_TEMPLATE,
   PUBLIC_PAGE_TEMPLATE_CATEGORY,
+  PUBLIC_PAGE_TEMPLATE_REGISTRY,
   PUBLIC_PAGE_TEMPLATE_RESOURCE,
+  PUBLIC_PAGE_TEMPLATES,
   normalizePublicPageTemplate,
   parsePublicPageTemplateConfig,
   type PublicPageTemplate,
@@ -230,8 +232,7 @@ export default function AdminSalesImages() {
     const payload = {
       kind: "notice" as const,
       title: "Template da página pública",
-      summary:
-        nextTemplate === "premium" ? "Template Premium" : "Template Oficial",
+      summary: PUBLIC_PAGE_TEMPLATE_REGISTRY[nextTemplate].label,
       body: JSON.stringify({ activeTemplate: nextTemplate }),
       resourceUrl: null,
       resourceCategory: PUBLIC_PAGE_TEMPLATE_CATEGORY,
@@ -749,8 +750,11 @@ export default function AdminSalesImages() {
                 )
               }
             >
-              <option value="official">Template Oficial</option>
-              <option value="premium">Template Premium</option>
+              {PUBLIC_PAGE_TEMPLATES.map(template => (
+                <option key={template} value={template}>
+                  {PUBLIC_PAGE_TEMPLATE_REGISTRY[template].label}
+                </option>
+              ))}
             </select>
             <button
               type="button"
