@@ -294,9 +294,42 @@ Executar a validação final da Etapa 7 em uma sessão sem acesso às variáveis
 - A opção “solicitar site para computador” continua validada pelo resolver determinístico, não em um aparelho físico.
 - A execução completa padrão ainda pode expirar o teste de PDF com o limite de 5 s sob alta concorrência; a suíte completa passou com concorrência reduzida e timeout de teste maior.
 
+## Etapa 8 — Primeiro template plug-and-play adicional
+
+**Status:** implementação concluída; validação automatizada e prévias concluídas.
+
+### Relação com a sequência oficial
+
+- O plano `03-PLANO-DE-ACAO.md` termina suas fases numeradas em 7 e permite continuar adicionando templates depois da validação inicial.
+- O `04-ROADMAP.md` contém oito marcos; seu Marco 7 pede o primeiro template novo plug-and-play e o Marco 8 pede validação final.
+- Para continuar sem reescrever as etapas já concluídas, esta entrada registra a continuação local como Etapa 8 e mantém explícito que ainda resta o Marco 8 do roadmap.
+
+### Feito
+
+- Registrado o ID estável `journey`, com metadados próprios e rótulo “Template Jornada”.
+- O novo renderer reutiliza `Home` e o mesmo `PublicSalesContentSnapshot`; a apresentação fica isolada em `PublicSalesJourneyTemplate.css`. A seleção padrão continua `official` e os templates `official` e `premium` não foram substituídos.
+- A lista do painel administrativo deriva de `PUBLIC_PAGE_TEMPLATES`, então a nova opção aparece sem fluxo paralelo. O layout visual continua separado por template e breakpoint; o contrato v1 e os layouts existentes não mudaram.
+- `/preview?template=journey` permite validar o novo estilo sem persistir a seleção. `/preview` sem parâmetro continua exibindo `premium`.
+- Não foram alterados copy, conteúdo comercial, CTAs, referral/tracking, fluxos de pedido, dados remotos ou dependências.
+
+### Verificações
+
+- `pnpm check`: passou.
+- Suíte completa com `--maxWorkers=4 --no-file-parallelism --testTimeout=15000`: 85 arquivos e 328 testes passaram, com variáveis de banco removidas.
+- `pnpm build`: passou. Persistem o aviso conhecido de chunk JavaScript acima de 500 kB e o aviso de dados desatualizados em `baseline-browser-mapping`.
+- O CSS foi analisado: todos os seletores estão sob `.public-sales-journey-template`, sem fontes ou assets externos.
+- Workflow `Start application` reiniciado e em execução na porta 5000. A prévia Journey carregou em desktop (1440×1000) e mobile (390×844); a página padrão `official` e `/preview` `premium` também renderizaram. Sem erros da aplicação no console.
+- Nenhuma migração, gravação remota ou alteração do template ativo persistido foi executada.
+
+### Limitações e próximo passo exato
+
+- A captura não tem sessão administrativa, portanto o painel autenticado não foi verificado visualmente. O seletor é gerado da lista compartilhada, mas não foi salvo: salvar mudaria a configuração global persistida.
+- Não foi usado um telefone físico para validar a opção “solicitar site para computador”; o modo continua coberto pelo resolver determinístico.
+- O Marco 8 do `04-ROADMAP.md` fica parcialmente pendente. Quando houver uma sessão autorizada e um ambiente isolado de teste, verificar a opção Journey no painel e sua seleção sem tocar na configuração de produção; validar também os modos mobile e desktop-em-telefone em aparelho físico. Não salvar nem testar contra o banco remoto de produção.
+
 ### Estado para retomada
 
-As etapas 0–7 estão concluídas. Não há outra etapa pendente neste plano; a próxima retomada pode partir deste arquivo sem depender do histórico do chat.
+As fases 0–7 do `03-PLANO-DE-ACAO.md` e a implementação local da Etapa 8 estão concluídas. A sequência não termina aí: o `04-ROADMAP.md`, na [pasta de desenvolvimento no GitHub](https://github.com/sistemacodigolucrativo/pagina-lucrativa-consolidada/tree/main/DESENVOLVIMENTO%20DE%20LAYOUT), tem oito marcos. A Etapa 8 atende ao Marco 7, de criar o primeiro template novo; o Marco 8, de validação final, ainda tem as verificações manuais listadas acima. O roadmap remoto não está incluído neste checkout.
 
 ## Histórico de etapas
 
@@ -310,3 +343,4 @@ As etapas 0–7 estão concluídas. Não há outra etapa pendente neste plano; a
 | 5 — Editor visual por contrato | Concluída | IDs canônicos por chave lógica com aliases legados; contrato persistido continua v1 e sem migração remota automática. |
 | 6 — Contrato para novos templates | Concluída | Documentado o caminho de registry/renderer e a compatibilidade dos templates e layouts existentes. |
 | 7 — Validação final | Concluída | Check/build passaram; 328 testes passaram com concorrência limitada; previews público, mobile e Premium carregaram. |
+| 8 — Primeiro template novo (Marco 7 do roadmap) | Concluída | `journey` compartilha `Home` e conteúdo, usa CSS isolado e tem prévia não persistente; resta a validação manual do Marco 8. |

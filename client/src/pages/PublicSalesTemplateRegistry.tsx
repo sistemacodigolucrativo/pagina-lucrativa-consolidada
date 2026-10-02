@@ -6,6 +6,7 @@ import {
 } from "@shared/publicPageTemplate";
 import type { PublicSalesContentSnapshot } from "@shared/publicSalesContent";
 import Home from "./Home";
+import "./PublicSalesJourneyTemplate.css";
 
 type PublicSalesPageProps = {
   content: PublicSalesContentSnapshot;
@@ -35,6 +36,14 @@ export const PUBLIC_SALES_TEMPLATE_REGISTRY = {
     wrapper: {
       className: "public-sales-premium-preview real-public-sales-preview",
       dataPublicTemplate: "premium",
+    },
+  },
+  journey: {
+    ...PUBLIC_PAGE_TEMPLATE_REGISTRY.journey,
+    component: Home,
+    wrapper: {
+      className: "public-sales-journey-template",
+      dataPublicTemplate: "journey",
     },
   },
 } satisfies Record<PublicPageTemplate, PublicSalesTemplateDefinition>;

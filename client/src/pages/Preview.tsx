@@ -1,4 +1,8 @@
 import { usePublicSalesCopy } from "@/components/PublicSalesCopyRuntime";
+import {
+  normalizePublicPageTemplate,
+  type PublicPageTemplate,
+} from "@shared/publicPageTemplate";
 import { PublicSalesTemplateRenderer } from "./PublicSalesTemplateRegistry";
 import "./PreviewPublicSales.css";
 
@@ -19,13 +23,29 @@ import "./PreviewPublicSales.css";
 
 export default function Preview() {
   const { content } = usePublicSalesCopy();
+  const requestedTemplate = new URLSearchParams(window.location.search).get(
+    "template"
+  );
+  const previewTemplate: PublicPageTemplate =
+    requestedTemplate === null
+      ? "premium"
+      : normalizePublicPageTemplate(requestedTemplate);
 
   return (
-    <main className="premium-public-preview-admin-shell premium-public-preview-fullscreen">
+    <main
+      className={
+        previewTemplate === "premium"
+          ? "premium-public-preview-admin-shell premium-public-preview-fullscreen"
+          : "public-sales-template-preview-fullscreen"
+      }
+    >
       <div
         data-preview-scope="public-sales-page"
       >
-        <PublicSalesTemplateRenderer template="premium" content={content} />
+        <PublicSalesTemplateRenderer
+          template={previewTemplate}
+          content={content}
+        />
       </div>
     </main>
   );

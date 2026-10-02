@@ -1,7 +1,7 @@
 export const PUBLIC_PAGE_TEMPLATE_CATEGORY = "public-sales-layout";
 export const PUBLIC_PAGE_TEMPLATE_RESOURCE = "template";
 
-export const PUBLIC_PAGE_TEMPLATES = ["official", "premium"] as const;
+export const PUBLIC_PAGE_TEMPLATES = ["official", "premium", "journey"] as const;
 export type PublicPageTemplate = (typeof PUBLIC_PAGE_TEMPLATES)[number];
 
 export const PUBLIC_PAGE_TEMPLATE_REGISTRY = {
@@ -13,6 +13,11 @@ export const PUBLIC_PAGE_TEMPLATE_REGISTRY = {
     label: "Template Premium",
     description:
       "Apresentação premium da mesma página, com conteúdo e funcionalidades compartilhados.",
+  },
+  journey: {
+    label: "Template Jornada",
+    description:
+      "Apresentação editorial da mesma página, com conteúdo e funcionalidades compartilhados.",
   },
 } as const satisfies Record<
   PublicPageTemplate,

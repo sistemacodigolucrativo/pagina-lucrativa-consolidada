@@ -9,6 +9,11 @@
   background: #05070d;
 }
 
+.public-sales-template-preview-fullscreen {
+  min-height: 100vh;
+  padding: 0;
+}
+
 .premium-public-preview-note {
   display: flex;
   flex-wrap: wrap;

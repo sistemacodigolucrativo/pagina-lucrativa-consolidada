@@ -30,6 +30,14 @@ describe("editor visual real da pagina publica", () => {
     layout.elements["hero.title"] = { x: 12, y: -8, width: 480 };
     expect(parsePublicVisualLayout(JSON.stringify(layout))).toEqual(layout);
     expect(parsePublicVisualLayout('{"version":2}')).toBeNull();
+
+    const journeyLayout = createEmptyPublicVisualLayout("journey", "mobile");
+    expect(publicVisualLayoutResource("journey", "mobile")).toBe(
+      "layout:journey:mobile"
+    );
+    expect(parsePublicVisualLayout(JSON.stringify(journeyLayout))).toEqual(
+      journeyLayout
+    );
   });
 
   it("migra IDs posicionais para chaves estáveis sem mudar o contrato v1", () => {
