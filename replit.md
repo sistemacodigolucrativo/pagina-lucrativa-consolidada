@@ -20,7 +20,7 @@
 - Layout visual deve continuar seguro e responsivo. Não persista HTML arbitrário nem permita que alterações em um breakpoint/template destruam os demais.
 - A composição “desktop no navegador mobile” deve ser explícita e independente das compactações mobile/tablet; mobile normal e tablet devem continuar com apresentações apropriadas.
 - Antes de remover estilos, seletores, fallback ou fluxo antigo, confirme que o substituto está implementado e validado.
-- Em alterações dessa área, atualize `docs/REPLIT_AGENT_STATUS.md` ao fim de cada etapa relevante com mudanças, decisões, verificações, erros, pendências e próximo passo exato.
+- Ao concluir cada etapa da Página Pública de Vendas, atualize `docs/REPLIT_AGENT_STATUS.md` com mudanças, decisões, verificações, erros, pendências e o próximo passo exato, deixando contexto suficiente para um Remix futuro continuar sem depender do histórico do chat.
 
 ## Validação
 
