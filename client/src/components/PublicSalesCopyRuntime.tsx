@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { withAppBase } from "@/lib/devPath";
+import { getPublicSalesPresentation } from "@/lib/publicSalesPresentation";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import {
@@ -137,16 +138,6 @@ export function PublicSalesCopyProvider({ children }: { children: ReactNode }) {
   );
 }
 
-function breakpointForWidth(width: number): "desktop" | "tablet" | "mobile" {
-  if (width <= 560) return "mobile";
-  if (width <= 980) return "tablet";
-  return "desktop";
-}
-
-function publicVisualBreakpointForWidth(width: number): PublicVisualBreakpoint {
-  return breakpointForWidth(width);
-}
-
 function clamp(min: number, value: number, max: number) {
   return Math.min(max, Math.max(min, value));
 }
@@ -223,7 +214,7 @@ function applyHeroTitle(overrides: PublicSalesCopyOverrides, ready: boolean) {
 }
 
 function applyFloatingLayout(layout: FloatingLayout) {
-  const breakpoint = breakpointForWidth(window.innerWidth);
+  const breakpoint = getPublicSalesPresentation().visualBreakpoint;
   const positions = layout[breakpoint] ?? {};
   const selectors: Record<"fab" | "cta" | "toast", string> = {
     fab: ".member-chat-fab-wrap",
@@ -741,7 +732,7 @@ export default function PublicSalesCopyRuntime() {
     useState<PublicVisualBreakpoint>(() =>
       typeof window === "undefined"
         ? "desktop"
-        : publicVisualBreakpointForWidth(window.innerWidth)
+        : getPublicSalesPresentation().visualBreakpoint
     );
   const activeSavedLayout =
     visualEditor.layouts[pageTemplate]?.[activeBreakpoint];
@@ -1007,7 +998,7 @@ export default function PublicSalesCopyRuntime() {
 
   useEffect(() => {
     const updateBreakpoint = () =>
-      setActiveBreakpoint(publicVisualBreakpointForWidth(window.innerWidth));
+      setActiveBreakpoint(getPublicSalesPresentation().visualBreakpoint);
     window.addEventListener("resize", updateBreakpoint);
     updateBreakpoint();
     return () => window.removeEventListener("resize", updateBreakpoint);

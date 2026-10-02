@@ -1,18 +1,32 @@
 import { useEffect } from "react";
+import { getPublicSalesPresentation } from "@/lib/publicSalesPresentation";
 
-const MOBILE_TABLET_QUERY = "(max-width: 900px)";
+const COARSE_POINTER_QUERY = "(pointer: coarse)";
 const COMPACT_SCROLL_THRESHOLD = 28;
 const COMPACT_CLASS = "public-mobile-scrolled";
+const PRESENTATION_ATTRIBUTE = "data-public-sales-presentation";
 
 export default function PublicMobileCompactHeaderRuntime() {
   useEffect(() => {
-    const media = window.matchMedia(MOBILE_TABLET_QUERY);
+    const pointerMedia = window.matchMedia(COARSE_POINTER_QUERY);
     let frame = 0;
 
     const sync = () => {
       frame = 0;
       const isPublicSalesPage = Boolean(document.querySelector(".sales-page.reference-page"));
-      const shouldCompact = isPublicSalesPage && media.matches && window.scrollY > COMPACT_SCROLL_THRESHOLD;
+      const presentation = getPublicSalesPresentation();
+      if (isPublicSalesPage) {
+        document.documentElement.setAttribute(
+          PRESENTATION_ATTRIBUTE,
+          presentation.mode
+        );
+      } else {
+        document.documentElement.removeAttribute(PRESENTATION_ATTRIBUTE);
+      }
+      const shouldCompact =
+        isPublicSalesPage &&
+        presentation.compactHeader &&
+        window.scrollY > COMPACT_SCROLL_THRESHOLD;
       document.documentElement.classList.toggle(COMPACT_CLASS, shouldCompact);
     };
 
@@ -20,18 +34,24 @@ export default function PublicMobileCompactHeaderRuntime() {
       if (frame) return;
       frame = window.requestAnimationFrame(sync);
     };
+    const routeObserver = new MutationObserver(scheduleSync);
 
     sync();
     window.addEventListener("scroll", scheduleSync, { passive: true });
     window.addEventListener("resize", scheduleSync);
-    media.addEventListener?.("change", scheduleSync);
+    window.addEventListener("orientationchange", scheduleSync);
+    pointerMedia.addEventListener?.("change", scheduleSync);
+    routeObserver.observe(document.body, { childList: true, subtree: true });
 
     return () => {
       if (frame) window.cancelAnimationFrame(frame);
+      routeObserver.disconnect();
       document.documentElement.classList.remove(COMPACT_CLASS);
+      document.documentElement.removeAttribute(PRESENTATION_ATTRIBUTE);
       window.removeEventListener("scroll", scheduleSync);
       window.removeEventListener("resize", scheduleSync);
-      media.removeEventListener?.("change", scheduleSync);
+      window.removeEventListener("orientationchange", scheduleSync);
+      pointerMedia.removeEventListener?.("change", scheduleSync);
     };
   }, []);
 

@@ -1,10 +1,10 @@
 ---
-name: Base de release atual
-description: Registra qual linha remota foi validada como base mais recente do workspace.
+name: Validação da ancestralidade das branches
+description: Como selecionar com segurança a base entre branches main e release.
 ---
 
-A linha `release/final-audit-launch` foi validada como posterior à `main` e passou a ser a base do workspace. A `main` continua sendo uma linha remota anterior, não a base local atual.
+Os nomes `main` e `release` não garantem qual branch contém a base mais recente. A relação entre elas pode mudar e uma nota de baseline pode ficar obsoleta.
 
-**Why:** A branch de release continha alterações posteriores de aplicação e auditoria que não estavam na `main`. Trocar de volta sem comparar os ponteiros pode reintroduzir uma versão mais antiga.
+**Why:** Uma retomada encontrou a branch local `main` contendo a linha de release e commits posteriores, contrariando a anotação antiga que apontava `release` como base vigente.
 
-**How to apply:** Antes de atualizar ou enviar código, comparar explicitamente `main` e `release/final-audit-launch`. Não fazer push ou merge automático entre elas.
+**How to apply:** Antes de atualizar ou enviar código, confira a branch atual, `git status`, ponteiros locais/remotos e ancestralidade com `merge-base`/`rev-list`. Não faça push ou merge automático com base apenas no nome da branch ou nesta nota.

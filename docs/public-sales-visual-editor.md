@@ -77,11 +77,18 @@ A camada usa os seletores já existentes em `shared/publicSalesCopyEditor.ts`. I
 
 ## Responsividade
 
-O breakpoint é definido pela largura real do viewport:
+O resolver compartilhado classifica o layout pela largura real do viewport:
 
 - mobile: até 560 px
 - tablet: até 980 px
 - desktop: acima de 980 px
+
+Ele também identifica explicitamente o modo desktop aberto em um telefone quando
+há entrada tátil, lado menor da tela de até 560 px e viewport de pelo menos
+901 px. Esse modo não substitui o breakpoint visual: o editor continua usando a
+largura do viewport, e a compactação do cabeçalho continua seguindo seu próprio
+limite de 900 px. A apresentação pode ser inspecionada em
+`data-public-sales-presentation` no elemento raiz do documento.
 
 Os layouts visuais são persistidos separadamente por breakpoint, evitando que uma alteração mobile sobrescreva diretamente desktop/tablet.
 

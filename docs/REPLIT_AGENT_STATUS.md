@@ -198,6 +198,37 @@ Iniciar a Etapa 4: validar a detecção de desktop e desktop mobile e então int
 
 Seguir para a Etapa 4: validar a detecção de desktop e desktop mobile antes de integrar um resolver único de apresentação ao runtime e ao cabeçalho.
 
+## Etapa 4 — Desktop real e desktop mobile
+
+**Status:** concluída.
+
+### Feito
+
+- Criado um resolver compartilhado para breakpoints visuais (`mobile` até 560 px, `tablet` até 980 px, `desktop` acima de 980 px), limite de cabeçalho compacto (900 px) e identificação explícita de desktop aberto em telefone.
+- A identificação desktop-no-telefone exige entrada tátil, lado menor da tela de até 560 px e viewport a partir de 901 px. Ela não sobrescreve o breakpoint visual nem força o layout mobile/tablet; os dois modos continuam baseados na largura real do viewport, inclusive em orientação horizontal.
+- Runtime de copy/layout flutuante e editor visual passaram a consumir o resolver compartilhado.
+- O runtime do cabeçalho também consome o resolver, registra o modo atual em `data-public-sales-presentation`, acompanha mudanças de rota, resize, orientação e alteração de ponteiro, e aplica a classe compacta somente pelo limite de viewport de 900 px.
+- Removida a duplicação do media query de 900 px no CSS do cabeçalho compacto; a classe aplicada pelo runtime tornou-se a fonte única para esse efeito de rolagem. As demais regras responsivas da página permaneceram inalteradas.
+- Nenhum conteúdo comercial, template, rota ou dado persistido foi alterado.
+
+### Verificações
+
+- `pnpm check`: passou.
+- `pnpm exec vitest run shared/publicSalesPresentation.test.ts server/publicHeader.responsive.test.ts`: 30 testes passaram.
+- `pnpm build`: passou; permanece o aviso já conhecido de chunk acima de 500 kB e recomendação de atualizar `baseline-browser-mapping`.
+- Workflow principal reiniciado; `/` capturada em 1440×1000 e 390×844. Ambas carregaram sem erro de aplicação no console.
+- Os testes do resolver cobrem mobile normal, tablet, desktop, desktop no navegador do telefone, orientação horizontal e limites de 560/900/980 px. A detecção de “solicitar site para computador” não foi confirmada em aparelho físico.
+- Nenhum teste com gravação no banco foi executado; nenhum dado de banco foi consultado ou alterado.
+
+### Limitações
+
+- Não foi possível confirmar visualmente o modo “site para computador” em um telefone físico ou navegador com essa opção. Os limites e a decisão de modo foram validados com entradas determinísticas no resolver.
+- A tela administrativa autenticada não foi visualmente verificada no navegador de captura.
+
+### Próximo passo exato
+
+Iniciar a Etapa 5: auditar o contrato do editor visual por IDs estáveis e a compatibilidade com layouts já persistidos; preservar a versão 1 e não modificar dados remotos.
+
 ## Histórico de etapas
 
 | Etapa | Estado | Resultado |
@@ -206,7 +237,7 @@ Seguir para a Etapa 4: validar a detecção de desktop e desktop mobile antes de
 | 1 — Conteúdo canônico | Concluída | Provider resolve defaults e overrides válidos em um snapshot único usado pela home existente. |
 | 2 — Registry de templates | Concluída | Metadados e renderer compartilham os templates existentes e centralizam o wrapper premium. |
 | 3 — Isolamento de estilos | Concluída | Grupos ativos exclusivos de `Home` foram limitados a `.reference-page`; estilos compartilhados ficaram globais e regras antigas sem consumidor foram preservadas. |
-| 4 — Desktop real e desktop mobile | Planejada | Criar resolver único de apresentação e integrá-lo ao runtime/cabeçalho após validar detecção. |
+| 4 — Desktop real e desktop mobile | Concluída | Resolver compartilhado mantém breakpoint visual e compactação do cabeçalho por viewport e identifica separadamente desktop aberto em telefone. |
 | 5 — Editor visual por contrato | Planejada | Manter persistência existente; estabilizar mapeamento lógico somente com compatibilidade v1. |
 | 6 — Contrato para novos templates | Planejada | Documentar manifesto/registro com base no registry implementado. |
 | 7 — Validação final | Planejada | Executar check/build/testes e cenários que forem acessíveis sem declarar validação física não executada. |
