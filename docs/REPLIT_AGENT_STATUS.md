@@ -229,6 +229,75 @@ Seguir para a Etapa 4: validar a detecção de desktop e desktop mobile antes de
 
 Iniciar a Etapa 5: auditar o contrato do editor visual por IDs estáveis e a compatibilidade com layouts já persistidos; preservar a versão 1 e não modificar dados remotos.
 
+## Etapa 5 — Editor visual por IDs estáveis
+
+**Status:** concluída.
+
+### Feito
+
+- Confirmado que os campos de copy já usam IDs lógicos `{sectionId}.{fieldKey}`; blocos, imagens e ações ainda dependiam da posição no DOM.
+- Criado um contrato para alvos de layout com chave estável: `{sectionId}.{kind}.{stableKey}`. O markup usa `data-public-visual-key` nos itens de pacote, objeções, prova social, imagens de seção e ações pertinentes, inclusive o envio do formulário de ativação.
+- IDs posicionais v1 (`block1`, `image1`, `action1`) continuam como aliases de leitura. Ao editar, o ID canônico tem precedência, referências `duplicateOf` são atualizadas em memória e os aliases reconhecidos são removidos apenas do layout pendente que o administrador poderá salvar.
+- IDs sem chave estável e registros sem consumidor continuam preservados; chaves muito longas permanecem no formato posicional v1. A versão, as categorias, os resource types e a separação por template/breakpoint não mudaram.
+- Elementos duplicados visualmente são excluídos da descoberta de alvos para que um clone não altere os índices legados dos demais elementos.
+- Documentado o contrato e a compatibilidade em `docs/public-sales-visual-editor.md`; assertions de markup foram alinhadas às novas chaves sem mudar a validação dos CTAs.
+- Nenhuma consulta manual, gravação ou migração de banco foi executada.
+
+### Arquivos alterados
+
+- `shared/publicVisualEditor.ts` e `client/src/components/PublicSalesCopyRuntime.tsx`.
+- `client/src/pages/Home.tsx` e `client/src/components/VioletaNeonActivationCard.tsx`.
+- `server/publicVisualEditor.integration.test.ts` e `server/publicHeader.responsive.test.ts`.
+- `docs/public-sales-visual-editor.md`.
+
+### Verificações
+
+- `pnpm check`: passou.
+- Suítes focadas do editor visual, templates, conteúdo e cabeçalho: 35 testes passaram.
+- Cobertos: precedência do ID canônico, leitura de layout somente com ID legado, remapeamento de `duplicateOf`, ausência de mutação do objeto original, fallback posicional e preservação da versão 1.
+
+### Próximo passo exato
+
+Documentar o contrato para registrar novos templates na Etapa 6.
+
+## Etapa 6 — Contrato para novos templates
+
+**Status:** concluída.
+
+### Feito
+
+- Criado `docs/PUBLIC_SALES_TEMPLATE_CONTRACT.md` com o fluxo de inclusão de IDs, metadados e renderers, escopo de estilos, testes mínimos e compatibilidade dos layouts v1.
+- Registrada a regra em `replit.md` para que futuras Remix mantenham os IDs lógicos e aliases compatíveis do editor visual.
+- O documento proíbe renomear/reutilizar IDs persistidos, duplicar a página ou lógica comercial, criar fontes de copy por template e fazer alterações remotas de banco como parte do registro.
+
+### Próximo passo exato
+
+Executar a validação final da Etapa 7 em uma sessão sem acesso às variáveis de banco.
+
+## Etapa 7 — Validação final
+
+**Status:** concluída.
+
+### Verificações
+
+- `pnpm check`: passou.
+- Execução focada das cinco suítes pertinentes: 35 testes passaram.
+- A execução padrão de `pnpm test` passou em 84 arquivos/327 testes, mas o teste de PDFs ultrapassou seu limite de 5 s sob concorrência e expirou. Reexecução completa com `--maxWorkers=4 --no-file-parallelism --testTimeout=15000`: 85 arquivos e 328 testes passaram. As variáveis de banco foram removidas durante as execuções de Vitest.
+- `pnpm build`: passou. Permanecem os avisos conhecidos de chunk JavaScript acima de 500 kB e recomendação de atualizar `baseline-browser-mapping`.
+- Workflow `Start application` reiniciado e em execução na porta 5000, sem erro de inicialização.
+- Preview Oficial capturado em `/` e Premium em `/preview`, cada um a 1440×1000 e 390×844. As páginas carregaram sem erros de aplicação no console.
+- Nenhuma migração ou gravação remota foi executada durante a validação.
+
+### Limitações
+
+- A interface administrativa autenticada não foi visualmente verificada porque o navegador de captura não possui sessão de administrador.
+- A opção “solicitar site para computador” continua validada pelo resolver determinístico, não em um aparelho físico.
+- A execução completa padrão ainda pode expirar o teste de PDF com o limite de 5 s sob alta concorrência; a suíte completa passou com concorrência reduzida e timeout de teste maior.
+
+### Estado para retomada
+
+As etapas 0–7 estão concluídas. Não há outra etapa pendente neste plano; a próxima retomada pode partir deste arquivo sem depender do histórico do chat.
+
 ## Histórico de etapas
 
 | Etapa | Estado | Resultado |
@@ -238,6 +307,6 @@ Iniciar a Etapa 5: auditar o contrato do editor visual por IDs estáveis e a com
 | 2 — Registry de templates | Concluída | Metadados e renderer compartilham os templates existentes e centralizam o wrapper premium. |
 | 3 — Isolamento de estilos | Concluída | Grupos ativos exclusivos de `Home` foram limitados a `.reference-page`; estilos compartilhados ficaram globais e regras antigas sem consumidor foram preservadas. |
 | 4 — Desktop real e desktop mobile | Concluída | Resolver compartilhado mantém breakpoint visual e compactação do cabeçalho por viewport e identifica separadamente desktop aberto em telefone. |
-| 5 — Editor visual por contrato | Planejada | Manter persistência existente; estabilizar mapeamento lógico somente com compatibilidade v1. |
-| 6 — Contrato para novos templates | Planejada | Documentar manifesto/registro com base no registry implementado. |
-| 7 — Validação final | Planejada | Executar check/build/testes e cenários que forem acessíveis sem declarar validação física não executada. |
+| 5 — Editor visual por contrato | Concluída | IDs canônicos por chave lógica com aliases legados; contrato persistido continua v1 e sem migração remota automática. |
+| 6 — Contrato para novos templates | Concluída | Documentado o caminho de registry/renderer e a compatibilidade dos templates e layouts existentes. |
+| 7 — Validação final | Concluída | Check/build passaram; 328 testes passaram com concorrência limitada; previews público, mobile e Premium carregaram. |

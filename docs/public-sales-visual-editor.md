@@ -75,6 +75,15 @@ Cada layout registra:
 
 A camada usa os seletores já existentes em `shared/publicSalesCopyEditor.ts`. Isso cobre os principais títulos, textos, cards, itens, dúvidas, oferta e blocos de copy pública mapeados no sistema atual.
 
+## IDs estáveis e compatibilidade v1
+
+- Campos de copy mantêm o ID lógico `{sectionId}.{fieldKey}`.
+- Alvos de layout com identidade própria recebem `data-public-visual-key`; o ID canônico segue `{sectionId}.{kind}.{stableKey}`, onde `kind` é `block`, `image` ou `action`.
+- Quando há uma chave estável, o ID posicional antigo (`block1`, `image1` ou `action1`) é lido como alias para compatibilidade com layouts já salvos.
+- A normalização acontece em memória ao aplicar ou editar o layout. O layout antigo só é regravado com IDs canônicos se um administrador editar e salvar; não há migração automática nem escrita em banco.
+- O contrato persistido continua em `version: 1`, com as mesmas categorias, resource types e separação por template/breakpoint. IDs sem consumidor atual continuam preservados.
+- Para novos itens repetidos, forneça uma chave de domínio estável no HTML; não use texto visível nem posição do array como identidade. Se não houver chave segura ou o ID ultrapassar 180 caracteres, mantenha o ID v1 posicional.
+
 ## Responsividade
 
 O resolver compartilhado classifica o layout pela largura real do viewport:
@@ -102,9 +111,16 @@ Os layouts visuais são persistidos separadamente por breakpoint, evitando que u
 ## Validações executadas
 
 - `pnpm check`
+- Cinco suítes focadas de editor, templates, conteúdo e cabeçalho: 35 testes passaram.
+- A primeira execução padrão de `pnpm test` passou em 84 arquivos/327 testes; o teste de PDFs excedeu 5 s sob concorrência e expirou. Reexecução completa com concorrência limitada e timeout de 15 s passou: 85 arquivos/328 testes.
+- `pnpm build` passou; há avisos de chunk JavaScript acima de 500 kB e recomendação de atualizar `baseline-browser-mapping`.
+- Workflow `Start application` reiniciado e ativo na porta 5000.
+- Preview Oficial `/`: desktop 1440×1000 e mobile 390×844. Preview Premium `/preview`: desktop 1440×1000 e mobile 390×844. Os quatro carregaram sem erros de aplicação no console.
+- Os testes Vitest foram executados sem as variáveis de ambiente do banco. Nenhuma migração ou gravação remota foi executada.
 
-## Pendências recomendadas
+## Limitações e pendências recomendadas
 
 - Validar manualmente no navegador com administrador autenticado.
-- Rodar suíte completa e build após a revisão visual local.
+- A execução padrão da suíte completa ainda pode expirar o teste de PDF com limite de 5 s sob alta concorrência; a reexecução com concorrência reduzida passou.
+- A opção “solicitar site para computador” não foi confirmada em aparelho físico; o resolver foi coberto por testes determinísticos.
 - Evoluir edição de imagens diretamente na página pública se isso for necessário além do editor administrativo atual.

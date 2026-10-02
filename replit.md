@@ -10,6 +10,7 @@
 - Mantenha os defaults do editor alinhados ao que a página pública já exibe. Quando duas fontes descrevem a mesma lista (por exemplo, objeções), derive uma da outra em vez de manter cópias divergentes.
 - Os IDs e rótulos persistidos dos templates vivem em `shared/publicPageTemplate.ts`; o renderer em `PublicSalesTemplateRegistry.tsx` associa esses IDs à apresentação. Hoje, `official` e `premium` usam o mesmo `Home`; somente `premium` aplica o wrapper CSS. Rotas públicas e prévia administrativa devem usar esse renderer.
 - O editor já persiste layouts em chaves separadas por template e breakpoint. Preserve esses dados e contratos ao adicionar IDs estáveis ou ajustar breakpoints.
+- IDs de copy continuam sendo `{sectionId}.{fieldKey}`. Para blocos, imagens e ações repetíveis, use `data-public-visual-key` para uma identidade lógica e mantenha aliases posicionais compatíveis com layouts v1; não migre nem grave dados sem uma edição administrativa explícita.
 - A regra central dos templates é separar conteúdo de apresentação: templates compartilham os mesmos textos, dados e funcionalidades comerciais. Não copie `Home.tsx` nem duplique a lógica de pedido, referral, tracking, prova social, FAQ, SEO ou segurança.
 - Antes de introduzir uma abstração, inspecione os contratos e runtimes existentes. Reutilize-os quando isso for compatível e faça adaptações pequenas, reversíveis e cobertas por validação.
 

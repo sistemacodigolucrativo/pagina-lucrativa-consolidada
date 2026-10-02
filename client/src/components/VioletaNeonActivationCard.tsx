@@ -37,7 +37,7 @@ export default function VioletaNeonActivationCard({
     <label className="application-field violeta-neon-field"><span>E-mail</span><input name="email" type="email" autoComplete="email" required maxLength={320} value={contact.email} onChange={event => onEmailChange(event.target.value)} placeholder="voce@email.com" /></label>
     <label className="application-field violeta-neon-field"><span>WhatsApp</span><PhoneInput name="whatsapp" required value={contact.whatsapp} onChange={onWhatsappChange} placeholder="(00) 0 0000-0000" /></label>
     {errorMessage ? <p className="application-error violeta-neon-error" role="alert">{errorMessage}</p> : null}
-    <button className="violeta-neon-submit" type="submit" disabled={isPending}>{isPending ? "Enviando pedido..." : "Quero ativar minha estrutura"}<ArrowUpRight size={16} /></button>
+    <button data-public-visual-key="activation-submit" className="violeta-neon-submit" type="submit" disabled={isPending}>{isPending ? "Enviando pedido..." : "Quero ativar minha estrutura"}<ArrowUpRight size={16} /></button>
     <small className="violeta-neon-privacy">Seus dados serão usados para dar continuidade ao atendimento da sua ativação.</small>
   </form>;
 }

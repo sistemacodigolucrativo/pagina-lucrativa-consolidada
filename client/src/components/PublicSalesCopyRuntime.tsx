@@ -35,12 +35,16 @@ import {
 import {
   PUBLIC_VISUAL_EDITOR_CATEGORY,
   createEmptyPublicVisualLayout,
+  normalizePublicVisualLayoutTargetIds,
+  publicVisualElementForTarget,
   publicVisualLayoutResource,
+  publicVisualTargetIdentity,
   parsePublicVisualLayout,
   type PublicVisualBreakpoint,
   type PublicVisualElement,
   type PublicVisualEditorConfig,
   type PublicVisualLayout,
+  type PublicVisualTargetIdentity,
 } from "@shared/publicVisualEditor";
 
 type Point = { x?: number; y?: number };
@@ -273,8 +277,7 @@ function queryWithin(root: HTMLElement, selector: string) {
   return root.querySelector<HTMLElement>(normalized);
 }
 
-type EditableTarget = {
-  id: string;
+type EditableTarget = PublicVisualTargetIdentity & {
   sectionId: string;
   fieldKey: string;
   label: string;
@@ -285,15 +288,23 @@ type EditableTarget = {
 function assignEditableTarget(
   targets: EditableTarget[],
   target: EditableTarget,
-  storage: "copy" | "layout"
+  storage: "copy" | "layout",
+  annotate = true
 ) {
-  if (target.element.closest("[data-visual-editor-ui]")) return;
-  target.element.dataset.publicVisualEditable = target.id;
-  target.element.dataset.publicVisualSection = target.sectionId;
-  target.element.dataset.publicVisualField = target.fieldKey;
-  target.element.dataset.publicVisualLabel = target.label;
-  target.element.dataset.publicVisualKind = target.kind;
-  target.element.dataset.publicVisualStorage = storage;
+  if (
+    target.element.closest(
+      "[data-visual-editor-ui], [data-public-visual-generated-duplicate]"
+    )
+  )
+    return;
+  if (annotate) {
+    target.element.dataset.publicVisualEditable = target.id;
+    target.element.dataset.publicVisualSection = target.sectionId;
+    target.element.dataset.publicVisualField = target.fieldKey;
+    target.element.dataset.publicVisualLabel = target.label;
+    target.element.dataset.publicVisualKind = target.kind;
+    target.element.dataset.publicVisualStorage = storage;
+  }
   targets.push(target);
 }
 
@@ -316,7 +327,7 @@ function editableBlockElements(root: HTMLElement) {
   );
 }
 
-function editableTargets(doc: Document): EditableTarget[] {
+function editableTargets(doc: Document, annotate = true): EditableTarget[] {
   const targets: EditableTarget[] = [];
   for (const section of PUBLIC_SALES_COPY_SECTIONS) {
     const root = sectionRoot(doc, section);
@@ -347,52 +358,74 @@ function editableTargets(doc: Document): EditableTarget[] {
           kind: "text",
           element,
         },
-        "copy"
+        "copy",
+        annotate
       );
     }
     editableBlockElements(root).forEach((block, index) => {
+      const identity = publicVisualTargetIdentity(
+        section.id,
+        "block",
+        block.dataset.publicVisualKey,
+        index
+      );
       assignEditableTarget(
         targets,
         {
-          id: `${section.id}.block${index + 1}`,
+          ...identity,
           sectionId: section.id,
           fieldKey: `block${index + 1}`,
           label: labelForBlockElement(section.adminLabel, index),
           kind: "block",
           element: block,
         },
-        "layout"
+        "layout",
+        annotate
       );
     });
     root.querySelectorAll<HTMLElement>("img").forEach((image, index) => {
+      const identity = publicVisualTargetIdentity(
+        section.id,
+        "image",
+        image.dataset.publicVisualKey,
+        index
+      );
       assignEditableTarget(
         targets,
         {
-          id: `${section.id}.image${index + 1}`,
+          ...identity,
           sectionId: section.id,
           fieldKey: `image${index + 1}`,
           label: `${section.adminLabel} - imagem ${index + 1}`,
           kind: "image",
           element: image,
         },
-        "layout"
+        "layout",
+        annotate
       );
     });
     root
       .querySelectorAll<HTMLElement>("a, button, [role='button']")
       .forEach((action, index) => {
         if (action.closest("[data-public-visual-editable]") !== action) return;
+        const identity = publicVisualTargetIdentity(
+          section.id,
+          "action",
+          action.dataset.publicVisualKey,
+          index
+        );
         assignEditableTarget(
           targets,
           {
-            id: `${section.id}.action${index + 1}`,
+            ...identity,
             sectionId: section.id,
             fieldKey: `action${index + 1}`,
             label: labelForInteractiveElement(action, index),
             kind: "button",
             element: action,
           },
-          "layout"
+          "layout",
+          annotate
         );
       });
   }
@@ -448,13 +481,26 @@ function removeGeneratedDuplicates() {
     .forEach(element => element.remove());
 }
 
+function findEditableTarget(
+  targets: readonly EditableTarget[],
+  id: string
+) {
+  return targets.find(
+    target => target.id === id || target.legacyIds?.includes(id)
+  );
+}
+
 function applyVisualLayout(layout: PublicVisualLayout | undefined) {
   const targets = editableTargets(document);
+  const compatibleLayout = layout
+    ? normalizePublicVisualLayoutTargetIds(layout, targets)
+    : undefined;
   removeGeneratedDuplicates();
   const orderedGroups = new Map<HTMLElement, EditableTarget[]>();
   for (const target of targets) {
-    applyVisualElementStyle(target.element, layout?.elements[target.id]);
-    const order = layout?.elements[target.id]?.order;
+    const config = publicVisualElementForTarget(compatibleLayout, target);
+    applyVisualElementStyle(target.element, config);
+    const order = config?.order;
     if (typeof order === "number" && target.element.parentElement) {
       const group = orderedGroups.get(target.element.parentElement) ?? [];
       group.push(target);
@@ -464,16 +510,18 @@ function applyVisualLayout(layout: PublicVisualLayout | undefined) {
   orderedGroups.forEach((group, parent) => {
     group
       .sort((first, second) => {
-        const firstOrder = layout?.elements[first.id]?.order ?? 0;
-        const secondOrder = layout?.elements[second.id]?.order ?? 0;
+        const firstOrder =
+          publicVisualElementForTarget(compatibleLayout, first)?.order ?? 0;
+        const secondOrder =
+          publicVisualElementForTarget(compatibleLayout, second)?.order ?? 0;
         return firstOrder - secondOrder;
       })
       .forEach(target => parent.appendChild(target.element));
   });
-  if (!layout) return;
-  for (const [id, config] of Object.entries(layout.elements)) {
+  if (!compatibleLayout) return;
+  for (const [id, config] of Object.entries(compatibleLayout.elements)) {
     if (!config.duplicateOf) continue;
-    const source = targets.find(target => target.id === config.duplicateOf);
+    const source = findEditableTarget(targets, config.duplicateOf);
     if (!source || config.hidden) continue;
     const clone = source.element.cloneNode(true) as HTMLElement;
     clone.dataset.publicVisualGeneratedDuplicate = id;
@@ -487,6 +535,16 @@ function applyVisualLayout(layout: PublicVisualLayout | undefined) {
     source.element.insertAdjacentElement("afterend", clone);
     applyVisualElementStyle(clone, config);
   }
+}
+
+function visualLayoutElementForId(
+  layout: PublicVisualLayout | null | undefined,
+  id: string
+) {
+  const target = findEditableTarget(editableTargets(document, false), id);
+  return target
+    ? publicVisualElementForTarget(layout, target)
+    : layout?.elements[id];
 }
 
 type RectBounds = {
@@ -760,7 +818,10 @@ export default function PublicSalesCopyRuntime() {
   const cloneLayout = useCallback(
     (layout: PublicVisualLayout | null | undefined): PublicVisualLayout => {
       if (layout)
-        return JSON.parse(JSON.stringify(layout)) as PublicVisualLayout;
+        return normalizePublicVisualLayoutTargetIds(
+          JSON.parse(JSON.stringify(layout)) as PublicVisualLayout,
+          editableTargets(document, false)
+        );
       return createEmptyPublicVisualLayout(pageTemplate, activeBreakpoint);
     },
     [activeBreakpoint, pageTemplate]
@@ -876,7 +937,10 @@ export default function PublicSalesCopyRuntime() {
       const startY = event.clientY;
       const rect = element.getBoundingClientRect();
       const startConfig =
-        (pendingLayout ?? activeSavedLayout)?.elements[selectedNow.id] ?? {};
+        visualLayoutElementForId(
+          pendingLayout ?? activeSavedLayout,
+          selectedNow.id
+        ) ?? {};
       const startOffsetX = startConfig.x ?? 0;
       const startOffsetY = startConfig.y ?? 0;
       const startWidth = startConfig.width ?? rect.width;
@@ -1038,7 +1102,7 @@ export default function PublicSalesCopyRuntime() {
         if (!id) return;
         const rect = startElement.getBoundingClientRect();
         const startConfig =
-          (pendingLayout ?? activeSavedLayout)?.elements[id] ?? {};
+          visualLayoutElementForId(pendingLayout ?? activeSavedLayout, id) ?? {};
         const startOffsetX = startConfig.x ?? 0;
         const startOffsetY = startConfig.y ?? 0;
         const bounds = dragBoundsForElement(startElement);

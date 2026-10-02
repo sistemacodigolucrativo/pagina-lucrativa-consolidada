@@ -3,4 +3,5 @@
 - [Ancestralidade das branches](release-branch-baseline.md) — confira refs e ancestralidade antes de assumir que release é a base vigente.
 - [Ambiente de validação E2E](e2e-validation-environment.md) — confirmar Chromium e bibliotecas nativas antes de classificar falhas Playwright como falhas do produto.
 - [Drawer móvel nos testes](mobile-drawer-e2e.md) — o Sidebar móvel é desmontado fechado e fecha de forma assíncrona após navegar; escopar seletores ao drawer e aguardar o fechamento.
+- [Timeout de PDF no Vitest](vitest-parallel-pdf-timeout.md) — sob alta concorrência, valide timeout isolando a suíte ou reduzindo workers antes de concluir que houve regressão.
 - [Continuidade em Remix](remix-context-continuity.md) — decisões duráveis precisam estar em arquivos do projeto; o Remix não leva o histórico nem a memória do Agent.

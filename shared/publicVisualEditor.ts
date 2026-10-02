@@ -48,6 +48,69 @@ export const publicVisualLayoutSchema = z
 
 export type PublicVisualLayout = z.infer<typeof publicVisualLayoutSchema>;
 
+export type PublicVisualTargetIdentity = {
+  id: string;
+  legacyIds?: readonly string[];
+};
+
+export function publicVisualTargetIdentity(
+  sectionId: string,
+  kind: "block" | "image" | "action",
+  stableKey: string | undefined,
+  legacyIndex: number
+): PublicVisualTargetIdentity {
+  const legacyId = `${sectionId}.${kind}${legacyIndex + 1}`;
+  const key = stableKey?.trim();
+  if (!key) return { id: legacyId };
+
+  const id = `${sectionId}.${kind}.${key}`;
+  if (id.length > 180) return { id: legacyId };
+  return { id, legacyIds: [legacyId] };
+}
+
+export function normalizePublicVisualLayoutTargetIds(
+  layout: PublicVisualLayout,
+  targets: readonly PublicVisualTargetIdentity[]
+): PublicVisualLayout {
+  const elements = { ...layout.elements };
+  const legacyToStableId = new Map<string, string>();
+
+  for (const target of targets) {
+    for (const legacyId of target.legacyIds ?? []) {
+      if (legacyId === target.id) continue;
+      legacyToStableId.set(legacyId, target.id);
+      if (!Object.prototype.hasOwnProperty.call(elements, legacyId)) continue;
+      if (!Object.prototype.hasOwnProperty.call(elements, target.id)) {
+        elements[target.id] = elements[legacyId]!;
+      }
+      delete elements[legacyId];
+    }
+  }
+
+  for (const [id, element] of Object.entries(elements)) {
+    const stableSourceId = element.duplicateOf
+      ? legacyToStableId.get(element.duplicateOf)
+      : undefined;
+    if (stableSourceId) {
+      elements[id] = { ...element, duplicateOf: stableSourceId };
+    }
+  }
+
+  return { ...layout, elements };
+}
+
+export function publicVisualElementForTarget(
+  layout: PublicVisualLayout | null | undefined,
+  target: PublicVisualTargetIdentity
+) {
+  if (!layout) return undefined;
+  if (layout.elements[target.id]) return layout.elements[target.id];
+  for (const legacyId of target.legacyIds ?? []) {
+    if (layout.elements[legacyId]) return layout.elements[legacyId];
+  }
+  return undefined;
+}
+
 export const publicVisualModeSchema = z
   .object({
     enabled: z.boolean(),

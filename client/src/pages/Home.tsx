@@ -68,13 +68,13 @@ function Eyebrow({ children }: { children: string }) {
   return <div className="eyebrow"><span aria-hidden="true" />{children}</div>;
 }
 
-function JoinButton({ className = "" }: { className?: string }) {
-  return <a href="#f" className={`btn btn-primary ${className}`.trim()}>Quero ativar minha estrutura <ArrowUpRight size={16} /></a>;
+function JoinButton({ className = "", visualKey }: { className?: string; visualKey?: string }) {
+  return <a href="#f" data-public-visual-key={visualKey} className={`btn btn-primary ${className}`.trim()}>Quero ativar minha estrutura <ArrowUpRight size={16} /></a>;
 }
 
 function TopPromoBanner() {
   return <section className="top-promo-banner" aria-label="Apresentação do Método Código Lucrativo">
-    <img src={promoBannerImage} alt="Método Código Lucrativo pronto para começar, com estrutura consolidada, Escritório Virtual, ferramentas e treinamentos." />
+    <img data-public-visual-key="hero-banner" src={promoBannerImage} alt="Método Código Lucrativo pronto para começar, com estrutura consolidada, Escritório Virtual, ferramentas e treinamentos." />
   </section>;
 }
 
@@ -155,11 +155,11 @@ function AnimatedMemberCount({ value }: { value: number }) {
 }
 
 const virtualOfficeSlides = [
-  { title: "Método e estrutura", caption: "Base de apresentação e dados essenciais preparados para iniciar sua operação." },
-  { title: "Escritório Virtual", caption: "Painel para centralizar perfil, pedidos, campanhas e acompanhamento." },
-  { title: "Campanhas de divulgação", caption: "Links e canais organizados para divulgar com mais clareza." },
-  { title: "Pedidos e acompanhamento", caption: "Solicitações, pagamento, comprovante e status reunidos no fluxo existente." },
-  { title: "Biblioteca e Academia", caption: "Materiais e conteúdos de apoio para aprender e executar." },
+  { id: "method", title: "Método e estrutura", caption: "Base de apresentação e dados essenciais preparados para iniciar sua operação." },
+  { id: "office", title: "Escritório Virtual", caption: "Painel para centralizar perfil, pedidos, campanhas e acompanhamento." },
+  { id: "campaigns", title: "Campanhas de divulgação", caption: "Links e canais organizados para divulgar com mais clareza." },
+  { id: "orders", title: "Pedidos e acompanhamento", caption: "Solicitações, pagamento, comprovante e status reunidos no fluxo existente." },
+  { id: "library", title: "Biblioteca e Academia", caption: "Materiais e conteúdos de apoio para aprender e executar." },
 ];
 
 function StructureDigitalShowcase({ image, imageAlt, content }: { image: string | null; imageAlt: string; content: PublicSalesContentSnapshot }) {
@@ -196,14 +196,14 @@ function StructureDigitalShowcase({ image, imageAlt, content }: { image: string 
       </div>
       <div className="structure-showcase-stage">
         <div className="hero-photo-wrap virtual-office-carousel" role="region" aria-roledescription="carrossel" aria-label="Demonstração visual do Escritório Virtual" tabIndex={0} onKeyDown={handleCarouselKeyDown} onTouchStart={event => { touchStartX.current = event.touches[0]?.clientX ?? null; }} onTouchEnd={handleTouchEnd}>
-          {image ? <img src={image} alt={imageAlt} aria-hidden="true" /> : null}
+          {image ? <img data-public-visual-key="office-preview" src={image} alt={imageAlt} aria-hidden="true" /> : null}
           <div className="photo-overlay" aria-hidden="true" />
           <div className="virtual-office-carousel-controls" aria-label="Controles do carrossel">
-            <button type="button" onClick={previousSlide} aria-label="Ver tela anterior do Escritório Virtual"><ChevronLeft size={16} /></button>
+            <button data-public-visual-key="previous-slide" type="button" onClick={previousSlide} aria-label="Ver tela anterior do Escritório Virtual"><ChevronLeft size={16} /></button>
             <div className="virtual-office-carousel-dots" role="tablist" aria-label="Telas do Escritório Virtual">
-              {virtualOfficeSlides.map((slide, index) => <button key={slide.title} type="button" role="tab" aria-selected={index === activeSlide} aria-label={`Ver ${slide.title}`} onClick={() => setActiveSlide(index)} />)}
+              {virtualOfficeSlides.map((slide, index) => <button key={slide.id} data-public-visual-key={`slide-${slide.id}`} type="button" role="tab" aria-selected={index === activeSlide} aria-label={`Ver ${slide.title}`} onClick={() => setActiveSlide(index)} />)}
             </div>
-            <button type="button" onClick={nextSlide} aria-label="Ver próxima tela do Escritório Virtual"><ChevronRight size={16} /></button>
+            <button data-public-visual-key="next-slide" type="button" onClick={nextSlide} aria-label="Ver próxima tela do Escritório Virtual"><ChevronRight size={16} /></button>
           </div>
         </div>
         <SalesTrustCard trust={getPublicSalesContentOverride(content, "hero", "trust")} placement="mobile" />
@@ -412,7 +412,7 @@ export default function Home({ content: providedContent }: { content?: PublicSal
             <TopPromoBanner />
             <SalesTrustCard trust={getPublicSalesContentOverride(content, "hero", "trust")} placement="desktop" />
              <p>{publicCopy(content, "hero", "description", "Tenha acesso ao Método Código Lucrativo com Escritório Virtual, ferramentas de divulgação, materiais e recursos organizados para aprender, ativar e acompanhar sua operação em um único ambiente.")}</p>
-            <div className="sales-actions"><JoinButton className="sales-action-button" /><a href="#como-funciona" className="btn btn-ghost sales-action-button">Ver como funciona <ArrowDown size={16} /></a></div>
+            <div className="sales-actions" data-public-visual-key="primary-actions"><JoinButton visualKey="primary-activation" className="sales-action-button" /><a data-public-visual-key="how-it-works" href="#como-funciona" className="btn btn-ghost sales-action-button">Ver como funciona <ArrowDown size={16} /></a></div>
           </div>
         </div>
       </section>
@@ -432,7 +432,7 @@ export default function Home({ content: providedContent }: { content?: PublicSal
             <div><Eyebrow>{publicCopy(content, "package", "eyebrow", "Tudo o que você recebe")}</Eyebrow><h2>{publicCopy(content, "package", "title", "Você recebe o método com uma estrutura de operação, não uma explicação solta.")}</h2></div>
             <p>{publicCopy(content, "package", "description", "Método Código Lucrativo, Escritório Virtual, campanhas, recebimentos, pedidos, histórico, biblioteca, academia e suporte reunidos no mesmo fluxo.")}</p>
           </div>
-          <div className="package-grid">{content.packageItems.map(item => <article key={item.id}><strong>{item.title}</strong><p>{item.description}</p></article>)}</div>
+          <div className="package-grid">{content.packageItems.map(item => <article key={item.id} data-public-visual-key={item.id}><strong>{item.title}</strong><p>{item.description}</p></article>)}</div>
         </div>
       </section>
 
@@ -443,13 +443,13 @@ export default function Home({ content: providedContent }: { content?: PublicSal
             <p>{publicCopy(content, "social_proof", "description", "Conheça agradecimentos de quem aplica o Método Código Lucrativo com estrutura pronta, suporte operacional e acompanhamento da própria execução.")}</p>
           </div>
           <div className="social-proof-stats">
-            <article><span>Total de membros</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : <AnimatedMemberCount value={socialProof.data?.realMemberCount ?? 0} />}</article>
+            <article data-public-visual-key="member-total"><span>Total de membros</span>{socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : <AnimatedMemberCount value={socialProof.data?.realMemberCount ?? 0} />}</article>
           </div>
           {socialProof.isError ? <p className="social-proof-empty">Não foi possível carregar os indicadores agora.</p> : testimonialItems.length ? <div className="testimonial-carousel" aria-label="Agradecimentos de membros">
             <div className="testimonial-carousel-track">
-              {testimonialItems.map((item, index) => <article key={item.id} className={`testimonial-card testimonial-carousel-card ${index === activeTestimonialIndex ? "is-active" : ""}`} aria-hidden={index !== activeTestimonialIndex}>
+              {testimonialItems.map((item, index) => <article key={item.id} data-public-visual-key={`testimonial-${item.id}`} className={`testimonial-card testimonial-carousel-card ${index === activeTestimonialIndex ? "is-active" : ""}`} aria-hidden={index !== activeTestimonialIndex}>
                 <div className="testimonial-card-top">
-                  {item.photoUrl ? <img src={withAppBase(item.photoUrl)} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}
+                  {item.photoUrl ? <img data-public-visual-key={`testimonial-${item.id}-photo`} src={withAppBase(item.photoUrl)} alt={`Foto de ${item.memberName}`} /> : <div className="testimonial-avatar" aria-hidden="true">{item.memberName.slice(0, 1).toUpperCase()}</div>}
                   <div className="testimonial-card-meta"><strong>{item.memberName}</strong><span>{item.location}</span></div>
                 </div>
                 <div className="testimonial-rating" aria-label={`Avaliação ${item.rating} de 5`}>{Array.from({ length: 5 }).map((_, starIndex) => <Star key={starIndex} size={16} fill={starIndex < item.rating ? "currentColor" : "none"} />)}</div>
@@ -457,7 +457,7 @@ export default function Home({ content: providedContent }: { content?: PublicSal
               </article>)}
             </div>
             <div className="testimonial-carousel-rating-bar" aria-label="Avaliação média e navegação dos agradecimentos">
-              <button type="button" onClick={previousTestimonial} aria-label="Ver agradecimento anterior"><ChevronLeft size={20} /></button>
+              <button data-public-visual-key="previous-testimonial" type="button" onClick={previousTestimonial} aria-label="Ver agradecimento anterior"><ChevronLeft size={20} /></button>
               <div className="testimonial-carousel-rating-main">
                 <span>Avaliação média</span>
                 {averageRating !== null ? <RatingStars rating={averageRating} /> : null}
@@ -466,7 +466,7 @@ export default function Home({ content: providedContent }: { content?: PublicSal
               <div className="testimonial-carousel-rating-score">
                 {socialProof.isLoading ? <strong>...</strong> : socialProof.isError ? <strong>Indisponível</strong> : averageRating !== null && formattedAverageRating ? <><strong>{formattedAverageRating} / 5</strong><small>{reviewCount} {reviewCount === 1 ? "avaliação" : "avaliações"}</small></> : <><strong>Aguardando</strong><small>Sem avaliações</small></>}
               </div>
-              <button type="button" onClick={nextTestimonial} aria-label="Ver próximo agradecimento"><ChevronRight size={20} /></button>
+              <button data-public-visual-key="next-testimonial" type="button" onClick={nextTestimonial} aria-label="Ver próximo agradecimento"><ChevronRight size={20} /></button>
             </div>
           </div> : <p className="social-proof-empty">Ainda não há agradecimentos publicados. Esta área será preenchida quando houver avaliações aprovadas.</p>}
         </div>
@@ -479,8 +479,8 @@ export default function Home({ content: providedContent }: { content?: PublicSal
           <div className="shell reference-copy-grid">
             <div className="reference-copy-index"><span>{String(index + 1).padStart(2, "0")}</span><i /></div>
              <div className="reference-copy-content"><Eyebrow>{sectionCopy("eyebrow", block.eyebrow)}</Eyebrow><h2>{sectionCopy("title", block.title)}</h2>
-              {sectionImage ? <div className={`reference-image-frame inline-reference-image ${block.id === "comparison" ? "comparison-image-fill" : ""}`}><img src={sectionImage} alt={block.defaultAlt} loading="lazy" /></div> : null}
-               <div className="copy-stack">{block.body.map((paragraph, paragraphIndex) => <p key={paragraph}>{sectionCopy(`paragraph${paragraphIndex + 1}`, paragraph)}</p>)}</div><JoinButton className="reference-copy-cta" /></div>
+               {sectionImage ? <div data-public-visual-key="reference-image" className={`reference-image-frame inline-reference-image ${block.id === "comparison" ? "comparison-image-fill" : ""}`}><img data-public-visual-key="reference-image-content" src={sectionImage} alt={block.defaultAlt} loading="lazy" /></div> : null}
+                <div className="copy-stack">{block.body.map((paragraph, paragraphIndex) => <p key={paragraph}>{sectionCopy(`paragraph${paragraphIndex + 1}`, paragraph)}</p>)}</div><JoinButton visualKey="section-activation" className="reference-copy-cta" /></div>
           </div>
         </section>;
       })}
@@ -503,7 +503,7 @@ export default function Home({ content: providedContent }: { content?: PublicSal
           <div className="objection-grid objection-accordion">{content.objectionItems.map(({ id, question, answer }, index) => {
             const isOpen = openObjectionIndex === index;
             const answerId = `objection-answer-${id}`;
-            return <article key={id} className={isOpen ? "is-open" : ""}>
+             return <article key={id} data-public-visual-key={id} className={isOpen ? "is-open" : ""}>
               <button type="button" aria-expanded={isOpen} aria-controls={answerId} onClick={() => setOpenObjectionIndex(current => current === index ? null : index)}>
                 <strong>{question}</strong>
                 <span aria-hidden="true">{isOpen ? "−" : "+"}</span>
