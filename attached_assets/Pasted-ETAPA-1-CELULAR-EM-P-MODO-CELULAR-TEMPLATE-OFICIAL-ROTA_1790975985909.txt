@@ -1,0 +1,218 @@
+ETAPA 1 — CELULAR EM PÉ / MODO CELULAR
+TEMPLATE: OFICIAL
+ROTA: /preview?template=official
+DISPOSITIVO: Redmi 10C
+ANDROID: Android 13 / MIUI 14
+NAVEGADOR: Opera
+VERSÃO PARA COMPUTADOR: DESLIGADA
+ORIENTAÇÃO: RETRATO
+
+RESULTADOS TESTADOS
+
+[PASSOU] Imagem principal carregou corretamente.
+[PASSOU] Título está visível corretamente.
+[PASSOU] Botões estão visíveis corretamente, sem corte e sem ocultação.
+[PASSOU] Não existe sobreposição entre título, botões ou outros elementos.
+[NÃO CONFIRMADO] Não existe conteúdo cortado nas laterais.
+[PASSOU] Cabeçalho está adequado ao modo celular e aparece corretamente.
+[PASSOU] Menu abre corretamente.
+[PASSOU] Menu fecha corretamente.
+[NÃO CONFIRMADO] Links/opções do menu funcionam.
+[NÃO CONFIRMADO] FAQ abre corretamente.
+[NÃO TESTADO] FAQ fecha corretamente.
+[FALHOU] CTA não aparece.
+[NÃO TESTADO] CTA leva ao formulário corretamente.
+[NÃO TESTADO] Formulário aparece corretamente.
+[NÃO SE APLICA] Sobreposição ou corte no formulário, pois o formulário não foi exibido.
+
+FALHAS REGISTRADAS
+
+ETAPA 1 → OFICIAL → CTA → O CTA não aparece na versão mobile normal.
+
+PENDÊNCIAS DE CONFIRMAÇÃO
+
+- Confirmar se existe conteúdo cortado nas laterais.
+- Confirmar se links do menu levam às seções corretas.
+- Confirmar se o FAQ abre.
+- Confirmar se o FAQ fecha.
+- Confirmar se existe outro CTA visível em outra parte da página.
+
+🔵🔵🔵🔵🔵
+
+ETAPA 1 — CELULAR EM PÉ / MODO CELULAR
+TEMPLATE: PREMIUM
+ROTA: /preview
+DISPOSITIVO: Redmi 10C
+ANDROID: Android 13 / MIUI 14
+NAVEGADOR: Opera
+VERSÃO PARA COMPUTADOR: DESLIGADA
+ORIENTAÇÃO: RETRATO
+
+RESULTADOS TESTADOS
+
+[PASSOU] Imagem principal carregou corretamente.
+[OBSERVAÇÃO] A imagem/bloco “Seu negócio digital pronto para começar” aparece abaixo dos botões, mas o posicionamento precisa ser conferido porque foi relatado como diferente do esperado.
+[PASSOU] Títulos estão visíveis corretamente, sem cortes.
+[PASSOU] Botões fixos da página estão visíveis corretamente.
+[PASSOU] Não existe sobreposição entre título, botões ou outros elementos.
+[PASSOU] Não existe conteúdo cortado nas laterais.
+[PASSOU] Cabeçalho está adequado ao modo celular.
+[PASSOU] Menu abre corretamente.
+[PASSOU] Menu fecha corretamente.
+[PASSOU] Links/opções do menu funcionam e levam à seção correta.
+[PASSOU] FAQ abre corretamente.
+[PASSOU] FAQ fecha corretamente.
+[FALHOU] Balão de chat não aparece no template Premium.
+[FALHOU] CTA flutuante não aparece no template Premium.
+[PASSOU] Botões fixos de CTA funcionam.
+[PASSOU] Botões fixos de CTA levam ao formulário.
+[PASSOU] Formulário aparece corretamente.
+[PASSOU] Não existe sobreposição ou corte no formulário.
+
+FALHAS REGISTRADAS
+
+ETAPA 1 → PREMIUM → BALÃO DE CHAT → O balão de chat não aparece na versão mobile normal.
+ETAPA 1 → PREMIUM → CTA FLUTUANTE → O botão flutuante de CTA não aparece na versão mobile normal.
+ETAPA 1 → PREMIUM → POSICIONAMENTO AO CLICAR NO CTA → Ao clicar nos botões fixos que levam ao formulário, o título do formulário aparece no meio da tela; o alinhamento de chegada precisa ser ajustado.
+
+PENDÊNCIAS DE CONFIRMAÇÃO
+
+- Confirmar o posicionamento correto esperado para o bloco/imagem “Seu negócio digital pronto para começar”.
+- Confirmar se o CTA flutuante e o balão de chat devem aparecer obrigatoriamente no template Premium mobile.
+
+🔵🔵🔵
+
+ETAPA 1 — CELULAR EM PÉ / MODO CELULAR
+TEMPLATE: JOURNEY
+ROTA: /preview?template=journey
+DISPOSITIVO: Redmi 10C
+ANDROID: Android 13 / MIUI 14
+NAVEGADOR: Opera
+VERSÃO PARA COMPUTADOR: DESLIGADA
+ORIENTAÇÃO: RETRATO
+
+RESULTADOS TESTADOS
+
+[PASSOU] Imagem principal carregou corretamente.
+[PASSOU] Título está visível corretamente, sem cortes.
+[PASSOU] Botões estão visíveis corretamente.
+[PASSOU] Não existe sobreposição entre título, botões ou outros elementos.
+[PASSOU] Não existe conteúdo cortado nas laterais.
+[PASSOU] Cabeçalho está adequado ao modo celular.
+[PASSOU] Menu abre corretamente.
+[PASSOU] Menu fecha corretamente.
+[PASSOU] Links/opções do menu funcionam e levam às seções corretas.
+[PASSOU] FAQ abre corretamente.
+[PASSOU] FAQ fecha corretamente.
+[FALHOU] CTA flutuante não aparece no template Journey.
+[PASSOU] Botões fixos de CTA funcionam.
+[PASSOU] Botões fixos de CTA levam ao formulário.
+[PASSOU] Formulário aparece corretamente.
+[PASSOU] Não existe sobreposição ou corte no formulário.
+
+FALHAS REGISTRADAS
+
+ETAPA 1 → JOURNEY → CTA FLUTUANTE → O botão flutuante de CTA não aparece na versão mobile normal.
+ETAPA 1 → JOURNEY → POSICIONAMENTO AO CLICAR NO CTA → Ao clicar nos botões fixos que levam ao formulário, o título da seção do formulário fica no meio da página; o destino está correto, mas o alinhamento de chegada precisa ser ajustado.
+
+PENDÊNCIAS DE CONFIRMAÇÃO
+
+- Confirmar se o CTA flutuante deve aparecer obrigatoriamente no template Journey mobile.
+- Ajustar ou revisar o comportamento de âncora/scroll dos botões fixos para que o título do formulário fique corretamente posicionado ao chegar na seção.
+
+🔵🔵🔵
+
+ETAPA 2 — CELULAR DEITADO / MODO CELULAR
+TEMPLATE: PREMIUM
+ROTA: /preview
+DISPOSITIVO: Redmi 10C
+ANDROID: Android 13 / MIUI 14
+NAVEGADOR: Opera
+VERSÃO PARA COMPUTADOR: DESLIGADA
+ORIENTAÇÃO: PAISAGEM
+LAYOUT IDENTIFICADO: MOBILE / NÃO CONFIRMADO COM PRECISÃO
+
+RESULTADOS TESTADOS
+
+[PASSOU] Imagem principal carregou corretamente.
+[OBSERVAÇÃO] A imagem/bloco principal aparece abaixo dos botões, mas foi informado que deveria aparecer abaixo do título.
+[PASSOU] Título está visível corretamente, sem cortes e sem sobreposição.
+[PASSOU] Botões fixos estão visíveis corretamente.
+[PASSOU] Não existe sobreposição entre título, botões ou outros elementos.
+[PASSOU] Conteúdo está dentro das margens, sem cortes laterais.
+[PASSOU] Cabeçalho aparece normal no modo celular deitado.
+[PARCIAL] Menu abre corretamente, mas dentro do card aparecem poucos itens por vez e é necessário arrastar lateralmente para ver os demais.
+[PASSOU] Menu fecha corretamente.
+[NÃO CONFIRMADO] Links/opções do menu levam às seções corretas.
+[PASSOU] FAQ abre corretamente.
+[PASSOU] FAQ fecha corretamente.
+[FALHOU] Botão de chat flutuante não aparece.
+[FALHOU] CTA flutuante não aparece.
+[PARCIAL] Botões fixos de CTA funcionam, mas o scroll de destino fica desalinhado.
+[PARCIAL] O CTA fixo “Quero otimizar minha estrutura” leva para a linha divisória entre a seção FAQ e a seção Próximo Passo, deixando a linha atravessando o meio da tela.
+[PASSOU] Formulário aparece corretamente.
+[NÃO CONFIRMADO] Não existe sobreposição ou corte no formulário.
+
+FALHAS REGISTRADAS
+
+ETAPA 2 → PREMIUM → IMAGEM/BLOCO PRINCIPAL → A imagem/bloco aparece abaixo dos botões, mas deveria aparecer abaixo do título.
+ETAPA 2 → PREMIUM → MENU → O menu abre em formato de card com poucos itens visíveis e exige arraste lateral para acessar outros itens.
+ETAPA 2 → PREMIUM → BALÃO DE CHAT → O botão de chat flutuante não aparece no modo celular deitado.
+ETAPA 2 → PREMIUM → CTA FLUTUANTE → O CTA flutuante não aparece no modo celular deitado.
+ETAPA 2 → PREMIUM → CTA FIXO / SCROLL → O botão fixo leva para a linha entre FAQ e Próximo Passo, deixando o destino desalinhado no meio da tela.
+
+PENDÊNCIAS DE CONFIRMAÇÃO
+
+- Confirmar se o layout exibido deve ser classificado como MOBILE, TABLET ou DESKTOP.
+- Confirmar se os links/opções do menu levam corretamente às seções esperadas.
+- Confirmar se não existe sobreposição ou corte no formulário.
+- Confirmar se o balão de chat e o CTA flutuante devem aparecer obrigatoriamente no template Premium em modo celular deitado.
+
+🔵🔵🔵
+
+ETAPA 2 — CELULAR DEITADO / MODO CELULAR
+TEMPLATE: JOURNEY
+ROTA: /preview?template=journey
+DISPOSITIVO: Redmi 10C
+ANDROID: Android 13 / MIUI 14
+NAVEGADOR: Opera
+VERSÃO PARA COMPUTADOR: DESLIGADA
+ORIENTAÇÃO: PAISAGEM
+LAYOUT IDENTIFICADO: MOBILE / NÃO CONFIRMADO COM PRECISÃO
+
+RESULTADOS TESTADOS
+
+[PASSOU] Imagem principal carregou corretamente.
+[OBSERVAÇÃO] A imagem/bloco principal aparece abaixo dos botões, mas foi informado que deveria aparecer abaixo do título.
+[PASSOU] Título está visível corretamente, sem cortes e sem sobreposição.
+[PASSOU] Botões fixos estão visíveis corretamente.
+[PASSOU] Não existe sobreposição entre título, botões ou outros elementos.
+[PASSOU] Conteúdo está dentro das margens, sem cortes laterais.
+[PASSOU] Cabeçalho aparece normal no modo celular deitado.
+[PARCIAL] Menu abre corretamente, mas dentro do card aparecem poucos itens por vez e é necessário arrastar lateralmente para ver os demais.
+[PASSOU] Menu fecha corretamente.
+[NÃO CONFIRMADO] Links/opções do menu levam às seções corretas.
+[PASSOU] FAQ abre corretamente.
+[PASSOU] FAQ fecha corretamente.
+[FALHOU] Botão de chat flutuante não aparece.
+[FALHOU] CTA flutuante não aparece.
+[PARCIAL] Botões fixos de CTA funcionam, mas o scroll de destino fica desalinhado.
+[PARCIAL] O CTA fixo “Quero otimizar minha estrutura” leva para a linha divisória entre a seção FAQ e a seção Próximo Passo, deixando a linha atravessando o meio da tela.
+[PASSOU] Formulário aparece corretamente.
+[NÃO CONFIRMADO] Não existe sobreposição ou corte no formulário.
+
+FALHAS REGISTRADAS
+
+ETAPA 2 → JOURNEY → IMAGEM/BLOCO PRINCIPAL → A imagem/bloco aparece abaixo dos botões, mas deveria aparecer abaixo do título.
+ETAPA 2 → JOURNEY → MENU → O menu abre em formato de card com poucos itens visíveis e exige arraste lateral para acessar outros itens.
+ETAPA 2 → JOURNEY → BALÃO DE CHAT → O botão de chat flutuante não aparece no modo celular deitado.
+ETAPA 2 → JOURNEY → CTA FLUTUANTE → O CTA flutuante não aparece no modo celular deitado.
+ETAPA 2 → JOURNEY → CTA FIXO / SCROLL → O botão fixo leva para a linha entre FAQ e Próximo Passo, deixando o destino desalinhado no meio da tela.
+
+PENDÊNCIAS DE CONFIRMAÇÃO
+
+- Confirmar se o layout exibido deve ser classificado como MOBILE, TABLET ou DESKTOP.
+- Confirmar se os links/opções do menu levam corretamente às seções esperadas.
+- Confirmar se não existe sobreposição ou corte no formulário.
+- Confirmar se o balão de chat e o CTA flutuante devem aparecer obrigatoriamente no template Journey em modo celular deitado.
+

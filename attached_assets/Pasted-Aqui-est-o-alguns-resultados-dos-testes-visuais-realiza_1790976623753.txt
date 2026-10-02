@@ -1,0 +1,98 @@
+Aqui estão alguns resultados dos testes visuais realizados até agora e uma decisão de escopo para simplificar o projeto.
+
+PROBLEMA IDENTIFICADO
+
+Os três templates atuais — Official, Premium e Journey — são muito parecidos visualmente e estruturalmente. Mesmo assim, estamos tendo que testar tudo repetidamente em vários cenários:
+
+- mobile em pé;
+- mobile deitado;
+- modo “versão para computador” no celular;
+- modo desktop no celular deitado;
+- tablet;
+- desktop real.
+
+Isso gera uma matriz de testes desnecessária, aumenta a chance de bugs e torna a manutenção mais difícil.
+
+DECISÃO
+
+A partir de agora, o template Premium será tratado como o template padrão principal do projeto.
+
+Não estou pedindo para deletar os templates Official e Journey neste momento. Eles podem continuar no código, mas não devem ser o foco das correções agora.
+
+O foco deve ser:
+
+- usar o Premium como base visual principal;
+- consolidar nele o que houver de melhor nos três templates;
+- corrigir os problemas já encontrados nos testes;
+- fazer os próximos testes somente no Premium;
+- depois, quando o Premium estiver estável, decidir se vale a pena criar outros templates derivados.
+
+OBJETIVO TÉCNICO
+
+Transformar o Premium no template canônico da página pública de vendas.
+
+Ele deve concentrar:
+
+- melhor estrutura visual;
+- melhor responsividade;
+- melhor comportamento de menu;
+- melhor posicionamento dos blocos;
+- melhor funcionamento dos CTAs;
+- melhor exibição do formulário;
+- melhor experiência em mobile em pé, mobile deitado e modo desktop no celular.
+
+CORREÇÕES JÁ IDENTIFICADAS
+
+Aplicar as correções principalmente no template Premium:
+
+1. Corrigir o posicionamento da imagem/bloco principal.
+   A imagem está aparecendo abaixo dos botões, mas deve ficar melhor alinhada ao conteúdo principal, preferencialmente abaixo do título ou em uma posição visualmente coerente com a hierarquia da seção.
+
+2. Corrigir centralização no Premium.
+   No modo desktop no celular, foi percebido que imagem e textos não estão centralizados corretamente.
+
+3. Corrigir CTA flutuante.
+   O botão flutuante de CTA não aparece em alguns modos testados.
+
+4. Corrigir botão/balão de chat flutuante.
+   O FAB de chat também não aparece em alguns modos testados.
+
+5. Corrigir âncoras dos botões fixos de CTA.
+   Os botões levam ao local correto, mas o scroll está desalinhado. Em alguns casos, a tela para exatamente na linha divisória entre FAQ e Próximo Passo, deixando a linha no meio da tela.
+
+6. Corrigir o posicionamento de chegada no formulário.
+   Ao clicar em botões que levam ao formulário, o título da seção fica mal posicionado no meio da tela. Ajustar offset/scroll-margin para que o formulário apareça corretamente.
+
+7. Revisar menu no celular deitado.
+   O menu abre, mas aparece como um card com poucos itens visíveis e exige arraste lateral para ver os demais. Melhorar essa experiência.
+
+8. Padronizar comportamento responsivo.
+   Mobile em pé deve ter comportamento próprio.
+   Celular deitado, desktop no celular, tablet e desktop devem seguir uma lógica mais consistente, sem criar variações desnecessárias.
+
+DIRETRIZES
+
+- Não reescrever o projeto inteiro.
+- Não deletar os outros templates agora.
+- Não criar uma nova arquitetura paralela desnecessária.
+- Fazer correções cirúrgicas.
+- Preservar o que já funciona.
+- Centralizar o esforço no Premium.
+- Evitar divergência entre templates.
+- Usar componentes compartilhados quando possível.
+- Depois das correções, testar somente o Premium como base principal.
+
+RESULTADO ESPERADO
+
+O template Premium deve se tornar o template padrão funcional e visual do projeto.
+
+Quando ele estiver estável em:
+
+- mobile em pé;
+- mobile deitado;
+- desktop no celular;
+- desktop no celular deitado;
+- tablet;
+- desktop real;
+
+aí sim avaliamos se vale criar variações visuais derivadas para Official e Journey.
