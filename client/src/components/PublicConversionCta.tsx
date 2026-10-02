@@ -20,6 +20,11 @@ function pointsToActivationSection(anchor: HTMLAnchorElement) {
   return href === "#f" || href.endsWith("/#f");
 }
 
+function isConversionCtaRoute(location: string) {
+  const pathname = location.split("?")[0].replace(/\/+$/, "") || "/";
+  return pathname === "/preview" || (pathname === "/" && isPublicConversionRoute(pathname));
+}
+
 function scrollToActivationSection() {
   const formSection = document.getElementById(FORM_SECTION_ID);
   if (!formSection) return;
@@ -37,7 +42,7 @@ export default function PublicConversionCta() {
   useEffect(() => {
     setShowFloatingCta(false);
     setDismissedByActivationClick(false);
-    if (location !== "/") return;
+    if (!isConversionCtaRoute(location)) return;
 
     const packageSection = document.getElementById(PACKAGE_SECTION_ID);
     const formSection = document.getElementById(FORM_SECTION_ID);
@@ -91,7 +96,7 @@ export default function PublicConversionCta() {
     };
   }, [location]);
 
-  if (!isPublicConversionRoute(location) || location !== "/" || !showFloatingCta || dismissedByActivationClick) return null;
+  if (!isConversionCtaRoute(location) || !showFloatingCta || dismissedByActivationClick) return null;
 
   return (
     <a

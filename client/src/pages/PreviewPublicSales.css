@@ -2113,7 +2113,7 @@
   }
 }
 
-/* Mantém o CTA flutuante alinhado à paleta premium e oculta o chat ainda indisponível. */
+/* Mantém os controles flutuantes Premium alinhados à paleta e às funções disponíveis. */
 .real-public-sales-preview .public-conversion-cta {
   color: #ffffff;
   border-color: rgba(191, 219, 254, 0.72);
@@ -2134,13 +2134,17 @@
 }
 
 .real-public-sales-preview .member-chat-fab-wrap {
-  display: none;
+  display: flex;
 }
 
 
 /* Evita que âncoras da página fiquem encobertas pelo cabeçalho fixo. */
 .real-public-sales-preview main [id] {
   scroll-margin-top: 88px;
+}
+
+.real-public-sales-preview #f {
+  scroll-margin-top: 92px;
 }
 
 /* Ajustes do hero premium: mantém a arte e as ações na identidade azul. */
@@ -2173,10 +2177,10 @@
     grid-template-areas:
       "kicker"
       "title"
+      "visual"
       "description"
       "actions"
-      "trust"
-      "visual";
+      "trust";
     column-gap: 0;
     row-gap: 0;
     align-items: start;
@@ -2220,7 +2224,7 @@
     grid-area: visual;
     width: 100%;
     max-width: 720px;
-    margin: 18px 0 0;
+    margin: 0 0 16px;
     padding: 0;
   }
 }
