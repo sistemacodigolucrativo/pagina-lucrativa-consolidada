@@ -152,23 +152,26 @@ Implementar a Fase 1: adicionar um resolver tipado de `PublicSalesContentSnapsho
 
 ### Próximo passo exato
 
-Continuar pela Etapa 3 abaixo; o diagnóstico dos seletores e a primeira rodada de escopo já foram registrados ali.
+Iniciar a Etapa 4: validar a detecção de desktop e desktop mobile e então integrar um resolver único de apresentação ao runtime e ao cabeçalho, sem mexer no conteúdo comercial compartilhado.
 
 ## Etapa 3 — Isolamento de estilos
 
-**Status:** em andamento.
+**Status:** concluída.
 
-### Auditoria inicial concluída
+### Auditoria e decisões
 
 - A skin Premium ativa da página real está sob `.real-public-sales-preview`, aplicada junto de `.public-sales-premium-preview` pelo registry. Os seletores ativos dessa skin já usam o wrapper; não foi necessário alterá-los nesta auditoria.
 - `PreviewPublicSales.css` ainda contém regras `.premium-preview-*` de uma composição de demonstração anterior. Não encontrei markup React que use esses nomes; não remover nem reestruturar esse bloco sem confirmar seu destino e os testes legados que ainda citam o preview.
 - As regras de seções e componentes de venda em `index.css` são usadas pela composição de `Home`. `.sales-page` também é usada em `PublicInfoPage`; `.shell` e `.btn` são compartilhadas por outras rotas. Essas regras compartilhadas não devem receber escopo exclusivo da landing.
 - Foram encontrados seletores não encapsulados da família antiga `.premium-preview-*` em `PreviewPublicSales.css`, mas sem consumidores React ativos. A contagem de 14 citada na retomada não corresponde ao conjunto atual; a classificação foi feita sobre os seletores presentes no checkout.
-- Em `index.css`, `.eyebrow` e `.top-promo-banner` eram nomes genéricos usados pela landing. Seus estilos-base, descendentes, variantes do banner e media queries foram limitados a `.reference-page`. `.sales-page`, `.shell`, `.btn` e tipografia compartilhada permaneceram globais.
+- A matriz comparou as classes efetivamente usadas por `Home` com `PublicInfoPage` e outras rotas. Estilos ativos de carrossel/estrutura, prova social, depoimentos, avaliações, grids de pacote e objeções, conteúdo de referência, animação de entrada e botão flutuante da landing foram limitados a `.reference-page`, incluindo suas regras responsivas.
+- `.eyebrow` e `.top-promo-banner`, seus descendentes, variantes e media queries também ficaram sob `.reference-page`.
+- `.public-info-grid` e suas regras compartilhadas permaneceram globais. `.sales-page`, `.shell`, `.btn`, tipografia e os estilos de navegação compartilhada não receberam escopo exclusivo.
+- A auditoria deixou apenas as regras globais de navegação compartilhada e `.faq.is-open`, que não tem consumidor ativo identificado. As famílias com nomes próprios de produto (`.sales-*`, `.public-*`) permanecem distinguíveis; não foi feita uma reestruturação ampla do CSS.
 
-### Alterações deste avanço
+### Alterações
 
-- `client/src/index.css`: escopo de `.eyebrow` e `.top-promo-banner` sob `.reference-page`, incluindo usos internos e regras responsivas do banner.
+- `client/src/index.css`: escopo seguro dos grupos de landing comprovadamente usados apenas por `Home`, incluindo seletores descendentes e variantes responsivas. Regras compartilhadas e estilos antigos sem consumidor identificado foram preservados.
 - `replit.md`: cada etapa concluída agora deve registrar mudanças, decisões, verificações, erros, pendências e próximo passo exato em `docs/REPLIT_AGENT_STATUS.md`, com contexto de continuidade para Remix.
 
 ### Verificações
@@ -176,10 +179,10 @@ Continuar pela Etapa 3 abaixo; o diagnóstico dos seletores e a primeira rodada 
 - `pnpm check`: passou.
 - `pnpm build`: passou; Vite manteve o aviso existente de um chunk acima de 500 kB.
 - `pnpm exec vitest run server/publicHeader.responsive.test.ts`: 24 testes passaram.
-- `git diff --check`: passou.
-- Prévia visual em desktop: `official` (`/`) e `premium` (`/preview`) carregaram. Em mobile (390×844), a home oficial preservou o banner e a apresentação compacta.
-- A rota `/politica-de-privacidade` também carregou; os estilos de landing recém-escopados não foram aplicados nela.
-- Workflow reiniciado após a alteração. Logs confirmam serviço na porta 5000 sem erro de inicialização; as capturas não mostraram erros de console.
+- O parser PostCSS aceitou `client/src/index.css`; `git diff --check` passou.
+- Capturas após reiniciar o workflow: `official` (`/`), carrossel (`/#estrutura-digital`), prova social em desktop e mobile (`/#depoimentos`), `premium` (`/preview`), página institucional (`/institucional`) e privacidade (`/politica-de-privacidade`). As rotas carregaram e as capturas não mostraram erros de console.
+- A análise estática confirmou que os grupos modificados pertencem à composição `Home`; as telas administrativas autenticadas não foram visualmente verificadas neste navegador.
+- O workflow `Start application` reiniciou na porta 5000; logs de inicialização sem erros.
 
 ### Erros e observações
 
@@ -188,13 +191,12 @@ Continuar pela Etapa 3 abaixo; o diagnóstico dos seletores e a primeira rodada 
 
 ### Pendências
 
-- A Etapa 3 ainda não está concluída: classificar os demais seletores exclusivos de `Home` em `index.css` e aplicar o escopo seguro também aos grupos restantes, mantendo os estilos realmente compartilhados.
 - A família antiga `.premium-preview-*` continua sem consumidor identificado; manter até decidir seu destino e confirmar os testes que ainda a referenciam.
-- Revalidar `official`, `premium`, informações públicas e telas administrativas após completar a etapa.
+- A interface administrativa autenticada não foi capturada; os seletores alterados foram conferidos estaticamente como pertencentes à landing.
 
 ### Próximo passo exato
 
-Completar a matriz de seletores de `index.css` por uso real em `Home`, `PublicInfoPage` e componentes compartilhados. Escopar os grupos restantes comprovadamente exclusivos de `Home` sob `.reference-page`, preservando `.sales-page`, `.shell`, `.btn` e a tipografia quando compartilhados. Não apagar estilos `.premium-preview-*` sem identificar consumidores e substitutos.
+Seguir para a Etapa 4: validar a detecção de desktop e desktop mobile antes de integrar um resolver único de apresentação ao runtime e ao cabeçalho.
 
 ## Histórico de etapas
 
@@ -203,7 +205,7 @@ Completar a matriz de seletores de `index.css` por uso real em `Home`, `PublicIn
 | 0 — Baseline e diagnóstico | Concluída | Base atual `official`, sem overrides/layout visual; composição compartilhada em `Home`; divergências de breakpoints anotadas. |
 | 1 — Conteúdo canônico | Concluída | Provider resolve defaults e overrides válidos em um snapshot único usado pela home existente. |
 | 2 — Registry de templates | Concluída | Metadados e renderer compartilham os templates existentes e centralizam o wrapper premium. |
-| 3 — Isolamento de estilos | Em andamento | Skin Premium ativa já está escopada; nomes genéricos da landing (`.eyebrow`, `.top-promo-banner`) foram limitados a `.reference-page`; faltam os demais grupos exclusivos. |
+| 3 — Isolamento de estilos | Concluída | Grupos ativos exclusivos de `Home` foram limitados a `.reference-page`; estilos compartilhados ficaram globais e regras antigas sem consumidor foram preservadas. |
 | 4 — Desktop real e desktop mobile | Planejada | Criar resolver único de apresentação e integrá-lo ao runtime/cabeçalho após validar detecção. |
 | 5 — Editor visual por contrato | Planejada | Manter persistência existente; estabilizar mapeamento lógico somente com compatibilidade v1. |
 | 6 — Contrato para novos templates | Planejada | Documentar manifesto/registro com base no registry implementado. |
